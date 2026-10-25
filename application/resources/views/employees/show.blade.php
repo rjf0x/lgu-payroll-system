@@ -8,6 +8,7 @@
             <a href="{{ route('employees.edit', $employee) }}" class="rounded bg-teal-800 px-4 py-3 font-semibold text-white">Edit employee</a>
         @endcan
     </div>
+    <a href="{{ route('employee-salaries.index', $employee) }}" class="mt-5 inline-block font-semibold text-teal-800 underline">Salary and preserved history</a>
     <section class="mt-6 rounded-xl border border-slate-200 bg-white p-6">
         <h2 class="text-xl font-semibold">Employment and payroll information</h2>
         <dl class="mt-5 grid gap-6 sm:grid-cols-2">

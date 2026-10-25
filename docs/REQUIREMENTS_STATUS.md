@@ -13,8 +13,8 @@ In progress; Not started; Blocked by client validation.
 | Progress, decisions, requirements, and testing records | 0 | Implemented and tested | Four tracking documents created and reviewed |
 | Login/logout, account management, four roles, server authorization | 1 | Implemented and tested | Five audit findings fixed; post-correction audit confirms 45 tests / 611 assertions and MySQL role/concurrency checks; no new confirmed defects. Remaining verification gaps: PHASE_1_REAUDIT.md |
 | Employee create, view, edit, search, classification | 2 | Implemented but needs validation | Existing 76 tests / 1040 assertions and normal MySQL checks pass; PHASE_2_AUDIT.md records missing suffix-search behavior, invalid-encoding HTTP 500 paths, and test coverage gaps |
-| Effective-dated salary schedules, grades, steps, history | 3 | Not started | Salary changes require external authorization |
-| Potential step eligibility separate from promotions | 3 | Not started | Eligibility must not change salary automatically |
+| Effective-dated salary schedules, grades, steps, history | 3 | Implemented but needs validation | PHASE_3_AUDIT.md records a missing strict applicability guard in salary retrieval, mixed real/demo employee histories, and unvalidated promotion semantics; 111 tests / 1683 assertions and normal MySQL checks pass. Actual client schedules remain unvalidated |
+| Potential step eligibility separate from promotions | 3 | Implemented and tested | Provisional three-year reminder from entered basis, leap-day tested; no automatic step change or claim of verified category eligibility |
 | Monthly draft batches and duplicate prevention | 4 | Not started | No payroll tables created |
 | Manual employee allowances, bonuses, loans, attendance, adjustments | 5 | Not started | Authorized reasons and original values must be preserved |
 | Decimal-safe totals, rounding, transparent calculation breakdown | 6 | Not started | Expected-result test cases required |

@@ -2,8 +2,11 @@
 
 Browser-based payroll prototype with planned blockchain integrity verification.
 Includes authentication, administrator-managed accounts, four roles, server
-authorization, and employee payroll records. Phase 2 has two open findings;
-see [the employee-management audit](docs/PHASE_2_AUDIT.md).
+authorization, employee payroll records, and effective-dated salary schedules
+with preserved employee salary history. Phase 2 has two open findings;
+see [the employee-management audit](docs/PHASE_2_AUDIT.md). Phase 3 also needs
+validation; see [the salary-management audit](docs/PHASE_3_AUDIT.md) for salary
+applicability, real/demo history interference, and promotion-policy gaps.
 
 ## Layout
 
@@ -106,9 +109,46 @@ employee-record access. This prototype grants read access across the office;
 client-specific organizational visibility needs validation before deployment.
 
 Use inactive status to retain a record; no deletion or document upload is provided.
-No salary amount, grade/step schedule, statutory rule, or calculation is assigned
-by employee entry. Salary authorization/history belongs to Phase 3. Employment
+No salary amount or grade/step is assigned by employee entry. Use the separate
+salary authorization/history workflow described below. Employment
 start dates are not salary-effective dates. No demonstration records are seeded.
+
+## Salary schedules and employee salary history
+
+As **Administrator**, open **Salary schedules**, create a draft with a classification,
+effective date, and data use (demonstration or externally authorized). Add the
+approved grade/step monthly amounts individually and correct draft entries as
+needed. Publishing requires a source reference and confirmation. Published
+schedules and their rates are permanently locked; changes require another dated
+schedule. No government salary table or rate is prefilled.
+
+As **Payroll Officer**, open an employee's **Salary and preserved history**, then
+**Record authorized change**. Choose the effective date and data use to find the
+latest published schedule for that classification and date. Select a grade/step,
+change type, authorized position, service-review basis date, authority reference,
+and reason. Confirm external authorization (or explicitly fictional demo use).
+Initial assignment, same-grade step increase, different-grade promotion, and
+same-grade/step schedule update are distinct records.
+
+Use **Salary as of** to retrieve the last authorized employee record effective on
+that date. Its exact decimal amount and source are preserved. A newer schedule
+never silently replaces an employee's recorded salary: record a separately
+authorized schedule update. Subsequent changes must be today or later and strictly
+after the latest recorded effective date; records cannot be edited or deleted.
+Missing salary is shown as missing, not zero. Future position changes are stored
+in salary history and do not rewrite the employee profile.
+
+The three-year review date is a provisional reminder calculated from the explicitly
+entered basis date. It does not establish eligibility, assume category-specific
+rules, or change salary/steps automatically. Schedule-only updates retain the prior
+basis. Obtain client validation of actual schedules, authority practices, and
+eligibility rules before real use. Demonstration records remain clearly labeled
+and are not production payroll inputs. No statutory calculation or payroll batch
+preparation is included in this phase.
+
+Payroll Officers, Approvers and Viewers can read employee salary history;
+Administrators maintain schedules without gaining employee-record access.
+Only Administrators see draft schedules; all active roles can read published ones.
 
 ## Verification
 
@@ -124,6 +164,7 @@ php ../scripts/verify-mysql.php
 php ../scripts/verify-auth.php
 php ../scripts/verify-auth-concurrency.php
 php ../scripts/verify-employees.php
+php ../scripts/verify-salaries.php
 ```
 
 PHPUnit pins in-memory SQLite in both server and environment variables. The base
@@ -140,6 +181,8 @@ accounts. The concurrency check temporarily commits four fictional accounts so
 separate processes can access them, then deletes only the accounts it created.
 It verifies reciprocal administrator deactivation/demotion without changing schema.
 The employee smoke check rolls back its fictional user and employee records.
+The salary smoke check likewise rolls back all of its fictional records, including
+schedules, rates, employee history and users; it never runs destructive migrations.
 The readiness command separately verifies the configured MySQL connection and
 base tables. `/up` indicates application boot, not database readiness.
 

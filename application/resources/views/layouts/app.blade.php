@@ -34,6 +34,9 @@
                 @can('viewAny', \App\Models\Employee::class)
                     <a href="{{ route('employees.index') }}">Employees</a>
                 @endcan
+                @can('viewAny', \App\Models\SalarySchedule::class)
+                    <a href="{{ route('salary-schedules.index') }}">Salary schedules</a>
+                @endcan
             </nav>
         @endauth
     </header>

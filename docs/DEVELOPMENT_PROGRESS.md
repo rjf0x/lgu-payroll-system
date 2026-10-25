@@ -4,8 +4,8 @@ Updated: 2026-10-25 (Asia/Manila).
 
 ## Authorized work
 
-Phase 2 - Employee Management authorized by the user's instruction to proceed to
-the next phase following the Phase 1 commit. Phase 3 has not been authorized.
+Phase 3 - Salary Grade and Step Management authorized by the user's instruction
+to proceed after the Phase 2 commit. Phase 4 has not been authorized.
 
 ## Initial inspection
 
@@ -136,8 +136,49 @@ diagnostics reproduce both gaps; failed MySQL writes roll back. No application
 fixes or Phase 3 work were performed during the audit. Resolve these findings
 before accepting Phase 2 without qualification.
 
+## Phase 3
+
+Status: Implemented but needs validation.
+
+- Administrator draft schedule maintenance, individual grade/step rates, explicit
+  category/effective-date/data-use coverage, and externally referenced publication.
+  Published schedules/rates are locked and remain available as earlier versions.
+- Payroll Officer salary assignment with external authority and reason. Initial
+  assignments, step increments, promotions and schedule updates are distinct.
+  Salary records preserve source, exact decimal amount, category, position,
+  service-review basis, operator, and effective date without editing prior history.
+- Applicable schedule resolution by category/date/demo mode; employee monthly
+  salary retrieval from the last effective authorized snapshot. New schedules do
+  not silently recalculate existing employee history, and missing salary is not zero.
+- Provisional three-year review reminders from an explicitly entered basis date.
+  No eligibility decision or salary/step change is automatic; actual category rules
+  remain blocked by client validation.
+- Server policies, transactional actor rechecks/locks, duplicate prevention,
+  source/date checks, immutable model guards, safe rejected salary text/error
+  sessions, and role-specific navigation. Approver/Viewer history access is read-only.
+- Salary migration applied to MySQL (three new tables); no production rate seeded.
+  Existing Phase 2 findings remain open and no Phase 4 work was introduced.
+
+Acceptance evidence: full suite passed 111 tests / 1683 assertions (35 salary cases
+plus all 76 previous cases). MySQL verified all three categories, effective schedule
+resolution, exact decimals, initial/step/promotion/schedule changes, preserved history
+and rollback. Vite build and strict Composer validation passed. See TESTING_STATUS.md.
+
+Real LGU schedules/eligibility/authority practices, browser acceptance, and broad
+concurrency/deployment validation remain unverified. Retrospective correction and
+cancellation of recorded future changes are not provided; new records append forward.
+A repeated full-suite run also exposed an intermittent, unchanged Phase 2 search
+test failure caused by non-isolated random fixture names; see TESTING_STATUS.md.
+
+Audit follow-up: [PHASE_3_AUDIT.md](PHASE_3_AUDIT.md) records a missing strict
+applicable-salary guard and mixed real/demo employee histories, reproduced by
+isolated HTTP/service diagnostics. Lower-grade/lower-pay moves accepted as
+promotions also need client policy validation. Both full-suite runs during the
+audit passed 111 tests / 1683 assertions; MySQL, isolation, and Pint checks passed.
+No application fixes or Phase 4 work were performed during the audit.
+
 ## Next phase
 
-Phase 3 - Salary Grade and Step Management. Do not proceed automatically.
+Phase 4 - Payroll Period Management. Do not proceed automatically.
 
 Final status: STOPPED - Awaiting permission to continue.

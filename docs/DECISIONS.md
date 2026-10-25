@@ -139,3 +139,61 @@ References: [Laravel 13 upgrade guide](https://laravel.com/framework/docs/13.x/u
   MySQL persistence. See PHASE_2_AUDIT.md for evidence and coverage boundaries.
 - Keep audit diagnostics in ignored local storage. No application fixes, policy
   changes, migrations, or later-phase features were applied during the audit.
+
+## 2026-10-25 - Phase 3 salary management
+
+- Use separate schedules, grade/step rates, and append-only employee salary records.
+  A schedule covers one classification, effective date and data-use mode. Do not
+  assume permanent, coterminous and part-time personnel share compensation rules.
+  No statutory table/rate is supplied or activated automatically.
+- Administrators maintain drafts and publish against an external authorization
+  reference/confirmation. Publication locks the header and every rate. Existing
+  schedules remain; the latest published effective date on/before the requested
+  date selects the applicable schedule within the classification and mode.
+- Payroll Officers record employee assignments with their own external reference,
+  reason and confirmation. Approver/Viewer access remains read-only, and schedule
+  maintenance does not grant Administrator access to employee salary records.
+  Internal payroll approval/finalization remains Phase 9, not part of this workflow.
+- Preserve each selected rate and decimal monthly amount in a salary snapshot.
+  Publishing a new schedule alone does not change employee salary; a separate
+  authorized schedule-update record is required. The date lookup returns the last
+  effective employee snapshot, including its source/mode metadata. Future payroll
+  consumers must reject missing/demo/inapplicable records rather than infer readiness.
+- Distinguish initial assignment, higher step in the same grade, promotion to a
+  different grade, and same-grade/step schedule replacement. These are prototype
+  record types, not a verified statutory promotion/eligibility policy. Each source
+  rate must match the employee's current category and the applicable schedule date.
+- Only the first employee record may establish an older starting salary. Later
+  records append strictly after the last effective date and cannot predate today;
+  this avoids changing previously retrieved historical intervals. No record edit,
+  deletion, retrospective correction, or cancellation flow is provided in this phase.
+- Store authorized position/category as historical snapshots. Do not rewrite the
+  employee profile for future-dated salary changes. Warn when the present employee
+  category differs from the selected historical record.
+- Use DECIMAL(12,2), decimal strings, and BCMath normalization. Grades/steps accept
+  positive unsigned-small-integer values as storage bounds, not invented universal
+  LGU grade/step limits. No floats, prorating, tax or contribution formula is used.
+- Three years from the explicitly authorized service-basis date provides a
+  provisional review date, with leap-day anniversaries clamped to February 28.
+  Operators enter the basis for initial/step/promotion records; schedule-only
+  updates retain it. Applicability remains unverified for every category, and the
+  reminder never grants eligibility or mutates salary/steps.
+- Reauthorize locked current actors inside write transactions; lock employee and
+  schedule rows and reject stale authority/source/date choices. Guard published
+  sources/history against ordinary model edits and retain FK references. This is
+  application-level preservation, not blockchain tamper verification.
+- Reject malformed salary UTF-8 before validation/persistence and remove rejected
+  bytes from flashed inputs so encrypted JSON sessions remain valid. Apply this
+  only to Phase 3 routes; the two known Phase 2 audit findings are unchanged.
+- Use clearly fictional tests and rollback-only MySQL checks. Real schedules,
+  category eligibility and external authorization practice require client validation.
+
+## 2026-10-25 - Phase 3 audit
+
+- Reclassify Phase 3 as Implemented but needs validation. PHASE_3_AUDIT.md
+  distinguishes preserved history from the missing strict applicable-salary
+  lookup contract, and records real/demo stream interference and unvalidated
+  promotion semantics. Existing snapshot behavior is not treated as permission
+  to recalculate salaries or rewrite history automatically.
+- Keep audit probes in ignored local storage. Update audit/tracking documents
+  only; do not fix application code or start Phase 4 during this audit.

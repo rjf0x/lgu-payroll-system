@@ -1,7 +1,7 @@
 # Testing status
 
-Updated: 2026-10-25. Phase 2 normal workflows pass 76 tests / 1040 assertions,
-but PHASE_2_AUDIT.md records two confirmed defects requiring follow-up.
+Updated: 2026-10-25. Phase 3 passes 111 tests / 1683 assertions. The two Phase 2
+defects in PHASE_2_AUDIT.md remain open and were not changed in Phase 3.
 
 ## Automated checks
 
@@ -49,7 +49,7 @@ tests or features at initial inspection.
 ## Not yet verified
 
 Production deployment, full offline office-network operation, visual browser review,
-backups/recovery, and all Phase 3-13 workflows. Payroll formulas and regulatory
+backups/recovery, and all Phase 4-13 workflows. Payroll formulas and regulatory
 procedures require validation before their implementation and activation.
 
 ## Audit and commit review
@@ -241,3 +241,84 @@ invalid-encoding paths were reproduced, with validation passing followed by erro
 These diagnostics confirm defects and are separate from the normal test suite.
 No application code was changed during the audit. MySQL was started temporarily
 and stopped afterward to restore its initial state.
+
+## Phase 3 salary management
+
+`SalaryManagementTest.php` adds 35 cases covering:
+
+- Draft schedule/rate creation and editing, publication authority/confirmation,
+  duplicate dates/grade-step pairs, decimal boundaries and invalid formats.
+- Initial assignments, step increases, different-grade promotions and explicit
+  schedule updates for all three classifications; exact amount/date/source lookup,
+  demo/real-mode isolation, missing/future/wrong-category/unpublished sources.
+- Unchanged historical snapshots, immutable published headers/rates and salary
+  records, preserved service basis on schedule updates, explicit category changes,
+  no future position rewrite, and no automatic salary replacement.
+- All four roles' schedule and employee-salary permissions; guests, CSRF, inactive
+  employees, revoked in-flight administrators/officers, and invalid query dates.
+- Three-year provisional review (including leap day), safe malformed inputs,
+  external reference/reason validation, and encrypted JSON error-session persistence.
+
+| Check | Result |
+| --- | --- |
+| Salary-focused PHPUnit suite before final two cases | Passed: 33 cases / 607 assertions |
+| `composer test` after final changes | Passed: 111 tests / 1683 assertions; all earlier tests retained |
+| `scripts/verify-test-isolation.ps1` | Passed: 111 tests / 1683 assertions with conflicting inherited production/MySQL settings; repeated run encountered the existing employee-search fixture failure described below |
+| Pint application formatter and script `--test` | Passed; application formatting applied |
+| `npm.cmd run build` | Passed |
+| `composer validate --strict` | Passed |
+| MySQL `migrate --force` and `migrate:status` | Passed: salary migration applied; all six migrations Ran |
+| `php ../scripts/verify-salaries.php` | Passed: all categories, effective schedules, exact decimals, initial/step/promotion/schedule changes, immutable history and rollback; no fictional records retained |
+| `git diff --check` | Passed |
+
+One additional test initially tried to decode encrypted session storage directly
+as JSON. It now decrypts through the actual session encrypter before asserting
+valid JSON. No production session setting was changed. Rejected text is not saved
+as salary data. The tests exercise HTTP controllers with isolated SQLite; the
+MySQL smoke check exercises real validators, service transactions and persistence
+inside an outer rollback transaction, not a live browser.
+
+A repeated isolation run returned 111 tests / 1662 assertions with one failure
+in the unchanged Phase 2 employee-search test (line 229): it expected only the
+target employee but also received a randomly generated employee. The fixture
+leaves other employees' first names random, which can match the `maria` query.
+This earlier-phase fixture instability is not corrected in Phase 3. All salary
+cases passed in that run. The final rerun after the salary source-lock refresh
+passed all 111 tests / 1683 assertions. The existing project MySQL instance was stopped after
+the checks to restore its initial state.
+
+Still unverified: real client schedule/rule/authorization examples, visual and
+multi-client browser acceptance, simultaneous schedule publication/assignment races,
+exhaustive database failure/recovery, and deployment. No coverage percentage or
+official category eligibility is claimed. No payroll batch/calculation work was
+introduced, and earlier Phase 0/2 findings remain documented.
+
+## Phase 3 audit follow-up
+
+Both `composer test` and `scripts/verify-test-isolation.ps1` passed 111 tests /
+1683 assertions. Application and script Pint checks passed. The rollback-only
+MySQL salary workflow passed with no fictional records retained; the temporarily
+started project database was stopped to restore its initial state.
+
+Three ignored diagnostic cases (65 assertions) reproduced a superseded schedule
+returned by salary lookup, demonstration assignments interfering with an existing
+real history, and a lower-grade/lower-pay move recorded as a promotion. These are
+observational probes, not successful acceptance tests for the affected behavior.
+PHASE_3_AUDIT.md records evidence, severity, policy gaps and missing permanent
+coverage. No application fixes or Phase 4 functionality were implemented.
+
+## Phase 3 commit verification - 2026-10-25
+
+- `composer test`: passed, 111 tests / 1683 assertions.
+- Application and script Pint `--test`: passed.
+- `composer validate --strict` and `npm.cmd run build`: passed.
+- MySQL salary smoke check and migration status: passed; all six migrations Ran,
+  all fictional fixtures rolled back, and the temporarily started project database
+  was stopped afterward.
+- Reviewed the phase files for sensitive paths, credential patterns and debugging
+  markers; none found. Environment files, local credentials/diagnostics, generated
+  build assets and installed dependencies remain ignored and excluded.
+
+The existing Phase 3 audit findings remain open; successful automated checks do
+not establish full acceptance. No application fixes or later-phase work were
+introduced during commit preparation.
