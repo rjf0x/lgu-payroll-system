@@ -1,6 +1,6 @@
 # Testing status
 
-Updated: 2026-10-26. The Phase 6 full regression passes 220 tests / 2737
+Updated: 2026-10-26. The username sign-in full regression passes 233 tests / 2902
 assertions. Phase 2/3 audit findings and Phase 4 validation limits remain open.
 
 ## Automated checks
@@ -629,3 +629,44 @@ Existing client-rule, browser, concurrency/recovery and performance limitations
 remain documented in PHASE_6_AUDIT.md. No application changes or Phase 7 work
 were introduced during commit preparation. The temporarily started project
 database was stopped afterward to restore its original state.
+
+## Username sign-in change after Phase 6 - 2026-10-26
+
+This explicitly requested change replaces account email with username; it does not
+implement Phase 7. Historical audit/test records above retain their original field
+names. Existing tests and all MySQL verifier fixtures now use the current schema.
+
+`UsernameAuthenticationTest.php` adds 13 permanent cases / 165 assertions:
+
+- Username/password login, whitespace/case normalization and rejection of the old
+  email-only login payload; login/account UI no longer exposes email fields.
+- Account creation and renaming, case-insensitive duplicate rejection, unchanged
+  password hashes on blank-password edits and session-version increment.
+- Valid 3/50-character bounds and allowed punctuation; invalid short/long names,
+  embedded spaces, email-shaped names, leading underscore, Unicode and array values.
+- Upgrade from legacy account rows, duplicate/truncated local-part collisions,
+  fallback names, ID/password/role/activity/version/timestamp preservation,
+  obsolete reset-token clearing, email-column removal and migrated login.
+
+| Executed check | Result |
+| --- | --- |
+| Existing access/foundation focused suite | Passed, 45 tests / 611 assertions |
+| New username suite | Passed, 13 tests / 165 assertions |
+| First `composer test` full run | 232 passed / 1 failed, 2881 assertions; the previously documented randomized employee-search fixture matched an additional employee at EmployeeManagementTest.php:229. No username test failed; unrelated search fixture/logic left unchanged |
+| Final `scripts/verify-test-isolation.ps1` full run | Passed, 233 tests / 2902 assertions, 32.798 seconds, with conflicting inherited production/MySQL settings |
+| Local MySQL upgrade migration | Applied; all ten migrations Ran. A before/after preservation fingerprint confirmed the one existing account's ID/name/password hash/remember token/role/activity/auth version/timestamps were unchanged; removed email columns and valid unique usernames checked |
+| MySQL auth and concurrency verifiers | Passed: username authentication, four roles, inactive rejection, rollback, reciprocal admin deactivate/demote locking and revocation; fictional accounts removed |
+| MySQL foundation, employee, salary, draft, input and core-calculation verifiers | All passed with fictional fixture rollback after converting their account identifiers to usernames |
+| Application/script Pint `--test`, production build, database readiness and whitespace checks | Passed |
+
+The local existing administrator's username is `admin`; its password was not reset
+or printed. The ignored preservation diagnostic stores only a fingerprint/count,
+not credential values. MySQL was temporarily started and stopped afterward.
+The migration removes original email addresses; rollback restores unique placeholder
+addresses rather than recovering deleted values. Email recovery remains unavailable;
+password resets continue through administrators. No new reset flow, public
+registration, payroll formula or Phase 7 feature was added.
+
+Live browser interaction and office acceptance remain unverified. Earlier Phase
+2/3 findings and the existing intermittent employee-search fixture issue remain
+open. No Git commit was created for this change.

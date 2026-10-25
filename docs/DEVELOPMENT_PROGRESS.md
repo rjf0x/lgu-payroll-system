@@ -6,6 +6,8 @@ Updated: 2026-10-26 (Asia/Manila).
 
 Phase 6 - Core Payroll Calculation authorized by the user's instruction to
 proceed after the Phase 5 commit. Phase 7 has not been authorized.
+After Phase 6 commit `8217a68`, the user authorized replacing email-based login
+with usernames and removing email columns. This change does not begin Phase 7.
 
 ## Initial inspection
 
@@ -312,6 +314,27 @@ zero replacements, detail/history pagination and changed salary sources. MySQL
 and Pint checks passed. Real processing/client rules, browser acceptance, live
 concurrency/recovery and performance remain unverified. Audit/tracking documents
 and ignored diagnostics only; no application fixes or Phase 7 work.
+
+## Username sign-in change after Phase 6
+
+The user requested replacing email login with username and removing the email
+column. Login, account lists/forms, initial administrator provisioning, factory,
+existing regression fixtures and MySQL verifiers now use usernames. A shared rule
+enforces normalized unique usernames while retaining password/role/session checks.
+
+The upgrade migration derives existing usernames, resolves collisions and removes
+email/verification columns; obsolete reset tokens are cleared and their unused
+identifier renamed. Original account IDs, credentials, roles and payroll references
+are preserved. Deleted emails are not recoverable by rollback (placeholder addresses
+are used). The local MySQL account migrated to username `admin`; its password and
+other preserved account attributes were unchanged. Verification is recorded in
+TESTING_STATUS.md. No statutory/payroll functionality or Phase 7 work was added.
+
+Status: Implemented and tested. Thirteen new username/migration cases pass; the
+final full isolation run passed 233 tests / 2902 assertions. Existing access,
+MySQL authentication/concurrency and all workflow verifiers passed. Pint and
+production build passed. The first full run hit the previously documented random
+employee-search fixture failure; its search logic/fixtures were left unchanged.
 
 ## Next phase
 

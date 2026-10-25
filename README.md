@@ -72,7 +72,7 @@ Run inside `application/` after migrations:
 php artisan app:create-admin
 ```
 
-Enter the first administrator's name, email, password, and password confirmation.
+Enter the first administrator's name, username, password, and password confirmation.
 Password entry is hidden. Use at least 12 characters with uppercase, lowercase,
 and numbers, at most 72 bytes, and no null characters. Some characters use more
 than one byte. The command refuses reuse once an administrator exists. There is no
@@ -82,6 +82,23 @@ Sign in at <http://127.0.0.1:8000/login>. Administrators can create/edit account
 assign Administrator, Payroll Officer, Approver, or Viewer, reset passwords, and
 activate/deactivate access under **User accounts**. Leave an edit password blank
 to preserve it. Administrators cannot deactivate or demote themselves.
+
+Sign-in and account management use a unique username instead of email. Usernames
+are case-insensitive, 3–50 characters, start with a letter or number, and allow
+letters, numbers, dots, underscores and hyphens. Surrounding spaces are removed;
+stored usernames are lowercase. Account lists show Username; email is not collected.
+
+For databases created before this change, run `php artisan migrate`. Existing
+accounts receive usernames from their former email local part (before `@`), with
+unsupported characters replaced by hyphens and duplicate names given an ID suffix.
+Short/empty results use `user-ID`. Passwords, roles, activity, account IDs, existing
+sessions and payroll references are preserved. Administrators can review/change
+usernames under **User accounts**. New logins require the username.
+
+The migration removes `users.email` and `email_verified_at`, renames the unused
+reset-token identifier to username and discards obsolete email reset tokens.
+Rolling it back creates placeholder addresses; it cannot recover removed emails.
+Password resets remain administrator-managed; no email reset workflow is exposed.
 
 If an account was created with a password longer than 72 bytes before the Phase 1
 fix, an administrator should reset it to a supported password. Such full-length

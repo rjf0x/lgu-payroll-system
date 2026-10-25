@@ -346,3 +346,24 @@ References: [Laravel 13 upgrade guide](https://laravel.com/framework/docs/13.x/u
   statutory zero is introduced to remove a documented validation blocker.
 - Keep diagnostic probes in ignored local storage and update audit/tracking records
   only. Do not fix earlier phases, alter permanent tests/schema or begin Phase 7.
+
+## 2026-10-26 - Username sign-in requested after Phase 6
+
+- The user explicitly requested username-based login and removal of the email
+  column. This is a scoped change to existing access functionality, not Phase 7.
+  Earlier email-based decisions/audits describe historical behavior.
+- Use one shared ASCII username rule for login, account create/edit and initial
+  administrator setup: 3–50 characters, leading letter/digit, then letters/digits,
+  dots, underscores or hyphens. Normalize case and surrounding whitespace before
+  validation, lookup, uniqueness and throttle keys. Preserve existing password,
+  session-version, role, account-revocation and locked-write safeguards.
+- Add an upgrade migration rather than rewrite applied migrations. Allocate
+  lowercase usernames from the old email local part, sanitize/bound them, use
+  `user-ID` for short names and append ID/attempt suffixes for collisions. Preserve
+  account IDs/password hashes/roles/activity/versions/timestamps and payroll FKs.
+- Remove email and email-verification columns. Clear obsolete email reset tokens
+  and rename their unused identifier to username; no password-reset feature is
+  added. The application continues administrator-managed password resets.
+  Rollback restores placeholder addresses, not deleted original emails.
+- Update account/login views, factory, existing regressions and all MySQL verifier
+  fixtures to the username schema. Keep old audit documents as historical evidence.
