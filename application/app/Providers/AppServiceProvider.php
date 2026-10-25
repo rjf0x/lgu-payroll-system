@@ -3,7 +3,9 @@
 namespace App\Providers;
 
 use App\Enums\Role;
+use App\Models\Employee;
 use App\Models\User;
+use App\Policies\EmployeePolicy;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 
@@ -22,6 +24,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Gate::policy(Employee::class, EmployeePolicy::class);
         Gate::define('manage-users', fn (User $user) => $user->is_active && $user->role === Role::Administrator);
 
         foreach (Role::cases() as $role) {

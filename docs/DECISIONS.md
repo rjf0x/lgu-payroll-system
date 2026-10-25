@@ -100,3 +100,42 @@ References: [Laravel 13 upgrade guide](https://laravel.com/framework/docs/13.x/u
 - Add permanent HTTP regression coverage and a MySQL two-process concurrency
   verification script. No destructive migrations are used for MySQL checks; only
   randomly named fictional accounts created by the script are removed.
+
+## 2026-10-25 - Phase 2 employee management
+
+- Keep login accounts separate from employee payroll records. Store a unique
+  normalized employee number, structured name, position, office, classification,
+  employment start date, active flag, timestamps, and record version. Do not add
+  personal/bank/contribution identifiers, uploads, salary values, or HR workflows.
+- Support permanent, coterminous, and part-time as a shared backed enum/database
+  constraint. Selecting a category activates no compensation rule or formula.
+  Employment start date is not an authorized salary-effective date. Dates use the
+  database-compatible 1000-01-01 through 9999-12-31 range; future dates are allowed.
+- Assign employee create/edit actions only to active Payroll Officers. Grant
+  Payroll Officers, Approvers, and Viewers read access across this prototype's
+  office. Preserve Phase 1's exclusive roles; Administrator has no implicit
+  employee access. Confirm client-specific record/office visibility separately.
+- Use explicit EmployeePolicy checks for routes/actions and navigation. Recheck
+  the locked current actor and authentication version inside write transactions
+  so in-flight requests cannot write after role/session revocation.
+- Reject duplicate numbers in validation and at the database constraint, converting
+  concurrent constraint conflicts into field errors. Use row locking and a server
+  record version to reject stale employee edits instead of overwriting them.
+- Treat the employee-number character set and 50-character limit as prototype
+  input conventions, not verified LGU numbering rules. Names may contain Unicode
+  and punctuation; no universal name pattern is invented.
+- Search all words across employee number, name parts, position, and office with
+  bound LIKE parameters and explicit escaping of wildcard characters. Limit input
+  to 100 UTF-8 characters and paginate 20 records with a stable order. Retain
+  inactive records in searches; do not implement deletion.
+- Extend the established Blade/Tailwind views and local assets. Fixtures are
+  explicitly fictional and are not seeded into the office database. The MySQL
+  employee verification script rolls back all of its records.
+
+## 2026-10-25 - Phase 2 audit
+
+- Reclassify Phase 2 as Implemented but needs validation after two reproduced
+  defects: omitted suffixes in name search and malformed UTF-8 accepted before
+  MySQL persistence. See PHASE_2_AUDIT.md for evidence and coverage boundaries.
+- Keep audit diagnostics in ignored local storage. No application fixes, policy
+  changes, migrations, or later-phase features were applied during the audit.

@@ -4,8 +4,8 @@ Updated: 2026-10-25 (Asia/Manila).
 
 ## Authorized work
 
-Phase 1 - Authentication and User Roles authorized by the user's instruction to
-proceed to the next phase. Phase 2 has not been authorized.
+Phase 2 - Employee Management authorized by the user's instruction to proceed to
+the next phase following the Phase 1 commit. Phase 3 has not been authorized.
 
 ## Initial inspection
 
@@ -101,8 +101,43 @@ audit probes pass 78 assertions for additional throttle, PATCH, escaping, and
 password-whitespace checks. Browser/deployment and broader coverage gaps remain
 explicitly documented. Application code and Phase 2 scope were unchanged.
 
+## Phase 2
+
+Status: Implemented but needs validation.
+
+- Employee create, paginated list/search, detail, and edit screens using the
+  existing Laravel/Blade structure and session protections.
+- Unique normalized employee number; structured names; position and office;
+  permanent/coterminous/part-time classification; employment start date; and
+  active/inactive record status. Login accounts remain independent.
+- EmployeePolicy grants Payroll Officers writes and Approvers/Viewers reads;
+  Administrator retains its Phase 1 responsibilities without employee access.
+- Typed validation, safe rejected-input rendering, bound literal-word search,
+  database uniqueness with controlled conflict errors, and versioned stale-edit
+  rejection. Writes reauthorize the current locked user after revocation.
+- Employee table migration applied to local MySQL. No salary schedule, payroll
+  input/calculation, approval, upload, or later-phase feature was introduced.
+- Fictional employee factory and a rollback-only MySQL employee workflow check.
+
+Acceptance evidence: the full suite passed 76 tests / 1040 assertions (31 new
+employee cases); all earlier tests remain. MySQL create/read/edit for all three
+classifications, literal search, role policy, stale-edit rejection and rollback
+passed. Production assets build and strict Composer validation passed. See
+TESTING_STATUS.md for the full execution record and verification limits.
+
+Client numbering/visibility conventions, full browser/office-network deployment,
+and the earlier unrelated Phase 0 setup findings remain unresolved or unverified.
+No demonstration employee or user was retained by the smoke check.
+
+Audit follow-up: [PHASE_2_AUDIT.md](PHASE_2_AUDIT.md) records two confirmed defects:
+full-name search omits suffixes, and invalid UTF-8 text bypasses validation then
+produces MySQL/HTTP 500 errors. The existing 76-test suite still passes. Isolated
+diagnostics reproduce both gaps; failed MySQL writes roll back. No application
+fixes or Phase 3 work were performed during the audit. Resolve these findings
+before accepting Phase 2 without qualification.
+
 ## Next phase
 
-Phase 2 - Employee Management. Do not proceed automatically.
+Phase 3 - Salary Grade and Step Management. Do not proceed automatically.
 
 Final status: STOPPED - Awaiting permission to continue.

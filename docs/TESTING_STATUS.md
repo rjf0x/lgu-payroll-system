@@ -1,7 +1,7 @@
 # Testing status
 
-Updated: 2026-10-25. Phase 1 audit findings fixed and regression-tested;
-45 tests / 611 assertions pass. See PHASE_1_AUDIT.md for current status and history.
+Updated: 2026-10-25. Phase 2 normal workflows pass 76 tests / 1040 assertions,
+but PHASE_2_AUDIT.md records two confirmed defects requiring follow-up.
 
 ## Automated checks
 
@@ -49,7 +49,7 @@ tests or features at initial inspection.
 ## Not yet verified
 
 Production deployment, full offline office-network operation, visual browser review,
-backups/recovery, and all Phase 2-13 workflows. Payroll formulas and regulatory
+backups/recovery, and all Phase 3-13 workflows. Payroll formulas and regulatory
 procedures require validation before their implementation and activation.
 
 ## Audit and commit review
@@ -184,3 +184,60 @@ initial state. No browser/HTTP server was started; live browser sessions, broade
 MySQL uniqueness races, bootstrap process/lock-failure cases, pagination, session
 expiry, accessibility and deployment remain unverified. No coverage percentage is
 claimed. The unrelated Phase 0 setup findings remain unresolved.
+
+## Phase 2 employee management
+
+`EmployeeManagementTest.php` adds 31 cases covering:
+
+- Create/retrieve/edit for permanent, coterminous, and part-time records, including
+  normalized identifiers, nullable names, active status, and exclusion of injected
+  salary/role/version fields.
+- All four roles' route/action permissions and navigation, guest restrictions,
+  disabled users, stale sessions, and in-flight writer revocation.
+- Invalid required fields, lengths, dates, classification/status values, malformed
+  arrays, and redirect-following rendering of rejected input with session cookies.
+- Duplicate/repeated identifiers and database uniqueness races on create/edit,
+  with full rollback; stale/missing versions cannot overwrite saved records.
+- Full-name and other field search, literal wildcard escaping, bound injection
+  attempts, empty results, stable pagination, inactive records, invalid search
+  parameters, CSRF enforcement, missing records, and absence of deletion.
+
+| Check | Result |
+| --- | --- |
+| `composer test` | Passed: 76 tests / 1040 assertions, including all 45 previous cases |
+| `scripts/verify-test-isolation.ps1` | Passed: 76 tests / 1040 assertions with inherited production/MySQL settings |
+| `php vendor/laravel/pint/builds/pint` for application and scripts | Passed; no formatting changes required |
+| Pint `--test`, employee route listing, and `git diff --check` | Passed; six employee routes registered, no delete route |
+| `npm.cmd run build` | Passed |
+| `composer validate --strict` | Passed |
+| `php artisan migrate --force` and `migrate:status` | Passed: employee migration applied on MySQL; all five migrations Ran |
+| `php artisan app:check-foundation` | Passed against MySQL |
+| `php ../scripts/verify-employees.php` | Passed: three classifications, create/read/edit, role policy, literal multiword search, stale-edit rejection, and rollback; no fictional records retained |
+
+The first full run passed 75 cases and failed a new test helper that assumed login
+always redirects to the dashboard. Laravel correctly preserved the originally
+requested employee URL; the helper now asserts the actual intended destination.
+The subsequent full run passed. No existing authentication test was changed.
+
+HTTP feature tests use guarded in-memory SQLite and array sessions. The MySQL
+employee smoke check uses the real validator, controller, policies, and SQL inside
+an outer rollback transaction, not a live authenticated browser. No coverage
+percentage is claimed. Visual/browser acceptance, actual simultaneous employee
+writes, client-specific numbering/record visibility, and production deployment
+remain unverified. Compensation rules and salary history are not Phase 2 features.
+
+## Phase 2 audit follow-up
+
+See [PHASE_2_AUDIT.md](PHASE_2_AUDIT.md) for the acceptance assessment, findings,
+reproduction commands, and missing coverage. The existing suite was rerun and
+passed 76 tests / 1040 assertions; Pint also passed for application and scripts.
+The inherited production/MySQL isolation regression passed the same 76 tests /
+1040 assertions.
+MySQL migration status/readiness and the normal employee workflow smoke check
+passed. Two isolated audit tests passed 12 assertions: one reproduces the omitted
+suffix search, and one positively checks valid Unicode/HTML escaping. Seven MySQL
+invalid-encoding paths were reproduced, with validation passing followed by error
+1366 and HTTP 500; the failed edit remained unchanged and all fixtures rolled back.
+These diagnostics confirm defects and are separate from the normal test suite.
+No application code was changed during the audit. MySQL was started temporarily
+and stopped afterward to restore its initial state.

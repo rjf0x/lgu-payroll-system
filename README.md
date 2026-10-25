@@ -1,8 +1,9 @@
 # LGU Payroll Management System
 
 Browser-based payroll prototype with planned blockchain integrity verification.
-Completed through Phase 1: authentication, administrator-managed accounts, four
-roles, server authorization, and role-specific navigation.
+Includes authentication, administrator-managed accounts, four roles, server
+authorization, and employee payroll records. Phase 2 has two open findings;
+see [the employee-management audit](docs/PHASE_2_AUDIT.md).
 
 ## Layout
 
@@ -84,6 +85,31 @@ Each role has its own protected workspace and navigation. Account edits revoke
 previous sessions; the current session survives a self-edit. Disabled users cannot
 sign in. There is no remember-me login. Payroll modules remain for later phases.
 
+## Employee records
+
+After applying migrations, sign in as a **Payroll Officer** and open **Employees**.
+Create a record with its unique employee number, first/last name, optional middle
+name/suffix, position, office, personnel classification, employment start date,
+and active/inactive record status. Permanent, coterminous, and part-time are
+supported. Employee records are separate from login accounts.
+
+Employee numbers are normalized to uppercase and accept letters, numbers, dots,
+underscores, slashes, and hyphens, up to 50 characters, starting with a letter or
+number. Search matches all entered words across number/name/position/office;
+`%`, `_`, and `!` are treated literally. Results are paginated and include inactive
+records. Two forms editing the same record cannot silently overwrite each other;
+use **Reload saved record** after a stale-edit warning.
+
+Payroll Officers can create/edit. Approvers and Viewers can list/search/view only.
+Administrators retain account/configuration responsibilities and do not inherit
+employee-record access. This prototype grants read access across the office;
+client-specific organizational visibility needs validation before deployment.
+
+Use inactive status to retain a record; no deletion or document upload is provided.
+No salary amount, grade/step schedule, statutory rule, or calculation is assigned
+by employee entry. Salary authorization/history belongs to Phase 3. Employment
+start dates are not salary-effective dates. No demonstration records are seeded.
+
 ## Verification
 
 Run inside `application/`:
@@ -97,6 +123,7 @@ php artisan app:check-foundation
 php ../scripts/verify-mysql.php
 php ../scripts/verify-auth.php
 php ../scripts/verify-auth-concurrency.php
+php ../scripts/verify-employees.php
 ```
 
 PHPUnit pins in-memory SQLite in both server and environment variables. The base
@@ -112,6 +139,7 @@ The ordinary MySQL smoke checks use transactions and roll back their fictional
 accounts. The concurrency check temporarily commits four fictional accounts so
 separate processes can access them, then deletes only the accounts it created.
 It verifies reciprocal administrator deactivation/demotion without changing schema.
+The employee smoke check rolls back its fictional user and employee records.
 The readiness command separately verifies the configured MySQL connection and
 base tables. `/up` indicates application boot, not database readiness.
 

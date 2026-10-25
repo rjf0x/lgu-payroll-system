@@ -31,6 +31,9 @@
                 @can('manage-users')
                     <a href="{{ route('users.index') }}">User accounts</a>
                 @endcan
+                @can('viewAny', \App\Models\Employee::class)
+                    <a href="{{ route('employees.index') }}">Employees</a>
+                @endcan
             </nav>
         @endauth
     </header>

@@ -2,6 +2,7 @@
 
 use App\Enums\Role;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -18,6 +19,7 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::post('/logout', [AuthController::class, 'destroy'])->name('logout');
     Route::view('/dashboard', 'dashboard')->name('dashboard');
     Route::resource('users', UserController::class)->except(['show', 'destroy'])->middleware('can:manage-users');
+    Route::resource('employees', EmployeeController::class)->except('destroy');
 
     foreach (Role::cases() as $role) {
         Route::get('/'.$role->workspace(), fn () => view('workspace', ['role' => $role]))

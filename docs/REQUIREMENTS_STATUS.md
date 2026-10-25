@@ -12,7 +12,7 @@ In progress; Not started; Blocked by client validation.
 | Environment setup and directory conventions | 0 | Implemented and tested | Root README, application/, scripts/; build and DB restart checks passed |
 | Progress, decisions, requirements, and testing records | 0 | Implemented and tested | Four tracking documents created and reviewed |
 | Login/logout, account management, four roles, server authorization | 1 | Implemented and tested | Five audit findings fixed; post-correction audit confirms 45 tests / 611 assertions and MySQL role/concurrency checks; no new confirmed defects. Remaining verification gaps: PHASE_1_REAUDIT.md |
-| Employee create, view, edit, search, classification | 2 | Not started | Permanent, coterminous, part-time required |
+| Employee create, view, edit, search, classification | 2 | Implemented but needs validation | Existing 76 tests / 1040 assertions and normal MySQL checks pass; PHASE_2_AUDIT.md records missing suffix-search behavior, invalid-encoding HTTP 500 paths, and test coverage gaps |
 | Effective-dated salary schedules, grades, steps, history | 3 | Not started | Salary changes require external authorization |
 | Potential step eligibility separate from promotions | 3 | Not started | Eligibility must not change salary automatically |
 | Monthly draft batches and duplicate prevention | 4 | Not started | No payroll tables created |
@@ -32,6 +32,7 @@ In progress; Not started; Blocked by client validation.
 | Unresolved requirement | Status | Required validation |
 | --- | --- | --- |
 | Category-specific compensation and applicability | Blocked by client validation | Approved rules for permanent, coterminous, and part-time personnel |
+| Employee record visibility and local numbering conventions | Blocked by client validation | Prototype uses whole-office read access for Payroll Officer/Approver/Viewer and restricted-format unique employee numbers; confirm any office/record scoping and actual identifier format before deployment |
 | Approved salary schedules and step eligibility practice | Blocked by client validation | Effective dates, authorization, and source schedules |
 | GSIS reported employee contribution of 9% | Blocked by client validation | Applicability, basis, limits, rounding, and approved current rules |
 | Pag-IBIG reported monthly employee contribution of PHP 200 | Blocked by client validation | Eligibility, applicability, and approved current rules |

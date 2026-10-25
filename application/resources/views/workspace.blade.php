@@ -13,6 +13,9 @@
                 \App\Enums\Role::Viewer => 'Payroll records',
             } }}</h2>
             <p class="mt-3 text-slate-600">Your access is ready. Payroll features will be introduced in later development phases.</p>
+            @can('viewAny', \App\Models\Employee::class)
+                <a href="{{ route('employees.index') }}" class="mt-4 inline-block font-semibold text-teal-800 underline">{{ $role === \App\Enums\Role::PayrollOfficer ? 'Manage employees' : 'View employees' }}</a>
+            @endcan
         @endif
     </section>
 @endsection
