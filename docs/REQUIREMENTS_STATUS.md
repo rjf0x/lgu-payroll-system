@@ -1,6 +1,6 @@
 # Requirements status
 
-Updated: 2026-10-25. Requirements derive from `master-prompt.md`.
+Updated: 2026-10-26. Requirements derive from `master-prompt.md`.
 Statuses reflect behavior and validation, not screen counts.
 
 Allowed statuses: Implemented and tested; Implemented but needs validation;
@@ -17,7 +17,7 @@ In progress; Not started; Blocked by client validation.
 | Potential step eligibility separate from promotions | 3 | Implemented and tested | Provisional three-year reminder from entered basis, leap-day tested; no automatic step change or claim of verified category eligibility |
 | Monthly draft batches and duplicate prevention | 4 | Implemented and tested | PHASE_4_AUDIT.md: both acceptance criteria pass for supported prototype conventions; 148 tests / 1997 assertions, additional workflow probes and MySQL checks pass; no new Phase 4 defect confirmed. First-day/historical eligibility, mid-month treatment, grouping, concurrency, browser acceptance and performance remain unvalidated |
 | Manual employee allowances, bonuses, loans, attendance, adjustments | 5 | Implemented and tested | PHASE_5_AUDIT.md: cross-form retry defect corrected with server-bound identity and seven permanent regressions; full suite 189 tests / 2472 assertions and MySQL input checks pass. Eligibility, attendance, adjustment, browser and concurrency validation remain pending |
-| Decimal-safe totals, rounding, transparent calculation breakdown | 6 | Not started | Expected-result test cases required |
+| Decimal-safe totals, rounding, transparent calculation breakdown | 6 | Implemented and tested | PHASE_6_AUDIT.md confirms all three criteria for demonstration-only full-month/zero-attendance previews; 31 phase cases, full isolation suite 220 tests / 2737 assertions, 3 extra probes / 114 assertions and MySQL checks pass. No new defect confirmed. Exact decimals, preserved history/inputs; real processing, client rules, browser, concurrency/recovery and performance remain unvalidated |
 | Configurable validated contributions and withholding | 7 | Not started | Unverified rules must remain inactive for real processing |
 | Taxable excess bonuses included in annual taxable compensation | 7 | Not started | Confirmed requirement; never hardcode the worksheet example |
 | Effective-dated versioned rules and controlled activation | 8 | Not started | Preserve historic payroll values |
@@ -36,6 +36,7 @@ In progress; Not started; Blocked by client validation.
 | Approved salary schedules and step eligibility practice | Blocked by client validation | Effective dates, authorization, and source schedules |
 | Monthly payroll grouping and salary reference policy | Blocked by client validation | Prototype uses one batch per month/data use, first-day reference and active employment; mid-month employment/salary/schedule changes are blocked until treatment is validated |
 | Allowance applicability, attendance input and adjustment authorization | Blocked by client validation | Prototype records operator-confirmed applicability, calendar-bounded attendance and manually entered original/replacement amounts; confirm actual entitlements, working-day conventions, authority and calculation treatment |
+| Core calculation basis and minimum-net treatment | Blocked by client validation | Fictional previews use full-month salary, zero attendance and replacement adjustment amounts counted once. Confirm category/monthly basis, attendance treatment and any minimum-net policy; negative preview values are flagged, not capped. Real calculations are disabled |
 | GSIS reported employee contribution of 9% | Blocked by client validation | Applicability, basis, limits, rounding, and approved current rules |
 | Pag-IBIG reported monthly employee contribution of PHP 200 | Blocked by client validation | Eligibility, applicability, and approved current rules |
 | PhilHealth applicability and procedures | Blocked by client validation | Employee categories, bases, rates, and procedures |

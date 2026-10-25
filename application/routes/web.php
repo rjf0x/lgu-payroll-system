@@ -5,6 +5,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\EmployeeSalaryController;
 use App\Http\Controllers\PayrollBatchController;
+use App\Http\Controllers\PayrollCalculationController;
 use App\Http\Controllers\PayrollInputController;
 use App\Http\Controllers\SalaryScheduleController;
 use App\Http\Controllers\UserController;
@@ -30,6 +31,9 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::put('payroll-batches/{batch}/employees/{entry}/inputs', [PayrollInputController::class, 'update'])
         ->middleware([ScopePayrollInputErrors::class, EnsureSalaryTextEncoding::class])->name('payroll-inputs.update');
     Route::middleware(EnsureSalaryTextEncoding::class)->group(function () {
+        Route::get('payroll-batches/{batch}/calculations', [PayrollCalculationController::class, 'index'])->name('payroll-calculations.index');
+        Route::post('payroll-batches/{batch}/calculations', [PayrollCalculationController::class, 'store'])->name('payroll-calculations.store');
+        Route::get('payroll-batches/{batch}/calculations/{run}', [PayrollCalculationController::class, 'show'])->name('payroll-calculations.show');
         Route::get('payroll-batches', [PayrollBatchController::class, 'index'])->name('payroll-batches.index');
         Route::get('payroll-batches/create', [PayrollBatchController::class, 'create'])->name('payroll-batches.create');
         Route::post('payroll-batches', [PayrollBatchController::class, 'store'])->name('payroll-batches.store');

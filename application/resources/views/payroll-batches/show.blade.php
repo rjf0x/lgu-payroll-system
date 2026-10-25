@@ -6,6 +6,7 @@
         @can('update', $batch)<a href="{{ route('payroll-employees.create', $batch) }}" class="rounded bg-teal-800 px-4 py-3 text-white">Select employees</a>@endcan
     </div>
     <p class="mt-3 font-semibold">Draft · {{ $entries->total() }} employees covered · {{ $batch->is_demonstration ? 'Demonstration only — not for real payroll' : 'Externally authorized salary sources' }}</p>
+    <a href="{{ route('payroll-calculations.index', $batch) }}" class="mt-3 inline-block text-teal-800 underline">Core calculation previews and history</a>
     <p class="mt-2 text-slate-600">Salary reference: {{ $batch->period_start->format('Y-m-d') }}. Saved amounts are monthly salary snapshots, not calculated pay. Source checks below apply to the entries on this page; every entry must be reviewed before later processing.</p>
     <div class="mt-6 space-y-4">
         @forelse ($entries as $entry)

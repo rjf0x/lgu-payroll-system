@@ -1,11 +1,11 @@
 # Development progress
 
-Updated: 2026-10-25 (Asia/Manila).
+Updated: 2026-10-26 (Asia/Manila).
 
 ## Authorized work
 
-Phase 5 - Earnings and Deduction Inputs authorized by the user's instruction to
-proceed after the Phase 4 commit. Phase 6 has not been authorized.
+Phase 6 - Core Payroll Calculation authorized by the user's instruction to
+proceed after the Phase 5 commit. Phase 7 has not been authorized.
 
 ## Initial inspection
 
@@ -274,8 +274,47 @@ service validation. The full suite passed 189 tests / 2472 assertions (41 Phase 
 cases), and MySQL input checks passed with rollback. No schema changes, new
 features or Phase 6 work were introduced by this correction.
 
+## Phase 6
+
+Status: Implemented and tested for the supported demonstration scope.
+
+- Exact-decimal core engine using full-month authorized salary references,
+  applicable allowances, bonuses, manual loan deductions and authorized adjustment
+  replacements. Originals remain audit references and are not counted twice.
+- Transparent per-employee line breakdown, excluded allowances, aggregate totals
+  and negative-core-net review flags. No implicit rounding, capping or input edits.
+- Immutable versioned runs/items snapshot source context and input revisions.
+  Only currently covered employees and their latest reviewed inputs participate.
+  Repeated calculations for one draft/engine version are idempotent; later draft
+  versions preserve earlier results. Changed/withdrawn sources are flagged on view.
+- Current actor/version/source checks and atomic persistence reuse existing draft
+  authorization and locks. Any invalid member prevents a partial batch preview.
+- Two new MySQL tables applied. Rollback-only MySQL checks verify all categories,
+  independently prepared item/batch values, preservation, history and real-mode blocking.
+
+Acceptance evidence: `composer test` passed 220 tests / 2737 assertions, including
+31 new Phase 6 cases and all 189 earlier cases. The focused suite first caught a
+Blade rendering defect, corrected before the full passing run. MySQL checks,
+Pint, production build and strict Composer validation passed; see TESTING_STATUS.md.
+
+Real-mode processing and nonzero attendance remain blocked. The demo's full-month
+basis is provisional; category rules, attendance formulas, statutory contributions,
+withholding and any minimum-net policy require validation. Missing statutory and
+attendance amounts are null/not calculated, not zero. No approval, finalization,
+rule configuration or Phase 7 features were added. Existing Phase 2/3 findings,
+browser acceptance, live concurrent writer and performance gaps remain open.
+
+Audit follow-up (2026-10-26): [PHASE_6_AUDIT.md](PHASE_6_AUDIT.md) confirms all
+three acceptance criteria for supported demonstration inputs; no new defect or
+missing required demo workflow was confirmed. Full isolation regression passed
+220 tests / 2737 assertions; three additional probes passed 114 assertions for
+zero replacements, detail/history pagination and changed salary sources. MySQL
+and Pint checks passed. Real processing/client rules, browser acceptance, live
+concurrency/recovery and performance remain unverified. Audit/tracking documents
+and ignored diagnostics only; no application fixes or Phase 7 work.
+
 ## Next phase
 
-Phase 6 - Core Payroll Calculation. Do not proceed automatically.
+Phase 7 - Contributions and Withholding Tax. Do not proceed automatically.
 
 Final status: STOPPED - Awaiting permission to continue.

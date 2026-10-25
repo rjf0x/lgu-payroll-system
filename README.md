@@ -3,7 +3,8 @@
 Browser-based payroll prototype with planned blockchain integrity verification.
 Includes authentication, administrator-managed accounts, four roles, server
 authorization, employee payroll records, and effective-dated salary schedules
-with preserved employee salary history, monthly payroll drafts and employee inputs.
+with preserved employee salary history, monthly payroll drafts, employee inputs
+and versioned demonstration core calculation previews.
 Phase 2 has two open findings;
 see [the employee-management audit](docs/PHASE_2_AUDIT.md). Phase 3 also needs
 validation; see [the salary-management audit](docs/PHASE_3_AUDIT.md) for salary
@@ -46,7 +47,8 @@ php artisan serve --host=127.0.0.1 --port=8000
 
 Open <http://127.0.0.1:8000>. Built assets are served locally; the application
 does not require a CDN or internet access after dependencies are installed.
-Guests are redirected to sign in. No payroll processing is implemented yet.
+Guests are redirected to sign in. Core calculation previews are demonstration-only;
+real payroll processing remains blocked pending validated rules.
 
 The MySQL helper starts an isolated development server on `127.0.0.1:3307`,
 creates `lgu_payroll`, generates local passwords, and configures `application/.env`.
@@ -87,7 +89,7 @@ passwords are now rejected; existing hashes cannot reveal their original length.
 
 Each role has its own protected workspace and navigation. Account edits revoke
 previous sessions; the current session survives a self-edit. Disabled users cannot
-sign in. There is no remember-me login. Payroll modules remain for later phases.
+sign in. There is no remember-me login. Approval and finalization remain for later phases.
 
 ## Employee records
 
@@ -174,8 +176,8 @@ an older real record is not substituted for a newer demonstration record.
 Saved entries that become invalid or differ from current source details display
 **Needs review**. Source checks cover the displayed page, not a whole-batch
 approval. Client validation is required for first-day eligibility, mid-month
-treatment and the one-batch-per-month convention. No pay calculation or approval
-workflow is included yet. Employee inputs are maintained separately below.
+treatment and the one-batch-per-month convention. Approval is not implemented.
+Employee inputs and demonstration calculation previews are maintained separately below.
 
 ## Draft earnings, deductions and attendance
 
@@ -203,7 +205,8 @@ Each group supports 30 distinct descriptions and nonnegative monetary strings of
 up to ten integer digits and two decimals. Absence days accept two decimal places
 up to the calendar days in the month; undertime uses integer minutes bounded by
 calendar minutes. These are input limits, not work schedules or deduction formulas.
-No net pay, tax treatment, basic-pay formula or attendance deduction is calculated.
+Input saves do not calculate payroll. Use the separate demonstration preview below;
+tax treatment and attendance deduction formulas remain unavailable.
 
 Stale draft versions and salary/profile snapshots are rejected.
 Validation retries restore values and errors only on the matching employee and
@@ -213,6 +216,32 @@ resolved. Inputs remain attached to the employee/monthly batch and reappear afte
 different source context requires a reviewed new revision. Removed employees'
 input history is retained but is not active covered payroll input. Removing all
 lines and saving records an empty current set without erasing earlier revisions.
+
+## Demonstration core calculation previews
+
+From a demonstration monthly draft, open **Core calculation previews and history**.
+Save a reviewed input revision for every covered employee, with zero absence days
+and zero undertime. As Payroll Officer, calculate a preview. Approvers/Viewers can
+read the preserved results; Administrators do not inherit payroll-record access.
+
+The preview uses the full monthly authorized salary reference as basic pay, adds
+applicable allowances, bonuses and earning adjustments, and subtracts manually
+entered loans and deduction adjustments. An adjustment's authorized replacement
+is counted once; its original amount remains a reference. Excluded allowances
+remain visible. All addition/subtraction uses exact two-decimal strings; invalid
+precision is rejected rather than silently rounded. Negative core net is retained
+and flagged for review, without an invented minimum-net rule.
+
+GSIS, Pag-IBIG, PhilHealth, withholding and attendance formulas are **not calculated**,
+not assumed zero. Core net is provisional, before statutory deductions, and is not
+approved/finalized payroll. Real-mode batches and any nonzero attendance are blocked
+server-side until rules are validated. Category compensation and full-month basis
+still need client acceptance; the fictional preview does not establish entitlement.
+
+Calculation never overwrites manual inputs. Repeating it for the same draft version
+reopens the existing run; saving new inputs or changing coverage allows a new run.
+History preserves employee, salary, input revision and line-by-line calculation
+snapshots. Old results stay unchanged and show draft/source review notices.
 
 ## Verification
 
@@ -231,6 +260,7 @@ php ../scripts/verify-employees.php
 php ../scripts/verify-salaries.php
 php ../scripts/verify-payroll-drafts.php
 php ../scripts/verify-payroll-inputs.php
+php ../scripts/verify-payroll-calculations.php
 ```
 
 PHPUnit pins in-memory SQLite in both server and environment variables. The base
@@ -252,6 +282,9 @@ schedules, rates, employee history and users; it never runs destructive migratio
 The payroll draft check also rolls back its fictional batches, coverage and sources.
 The input check rolls back its fictional revisions and verifies exclusions,
 per-employee values, edits and preservation across coverage refresh.
+The core calculation check verifies all three categories against prepared item and
+batch totals, no input overwrite, exclusions/replacements, idempotency and history;
+its fictional calculation fixtures also roll back.
 The readiness command separately verifies the configured MySQL connection and
 base tables. `/up` indicates application boot, not database readiness.
 

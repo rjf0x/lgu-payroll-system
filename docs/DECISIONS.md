@@ -305,3 +305,44 @@ References: [Laravel 13 upgrade guide](https://laravel.com/framework/docs/13.x/u
 - Add seven permanent regression cases and retain all earlier Phase 5 behavior.
   No salary/input persistence rules, schema, earlier-phase workflows or Phase 6
   features change. Client-rule, browser and live-race limitations still apply.
+
+## 2026-10-25 - Phase 6 core payroll calculation
+
+- Keep the initial engine demonstration-only. Real-mode requests fail server-side;
+  no unvalidated category, statutory or attendance rule is activated. Full-month
+  authorized salary supplies the fictional basic-pay basis, with zero absence and
+  undertime required. Arbitrary manual adjustment labels cannot establish that
+  attendance was correctly deducted; nonzero attendance fails closed.
+- Use BCMath addition/subtraction on canonical two-decimal strings. Reject invalid
+  precision/types rather than round saved source data. There is no division or
+  fractional rate in this phase; do not invent a proration/rounding rule.
+- Sum only applicable allowance lines, bonuses, earning replacements, manual loans
+  and deduction replacements. Count adjustment replacement amounts once, preserving
+  originals/reasons as audit references. Never mutate input revisions or salary
+  sources. Preserve negative net and flag it instead of inventing a floor/limit.
+- Statutory and attendance deduction components remain null/not calculated, not
+  numeric zero. Label results provisional core net before statutory deductions,
+  not approved/finalized payroll or real-payroll readiness. Tax treatment is Phase 7.
+- Start with current batch coverage and latest employee/batch input revisions.
+  Reuse preparation/input context guards under actor, batch, entry, employee and
+  salary-source locks. Reject stale versions, changed source context and incomplete
+  members atomically before creating any run. Recheck sources even on repeated runs.
+- Preserve immutable run/item snapshots with FKs to stable batch/employee/input/
+  salary identities, not removable draft entries. One run per batch version and
+  engine version makes retries idempotent; changed inputs/coverage increment the
+  draft version through existing workflows and permit a separate preserved run.
+- Display old results from saved snapshots, with version/source/withdrawn-coverage
+  review notices. Application model immutability is not database administrator
+  tamper resistance or blockchain verification. No new dependency, approval,
+  finalization, statutory configuration or later-phase feature is introduced.
+
+## 2026-10-26 - Phase 6 audit
+
+- Retain Implemented and tested for supported demonstration core previews after
+  acceptance review, full isolation regression, MySQL checks and additional
+  pagination/replacement/source diagnostics. No new application defect confirmed.
+  PHASE_6_AUDIT.md separates that evidence from actual payroll/client-rule readiness.
+- Keep real processing and nonzero attendance inactive; no guessed formula or
+  statutory zero is introduced to remove a documented validation blocker.
+- Keep diagnostic probes in ignored local storage and update audit/tracking records
+  only. Do not fix earlier phases, alter permanent tests/schema or begin Phase 7.
