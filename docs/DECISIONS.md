@@ -237,3 +237,71 @@ References: [Laravel 13 upgrade guide](https://laravel.com/framework/docs/13.x/u
   client validation; do not invent rules or expand this audit into later phases.
 - Keep additional integration/boundary probes in ignored local storage. No
   application or permanent test changes, fixes, migrations or Phase 5 work.
+
+## 2026-10-25 - Phase 5 earnings and deduction inputs
+
+- Add an immutable full input revision per employee/monthly batch save. Key
+  revisions by stable batch/employee identity, not a removable draft-entry ID.
+  Retain the salary-record FK and employee/salary snapshot for each revision.
+  Removing draft coverage does not destroy input history; re-selection restores
+  it and changed source context must be reviewed and saved as a new revision.
+- Reuse batch role policy, shared text-encoding middleware and salary applicability
+  checks. Lock the actor, batch, entry and employee, revalidate the current source,
+  compare batch versions and increment the version in the revision transaction.
+  An input save invalidates other open forms for the same batch conservatively.
+- Support up to 30 manual lines per allowance/bonus/loan/adjustment group. Labels
+  are distinct within a group, ignoring case. Validate allowed row keys; loan
+  balances, dates, schedules and unknown fields are not part of input rows.
+- Allowance applicability is an explicitly authorized operator input, defaulting
+  to excluded in a new UI line. Preserve excluded entered amounts, but expose a
+  filtered applicable list and exact subtotal. Do not infer category entitlement
+  or treat the subtotal as a payroll calculation-engine implementation.
+- Normalize nonnegative money to decimal strings with BCMath and two decimals;
+  store JSON money as strings. The input maximum is ten integer digits plus two
+  decimals; multiple-line allowance subtotals can exceed a single-line maximum
+  and remain decimal strings. No monetary float arithmetic is introduced.
+- Attendance inputs are decimal absence days and integer undertime minutes.
+  Calendar-month bounds prevent impossible magnitudes without asserting working
+  days or daily paid hours. No deduction formula or implied proration is active.
+- Adjustments explicitly retain manually entered original/reference and authorized
+  replacement amounts, direction and reason. These are not computed originals or
+  automatically applied deltas. Save-level external authority, reason and explicit
+  confirmation apply to the complete input set. Internal approval remains Phase 9.
+- Empty groups mean none entered; a new empty set replaces current lines while
+  preserving past versions. Restore rejected groups only for a server-matched
+  batch/entry/employee context; absent groups on that retry remain empty.
+- Future processing must start with currently covered entries, use the latest
+  employee/batch revision only after source/context checks, and exclude inapplicable
+  allowances. Do not sum historical revisions, withdrawn employee inputs or both
+  original and replacement adjustment amounts. Tax treatment remains Phase 7.
+- No schedules, uploads, statutory calculations, payroll totals, net pay or
+  approval actions were added. Browser/office acceptance and actual input rules
+  remain subject to validation; preserve earlier Phase 2/3/4 findings and limits.
+
+## 2026-10-25 - Phase 5 audit
+
+- Reclassify Phase 5 as Implemented but needs validation after reproducing
+  rejected input being restored on another employee's form. PHASE_5_AUDIT.md
+  records the conditional same-session sequence, unchanged database until an
+  authorized resubmission, preserved history and missing regression coverage.
+- Keep audit probes in ignored local storage. No application/permanent-test
+  changes, fixes, migrations, commits or Phase 6 work during this audit.
+
+## 2026-10-25 - Phase 5 correction
+
+- Correct only the audited form-state defect. A route-specific middleware records
+  bound batch/entry/employee identity on validation redirect responses, before the
+  session is saved. Laravel's routing pipeline handles exceptions internally;
+  inspect the response's ValidationException instead of expecting an outer catch.
+- Put this middleware before the shared encoding validator so malformed-input
+  retries receive the same identity protection. JSON validation errors do not
+  flash input and must not establish a restore context.
+- Ignore all old input and unrelated error bags on other employee/batch forms.
+  Matching forms restore groups, attendance and authorization metadata, including
+  empty groups. Remove the generic client-side form marker; posted identity
+  fields cannot select the trusted restore context.
+- Preserve ordinary session-flash lifetime. This fixes wrong-form restoration,
+  not multi-tab draft caching or indefinite retention of rejected input.
+- Add seven permanent regression cases and retain all earlier Phase 5 behavior.
+  No salary/input persistence rules, schema, earlier-phase workflows or Phase 6
+  features change. Client-rule, browser and live-race limitations still apply.

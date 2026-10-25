@@ -5,9 +5,11 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\EmployeeSalaryController;
 use App\Http\Controllers\PayrollBatchController;
+use App\Http\Controllers\PayrollInputController;
 use App\Http\Controllers\SalaryScheduleController;
 use App\Http\Controllers\UserController;
 use App\Http\Middleware\EnsureSalaryTextEncoding;
+use App\Http\Middleware\ScopePayrollInputErrors;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -24,6 +26,9 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::view('/dashboard', 'dashboard')->name('dashboard');
     Route::resource('users', UserController::class)->except(['show', 'destroy'])->middleware('can:manage-users');
     Route::resource('employees', EmployeeController::class)->except('destroy');
+    Route::get('payroll-batches/{batch}/employees/{entry}/inputs', [PayrollInputController::class, 'show'])->name('payroll-inputs.show');
+    Route::put('payroll-batches/{batch}/employees/{entry}/inputs', [PayrollInputController::class, 'update'])
+        ->middleware([ScopePayrollInputErrors::class, EnsureSalaryTextEncoding::class])->name('payroll-inputs.update');
     Route::middleware(EnsureSalaryTextEncoding::class)->group(function () {
         Route::get('payroll-batches', [PayrollBatchController::class, 'index'])->name('payroll-batches.index');
         Route::get('payroll-batches/create', [PayrollBatchController::class, 'create'])->name('payroll-batches.create');

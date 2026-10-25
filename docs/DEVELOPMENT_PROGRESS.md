@@ -4,8 +4,8 @@ Updated: 2026-10-25 (Asia/Manila).
 
 ## Authorized work
 
-Phase 4 - Payroll Period Management authorized by the user's instruction to
-proceed after the Phase 3 commit. Phase 5 has not been authorized.
+Phase 5 - Earnings and Deduction Inputs authorized by the user's instruction to
+proceed after the Phase 4 commit. Phase 6 has not been authorized.
 
 ## Initial inspection
 
@@ -219,8 +219,63 @@ and three additional workflow/boundary probes passed. Client policy, historical
 employment handling, live races, browser acceptance and performance remain
 unverified. No application fixes or Phase 5 work were performed during the audit.
 
+## Phase 5
+
+Status: Implemented and tested.
+
+- Employee-specific allowance, bonus/additional earning, manual loan deduction,
+  attendance and adjustment input screens on existing monthly draft entries.
+  Payroll Officers write; Approvers/Viewers read current and historical inputs.
+- Explicit allowance applicability, excluded-line retention and exact applicable
+  allowance subtotal. New lines do not infer entitlement or common employee rates.
+- Manual absence days/undertime minutes, original/reference and authorized
+  replacement adjustment amounts, earning/deduction direction and required reasons.
+  No pay, absence, tax or contribution formulas are activated.
+- Safe typed/bounded input validation and add/remove-line UI. Source/profile
+  rechecks, current locked actor/batch/entry/employee authorization, versioned
+  stale-save/duplicate rejection and transactionally saved revisions.
+- Immutable input revisions preserve full input sets, source context, operator,
+  authority and reasons. Empty sets clear current lines while retaining originals.
+  Employee/batch identity retains history through coverage removal/re-addition;
+  context changes require a reviewed new input revision before later processing.
+- One revision-table migration applied to local MySQL. Rollback-only MySQL checks
+  verify all personnel categories and both modes, independent employee values,
+  exclusions, exact decimals, edited history and coverage refresh.
+
+See TESTING_STATUS.md for executed evidence and a form-validation regression
+found and corrected during implementation. Existing Phase 2/3 audit findings and
+Phase 4 client-policy limits remain open. Eligibility, authorization practice,
+attendance/adjustment semantics, browser acceptance, live races and deployment
+remain unverified. No loan scheduling, uploads, approval workflow or Phase 6
+calculation engine was introduced.
+
+Acceptance evidence: the final full isolation regression passed 182 tests / 2387
+assertions, including 34 new input cases and all 148 earlier cases. MySQL input
+and prior draft workflows passed with fixture rollback. Pint, Node syntax check,
+production asset build, strict Composer validation, eight-migration status and
+database readiness checks passed. Browser interaction/visual acceptance and
+simultaneous writer tests were not performed.
+
+Audit follow-up: [PHASE_5_AUDIT.md](PHASE_5_AUDIT.md) records one reproduced
+medium defect: global rejected form values can prefill a different employee's
+input form before the original redirect consumes the flash. Database state changes
+only after an authorized resubmission; prior revisions remain preserved. Both full
+suite runs passed 182 tests / 2387 assertions, and MySQL checks passed. Additional
+diagnostics verified rollback/history pagination and reproduced the form-state gap.
+No application fixes or Phase 6 work were performed during the audit.
+
+Correction follow-up: the rejected-input defect is fixed. Validation redirects
+carry server-derived batch/entry/employee identity; only the matching form restores
+old groups, attendance, authority, reasons and errors. Other forms retain their own
+saved/default values. The obsolete client form-type marker was removed. Seven
+permanent regression cases cover employee/month isolation, unsaved recipients,
+forged identity, matching-form retries, UTF-8 preprocessing, JSON errors and
+service validation. The full suite passed 189 tests / 2472 assertions (41 Phase 5
+cases), and MySQL input checks passed with rollback. No schema changes, new
+features or Phase 6 work were introduced by this correction.
+
 ## Next phase
 
-Phase 5 - Earnings and Deduction Inputs. Do not proceed automatically.
+Phase 6 - Core Payroll Calculation. Do not proceed automatically.
 
 Final status: STOPPED - Awaiting permission to continue.

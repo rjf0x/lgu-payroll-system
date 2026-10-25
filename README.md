@@ -3,7 +3,8 @@
 Browser-based payroll prototype with planned blockchain integrity verification.
 Includes authentication, administrator-managed accounts, four roles, server
 authorization, employee payroll records, and effective-dated salary schedules
-with preserved employee salary history and monthly payroll drafts. Phase 2 has two open findings;
+with preserved employee salary history, monthly payroll drafts and employee inputs.
+Phase 2 has two open findings;
 see [the employee-management audit](docs/PHASE_2_AUDIT.md). Phase 3 also needs
 validation; see [the salary-management audit](docs/PHASE_3_AUDIT.md) for salary
 applicability, real/demo history interference, and promotion-policy gaps.
@@ -173,8 +174,45 @@ an older real record is not substituted for a newer demonstration record.
 Saved entries that become invalid or differ from current source details display
 **Needs review**. Source checks cover the displayed page, not a whole-batch
 approval. Client validation is required for first-day eligibility, mid-month
-treatment and the one-batch-per-month convention. No pay calculation, earnings,
-deduction input or approval workflow is included yet.
+treatment and the one-batch-per-month convention. No pay calculation or approval
+workflow is included yet. Employee inputs are maintained separately below.
+
+## Draft earnings, deductions and attendance
+
+From a covered employee in a monthly draft, open **Draft earnings, deductions and
+attendance inputs**. Payroll Officers can add/edit allowance, bonus, loan and
+adjustment lines, plus absence days and undertime minutes. Approvers/Viewers can
+read current inputs and preserved revisions. JavaScript is required to add or
+remove lines; existing line values and attendance fields can be edited without it.
+
+Each employee has a separate input set. Add only authorized items; new groups are
+empty and new allowances default to excluded. Select applicability explicitly.
+Excluded allowances retain their entered values for review but are omitted from
+the applicable allowance list and decimal-safe allowance subtotal. No entitlement
+or category rule is inferred. Bonuses and loan deductions are manual amounts;
+there is no loan balance, amortization or due-date scheduling.
+
+Enter the original/reference and authorized replacement amounts for each manual
+adjustment, choose earning or deduction, and document its reason. The reference
+is manually entered, not a claimed calculated deduction. Every save requires an
+external authorization (or fictional demonstration reference), revision reason,
+and confirmation. An edit saves a complete new input revision, retaining previous
+amounts, applicability, reasons, operator and the employee/salary context.
+
+Each group supports 30 distinct descriptions and nonnegative monetary strings of
+up to ten integer digits and two decimals. Absence days accept two decimal places
+up to the calendar days in the month; undertime uses integer minutes bounded by
+calendar minutes. These are input limits, not work schedules or deduction formulas.
+No net pay, tax treatment, basic-pay formula or attendance deduction is calculated.
+
+Stale draft versions and salary/profile snapshots are rejected.
+Validation retries restore values and errors only on the matching employee and
+monthly draft entry; other input forms use their own saved or empty values.
+Refresh coverage by removing/re-adding the employee when the source issue has been
+resolved. Inputs remain attached to the employee/monthly batch and reappear after re-selection;
+different source context requires a reviewed new revision. Removed employees'
+input history is retained but is not active covered payroll input. Removing all
+lines and saving records an empty current set without erasing earlier revisions.
 
 ## Verification
 
@@ -192,6 +230,7 @@ php ../scripts/verify-auth-concurrency.php
 php ../scripts/verify-employees.php
 php ../scripts/verify-salaries.php
 php ../scripts/verify-payroll-drafts.php
+php ../scripts/verify-payroll-inputs.php
 ```
 
 PHPUnit pins in-memory SQLite in both server and environment variables. The base
@@ -211,6 +250,8 @@ The employee smoke check rolls back its fictional user and employee records.
 The salary smoke check likewise rolls back all of its fictional records, including
 schedules, rates, employee history and users; it never runs destructive migrations.
 The payroll draft check also rolls back its fictional batches, coverage and sources.
+The input check rolls back its fictional revisions and verifies exclusions,
+per-employee values, edits and preservation across coverage refresh.
 The readiness command separately verifies the configured MySQL connection and
 base tables. `/up` indicates application boot, not database readiness.
 

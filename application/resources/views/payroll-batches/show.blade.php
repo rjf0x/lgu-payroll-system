@@ -13,6 +13,7 @@
                 <h2 class="text-lg font-semibold">{{ $entry->employee_number }} · {{ $entry->employee_name }}</h2>
                 <p class="mt-2">{{ $entry->position }} · {{ $entry->office }} · {{ $entry->personnel_classification->label() }}</p>
                 <p class="mt-2">Grade {{ $entry->grade }} / Step {{ $entry->step }} · Monthly salary PHP {{ $entry->monthly_salary }}</p>
+                <a href="{{ route('payroll-inputs.show', [$batch, $entry]) }}" class="mt-3 inline-block text-teal-800 underline">Draft earnings, deductions and attendance inputs</a>
                 <p class="mt-2">Source: {{ $entry->salaryRecord->rate->schedule->name }} · Effective {{ $entry->salaryRecord->effective_from->format('Y-m-d') }} · Authority: {{ $entry->salaryRecord->authority_reference }}</p>
                 @if ($issues[$entry->id])
                     <p class="mt-3 font-semibold text-amber-900">Needs review: {{ $issues[$entry->id] }} Saved values remain unchanged.</p>

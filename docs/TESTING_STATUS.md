@@ -1,8 +1,7 @@
 # Testing status
 
-Updated: 2026-10-25. The final Phase 4 full regression passes 148 tests / 1997
-assertions. Phase 2/3 audit findings remain open; Phase 4 adds salary consumer
-guards without changing those earlier workflows.
+Updated: 2026-10-25. The corrected Phase 5 full regression passes 189 tests / 2472
+assertions. Phase 2/3 audit findings and Phase 4 validation limits remain open.
 
 ## Automated checks
 
@@ -50,7 +49,7 @@ tests or features at initial inspection.
 ## Not yet verified
 
 Production deployment, full offline office-network operation, visual browser review,
-backups/recovery, and all Phase 5-13 workflows. Payroll formulas and regulatory
+backups/recovery, and all Phase 6-13 workflows. Payroll formulas and regulatory
 procedures require validation before their implementation and activation.
 
 ## Audit and commit review
@@ -407,3 +406,129 @@ open. No application fixes or Phase 5 implementation were performed.
   excluded. The Phase 4 audit's client-policy and verification limits still apply.
 
 No application fixes or Phase 5 functionality were introduced during preparation.
+
+## Phase 5 earnings and deduction inputs
+
+`PayrollInputTest.php` adds 34 cases, including datasets, covering:
+
+- Independent employee allowance/bonus/loan/adjustment/attendance persistence for
+  all three classifications, with real-mode and demonstration examples.
+- Excluded allowance retention and filtered applicability, multiple-line exact
+  subtotals, zero/maximum monetary values, normalization, invalid money formats,
+  and ignored forged salary/status/total fields.
+- Complete revision edits, original/replacement earning and deduction adjustments,
+  required reasons/authority/confirmation, old revision read-only display, model
+  update/delete guards, and empty-current-set saves with history preservation.
+- Allowed row keys, shapes/counts, case-insensitive distinct descriptions, safe
+  rejected inputs, valid UTF-8/HTML escaping, and cleared rows after a validation
+  error in an unrelated field.
+- Calendar-month/leap bounds on absence days and integer undertime minutes;
+  no calculation-formula claim is tested or made.
+- All four roles, guests/CSRF, fresh actor role/activity/auth-version checks,
+  stale/duplicate saves, cross-batch entry/revision scoping and bad revision queries.
+- Stale employee/source rejection, retained revisions across coverage removal/
+  re-selection, changed-context warnings and explicit reviewed replacement revisions.
+
+| Check | Result |
+| --- | --- |
+| Initial focused PHPUnit suite | Passed: 32 cases / 372 assertions |
+| Focused suite after cleared-row regression correction | Passed: 33 cases / 382 assertions |
+| Final `scripts/verify-test-isolation.ps1` | Passed: 182 tests / 2387 assertions with inherited production/MySQL settings; 34 input cases plus 148 earlier cases |
+| Application and scripts Pint | Passed; new code formatted, final application/script `--test` checks passed |
+| `node --check resources/js/payroll-inputs.js` | Passed syntax check; not browser interaction evidence |
+| `npm.cmd run build` | Passed; 59 modules, compiled CSS and JavaScript |
+| `composer validate --strict` | Passed |
+| MySQL `migrate --force` / `migrate:status` | Passed: input revision migration applied; all eight migrations Ran |
+| `php ../scripts/verify-payroll-inputs.php` | Passed twice: all categories/modes, employee-specific values, exclusions, exact JSON decimal strings, two revisions with original values, stable history through coverage refresh and rollback |
+| `php ../scripts/verify-payroll-drafts.php` | Passed after adding input schema/workflow |
+| `php artisan app:check-foundation` | Passed against MySQL |
+| `git diff --check` | Passed; ordinary LF/CRLF conversion notices |
+
+An intermediate `composer test` run returned 180 passed / 1 failed (2375
+assertions). The new cleared-row regression exposed that normalizing a FormRequest
+alone did not preserve empty groups in the original request's flashed input.
+The form now includes an inert state marker so a validation retry distinguishes
+an intentionally cleared group from the initial saved defaults. The regression
+was corrected and passed, followed by the final full 182-case pass. No production
+session setting or earlier-phase application logic was changed.
+
+HTTP/Blade tests use in-memory SQLite. The MySQL input script uses fictional
+model fixtures, actual FormRequests and input/draft service transactions inside
+an outer rollback transaction. All fictional data was rolled back. The project
+MySQL server was started temporarily and stopped afterward to restore its initial
+state; the new migration remains applied.
+
+Unverified: browser add/remove-line interaction and visual acceptance, concurrent
+input/coverage/source writers and failure/recovery behavior, office-scale load,
+client allowance/attendance/adjustment authorization rules, and deployment.
+Adjustment originals are entered reference values, not computed deductions.
+Current-input history for removed coverage is retained but not active payroll
+input. No loan scheduling, uploads, statutory formulas, payroll calculation totals,
+tax treatment, net pay or internal approval workflow were implemented. No coverage
+percentage or full real-office acceptance is claimed.
+
+## Phase 5 audit follow-up
+
+The full PHPUnit suite and inherited-environment isolation regression each passed
+182 tests / 2387 assertions. Application/script Pint, Node syntax and whitespace
+checks passed. MySQL input checks passed with fixture rollback; all eight existing
+migrations showed Ran. The temporarily started database was stopped afterward.
+
+Three ignored audit cases (38 assertions) reproduced cross-employee restoration
+of rejected old input before the originating redirect consumes the flash, verified
+atomic rollback on an injected post-insert batch-update failure, and checked
+11-revision history pagination. The defect probe passes by asserting the observed
+wrong-form values, not by asserting acceptance success. The rollback injection
+used SQLite, not a real MySQL disconnection.
+
+PHASE_5_AUDIT.md records the medium form-state defect, acceptance qualifications,
+missing permanent/multi-tab/browser/concurrency evidence and client policy limits.
+No application fixes or Phase 6 implementation were performed during the audit.
+
+## Phase 5 correction verification
+
+- Added seven permanent input cases: other employee and unsaved-recipient forms,
+  same employee in another month, forged posted context, matching-form retries,
+  encoding rejection, JSON errors and service validation (dataset cases included).
+  Phase 5 now has 41 cases; all 148 earlier cases remain.
+- The three boundary regressions first failed against the original implementation,
+  reproducing cross-form values/errors. The first middleware attempt caught thrown
+  exceptions, while Laravel's routing pipeline had already rendered them; three
+  matching-form checks caught that mistake. Handling validation redirect responses
+  corrected it. The focused suite then passed 40 cases / 466 assertions, before
+  the final service-validation case was added.
+- Final `composer test`: passed, 189 tests / 2472 assertions.
+- MySQL `verify-payroll-inputs.php`: passed; fictional fixtures rolled back. All
+  eight migrations remain Ran; no new migration was introduced for this fix.
+- Pint application formatting/check, scripts Pint, strict Composer validation,
+  production asset build, Node syntax and whitespace checks passed.
+
+No live browser race or interaction test was performed. Client-policy and earlier
+phase findings remain unchanged. No new features or Phase 6 work were introduced.
+
+## Phase 5 post-correction re-audit
+
+Full PHPUnit rerun passed 189 tests / 2472 assertions. The corrected diagnostic
+suite passed 3 cases / 38 assertions. Application/script Pint, Node syntax and
+whitespace checks passed. The former cross-form restoration defect no longer
+reproduces; no additional confirmed Phase 5 defect or missing required task was
+found. See PHASE_5_AUDIT.md for the qualified acceptance result and remaining
+client/browser/concurrency/recovery coverage gaps. MySQL, build and isolation
+checks were not rerun in this re-audit; the database remained stopped. No
+application or Phase 6 work was performed.
+
+## Phase 5 commit verification - 2026-10-25
+
+- `composer test`: passed, 189 tests / 2472 assertions.
+- Application and scripts Pint `--test`, JavaScript syntax check, strict Composer
+  validation and production asset build: passed.
+- MySQL input workflow and migration status: passed; all eight migrations Ran.
+  Fictional fixtures rolled back, and the temporarily started project database
+  was stopped afterward to restore its initial state.
+- Reviewed all 20 phase files for sensitive paths, secret/debug markers and exact
+  local application/database credential values; no matches found. Environment
+  files, local credentials/diagnostics, installed dependencies and generated assets
+  remain excluded. No new dependency or unrelated functionality change is included.
+
+The audit's client-rule/browser/concurrency/recovery limitations remain documented.
+No Phase 6 work or application changes were introduced during commit preparation.
