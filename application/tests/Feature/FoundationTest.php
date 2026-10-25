@@ -13,15 +13,12 @@ class FoundationTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_home_page_renders_the_foundation_screen(): void
+    public function test_home_page_redirects_guests_to_login(): void
     {
         $this->withoutVite();
 
         $this->get('/')
-            ->assertOk()
-            ->assertViewIs('foundation')
-            ->assertSee('LGU Payroll Management System')
-            ->assertSee('Project Foundation');
+            ->assertRedirect('/login');
     }
 
     public function test_application_health_endpoint_responds(): void

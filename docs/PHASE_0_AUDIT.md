@@ -9,15 +9,17 @@ application startup, database connectivity, and initial automated tests.
 This does not establish reliable fresh setup or safe test isolation under every
 inherited environment configuration.
 
-## Unresolved findings
+## Findings and follow-up status
 
-1. **High - Test database isolation is not enforced.**
+1. **High - Test database isolation was not enforced. Resolved in Phase 1.**
    `application/phpunit.xml` sets database variables without `force="true"`, and
    `FoundationTest` uses `RefreshDatabase`, which runs `migrate:fresh`.
    A configuration-only probe confirmed inherited DB_CONNECTION, DB_DATABASE,
    and DB_URL values survive PHPUnit configuration. Tests can therefore target
    a non-test database. The probe did not connect to or modify any database.
-   Enforce test settings and guard destructive migrations before expanding tests.
+   Phase 1 pins both environment and server values and guards the resolved SQLite
+   in-memory configuration before RefreshDatabase runs. The full suite passes
+   with conflicting inherited MySQL configuration; see TESTING_STATUS.md.
 2. **Medium - Repeated setup rotates the encryption key.**
    `application/composer.json` runs `key:generate` unconditionally in `setup`.
    Rerunning it can invalidate encrypted sessions and encrypted values.
@@ -32,8 +34,9 @@ inherited environment configuration.
    clearing or rejecting DB_URL. A configuration-only parser probe confirmed a
    URL overrides those settings, potentially selecting another database.
 
-No application fixes were made as part of this audit or commit review. These are
-Phase 0 follow-ups, not authorization to begin Phase 1.
+No application fixes were made during the original audit or commit review. The
+isolation fix was subsequently included as a prerequisite in authorized Phase 1.
+Findings 2-4 remain unresolved; Phase 1 did not modify those setup paths.
 
 ## Coverage
 

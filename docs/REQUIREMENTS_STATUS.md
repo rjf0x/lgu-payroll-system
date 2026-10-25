@@ -11,7 +11,7 @@ In progress; Not started; Blocked by client validation.
 | Application starts, database connects, initial tests pass | 0 | Implemented and tested | HTTP 200; MySQL readiness/persistence; 6 tests, 14 assertions |
 | Environment setup and directory conventions | 0 | Implemented and tested | Root README, application/, scripts/; build and DB restart checks passed |
 | Progress, decisions, requirements, and testing records | 0 | Implemented and tested | Four tracking documents created and reviewed |
-| Login/logout, account management, four roles, server authorization | 1 | Not started | Default user model/schema are scaffolding only |
+| Login/logout, account management, four roles, server authorization | 1 | Implemented and tested | Five audit findings fixed; post-correction audit confirms 45 tests / 611 assertions and MySQL role/concurrency checks; no new confirmed defects. Remaining verification gaps: PHASE_1_REAUDIT.md |
 | Employee create, view, edit, search, classification | 2 | Not started | Permanent, coterminous, part-time required |
 | Effective-dated salary schedules, grades, steps, history | 3 | Not started | Salary changes require external authorization |
 | Potential step eligibility separate from promotions | 3 | Not started | Eligibility must not change salary automatically |
