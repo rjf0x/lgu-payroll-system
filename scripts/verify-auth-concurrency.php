@@ -34,7 +34,7 @@ function waitForFile(string $path): void
 function editRequest(User $actor, User $target, string $change): SaveUserRequest
 {
     $request = SaveUserRequest::create('/users/'.$target->id, 'PUT', [
-        'name' => $target->name, 'email' => $target->email,
+        'name' => $target->name, 'username' => $target->username,
         'role' => $change === 'demote' ? 'viewer' : 'administrator',
         'is_active' => $change === 'deactivate' ? 0 : 1,
     ]);
@@ -101,7 +101,7 @@ try {
         for ($index = 0; $index < 2; $index++) {
             $account = User::factory()->create([
                 'name' => 'Fictional Concurrent Access Check',
-                'email' => 'concurrency-'.bin2hex(random_bytes(12)).'@example.test',
+                'username' => 'concurrency-'.bin2hex(random_bytes(12)),
                 'role' => Role::Administrator,
             ]);
             $fixtureIds[] = $account->id;

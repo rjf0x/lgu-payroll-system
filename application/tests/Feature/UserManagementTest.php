@@ -23,7 +23,7 @@ class UserManagementTest extends TestCase
     private function signInAdministrator(): User
     {
         $admin = User::factory()->create(['role' => Role::Administrator]);
-        $this->post('/login', ['email' => $admin->email, 'password' => 'password'])->assertRedirect('/dashboard');
+        $this->post('/login', ['username' => $admin->username, 'password' => 'password'])->assertRedirect('/dashboard');
 
         return $admin;
     }
@@ -32,7 +32,7 @@ class UserManagementTest extends TestCase
     {
         return array_replace([
             'name' => 'Fictional Payroll User',
-            'email' => 'fictional@example.test',
+            'username' => 'fictional',
             'role' => Role::PayrollOfficer->value,
             'is_active' => '1',
             'password' => 'FictionalPass123',
@@ -69,17 +69,17 @@ class UserManagementTest extends TestCase
         $this->get('/users/create')->assertOk()->assertSee('Create account');
 
         foreach (Role::cases() as $role) {
-            $email = $role->value.'@example.test';
-            $this->post('/users', $this->accountData(['email' => strtoupper($email), 'role' => $role->value, 'auth_version' => 99]))
+            $username = $role->value.'';
+            $this->post('/users', $this->accountData(['username' => strtoupper($username), 'role' => $role->value, 'auth_version' => 99]))
                 ->assertRedirect('/users')->assertSessionHasNoErrors();
-            $account = User::where('email', $email)->firstOrFail();
+            $account = User::where('username', $username)->firstOrFail();
             $this->assertSame($role, $account->role);
             $this->assertTrue($account->is_active);
             $this->assertSame(1, $account->auth_version);
             $this->assertTrue(Hash::check('FictionalPass123', $account->password));
             $this->assertNotSame('FictionalPass123', $account->password);
             $this->assertArrayNotHasKey('password', $account->toArray());
-            $this->get('/users/'.$account->id.'/edit')->assertOk()->assertSee($email)->assertDontSee($account->password);
+            $this->get('/users/'.$account->id.'/edit')->assertOk()->assertSee($username)->assertDontSee($account->password);
         }
     }
 
@@ -87,13 +87,13 @@ class UserManagementTest extends TestCase
     {
         $admin = $this->signInAdministrator();
         $this->post('/users', $this->accountData([
-            'name' => '', 'email' => strtoupper($admin->email), 'role' => 'owner', 'is_active' => 'yes',
+            'name' => '', 'username' => strtoupper($admin->username), 'role' => 'owner', 'is_active' => 'yes',
             'password' => 'weak', 'password_confirmation' => 'different',
-        ]))->assertSessionHasErrors(['name', 'email', 'role', 'is_active', 'password']);
-        $this->post('/users', $this->accountData(['email' => ['bad']]))->assertSessionHasErrors('email');
+        ]))->assertSessionHasErrors(['name', 'username', 'role', 'is_active', 'password']);
+        $this->post('/users', $this->accountData(['username' => ['bad']]))->assertSessionHasErrors('username');
         $this->assertDatabaseCount('users', 1);
         $this->post('/users', $this->accountData())->assertRedirect('/users');
-        $this->post('/users', $this->accountData())->assertSessionHasErrors('email');
+        $this->post('/users', $this->accountData())->assertSessionHasErrors('username');
         $this->assertDatabaseCount('users', 2);
     }
 
@@ -119,8 +119,8 @@ class UserManagementTest extends TestCase
         $this->actingAs($target)->withSession(['auth_version' => 1]);
         $this->get('/dashboard')->assertRedirect('/login');
         $this->assertGuest();
-        $this->post('/login', ['email' => $target->email, 'password' => 'password'])->assertSessionHasErrors('email');
-        $this->post('/login', ['email' => $target->email, 'password' => 'FictionalPass123'])->assertRedirect('/dashboard');
+        $this->post('/login', ['username' => $target->username, 'password' => 'password'])->assertSessionHasErrors('username');
+        $this->post('/login', ['username' => $target->username, 'password' => 'FictionalPass123'])->assertRedirect('/dashboard');
     }
 
     public function test_role_change_applies_on_the_next_request(): void
@@ -134,7 +134,7 @@ class UserManagementTest extends TestCase
         $admin->forceFill(['role' => Role::Viewer, 'auth_version' => $admin->fresh()->auth_version + 1])->save();
         Auth::forgetGuards();
         $this->get('/users')->assertRedirect('/login');
-        $this->post('/login', ['email' => 'fictional@example.test', 'password' => 'FictionalPass123'])->assertRedirect('/dashboard');
+        $this->post('/login', ['username' => 'fictional', 'password' => 'FictionalPass123'])->assertRedirect('/dashboard');
         $this->get('/users')->assertForbidden();
         $this->get('/payroll-records')->assertOk();
     }
@@ -153,14 +153,14 @@ class UserManagementTest extends TestCase
     {
         $this->artisan('app:create-admin')
             ->expectsQuestion('Administrator name', 'Fictional Administrator')
-            ->expectsQuestion('Administrator email', 'ADMIN@EXAMPLE.TEST')
+            ->expectsQuestion('Administrator username', 'ADMIN')
             ->expectsQuestion('Password (12+ characters, upper/lowercase and numbers)', 'FictionalAdmin123')
             ->expectsQuestion('Confirm password', 'FictionalAdmin123')
             ->expectsOutput('Administrator created. Sign in to manage other accounts.')
             ->assertSuccessful();
         $admin = User::sole();
         $this->assertSame(Role::Administrator, $admin->role);
-        $this->assertSame('admin@example.test', $admin->email);
+        $this->assertSame('admin', $admin->username);
         $this->assertTrue(Hash::check('FictionalAdmin123', $admin->password));
         $this->artisan('app:create-admin')->expectsOutput('An administrator already exists. Manage accounts through the application.')->assertFailed();
         $this->assertDatabaseCount('users', 1);
@@ -172,7 +172,7 @@ class UserManagementTest extends TestCase
         $this->assertDatabaseCount('users', 0);
         $this->artisan('app:create-admin')
             ->expectsQuestion('Administrator name', '')
-            ->expectsQuestion('Administrator email', 'invalid')
+            ->expectsQuestion('Administrator username', 'bad username')
             ->expectsQuestion('Password (12+ characters, upper/lowercase and numbers)', 'short')
             ->expectsQuestion('Confirm password', 'different')
             ->assertFailed();

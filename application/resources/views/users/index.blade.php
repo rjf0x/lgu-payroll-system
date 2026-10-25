@@ -8,12 +8,12 @@
         <table class="w-full text-left text-sm">
             <caption class="sr-only">System user accounts and assigned roles</caption>
             <thead class="bg-slate-50"><tr>
-                <th scope="col" class="p-4">Name</th><th scope="col" class="p-4">Email</th><th scope="col" class="p-4">Role</th><th scope="col" class="p-4">Status</th><th scope="col" class="p-4">Action</th>
+                <th scope="col" class="p-4">Name</th><th scope="col" class="p-4">Username</th><th scope="col" class="p-4">Role</th><th scope="col" class="p-4">Status</th><th scope="col" class="p-4">Action</th>
             </tr></thead>
             <tbody>
                 @foreach ($users as $account)
                     <tr class="border-t border-slate-200">
-                        <td class="p-4">{{ $account->name }}</td><td class="p-4">{{ $account->email }}</td><td class="p-4">{{ $account->role->label() }}</td><td class="p-4">{{ $account->is_active ? 'Active' : 'Inactive' }}</td>
+                        <td class="p-4">{{ $account->name }}</td><td class="p-4">{{ $account->username }}</td><td class="p-4">{{ $account->role->label() }}</td><td class="p-4">{{ $account->is_active ? 'Active' : 'Inactive' }}</td>
                         <td class="p-4"><a href="{{ route('users.edit', $account) }}" class="font-semibold text-teal-800 underline" aria-label="Edit {{ $account->name }}">Edit</a></td>
                     </tr>
                 @endforeach

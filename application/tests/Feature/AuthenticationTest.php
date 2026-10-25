@@ -33,7 +33,7 @@ class AuthenticationTest extends TestCase
         $this->get('/login')->assertOk()->assertSee('Sign in');
         $oldSession = session()->getId();
 
-        $this->post('/login', ['email' => strtoupper($user->email), 'password' => 'password', 'role' => 'administrator'])
+        $this->post('/login', ['username' => strtoupper($user->username), 'password' => 'password', 'role' => 'administrator'])
             ->assertRedirect('/dashboard')->assertSessionHas('auth_version', 1);
         $this->assertAuthenticatedAs($user);
         $this->assertNotSame($oldSession, session()->getId());
@@ -69,12 +69,12 @@ class AuthenticationTest extends TestCase
     public function test_invalid_and_inactive_credentials_are_rejected_without_account_disclosure(): void
     {
         $user = User::factory()->create(['is_active' => false]);
-        foreach ([[$user->email, 'password'], [$user->email, 'wrong'], ['unknown@example.test', 'password']] as [$email, $password]) {
-            $this->post('/login', compact('email', 'password'))
-                ->assertSessionHasErrors(['email' => 'The provided credentials could not be verified.']);
+        foreach ([[$user->username, 'password'], [$user->username, 'wrong'], ['unknown', 'password']] as [$username, $password]) {
+            $this->post('/login', compact('username', 'password'))
+                ->assertSessionHasErrors(['username' => 'The provided credentials could not be verified.']);
             $this->assertGuest();
         }
-        $this->post('/login', ['email' => ['invalid'], 'password' => []])->assertSessionHasErrors(['email', 'password']);
+        $this->post('/login', ['username' => ['invalid'], 'password' => []])->assertSessionHasErrors(['username', 'password']);
     }
 
     public function test_login_is_throttled_and_recovers_after_the_timeout(): void
@@ -82,21 +82,21 @@ class AuthenticationTest extends TestCase
         $this->freezeTime();
         $user = User::factory()->create();
         for ($attempt = 0; $attempt < 5; $attempt++) {
-            $this->post('/login', ['email' => $user->email, 'password' => 'incorrect'])->assertSessionHasErrors('email');
+            $this->post('/login', ['username' => $user->username, 'password' => 'incorrect'])->assertSessionHasErrors('username');
         }
-        $this->post('/login', ['email' => $user->email, 'password' => 'password'])
-            ->assertSessionHasErrors(['email' => 'Too many sign-in attempts. Try again in 60 seconds.']);
+        $this->post('/login', ['username' => $user->username, 'password' => 'password'])
+            ->assertSessionHasErrors(['username' => 'Too many sign-in attempts. Try again in 60 seconds.']);
         $this->assertGuest();
         $this->travel(61)->seconds();
-        $this->post('/login', ['email' => $user->email, 'password' => 'password'])->assertRedirect('/dashboard');
+        $this->post('/login', ['username' => $user->username, 'password' => 'password'])->assertRedirect('/dashboard');
         $this->assertAuthenticatedAs($user);
-        $this->assertSame(0, RateLimiter::attempts('login:'.hash('sha256', $user->email.'|127.0.0.1')));
+        $this->assertSame(0, RateLimiter::attempts('login:'.hash('sha256', $user->username.'|127.0.0.1')));
     }
 
     public function test_logout_invalidates_session_and_regenerates_csrf_token(): void
     {
         $user = User::factory()->create();
-        $this->post('/login', ['email' => $user->email, 'password' => 'password']);
+        $this->post('/login', ['username' => $user->username, 'password' => 'password']);
         $oldSession = session()->getId();
         $oldToken = session()->token();
         $this->withSession(['private_marker' => 'secret']);
@@ -110,13 +110,13 @@ class AuthenticationTest extends TestCase
     public function test_inactive_accounts_and_outdated_sessions_are_rejected_on_the_next_request(): void
     {
         $user = User::factory()->create();
-        $this->post('/login', ['email' => $user->email, 'password' => 'password']);
+        $this->post('/login', ['username' => $user->username, 'password' => 'password']);
         $user->forceFill(['auth_version' => 2])->save();
         Auth::forgetGuards(); // Simulate the fresh guard in the next real HTTP request.
         $this->get('/dashboard')->assertRedirect('/login');
         $this->assertGuest();
 
-        $this->post('/login', ['email' => $user->email, 'password' => 'password'])->assertRedirect('/dashboard');
+        $this->post('/login', ['username' => $user->username, 'password' => 'password'])->assertRedirect('/dashboard');
         $user->forceFill(['is_active' => false])->save();
         Auth::forgetGuards();
         $this->get('/dashboard')->assertRedirect('/login');
@@ -135,8 +135,8 @@ class AuthenticationTest extends TestCase
 
         $user = User::factory()->create(['role' => Role::Administrator]);
         $this->get('/login')->assertOk();
-        $this->post('/login', ['email' => $user->email, 'password' => 'password'])->assertStatus(419);
-        $this->post('/login', ['email' => $user->email, 'password' => 'password', '_token' => session()->token()])->assertRedirect('/dashboard');
+        $this->post('/login', ['username' => $user->username, 'password' => 'password'])->assertStatus(419);
+        $this->post('/login', ['username' => $user->username, 'password' => 'password', '_token' => session()->token()])->assertRedirect('/dashboard');
         $this->post('/users', [])->assertStatus(419);
         $this->put('/users/'.$user->id, [])->assertStatus(419);
         $this->post('/logout')->assertStatus(419);

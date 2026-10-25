@@ -32,7 +32,7 @@ class AccessRegressionTest extends TestCase
     private function admin(): User
     {
         $account = User::factory()->create(['role' => Role::Administrator]);
-        $this->post('/login', ['email' => $account->email, 'password' => 'password'])->assertRedirect('/dashboard');
+        $this->post('/login', ['username' => $account->username, 'password' => 'password'])->assertRedirect('/dashboard');
 
         return $account;
     }
@@ -40,7 +40,7 @@ class AccessRegressionTest extends TestCase
     private function input(array $overrides = []): array
     {
         return array_replace([
-            'name' => 'Fictional Regression User', 'email' => 'regression@example.test',
+            'name' => 'Fictional Regression User', 'username' => 'regression',
             'role' => 'viewer', 'is_active' => 1, 'password' => 'FictionalPass123',
             'password_confirmation' => 'FictionalPass123',
         ], $overrides);
@@ -77,7 +77,7 @@ class AccessRegressionTest extends TestCase
         $this->assertDatabaseCount('users', 2);
 
         $this->post('/logout');
-        $this->from('/login')->post('/login', ['email' => $admin->email, 'password' => $password])
+        $this->from('/login')->post('/login', ['username' => $admin->username, 'password' => $password])
             ->assertRedirect('/login')->assertSessionHasErrors('password');
         $this->followRedirectToForm('/login')->assertOk();
         $this->assertGuest();
@@ -85,7 +85,7 @@ class AccessRegressionTest extends TestCase
         $admin->forceFill(['role' => Role::Viewer])->save();
         $this->artisan('app:create-admin')
             ->expectsQuestion('Administrator name', 'Fictional Administrator')
-            ->expectsQuestion('Administrator email', 'initial@example.test')
+            ->expectsQuestion('Administrator username', 'initial')
             ->expectsQuestion('Password (12+ characters, upper/lowercase and numbers)', $password)
             ->expectsQuestion('Confirm password', $password)
             ->assertFailed();
@@ -104,12 +104,12 @@ class AccessRegressionTest extends TestCase
         $this->assertSame(72, strlen($password));
         $this->post('/users', $this->input(['password' => $password, 'password_confirmation' => $password]))
             ->assertRedirect('/users')->assertSessionHasNoErrors();
-        $account = User::where('email', 'regression@example.test')->firstOrFail();
+        $account = User::where('username', 'regression')->firstOrFail();
         $this->assertTrue(Hash::check($password, $account->password));
         $this->post('/logout');
-        $this->post('/login', ['email' => $account->email, 'password' => substr($password, 0, -1).'z'])->assertSessionHasErrors('email');
+        $this->post('/login', ['username' => $account->username, 'password' => substr($password, 0, -1).'z'])->assertSessionHasErrors('username');
         $this->assertGuest();
-        $this->post('/login', ['email' => $account->email, 'password' => $password])->assertRedirect('/dashboard');
+        $this->post('/login', ['username' => $account->username, 'password' => $password])->assertRedirect('/dashboard');
         $this->assertAuthenticatedAs($account);
     }
 
@@ -117,7 +117,7 @@ class AccessRegressionTest extends TestCase
     {
         $prefix = 'Aa1'.str_repeat('x', 69);
         $user = User::factory()->create(['password' => $prefix.'FIRST']);
-        $this->post('/login', ['email' => $user->email, 'password' => $prefix.'SECOND'])->assertSessionHasErrors('password');
+        $this->post('/login', ['username' => $user->username, 'password' => $prefix.'SECOND'])->assertSessionHasErrors('password');
         $this->assertGuest();
     }
 
@@ -127,26 +127,26 @@ class AccessRegressionTest extends TestCase
         $password = Hash::make('OriginalPassword123');
         $this->post('/users', $this->input(['password' => $password, 'password_confirmation' => $password]))
             ->assertRedirect('/users')->assertSessionHasNoErrors();
-        $account = User::where('email', 'regression@example.test')->firstOrFail();
+        $account = User::where('username', 'regression')->firstOrFail();
         $this->assertTrue(Hash::check($password, $account->password));
         $this->assertFalse(Hash::check('OriginalPassword123', $account->password));
         $this->put('/users/'.$account->id, $this->input(['password' => $password, 'password_confirmation' => $password]))
             ->assertRedirect('/users')->assertSessionHasNoErrors();
         $this->assertTrue(Hash::check($password, $account->fresh()->password));
         $this->post('/logout');
-        $this->post('/login', ['email' => $account->email, 'password' => $password])->assertRedirect('/dashboard');
+        $this->post('/login', ['username' => $account->username, 'password' => $password])->assertRedirect('/dashboard');
     }
 
     public function test_invalid_login_input_remains_renderable_after_redirect(): void
     {
-        $this->from('/login')->post('/login', ['email' => ['bad'], 'password' => ['bad']])
-            ->assertRedirect('/login')->assertSessionHasErrors(['email', 'password']);
+        $this->from('/login')->post('/login', ['username' => ['bad'], 'password' => ['bad']])
+            ->assertRedirect('/login')->assertSessionHasErrors(['username', 'password']);
         $this->followRedirectToForm('/login')->assertOk()->assertSee('Please check the following:');
     }
 
     public static function formFields(): array
     {
-        return [['name'], ['email'], ['role'], ['is_active']];
+        return [['name'], ['username'], ['role'], ['is_active']];
     }
 
     #[DataProvider('formFields')]
@@ -170,12 +170,12 @@ class AccessRegressionTest extends TestCase
         $this->admin();
         $competing = false;
         User::creating(function (User $user) use (&$competing) {
-            if (! $competing && $user->email === 'regression@example.test') {
+            if (! $competing && $user->username === 'regression') {
                 $competing = true;
-                User::factory()->create(['email' => $user->email]);
+                User::factory()->create(['username' => $user->username]);
             }
         });
-        $this->from('/users/create')->post('/users', $this->input())->assertRedirect('/users/create')->assertSessionHasErrors('email');
+        $this->from('/users/create')->post('/users', $this->input())->assertRedirect('/users/create')->assertSessionHasErrors('username');
         $this->followRedirectToForm('/users/create')->assertOk();
         // The deterministic competing insert shares the transaction and rolls back too.
         $this->assertDatabaseCount('users', 1);
@@ -188,11 +188,11 @@ class AccessRegressionTest extends TestCase
         $original = $target->fresh()->getAttributes();
         User::updating(function (User $user) use ($target) {
             if ($user->id === $target->id) {
-                User::factory()->create(['email' => $user->email]);
+                User::factory()->create(['username' => $user->username]);
             }
         });
         $path = '/users/'.$target->id.'/edit';
-        $this->from($path)->put('/users/'.$target->id, $this->input())->assertRedirect($path)->assertSessionHasErrors('email');
+        $this->from($path)->put('/users/'.$target->id, $this->input())->assertRedirect($path)->assertSessionHasErrors('username');
         $this->followRedirectToForm($path)->assertOk();
         $this->assertSame($original, $target->fresh()->getAttributes());
         $this->assertDatabaseCount('users', 2);
@@ -230,12 +230,12 @@ class AccessRegressionTest extends TestCase
         $first = $this->admin();
         $second = User::factory()->create(['role' => Role::Administrator]);
         $edit = $this->validatedRequest($first, [
-            'name' => $second->name, 'email' => $second->email, 'role' => 'administrator', 'is_active' => 0,
+            'name' => $second->name, 'username' => $second->username, 'role' => 'administrator', 'is_active' => 0,
         ], $second);
         $create = $this->validatedRequest($first, $this->input());
         $this->actingAs($second)->withSession(['auth_version' => 1]);
         $this->put('/users/'.$first->id, [
-            'name' => $first->name, 'email' => $first->email,
+            'name' => $first->name, 'username' => $first->username,
             'role' => $change === 'demote' ? 'viewer' : 'administrator', 'is_active' => $change === 'deactivate' ? 0 : 1,
             ...($change === 'reset' ? ['password' => 'ChangedPassword123', 'password_confirmation' => 'ChangedPassword123'] : []),
         ])->assertRedirect('/users');
@@ -264,7 +264,7 @@ class AccessRegressionTest extends TestCase
         try {
             $this->artisan('app:create-admin')
                 ->expectsQuestion('Administrator name', 'Fictional Administrator')
-                ->expectsQuestion('Administrator email', 'initial@example.test')
+                ->expectsQuestion('Administrator username', 'initial')
                 ->expectsQuestion('Password (12+ characters, upper/lowercase and numbers)', 'FictionalPass123')
                 ->expectsQuestion('Confirm password', 'FictionalPass123')
                 ->expectsOutput('Another administrator setup is in progress. Try again.')
@@ -279,19 +279,19 @@ class AccessRegressionTest extends TestCase
     {
         $created = false;
         DB::listen(function ($query) use (&$created) {
-            if (! $created && str_contains($query->sql, 'count(*)') && in_array('initial@example.test', $query->bindings, true)) {
+            if (! $created && str_contains($query->sql, 'count(*)') && in_array('initial', $query->bindings, true)) {
                 $created = true;
                 User::factory()->create(['role' => Role::Administrator]);
             }
         });
         $this->artisan('app:create-admin')
             ->expectsQuestion('Administrator name', 'Fictional Administrator')
-            ->expectsQuestion('Administrator email', 'initial@example.test')
+            ->expectsQuestion('Administrator username', 'initial')
             ->expectsQuestion('Password (12+ characters, upper/lowercase and numbers)', 'FictionalPass123')
             ->expectsQuestion('Confirm password', 'FictionalPass123')
             ->expectsOutput('An administrator already exists. Manage accounts through the application.')
             ->assertFailed();
         $this->assertDatabaseCount('users', 1);
-        $this->assertDatabaseMissing('users', ['email' => 'initial@example.test']);
+        $this->assertDatabaseMissing('users', ['username' => 'initial']);
     }
 }

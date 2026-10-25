@@ -2,7 +2,7 @@
 @section('content')
     @php
         $oldName = old('name', $account->name);
-        $oldEmail = old('email', $account->email);
+        $oldUsername = old('username', $account->username);
         $oldRole = old('role', $account->role?->value ?? 'viewer');
         $oldStatus = old('is_active', (int) $account->is_active);
         $roleValue = is_string($oldRole) && \App\Enums\Role::tryFrom($oldRole) ? $oldRole : ($account->role?->value ?? 'viewer');
@@ -17,8 +17,9 @@
             <input id="name" name="name" value="{{ is_string($oldName) ? $oldName : '' }}" required maxlength="255" autocomplete="name" class="mt-2 w-full rounded border border-slate-300 p-3">
         </div>
         <div>
-            <label for="email" class="block text-sm font-semibold">Email</label>
-            <input id="email" name="email" type="email" value="{{ is_string($oldEmail) ? $oldEmail : '' }}" required maxlength="255" autocomplete="off" class="mt-2 w-full rounded border border-slate-300 p-3">
+            <label for="username" class="block text-sm font-semibold">Username</label>
+            <input id="username" name="username" type="text" value="{{ is_string($oldUsername) ? $oldUsername : '' }}" required minlength="3" maxlength="50" autocomplete="off" class="mt-2 w-full rounded border border-slate-300 p-3">
+            <p class="mt-2 text-sm text-slate-600">3–50 letters, numbers, dots, underscores or hyphens. Start with a letter or number. Usernames are case-insensitive.</p>
         </div>
         <div>
             <label for="role" class="block text-sm font-semibold">Role</label>

@@ -49,7 +49,7 @@ function draftCheckRequest(User $actor, string $class, array $data, ?PayrollBatc
 $nonce = strtoupper(bin2hex(random_bytes(12)));
 $connection->beginTransaction();
 try {
-    $actor = User::factory()->create(['role' => Role::PayrollOfficer, 'email' => 'draft-check-'.$nonce.'@example.test']);
+    $actor = User::factory()->create(['role' => Role::PayrollOfficer, 'username' => 'draft-check-'.$nonce]);
     $service = app(PayrollPreparationService::class);
     $date = CarbonImmutable::create(random_int(8000, 8998), random_int(1, 12), 1);
     while (PayrollBatch::whereDate('period_start', $date->format('Y-m-d'))->exists() || SalarySchedule::whereDate('effective_from', $date->format('Y-m-d'))->exists()) {
@@ -107,7 +107,7 @@ try {
 } finally {
     $connection->rollBack();
 }
-if (User::where('email', 'draft-check-'.$nonce.'@example.test')->exists()
+if (User::where('username', 'draft-check-'.$nonce)->exists()
     || Employee::where('employee_number', 'like', 'DRAFT-'.$nonce.'%')->exists()
     || SalarySchedule::where('name', 'FICTIONAL DRAFT CHECK '.$nonce)->exists()) {
     throw new RuntimeException('Payroll verification fixtures were retained.');

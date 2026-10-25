@@ -51,8 +51,8 @@ function salaryCheckRequest(User $actor, string $class, array $data, ?Employee $
 $nonce = strtoupper(bin2hex(random_bytes(12)));
 $connection->beginTransaction();
 try {
-    $admin = User::factory()->create(['email' => 'salary-admin-'.$nonce.'@example.test', 'role' => Role::Administrator]);
-    $officer = User::factory()->create(['email' => 'salary-officer-'.$nonce.'@example.test', 'role' => Role::PayrollOfficer]);
+    $admin = User::factory()->create(['username' => 'salary-admin-'.$nonce, 'role' => Role::Administrator]);
+    $officer = User::factory()->create(['username' => 'salary-officer-'.$nonce, 'role' => Role::PayrollOfficer]);
     $service = app(SalaryService::class);
     $base = CarbonImmutable::create(random_int(8000, 8998), random_int(1, 12), 1);
     while (SalarySchedule::whereIn('effective_from', [$base->format('Y-m-d'), $base->addYear()->format('Y-m-d')])->exists()) {
@@ -115,7 +115,7 @@ try {
     $connection->rollBack();
 }
 if (SalarySchedule::where('name', 'like', '%'.$nonce.'%')->exists() || Employee::where('employee_number', 'like', 'SAL-'.$nonce.'%')->exists()
-    || User::whereIn('email', ['salary-admin-'.$nonce.'@example.test', 'salary-officer-'.$nonce.'@example.test'])->exists()) {
+    || User::whereIn('username', ['salary-admin-'.$nonce, 'salary-officer-'.$nonce])->exists()) {
     throw new RuntimeException('Salary smoke check rollback failed.');
 }
 echo "MySQL effective schedules, exact decimal salaries, all three categories, initial/step/promotion/schedule changes, immutable history and rollback passed; no fictional records retained.\n";

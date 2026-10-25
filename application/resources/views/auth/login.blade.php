@@ -8,8 +8,8 @@
         <form method="POST" action="{{ route('login') }}" class="mt-6 space-y-5">
             @csrf
             <div>
-                <label for="email" class="block text-sm font-semibold">Email</label>
-                <input id="email" name="email" type="email" value="{{ is_string(old('email')) ? old('email') : '' }}" required maxlength="255" autocomplete="username" autofocus class="mt-2 w-full rounded border border-slate-300 p-3">
+                <label for="username" class="block text-sm font-semibold">Username</label>
+                <input id="username" name="username" type="text" value="{{ is_string(old('username')) ? old('username') : '' }}" required minlength="3" maxlength="50" autocomplete="username" autofocus class="mt-2 w-full rounded border border-slate-300 p-3">
             </div>
             <div>
                 <label for="password" class="block text-sm font-semibold">Password</label>

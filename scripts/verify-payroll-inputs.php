@@ -50,7 +50,7 @@ function inputCheckRequest(User $actor, string $class, array $data, ?PayrollBatc
 $nonce = strtoupper(bin2hex(random_bytes(12)));
 $connection->beginTransaction();
 try {
-    $actor = User::factory()->create(['role' => Role::PayrollOfficer, 'email' => 'input-check-'.$nonce.'@example.test']);
+    $actor = User::factory()->create(['role' => Role::PayrollOfficer, 'username' => 'input-check-'.$nonce]);
     $preparation = app(PayrollPreparationService::class);
     $inputs = app(PayrollInputService::class);
     $date = CarbonImmutable::create(random_int(8000, 8998), random_int(1, 12), 1);
@@ -120,7 +120,7 @@ try {
 } finally {
     $connection->rollBack();
 }
-if (User::where('email', 'input-check-'.$nonce.'@example.test')->exists()
+if (User::where('username', 'input-check-'.$nonce)->exists()
     || Employee::where('employee_number', 'like', 'INPUT-'.$nonce.'%')->exists()
     || SalarySchedule::where('name', 'FICTIONAL INPUT CHECK '.$nonce)->exists()) {
     throw new RuntimeException('Input check retained fictional fixtures.');

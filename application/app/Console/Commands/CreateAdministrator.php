@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Enums\Role;
 use App\Models\User;
 use App\Rules\SupportedPassword;
+use App\Rules\Username;
 use Illuminate\Console\Command;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\Cache;
@@ -30,13 +31,13 @@ class CreateAdministrator extends Command
 
         $data = [
             'name' => $this->ask('Administrator name'),
-            'email' => Str::lower(trim((string) $this->ask('Administrator email'))),
+            'username' => Str::lower(trim((string) $this->ask('Administrator username'))),
             'password' => $this->secret('Password (12+ characters, upper/lowercase and numbers)'),
             'password_confirmation' => $this->secret('Confirm password'),
         ];
         $validator = Validator::make($data, [
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'max:255', Rule::unique('users')],
+            'username' => ['required', 'string', new Username, Rule::unique('users')],
             'password' => ['bail', 'required', 'string', new SupportedPassword, 'confirmed', Password::min(12)->mixedCase()->numbers()],
         ]);
 
@@ -69,7 +70,7 @@ class CreateAdministrator extends Command
             $account->is_active = true;
             $account->save();
         } catch (UniqueConstraintViolationException) {
-            $this->error('This email address is already in use.');
+            $this->error('This username is already in use.');
 
             return self::FAILURE;
         } finally {

@@ -13,18 +13,18 @@ if ($connection->getDriverName() !== 'mysql') {
     exit(1);
 }
 
-$email = 'foundation-'.bin2hex(random_bytes(8)).'@example.test';
+$username = 'foundation-'.bin2hex(random_bytes(8));
 $connection->beginTransaction();
 try {
-    $user = User::factory()->create(['name' => 'Foundation Test', 'email' => $email]);
-    if ($user->fresh()?->email !== $email) {
+    $user = User::factory()->create(['name' => 'Foundation Test', 'username' => $username]);
+    if ($user->fresh()?->username !== $username) {
         throw new RuntimeException('MySQL persistence check failed.');
     }
 } finally {
     $connection->rollBack();
 }
 
-if (User::where('email', $email)->exists()) {
+if (User::where('username', $username)->exists()) {
     throw new RuntimeException('MySQL rollback check failed.');
 }
 echo "MySQL write, read, and rollback checks passed; no test account retained.\n";

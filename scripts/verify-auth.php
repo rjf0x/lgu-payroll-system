@@ -16,20 +16,20 @@ if ($connection->getDriverName() !== 'mysql') {
     throw new RuntimeException('This smoke check requires the configured MySQL database.');
 }
 
-$emails = [];
+$usernames = [];
 $connection->beginTransaction();
 try {
     foreach (Role::cases() as $role) {
-        $email = 'auth-'.bin2hex(random_bytes(12)).'@example.test';
-        $emails[] = $email;
+        $username = 'auth-'.bin2hex(random_bytes(12));
+        $usernames[] = $username;
         $password = bin2hex(random_bytes(24));
-        $account = new User(['name' => 'Fictional Access Check', 'email' => $email, 'password' => $password]);
+        $account = new User(['name' => 'Fictional Access Check', 'username' => $username, 'password' => $password]);
         $account->role = $role;
         $account->save();
         $account->refresh();
 
         if ($account->role !== $role || ! Hash::check($password, $account->password)
-            || ! Auth::attempt(['email' => $email, 'password' => $password, 'is_active' => true])) {
+            || ! Auth::attempt(['username' => $username, 'password' => $password, 'is_active' => true])) {
             throw new RuntimeException('MySQL role persistence or authentication failed.');
         }
         foreach (Role::cases() as $candidate) {
@@ -43,7 +43,7 @@ try {
         Auth::logout();
         $account->is_active = false;
         $account->save();
-        if (Auth::attempt(['email' => $email, 'password' => $password, 'is_active' => true])) {
+        if (Auth::attempt(['username' => $username, 'password' => $password, 'is_active' => true])) {
             throw new RuntimeException('An inactive MySQL account authenticated.');
         }
     }
@@ -52,7 +52,7 @@ try {
     $connection->rollBack();
 }
 
-if (User::whereIn('email', $emails)->exists()) {
+if (User::whereIn('username', $usernames)->exists()) {
     throw new RuntimeException('MySQL authentication smoke check did not roll back.');
 }
 echo "MySQL authentication, four-role authorization, inactive-account rejection, and rollback passed; no test accounts retained.\n";

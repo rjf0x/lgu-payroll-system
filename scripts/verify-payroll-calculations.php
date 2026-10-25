@@ -58,7 +58,7 @@ function calculationCheckRequest(User $actor, string $class = Request::class, ar
 $nonce = strtoupper(bin2hex(random_bytes(12)));
 $connection->beginTransaction();
 try {
-    $actor = User::factory()->create(['role' => Role::PayrollOfficer, 'email' => 'calculation-check-'.$nonce.'@example.test']);
+    $actor = User::factory()->create(['role' => Role::PayrollOfficer, 'username' => 'calculation-check-'.$nonce]);
     $preparation = app(PayrollPreparationService::class);
     $inputs = app(PayrollInputService::class);
     $calculator = app(PayrollCalculationService::class);
@@ -147,7 +147,7 @@ try {
 } finally {
     $connection->rollBack();
 }
-if (User::where('email', 'calculation-check-'.$nonce.'@example.test')->exists()
+if (User::where('username', 'calculation-check-'.$nonce)->exists()
     || Employee::where('employee_number', 'like', 'CALC-'.$nonce.'%')->exists()
     || PayrollCalculationRun::where('created_by', $actor->id)->exists()) {
     throw new RuntimeException('Calculation smoke fixtures were retained.');

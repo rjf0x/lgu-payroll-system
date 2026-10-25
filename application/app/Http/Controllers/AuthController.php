@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Rules\SupportedPassword;
+use App\Rules\Username;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -20,22 +21,22 @@ class AuthController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        if (is_string($request->input('email'))) {
-            $request->merge(['email' => Str::lower(trim($request->input('email')))]);
+        if (is_string($request->input('username'))) {
+            $request->merge(['username' => Str::lower(trim($request->input('username')))]);
         }
         $credentials = $request->validate([
-            'email' => ['required', 'string', 'email', 'max:255'],
+            'username' => ['required', 'string', new Username],
             'password' => ['bail', 'required', 'string', new SupportedPassword],
         ]);
-        $key = 'login:'.hash('sha256', $credentials['email'].'|'.$request->ip());
+        $key = 'login:'.hash('sha256', $credentials['username'].'|'.$request->ip());
 
         if (RateLimiter::tooManyAttempts($key, 5)) {
-            throw ValidationException::withMessages(['email' => 'Too many sign-in attempts. Try again in '.RateLimiter::availableIn($key).' seconds.']);
+            throw ValidationException::withMessages(['username' => 'Too many sign-in attempts. Try again in '.RateLimiter::availableIn($key).' seconds.']);
         }
 
         if (! Auth::attempt([...$credentials, 'is_active' => true])) {
             RateLimiter::hit($key, 60);
-            throw ValidationException::withMessages(['email' => 'The provided credentials could not be verified.']);
+            throw ValidationException::withMessages(['username' => 'The provided credentials could not be verified.']);
         }
 
         RateLimiter::clear($key);

@@ -44,10 +44,10 @@ function employeeRequest(User $actor, array $data, ?Employee $employee = null): 
 }
 
 $numbers = [];
-$email = 'employee-check-'.bin2hex(random_bytes(12)).'@example.test';
+$username = 'employee-check-'.bin2hex(random_bytes(12));
 $connection->beginTransaction();
 try {
-    $officer = User::factory()->create(['email' => $email, 'role' => Role::PayrollOfficer]);
+    $officer = User::factory()->create(['username' => $username, 'role' => Role::PayrollOfficer]);
     Auth::setUser($officer);
     $controller = app(EmployeeController::class);
     foreach (PersonnelClassification::cases() as $classification) {
@@ -95,7 +95,7 @@ try {
     Auth::forgetGuards();
     $connection->rollBack();
 }
-if (Employee::whereIn('employee_number', $numbers)->exists() || User::where('email', $email)->exists()) {
+if (Employee::whereIn('employee_number', $numbers)->exists() || User::where('username', $username)->exists()) {
     throw new RuntimeException('Employee smoke check rollback failed.');
 }
 echo "MySQL employee create/read/edit, three classifications, literal search, role policy, stale-edit rejection and rollback passed; no fictional records retained.\n";

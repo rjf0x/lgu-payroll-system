@@ -28,10 +28,10 @@ class FoundationTest extends TestCase
 
     public function test_base_migrations_support_database_persistence(): void
     {
-        $user = User::factory()->create(['email' => 'foundation@example.test']);
+        $user = User::factory()->create(['username' => 'foundation']);
 
-        $this->assertDatabaseHas('users', ['id' => $user->id, 'email' => 'foundation@example.test']);
-        $this->assertSame('foundation@example.test', $user->fresh()->email);
+        $this->assertDatabaseHas('users', ['id' => $user->id, 'username' => 'foundation']);
+        $this->assertSame('foundation', $user->fresh()->username);
     }
 
     public function test_readiness_command_succeeds_with_a_migrated_database(): void

@@ -37,7 +37,7 @@ class UserController extends Controller
                 $account->forceFill($data)->save();
             }, 3);
         } catch (UniqueConstraintViolationException) {
-            throw ValidationException::withMessages(['email' => 'This email address is already in use.']);
+            throw ValidationException::withMessages(['username' => 'This username is already in use.']);
         }
 
         return redirect()->route('users.index')->with('status', 'Account created.');
@@ -67,7 +67,7 @@ class UserController extends Controller
                 return $account;
             }, 3);
         } catch (UniqueConstraintViolationException) {
-            throw ValidationException::withMessages(['email' => 'This email address is already in use.']);
+            throw ValidationException::withMessages(['username' => 'This username is already in use.']);
         }
 
         if ($account->is($request->user())) {

@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use App\Enums\Role;
 use App\Rules\SupportedPassword;
+use App\Rules\Username;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -19,8 +20,8 @@ class SaveUserRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
-        if (is_string($this->input('email'))) {
-            $this->merge(['email' => Str::lower(trim($this->input('email')))]);
+        if (is_string($this->input('username'))) {
+            $this->merge(['username' => Str::lower(trim($this->input('username')))]);
         }
     }
 
@@ -28,7 +29,7 @@ class SaveUserRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($this->route('user'))],
+            'username' => ['required', 'string', new Username, Rule::unique('users')->ignore($this->route('user'))],
             'role' => ['required', Rule::enum(Role::class)],
             'is_active' => ['required', 'boolean'],
             'password' => ['bail', $this->isMethod('post') ? 'required' : 'nullable', 'string', new SupportedPassword, 'confirmed', Password::min(12)->mixedCase()->numbers()],

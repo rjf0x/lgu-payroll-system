@@ -18,7 +18,7 @@ class EnsureActiveAccount
             $request->session()->invalidate();
             $request->session()->regenerateToken();
 
-            return redirect()->route('login')->withErrors(['email' => 'Your session has ended. Please sign in again.']);
+            return redirect()->route('login')->withErrors(['username' => 'Your session has ended. Please sign in again.']);
         }
 
         return $next($request);

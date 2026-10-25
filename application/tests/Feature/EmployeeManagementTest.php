@@ -33,7 +33,7 @@ class EmployeeManagementTest extends TestCase
     {
         $user = User::factory()->create(['role' => $role]);
         $expected = session('url.intended', route('dashboard'));
-        $this->post('/login', ['email' => $user->email, 'password' => 'password'])->assertRedirect($expected);
+        $this->post('/login', ['username' => $user->username, 'password' => 'password'])->assertRedirect($expected);
 
         return $user;
     }
