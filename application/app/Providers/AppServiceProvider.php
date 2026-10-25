@@ -4,9 +4,11 @@ namespace App\Providers;
 
 use App\Enums\Role;
 use App\Models\Employee;
+use App\Models\PayrollBatch;
 use App\Models\SalarySchedule;
 use App\Models\User;
 use App\Policies\EmployeePolicy;
+use App\Policies\PayrollBatchPolicy;
 use App\Policies\SalarySchedulePolicy;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
@@ -27,6 +29,7 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Gate::policy(Employee::class, EmployeePolicy::class);
+        Gate::policy(PayrollBatch::class, PayrollBatchPolicy::class);
         Gate::policy(SalarySchedule::class, SalarySchedulePolicy::class);
         Gate::define('manage-users', fn (User $user) => $user->is_active && $user->role === Role::Administrator);
 

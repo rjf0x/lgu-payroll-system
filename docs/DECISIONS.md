@@ -197,3 +197,43 @@ References: [Laravel 13 upgrade guide](https://laravel.com/framework/docs/13.x/u
   to recalculate salaries or rewrite history automatically.
 - Keep audit probes in ignored local storage. Update audit/tracking documents
   only; do not fix application code or start Phase 4 during this audit.
+
+## 2026-10-25 - Phase 4 payroll period management
+
+- One fixed monthly batch per data-use mode; one covered entry per employee in a
+  batch. These are provisional office-grouping conventions, not an assertion of
+  statutory batch limits. No deletion or period/mode editing endpoint is supplied.
+- Payroll Officers prepare drafts, Approvers/Viewers read them, and Administrators
+  retain configuration responsibilities. Preparation status is Draft, with coverage
+  count and per-entry source checks/Needs review; no approval readiness is claimed.
+- Store the authorized salary reference and exact monthly salary as a draft
+  snapshot, separate from calculated pay. Reopen saved snapshots unchanged. A
+  deliberate removal/re-add refreshes an entry; source salary history is untouched.
+- Use first-day salary and currently active employment as a conservative prototype
+  convention. Block employees joining mid-month and salaries/schedules changing
+  within the month until the client supplies approved treatment. Do not prorate,
+  infer attendance, calculate pay or introduce Phase 5 inputs.
+- Resolve the latest employee record across all modes, then require the batch's
+  mode and employee category, a matching effective published schedule and equal
+  stored/source decimal amounts. Do not fall back across modes or use a superseded
+  source. These guards apply to the Phase 4 consumer; the Phase 3 audit stays open.
+- Add selected coverage atomically without discarding previous pages. Limit each
+  request to 100 distinct employees and paginate visible lists at 20. A selected
+  source is rechecked at write time under locks, not trusted from submitted amounts.
+- Reauthorize the current actor, lock batch and employee/source rows, and compare
+  draft versions for every coverage mutation. Database unique constraints back
+  duplicate guards. Deadlock retries do not substitute for live race validation.
+- Reuse Phase 3's text-encoding middleware on payroll draft mutations to keep
+  rejected malformed inputs out of JSON sessions. No credentials or fixtures seeded.
+- Current employee activity is not effective-dated; historical employment status
+  cannot be inferred. Real grouping and eligibility require client validation.
+
+## 2026-10-25 - Phase 4 audit
+
+- Retain Implemented and tested for the supported Phase 4 prototype workflows;
+  no new confirmed application defect was found. PHASE_4_AUDIT.md separates
+  tested acceptance behavior from unvalidated policies and missing evidence.
+- Historical activity reconstruction, mid-month treatment and grouping require
+  client validation; do not invent rules or expand this audit into later phases.
+- Keep additional integration/boundary probes in ignored local storage. No
+  application or permanent test changes, fixes, migrations or Phase 5 work.

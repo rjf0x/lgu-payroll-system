@@ -4,6 +4,7 @@ use App\Enums\Role;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\EmployeeSalaryController;
+use App\Http\Controllers\PayrollBatchController;
 use App\Http\Controllers\SalaryScheduleController;
 use App\Http\Controllers\UserController;
 use App\Http\Middleware\EnsureSalaryTextEncoding;
@@ -24,6 +25,13 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::resource('users', UserController::class)->except(['show', 'destroy'])->middleware('can:manage-users');
     Route::resource('employees', EmployeeController::class)->except('destroy');
     Route::middleware(EnsureSalaryTextEncoding::class)->group(function () {
+        Route::get('payroll-batches', [PayrollBatchController::class, 'index'])->name('payroll-batches.index');
+        Route::get('payroll-batches/create', [PayrollBatchController::class, 'create'])->name('payroll-batches.create');
+        Route::post('payroll-batches', [PayrollBatchController::class, 'store'])->name('payroll-batches.store');
+        Route::get('payroll-batches/{batch}', [PayrollBatchController::class, 'show'])->name('payroll-batches.show');
+        Route::get('payroll-batches/{batch}/employees/create', [PayrollBatchController::class, 'select'])->name('payroll-employees.create');
+        Route::post('payroll-batches/{batch}/employees', [PayrollBatchController::class, 'add'])->name('payroll-employees.store');
+        Route::delete('payroll-batches/{batch}/employees/{entry}', [PayrollBatchController::class, 'remove'])->name('payroll-employees.destroy');
         Route::resource('salary-schedules', SalaryScheduleController::class)->parameters(['salary-schedules' => 'schedule'])->except('destroy');
         Route::post('salary-schedules/{schedule}/rates', [SalaryScheduleController::class, 'storeRate'])->name('salary-rates.store');
         Route::put('salary-schedules/{schedule}/rates/{rate}', [SalaryScheduleController::class, 'updateRate'])->name('salary-rates.update');

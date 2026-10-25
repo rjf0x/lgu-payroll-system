@@ -3,7 +3,7 @@
 Browser-based payroll prototype with planned blockchain integrity verification.
 Includes authentication, administrator-managed accounts, four roles, server
 authorization, employee payroll records, and effective-dated salary schedules
-with preserved employee salary history. Phase 2 has two open findings;
+with preserved employee salary history and monthly payroll drafts. Phase 2 has two open findings;
 see [the employee-management audit](docs/PHASE_2_AUDIT.md). Phase 3 also needs
 validation; see [the salary-management audit](docs/PHASE_3_AUDIT.md) for salary
 applicability, real/demo history interference, and promotion-policy gaps.
@@ -143,12 +143,38 @@ entered basis date. It does not establish eligibility, assume category-specific
 rules, or change salary/steps automatically. Schedule-only updates retain the prior
 basis. Obtain client validation of actual schedules, authority practices, and
 eligibility rules before real use. Demonstration records remain clearly labeled
-and are not production payroll inputs. No statutory calculation or payroll batch
-preparation is included in this phase.
+and are not production payroll inputs. Salary maintenance does not perform
+statutory calculations; select covered employees through the draft workflow below.
 
 Payroll Officers, Approvers and Viewers can read employee salary history;
 Administrators maintain schedules without gaining employee-record access.
 Only Administrators see draft schedules; all active roles can read published ones.
+
+## Monthly payroll drafts
+
+As **Payroll Officer**, open **Monthly payroll drafts**, create a payroll month
+with its data use, then choose **Select employees**. Save selected employees on
+each page before continuing. Reopen the batch from the draft list to inspect its
+coverage, source references, exact monthly salary snapshots and preparation status.
+Approvers and Viewers have read-only access; Administrators retain settings access.
+
+There is one batch per month and data use, with one entry per employee. The month
+and data use cannot be edited after creation. Repeated submissions and outdated
+draft versions are rejected. Remove an entry from the draft to change coverage or
+remove and re-add it to refresh changed source details; employee salary history
+is retained. Reopening never silently recalculates or refreshes saved values.
+
+The prototype uses the first day of the month as the salary reference date and
+requires an active employee employed by that date, a matching latest authorized
+salary record, and the applicable published schedule for the selected data use.
+Missing, superseded, mismatched or mid-month-changing salary sources are blocked.
+The latest record is checked across all modes before validating the batch mode;
+an older real record is not substituted for a newer demonstration record.
+Saved entries that become invalid or differ from current source details display
+**Needs review**. Source checks cover the displayed page, not a whole-batch
+approval. Client validation is required for first-day eligibility, mid-month
+treatment and the one-batch-per-month convention. No pay calculation, earnings,
+deduction input or approval workflow is included yet.
 
 ## Verification
 
@@ -165,6 +191,7 @@ php ../scripts/verify-auth.php
 php ../scripts/verify-auth-concurrency.php
 php ../scripts/verify-employees.php
 php ../scripts/verify-salaries.php
+php ../scripts/verify-payroll-drafts.php
 ```
 
 PHPUnit pins in-memory SQLite in both server and environment variables. The base
@@ -183,6 +210,7 @@ It verifies reciprocal administrator deactivation/demotion without changing sche
 The employee smoke check rolls back its fictional user and employee records.
 The salary smoke check likewise rolls back all of its fictional records, including
 schedules, rates, employee history and users; it never runs destructive migrations.
+The payroll draft check also rolls back its fictional batches, coverage and sources.
 The readiness command separately verifies the configured MySQL connection and
 base tables. `/up` indicates application boot, not database readiness.
 

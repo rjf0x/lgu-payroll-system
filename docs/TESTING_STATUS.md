@@ -1,7 +1,8 @@
 # Testing status
 
-Updated: 2026-10-25. Phase 3 passes 111 tests / 1683 assertions. The two Phase 2
-defects in PHASE_2_AUDIT.md remain open and were not changed in Phase 3.
+Updated: 2026-10-25. The final Phase 4 full regression passes 148 tests / 1997
+assertions. Phase 2/3 audit findings remain open; Phase 4 adds salary consumer
+guards without changing those earlier workflows.
 
 ## Automated checks
 
@@ -49,7 +50,7 @@ tests or features at initial inspection.
 ## Not yet verified
 
 Production deployment, full offline office-network operation, visual browser review,
-backups/recovery, and all Phase 4-13 workflows. Payroll formulas and regulatory
+backups/recovery, and all Phase 5-13 workflows. Payroll formulas and regulatory
 procedures require validation before their implementation and activation.
 
 ## Audit and commit review
@@ -322,3 +323,87 @@ coverage. No application fixes or Phase 4 functionality were implemented.
 The existing Phase 3 audit findings remain open; successful automated checks do
 not establish full acceptance. No application fixes or later-phase work were
 introduced during commit preparation.
+
+## Phase 4 payroll period management
+
+`PayrollPreparationTest.php` adds 37 cases, including datasets, covering:
+
+- Create/list/reopen an empty or covered monthly draft; all three categories and
+  both data-use modes; exact decimal amounts and selected salary record IDs.
+- Four-role read/write matrix, guests/CSRF, revoked role and expired actor checks.
+- Duplicate month/mode and employee coverage rejection, repeated submissions,
+  stale draft versions, cross-batch removal, and atomic rollback on invalid members.
+- Invalid months, data-use values and selection shapes; safe old inputs and
+  malformed UTF-8 rejection; supported year storage boundaries.
+- First-day employment/reference conventions; missing/future/inactive/mismatched
+  category/mode/amount sources, corrected employment dates and superseded schedules.
+- Newest-record selection without cross-mode fallback, first-day change inclusion,
+  mid-month salary/schedule rejection and leap-day/month-end boundaries.
+- Saved-value preservation, stale source/profile warnings, explicit remove/re-add
+  refresh without changing salary history, and paginated coverage preservation.
+
+| Check | Result |
+| --- | --- |
+| Initial Phase 4 focused suite | Passed: 31 cases / 272 assertions before final additions |
+| `composer test` before final source guards/boundary cases | Passed: 143 tests / 1966 assertions |
+| Final `scripts/verify-test-isolation.ps1` | Passed: 148 tests / 1997 assertions with inherited production/MySQL settings |
+| Application and scripts Pint `--test` | Passed; formatting applied to new code |
+| `npm.cmd run build` and `composer validate --strict` | Passed |
+| MySQL `migrate --force` and `migrate:status` | Passed: two new payroll draft tables; all seven migrations Ran |
+| `php ../scripts/verify-payroll-drafts.php` | Passed twice, including after final service change: both modes, all categories, create/reopen, exact snapshots/source checks, duplicate protection and fixture rollback |
+| `php artisan app:check-foundation` | Passed against local MySQL |
+| Route inventory | Seven new payroll batch/coverage routes present; no calculation or approval endpoints |
+| `git diff --check` | Passed; normal Git LF/CRLF notices |
+
+An earlier isolation run returned 148 tests / 1976 assertions with one failure in
+the unchanged Phase 2 random employee-search fixture (EmployeeManagementTest.php:229).
+It expected the target alone but received another generated employee. This is the
+same instability documented during Phase 3; all Phase 4 cases passed. The final
+isolation rerun passed all 148 cases; the earlier failure is not concealed or fixed
+as part of Phase 4.
+
+HTTP/Blade feature cases use isolated in-memory SQLite. The MySQL smoke check uses
+fictional model fixtures and validated payroll requests/service transactions within
+an outer rollback transaction. It is not a browser or simultaneous-writer test.
+The project MySQL instance was started temporarily, the salary/draft migrations
+were retained, all smoke fixtures rolled back, and the server stopped afterward.
+
+Unverified: client batch grouping and first-day/month-changing salary conventions,
+actual salary/eligibility/authority examples, browser visual acceptance, concurrent
+MySQL publication/assignment/coverage races, large-office performance, deployment
+and backup/recovery. Per-entry source checks cover the visible page; no whole-batch
+approval/readiness or calculated pay is claimed. Phase 2/3 findings remain open and
+Phase 5 inputs were not implemented.
+
+## Phase 4 audit follow-up
+
+The full PHPUnit suite and inherited-environment isolation regression each passed
+148 tests / 1997 assertions. Application/script Pint and whitespace checks passed.
+MySQL verified create/reopen, both modes, all categories, exact source snapshots,
+duplicates and rollback; all seven migrations already showed Ran. The project
+database was started temporarily and stopped to restore its initial state.
+
+Three ignored probes (3 cases / 36 assertions) passed actual employee/salary
+authorization HTTP integration into a real-mode draft with distinct rates,
+unpublished-schedule handling, and employee-selection pagination/read-only actions.
+These extend diagnostic evidence rather than permanent suite coverage.
+
+No new Phase 4 defect was reproduced. PHASE_4_AUDIT.md records the qualified
+acceptance result, missing real/client/concurrent/browser/performance evidence and
+the historical-employment/mid-month limitations. Earlier Phase 2/3 findings remain
+open. No application fixes or Phase 5 implementation were performed.
+
+## Phase 4 commit verification - 2026-10-25
+
+- `composer test`: passed, 148 tests / 1997 assertions.
+- Application and scripts Pint `--test`: passed.
+- `composer validate --strict` and `npm.cmd run build`: passed.
+- MySQL payroll draft workflow and migration status: passed; all seven migrations
+  Ran. All fictional fixtures rolled back; the temporarily started database was
+  stopped to restore its initial state.
+- Candidate files were reviewed for sensitive paths, secret/debug markers and
+  exact local application/database credential values; none matched. Environment
+  files, local credentials/diagnostics, dependencies and generated assets remain
+  excluded. The Phase 4 audit's client-policy and verification limits still apply.
+
+No application fixes or Phase 5 functionality were introduced during preparation.

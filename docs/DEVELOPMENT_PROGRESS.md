@@ -4,8 +4,8 @@ Updated: 2026-10-25 (Asia/Manila).
 
 ## Authorized work
 
-Phase 3 - Salary Grade and Step Management authorized by the user's instruction
-to proceed after the Phase 2 commit. Phase 4 has not been authorized.
+Phase 4 - Payroll Period Management authorized by the user's instruction to
+proceed after the Phase 3 commit. Phase 5 has not been authorized.
 
 ## Initial inspection
 
@@ -177,8 +177,50 @@ promotions also need client policy validation. Both full-suite runs during the
 audit passed 111 tests / 1683 assertions; MySQL, isolation, and Pint checks passed.
 No application fixes or Phase 4 work were performed during the audit.
 
+## Phase 4
+
+Status: Implemented and tested.
+
+- Monthly draft create/list/reopen, with fixed month/data use and paginated
+  employee coverage. Payroll Officers write; Approvers/Viewers read. Administrators
+  do not inherit payroll record access.
+- Server-selected salary/employee snapshots retain exact decimal amounts, source,
+  grade/step, authorized position, category, identity and office. Duplicate month/
+  mode batches and duplicate employee coverage are prevented by database constraints.
+- First-day reference, employment/source applicability checks, mode matching,
+  superseded-source and mid-month-change rejection. The latest source is checked
+  across all modes so a contaminated salary stream cannot supply an older fallback.
+- Draft entries preserve saved values on reopen and show Needs review when sources
+  or profile details change. Removing/re-adding refreshes a draft entry explicitly
+  without changing salary history. Status remains Draft/Not calculated.
+- Atomic writes, locked current actor/employee/salary sources, batch version checks,
+  stale authority protection and safe validation. Selection adds coverage page by
+  page rather than replacing previously saved employees.
+- Two-table migration applied to local MySQL; rollback-only MySQL verification
+  covers both modes, all categories, exact snapshots, reopening and duplicates.
+
+See TESTING_STATUS.md for executed tests and the intermittent existing Phase 2
+random-fixture failure. The earlier Phase 2/3 audit findings remain open; Phase 4
+adds consumer guards rather than changing the earlier salary workflow. Client
+grouping/first-day/mid-month policies, live concurrent MySQL writes and browser
+acceptance remain unverified. No calculations, input amounts, approvals or Phase 5
+features were introduced.
+
+Acceptance evidence: the final full isolation run passed 148 tests / 1997
+assertions, including 37 new Phase 4 cases and all 111 prior cases. MySQL draft
+create/reopen, both modes, all categories, exact salary snapshots, source checks,
+duplicate rejection and rollback passed. Pint, production build, strict Composer
+validation, migration status and readiness checks passed.
+
+Audit follow-up: [PHASE_4_AUDIT.md](PHASE_4_AUDIT.md) confirms both acceptance
+criteria for supported prototype conventions; no new Phase 4 application defect
+was reproduced. Both full-suite runs passed 148 tests / 1997 assertions; MySQL
+and three additional workflow/boundary probes passed. Client policy, historical
+employment handling, live races, browser acceptance and performance remain
+unverified. No application fixes or Phase 5 work were performed during the audit.
+
 ## Next phase
 
-Phase 4 - Payroll Period Management. Do not proceed automatically.
+Phase 5 - Earnings and Deduction Inputs. Do not proceed automatically.
 
 Final status: STOPPED - Awaiting permission to continue.
