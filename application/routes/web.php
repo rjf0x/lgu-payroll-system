@@ -8,8 +8,10 @@ use App\Http\Controllers\PayrollBatchController;
 use App\Http\Controllers\PayrollCalculationController;
 use App\Http\Controllers\PayrollInputController;
 use App\Http\Controllers\SalaryScheduleController;
+use App\Http\Controllers\StatutoryPreviewController;
 use App\Http\Controllers\UserController;
 use App\Http\Middleware\EnsureSalaryTextEncoding;
+use App\Http\Middleware\PreventStatutoryInputFlash;
 use App\Http\Middleware\ScopePayrollInputErrors;
 use Illuminate\Support\Facades\Route;
 
@@ -30,7 +32,10 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::get('payroll-batches/{batch}/employees/{entry}/inputs', [PayrollInputController::class, 'show'])->name('payroll-inputs.show');
     Route::put('payroll-batches/{batch}/employees/{entry}/inputs', [PayrollInputController::class, 'update'])
         ->middleware([ScopePayrollInputErrors::class, EnsureSalaryTextEncoding::class])->name('payroll-inputs.update');
+    Route::post('payroll-batches/{batch}/calculations/{run}/employees/{item}/statutory', [StatutoryPreviewController::class, 'store'])
+        ->middleware([PreventStatutoryInputFlash::class, EnsureSalaryTextEncoding::class])->name('statutory-previews.store');
     Route::middleware(EnsureSalaryTextEncoding::class)->group(function () {
+        Route::get('payroll-batches/{batch}/calculations/{run}/employees/{item}/statutory', [StatutoryPreviewController::class, 'show'])->name('statutory-previews.show');
         Route::get('payroll-batches/{batch}/calculations', [PayrollCalculationController::class, 'index'])->name('payroll-calculations.index');
         Route::post('payroll-batches/{batch}/calculations', [PayrollCalculationController::class, 'store'])->name('payroll-calculations.store');
         Route::get('payroll-batches/{batch}/calculations/{run}', [PayrollCalculationController::class, 'show'])->name('payroll-calculations.show');

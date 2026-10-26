@@ -4,12 +4,15 @@ Updated: 2026-10-26 (Asia/Manila).
 
 ## Authorized work
 
-Phase 6 - Core Payroll Calculation authorized by the user's instruction to
-proceed after the Phase 5 commit. Phase 7 has not been authorized.
+Phase 7 - Contributions and Withholding Tax is now authorized by the user's
+instruction to proceed to the next phase, implement only that phase, test and stop.
+The user confirmed no client-approved rules/examples are available; production
+statutory processing remains blocked. Phase 8 has not been authorized.
+Phase 6 - Core Payroll Calculation was authorized after the Phase 5 commit.
 After Phase 6 commit `8217a68`, the user authorized replacing email-based login
 with usernames and removing email columns. This change does not begin Phase 7.
 The user subsequently requested a UI/UX refresh using UI UX Pro Max. That work
-updates existing interfaces only; Phase 7 remains unauthorized.
+updated existing interfaces only; Phase 7 was not authorized at that time.
 
 ## Initial inspection
 
@@ -361,8 +364,71 @@ was available, so screenshots, actual viewport layout, screen-reader behavior an
 live JavaScript interactions remain unverified. No backend/rule/schema changes,
 dependencies, Phase 7 work or Git commit were introduced.
 
+## Phase 7 - Contributions and Withholding Tax
+
+Status: Implemented but needs validation. The supported reference engine/workflow
+is implemented and tested; client-approved real processing is blocked.
+
+- Separate per-employee contribution/withholding reviews from preserved core
+  previews, using explicit fictional coverage and reviewed bases for each category.
+- Source-controlled regulatory reference parameters, with ordinary GSIS,
+  tiered/capped Pag-IBIG and shared employed PhilHealth employee calculations.
+  All category applicability remains unverified; real calculations stay disabled.
+- Monthly regular-only, cumulative monthly average and December annual tax
+  scenarios. Configurable shared bonus exemption; taxable excess included once in
+  taxable compensation; previous withholding and credits/refunds recorded.
+- Explainable exact-decimal calculations with explicit reference rounding;
+  incomplete inputs/rules produce issues and null totals. No statutory zero is
+  inferred from missing data. Manual tax/YTD inputs are not a verified ledger.
+- Immutable statutory revisions preserve complete inputs, parameters/sources,
+  results, operator and time. Source/version/actor checks, stale-save rejection,
+  idempotent retries and core/input preservation reuse existing authorization.
+- One new table, routes, linked review screen, calculator/workflow regressions and
+  rollback-only MySQL verifier. No dependencies, Phase 8 settings/activation UI or
+  approval/finalization features were added. See PHASE_7_HANDOFF.md for files,
+  browser scenarios, sources and limits; TESTING_STATUS.md records executed checks.
+
+Acceptance evidence: final full isolation regression passed 304 tests / 3319
+assertions, including 65 new Phase 7 cases and all 239 existing cases. New statutory
+and existing MySQL workflow verifiers passed with fixture rollback. Production
+asset build, Pint, strict Composer validation and database readiness passed.
+MySQL testing caught and corrected JSON object-key ordering in idempotent retries;
+a permanent regression covers the correction. One new table was applied, along
+with the previously pending username migration; all eleven migrations are Ran.
+
+The user confirmed no approved client rules are available. Category coverage,
+taxable classifications, office procedure selection/rounding, special cases,
+refund/shortfall execution, browser acceptance, live concurrency/recovery and
+performance remain unverified. Existing Phase 2/3 findings are unchanged.
+
+## Phase 7 audit and correction
+
+Phase 7 audit (2026-10-26): [PHASE_7_AUDIT.md](PHASE_7_AUDIT.md) records two
+medium findings (one-cent cumulative half-cent underrounding and rejected statutory
+reason prefill in another employee's salary form) and one low source-rule validation
+finding (malformed brackets/limits). Full isolation regression still passes 304
+tests / 3319 assertions; four additional diagnostics reproduce the findings and
+MySQL statutory/core verifiers pass with rollback. Status remains Implemented but
+needs validation; production isolation holds in exercised paths. No fixes or
+Phase 8 work were performed. Correct the current-phase findings before treating
+the reference workflow as accepted.
+
+Correction follow-up: the user authorized current-phase fixes only. F1-F3 are
+corrected: exact cumulative liability before rounding, suppressed rejected input
+across statutory request/encoding/service failures, and validated bracket shapes
+and contribution parameter ranges. Engine v2 saves new reviews rather than reuse
+v1 results; older immutable reviews remain readable and marked for review.
+
+Focused Phase 7 tests pass 99 cases / 528 assertions. The full isolation suite
+passes 338 tests / 3502 assertions, retaining all 304 previous cases and adding 34
+regressions. Expanded MySQL statutory, core and input checks pass with rollback;
+build, Pint, Composer validation, readiness and whitespace checks pass. No policy
+rate, schema, dependency, new payroll feature or Phase 8 work was introduced.
+Client rules, browser acceptance, concurrency/recovery and performance remain
+unverified. See PHASE_7_AUDIT.md and TESTING_STATUS.md for details.
+
 ## Next phase
 
-Phase 7 - Contributions and Withholding Tax. Do not proceed automatically.
+Phase 8 - Payroll Configuration. Do not proceed automatically.
 
 Final status: STOPPED - Awaiting permission to continue.

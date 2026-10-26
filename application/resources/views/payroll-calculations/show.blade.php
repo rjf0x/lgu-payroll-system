@@ -14,6 +14,7 @@
     @foreach ($items as $item)
         <article class="mt-6 rounded border border-slate-200 bg-white p-6">
             <h2 class="text-xl font-semibold">{{ $item->entry_snapshot['employee_number'] }} · {{ $item->entry_snapshot['employee_name'] }}</h2>
+            <a href="{{ route('statutory-previews.show', [$batch, $run, $item]) }}" class="mt-3 inline-block font-semibold text-teal-800 underline">Contribution and withholding reference review</a>
             <p class="mt-2">{{ $item->entry_snapshot['position'] }} · {{ $item->entry_snapshot['personnel_classification'] }} · Grade {{ $item->entry_snapshot['grade'] }} / Step {{ $item->entry_snapshot['step'] }}</p>
             <p class="mt-2">Input revision {{ $item->input_snapshot['revision'] }} · Authority: {{ $item->input_snapshot['authority_reference'] }} · Reason: {{ $item->input_snapshot['change_reason'] }}</p>
             @if ($issues[$item->id])<p class="mt-4 font-semibold text-amber-900">Needs review: {{ $issues[$item->id] }}</p>@endif

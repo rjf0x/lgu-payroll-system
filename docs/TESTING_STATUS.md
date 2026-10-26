@@ -712,3 +712,117 @@ motion, 200% zoom and 375/768/1024/1440px layouts remain manual verification gap
 Contrast values above measure specified token pairs, not every rendered state.
 No accessibility certification, measured CLS, office acceptance or performance
 capacity claim is made. See UI_UX_GUIDE.md for the manual review checklist.
+
+## Phase 7 - Contributions and Withholding Tax - 2026-10-26
+
+Scope: regulatory-reference scenarios only. The user confirmed no client-approved
+rules/examples are available. Real payroll remains blocked; passing arithmetic
+tests do not validate client applicability or production payroll.
+
+| Executed check | Result |
+| --- | --- |
+| Existing calculator regression before integration | Passed: 12 tests / 36 assertions |
+| Initial Phase 7 calculator/workflow suite | Passed: 62 tests / 330 assertions |
+| Full isolation regression before MySQL retry correction | Passed: 301 tests / 3304 assertions |
+| Focused Phase 7 suite after JSON-key-order correction | Passed: 63 tests / 340 assertions |
+| Final full isolation regression, including cumulative-rounding/supplementary guards | Passed: 304 tests / 3319 assertions, 39.649 seconds, 70 MB; all 239 existing tests retained. Ran with conflicting inherited production/MySQL/DB_URL values and stayed on in-memory SQLite |
+| New `php ../scripts/verify-statutory-previews.php` | Passed on MySQL: explicit scenarios for all three categories, literal contributions/tax/net, shared-pool bonus excess, previous withholding, retries, preserved inputs/core/rule history, null unavailable amounts, real blocking and fixture rollback |
+| Existing MySQL core-calculation and payroll-input verifiers | Passed with fictional fixture rollback |
+| Existing MySQL foundation/auth/concurrency/employee/salary/draft verifiers | Passed; transactional fixtures rolled back and the concurrency verifier's temporary accounts removed |
+| `php artisan migrate --force`, `migrate:status`, `app:check-foundation` | Applied the previously pending username migration plus one new statutory-preview table migration. All eleven migrations Ran; database readiness passed |
+| Application Pint `--test` and new verifier Pint `--test` | Passed |
+| `npm.cmd run build` | Passed: 60 modules, CSS 79.38 kB / gzip 16.65 kB, JS 55.37 kB / gzip 20.88 kB |
+| `composer validate --strict` | Passed |
+| `git diff --check` | Passed; ordinary LF/CRLF conversion notices |
+
+The final suite adds 65 cases / 345 assertions: 48 calculator cases and 17
+workflow cases. Literal vectors cover all monthly/annual tax brackets, contribution
+thresholds/floors/caps, half-cent rounding, bonus pool changes, cumulative averages
+without premature monthly rounding, previous withholding and separate credits.
+Missing coverage/bases/rules, unsupported years/categories, supplementary regular-
+only rejection and unavailable combined totals are covered. Integration tests
+exercise all roles, guest/CSRF/revocation, route ownership, source/version drift,
+stale reviews, idempotency, history pagination, immutable models, persistence
+failure rollback, encoding rejection and absence of cross-employee rejected values.
+
+The first MySQL run reproduced a real retry bug: strict PHP array comparison
+treated MySQL's reordered JSON object keys as changed inputs/parameters. The
+service now recursively canonicalizes object keys, preserving list order and
+scalar types; a permanent regression simulates reordering and rejects a changed
+rate type. A subsequent preservation check initially compared an unrefreshed
+newly inserted core model with its database serialization. Refreshing the smoke
+baseline corrected that verifier mismatch; the passing run confirms no core/input
+overwrites. Both failed attempts rolled back their fictional records.
+
+MySQL was initially stopped and temporarily started for additive migrations and
+verification. Its original stopped state was restored after checks. The new smoke
+check uses a vacant far-future fictional year and an in-memory reference-year
+override solely to avoid operator schedules; no configured rule file is modified.
+No real employee fixtures, passwords or database dumps were added to source.
+
+HTTP integration tests render the new form/history for authorized roles and assert
+literal values, warnings and links. No live browser visual/JavaScript/viewport
+acceptance was performed. No simultaneous MySQL statutory-save/source-publication
+race, recovery/deadlock fault test or office-scale performance measurement was
+performed. No client-approved statutory cases are claimed. See
+PHASE_7_HANDOFF.md for source references, unsupported cases and browser checks.
+
+## Phase 7 acceptance audit - 2026-10-26
+
+- Full isolation suite rerun: passed **304 tests / 3319 assertions**, 39.778
+  seconds, 68 MB. All tests stayed on in-memory SQLite under conflicting inherited
+  production/MySQL/DB_URL values. No application or permanent-test changes.
+- Four ignored diagnostics passed **36 assertions reproducing observed defects**:
+  cumulative liability `50625.15` instead of the exact half-up `50625.16`;
+  rejected statutory reason in another employee's salary form using the actual
+  session cookie; associative bracket HTTP 500 with no saved review; and a zero
+  savings ceiling accepted with `0.00` deduction and no issues. These are successful
+  reproductions, not tests establishing correct behavior.
+- MySQL statutory-preview and core-calculation verifiers passed with rollback.
+  All eleven migrations were already Ran; no migration executed during this audit.
+  MySQL was temporarily started and its original stopped state restored afterward.
+- Application and new verifier Pint `--test` passed; whitespace check passed.
+- No browser visual/interaction, statutory concurrent-writer/recovery or capacity
+  tests performed. No client-approved regulatory payroll cases are available.
+
+See PHASE_7_AUDIT.md for acceptance assessment, the two medium/one low findings,
+missing/blocked functionality, test limitations and the diagnostic command. The
+audit updated documentation and ignored probes only; no fixes or Phase 8 work.
+
+## Phase 7 audit corrections - 2026-10-26
+
+F1-F3 are corrected under the user's current-phase-only instruction. No new
+payroll feature, schema change, dependency or Phase 8 work.
+
+| Executed check | Result |
+| --- | --- |
+| Selected regressions before fixes | Expected failures reproduced: 12 failed / 2 passed, 52 assertions; cumulative cent boundaries, persistent-session flash and malformed bracket HTTP behavior |
+| Focused statutory suite after fixes | Passed: 99 tests / 528 assertions |
+| Final `scripts/verify-test-isolation.ps1` | Passed: 338 tests / 3502 assertions, 43.551 seconds, 70 MB; all 304 previous cases retained. Inherited production/MySQL/DB_URL conflicts stayed isolated in-memory |
+| Expanded MySQL statutory verifier | Passed: original scenarios plus exact `50625.16` liability, negative reference net, retries, invalid zero cap and associative-bracket incomplete states; three explicit fictional categories and rollback |
+| MySQL core/input verifiers | Both passed with fixture rollback and input/history preservation |
+| Application/verifier Pint `--test` | Passed |
+| Production build | Passed: 60 modules; CSS 79.38 kB / gzip 16.65 kB, JS 55.37 kB / gzip 20.88 kB |
+| Strict Composer validation | Passed |
+| Readiness/migration status | Passed; eleven migrations already Ran. No migration executed |
+| Whitespace check | Passed; ordinary LF/CRLF conversion notices |
+
+Thirty-four permanent cases were added: ten literal cumulative cent-boundary
+vectors, six malformed bracket shapes, twelve invalid contribution ranges and six
+workflow cases (three validation paths, persisted half-cent output, malformed-rule
+incomplete output and old-engine history/retry preservation). Total Phase 7
+coverage is 99 cases / 528 assertions: 76 calculator and 23 workflow cases. The
+existing statutory-form isolation test now explicitly carries a session cookie.
+Cross-workflow tests also check suppression of unvalidated shared fields.
+
+Engine v2 preserves exact liability through final half-up rounding; eight-decimal
+averages are display values. Legacy v1 snapshots remain unchanged; the regression
+verifies a reviewed v2 revision and idempotent retries. No historical data rewrite
+or reference rate change. Middleware affects statutory validation redirects only.
+
+MySQL was initially stopped, temporarily started for rollback-only checks and
+restored afterward. No real fixture, credential export, database dump or commit
+was added. Historical ignored audit probes assert former defects and are no longer
+the current regression command. Client-approved cases/category applicability and
+rounding acceptance, live browser, statutory concurrency/recovery and office-scale
+performance remain unverified. Real payroll remains disabled.

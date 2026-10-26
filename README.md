@@ -4,7 +4,8 @@ Browser-based payroll prototype with planned blockchain integrity verification.
 Includes authentication, administrator-managed accounts, four roles, server
 authorization, employee payroll records, and effective-dated salary schedules
 with preserved employee salary history, monthly payroll drafts, employee inputs
-and versioned demonstration core calculation previews.
+and versioned demonstration core calculation previews, with separate contribution
+and withholding reference reviews.
 Phase 2 has two open findings;
 see [the employee-management audit](docs/PHASE_2_AUDIT.md). Phase 3 also needs
 validation; see [the salary-management audit](docs/PHASE_3_AUDIT.md) for salary
@@ -260,6 +261,35 @@ reopens the existing run; saving new inputs or changing coverage allows a new ru
 History preserves employee, salary, input revision and line-by-line calculation
 snapshots. Old results stay unchanged and show draft/source review notices.
 
+## Contribution and withholding reference reviews (Phase 7)
+
+From an employee in a saved core preview, open **Contribution and withholding
+reference review**. Payroll Officers can save fictional scenarios; Approvers and
+Viewers read preserved reviews. Explicitly review each contribution's coverage and
+basis, tax procedure, taxable compensation, qualifying bonus pool and prior tax.
+Unknown applicability leaves amounts and combined totals unavailable.
+
+The source-controlled reference profile supports ordinary GSIS members, standard
+Pag-IBIG employee savings and employed/shared PhilHealth premiums. Tax scenarios
+support regular monthly pay, cumulative monthly averages and December annual
+reconciliation. Taxable excess qualifying benefits are added to taxable compensation
+once. No membership, category entitlement, tax classification or annual ledger is
+inferred. Regulatory references do not establish client approval.
+
+Reviews preserve their inputs, rules/sources, bases, results and operator without
+changing core previews or manual inputs. Changed scenarios create separate
+revisions; unchanged retries reuse the latest matching review. Outdated drafts or
+salary/input sources prevent new reviews. Credits/refunds remain separate from
+reference net and need review. All results remain demonstration-only; real
+payroll is blocked. The reference review window is limited to 2026 pending review
+for other years. Configuration maintenance/activation remains Phase 8.
+
+New reviews use the corrected v2 engine. Earlier-engine reviews stay unchanged
+and display a notice; review and save a new revision to apply the corrections.
+
+See [the Phase 7 handoff](docs/PHASE_7_HANDOFF.md) for sources, supported procedures,
+remaining validation needs and a browser scenario with expected amounts.
+
 ## Interface and navigation
 
 The workspace uses a navy sidebar, active navigation, role-specific starting
@@ -290,6 +320,7 @@ php ../scripts/verify-salaries.php
 php ../scripts/verify-payroll-drafts.php
 php ../scripts/verify-payroll-inputs.php
 php ../scripts/verify-payroll-calculations.php
+php ../scripts/verify-statutory-previews.php
 ```
 
 PHPUnit pins in-memory SQLite in both server and environment variables. The base
@@ -314,6 +345,11 @@ per-employee values, edits and preservation across coverage refresh.
 The core calculation check verifies all three categories against prepared item and
 batch totals, no input overwrite, exclusions/replacements, idempotency and history;
 its fictional calculation fixtures also roll back.
+The statutory preview check verifies three explicitly selected fictional category
+scenarios, prepared contribution/tax/net values, taxable bonus excess, retries,
+history and missing-rule states without changing core inputs. Its fictional
+fixtures also roll back; an in-memory review-year override isolates their dates
+from operator schedules and does not change the configured reference file.
 The readiness command separately verifies the configured MySQL connection and
 base tables. `/up` indicates application boot, not database readiness.
 

@@ -19,8 +19,8 @@ In progress; Not started; Blocked by client validation.
 | Monthly draft batches and duplicate prevention | 4 | Implemented and tested | PHASE_4_AUDIT.md: both acceptance criteria pass for supported prototype conventions; 148 tests / 1997 assertions, additional workflow probes and MySQL checks pass; no new Phase 4 defect confirmed. First-day/historical eligibility, mid-month treatment, grouping, concurrency, browser acceptance and performance remain unvalidated |
 | Manual employee allowances, bonuses, loans, attendance, adjustments | 5 | Implemented and tested | PHASE_5_AUDIT.md: cross-form retry defect corrected with server-bound identity and seven permanent regressions; full suite 189 tests / 2472 assertions and MySQL input checks pass. Eligibility, attendance, adjustment, browser and concurrency validation remain pending |
 | Decimal-safe totals, rounding, transparent calculation breakdown | 6 | Implemented and tested | PHASE_6_AUDIT.md confirms all three criteria for demonstration-only full-month/zero-attendance previews; 31 phase cases, full isolation suite 220 tests / 2737 assertions, 3 extra probes / 114 assertions and MySQL checks pass. No new defect confirmed. Exact decimals, preserved history/inputs; real processing, client rules, browser, concurrency/recovery and performance remain unvalidated |
-| Configurable validated contributions and withholding | 7 | Not started | Unverified rules must remain inactive for real processing |
-| Taxable excess bonuses included in annual taxable compensation | 7 | Not started | Confirmed requirement; never hardcode the worksheet example |
+| Configurable validated contributions and withholding | 7 | Implemented but needs validation | PHASE_7_AUDIT.md F1-F3 corrected: exact cumulative half-cent liability, suppressed cross-workflow rejected input and validated rule shapes/ranges. Engine v2 preserves earlier reviews. Full isolation suite passes 338 tests / 3502 assertions; 99 Phase 7 cases and expanded MySQL checks pass. No client-approved cases; production remains blocked. PHASE_7_HANDOFF.md records supported scope |
+| Taxable excess bonuses included in annual taxable compensation | 7 | Implemented and tested | Shared configurable qualifying-benefit exemption; excess added once to annual/cumulative taxable compensation. Literal varying-bonus, annual and cumulative cases pass; no fixed worksheet excess. Actual benefit qualification/annual inputs still need client validation |
 | Effective-dated versioned rules and controlled activation | 8 | Not started | Preserve historic payroll values |
 | Submission, return, approval, finalization, separation of duties | 9 | Not started | Preparers cannot approve their own submissions |
 | Payroll registers and payslips from finalized values | 10 | Not started | Obtain and validate client templates |
@@ -48,7 +48,8 @@ In progress; Not started; Blocked by client validation.
 | Blockchain network, governance, confirmations, outage policy | Blocked by client validation | Suitable genuine test network and operating policy |
 | Office network deployment, backups, and recovery | Blocked by client validation | Target infrastructure and operational acceptance |
 
-No statutory formulas or rates have been activated. No employee information is
+No statutory formulas or rates have been activated for real payroll. Phase 7
+reference scenarios cannot produce production-ready results. No employee information is
 stored on-chain. A local hash or simulated transaction cannot satisfy anchoring.
 
 ## Excluded scope

@@ -390,3 +390,79 @@ References: [Laravel 13 upgrade guide](https://laravel.com/framework/docs/13.x/u
 - Verify through the full tests, a separate fictional SQLite review database,
   served HTTP checks and measured color-token contrast. Record the unavailable
   browser connection rather than claim visual/responsive interaction acceptance.
+
+## 2026-10-26 - Phase 7 reference contributions and withholding
+
+- Proceed only with Phase 7 under the user's instruction. The user explicitly
+  answered that no client-approved rules/examples are available. Implement a
+  reviewable reference workflow; do not equate official regulatory references
+  with validated LGU applicability or enable real payroll processing.
+- Preserve Phase 6 core results and manual inputs. Attach immutable statutory
+  review revisions to individual saved core items, retaining full rule/source
+  parameters, entered bases, results and operator. Never recalculate old reviews
+  from current config. One additive table is the minimal storage dependency.
+- Use source-controlled reference config as a Phase 7 dependency, with explicit
+  unverified entries for all three categories and a deliberately limited 2026
+  reference window. Phase 8 settings maintenance, activation and effective-dated
+  rule administration remain out of scope. No HTTP input can activate production.
+- Require explicit coverage and monthly basis per contribution, and separately
+  reviewed tax classifications, taxable compensation, qualifying bonus pool,
+  elapsed monthly periods and prior withholding. Default to unknown, not zero.
+  Unsupported/missing inputs or reference rules yield null affected results and
+  combined totals, with explanations and `production_ready: false` in every result.
+- Use official GSIS, Pag-IBIG, PhilHealth and BIR sources recorded in the handoff.
+  Exclude special membership/tax cases and automatic entitlement. Support regular
+  monthly-only, cumulative monthly and December annual reference procedures;
+  reject regular-only processing with saved supplementary earnings. The shared
+  bonus exemption is configurable and excess is included once, never hardcoded.
+- Use BCMath throughout with reference half-up rounding at component totals.
+  Retain eight decimal places for cumulative averages before multiplying and
+  rounding liability. Client rounding approval is unresolved. Preserve credits/
+  refunds separately and do not infer refund execution or a minimum-net floor.
+- Reuse current actor, source/input and whole-batch core checks within a locked
+  transaction before saving or reusing reviews. Reject outdated core/entry context
+  and stale review revisions. Canonicalize JSON object keys for MySQL retries
+  without sorting lists or coercing scalar types.
+- Avoid global old-input reuse in statutory forms: only this item's saved values
+  prefill its form, and rejected values must be re-entered. Keep old core screens
+  explicit that their own saved totals exclude statutory amounts.
+- Test literal arithmetic/boundary cases, authorization/CSRF, source/version drift,
+  immutability, retries and rollback. Keep smoke fixtures transactional and isolate
+  their dates with an in-memory review-year override; never rewrite operator rules.
+- Stop after Phase 7 and report remaining client/browser/concurrency gaps. Do not
+  implement Phase 8 or resolve unrelated earlier audit findings in this phase.
+
+## 2026-10-26 - Phase 7 audit
+
+- Audit current Phase 7 acceptance without application fixes or Phase 8 work.
+  Retain Implemented but needs validation: passing existing tests does not negate
+  reproduced cumulative rounding, cross-workflow flash-state and malformed-rule
+  validation defects. Record severity, reproducible evidence and scope limits in
+  PHASE_7_AUDIT.md rather than silently treating them as accepted behavior.
+- Keep exact arithmetic correctness separate from unapproved client rounding
+  policy. F1 contradicts the reference engine's own half-up convention; the
+  production block is still required regardless of correction.
+- Preserve all existing source/permanent tests and prior uncommitted work. Keep
+  four reproduction probes in ignored local audit storage; they verify observed
+  defects and are not corrected-behavior regressions. Do not claim a production
+  approval, full statutory accuracy or browser/concurrency acceptance.
+
+## 2026-10-26 - Phase 7 audit corrections
+
+- Fix only confirmed current-phase findings under the user's instruction. No
+  settings UI, new tax/contribution procedure, Phase 8 work or production activation.
+- Evaluate cumulative selected-bracket arithmetic against exact total amounts;
+  use divided averages for display only. Preserve the existing half-up convention.
+  Bump the engine identifier to v2 so v1 results cannot satisfy current-engine
+  retries. Retain historical reviews and identify their older engine in the UI.
+- Suppress statutory `_old_input` at the outer route middleware boundary on
+  validation redirects, including encoding and service failures. Keep errors and
+  JSON behavior. This enforces the saved-values-only form policy without changing
+  unrelated salary-form retry behavior.
+- Validate list/tuple shape before tax-table numeric access and positive active
+  contribution parameters with logical rate/threshold/floor/cap bounds. Invalid
+  reference configurations produce explained incomplete results. No statutory
+  rate or applicability rule was introduced.
+- Add permanent corrected-behavior regressions and expand rollback-only MySQL
+  checks. Retain the audit's original evidence as historical; permanent tests
+  supersede its ignored former-defect probes. Client validation remains pending.
