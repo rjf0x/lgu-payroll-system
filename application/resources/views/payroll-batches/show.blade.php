@@ -1,11 +1,12 @@
 @extends('layouts.app')
 @section('content')
-    <a href="{{ route('payroll-batches.index') }}" class="text-teal-800 underline">All monthly drafts</a>
+    <a href="{{ route('payroll-batches.index') }}" class="text-teal-800 underline">All monthly payroll</a>
     <div class="mt-5 flex flex-wrap items-center justify-between gap-4">
-        <h1 class="text-3xl font-bold">{{ $batch->period_start->format('F Y') }} payroll draft</h1>
+        <h1 class="text-3xl font-bold">{{ $batch->period_start->format('F Y') }} payroll</h1>
         @can('update', $batch)<a href="{{ route('payroll-employees.create', $batch) }}" class="rounded bg-teal-800 px-4 py-3 text-white">Select employees</a>@endcan
     </div>
-    <p class="mt-3 font-semibold">Draft · {{ $entries->total() }} employees covered · {{ $batch->is_demonstration ? 'Demonstration only — not for real payroll' : 'Externally authorized salary sources' }}</p>
+    <p class="mt-3 font-semibold">{{ ucfirst($batch->status) }} · {{ $entries->total() }} employees covered · {{ $batch->is_demonstration ? 'Demonstration only — not for real payroll' : 'Externally authorized salary sources' }}</p>
+    <a href="{{ route('payroll-reviews.show', $batch) }}" class="mt-3 inline-block font-semibold text-teal-800 underline">Payroll review, approval and finalized snapshot</a>
     <a href="{{ route('payroll-calculations.index', $batch) }}" class="mt-3 inline-block text-teal-800 underline">Core calculation previews and history</a>
     <p class="mt-2 text-slate-600">Salary reference: {{ $batch->period_start->format('Y-m-d') }}. Saved amounts are monthly salary snapshots, not calculated pay. Source checks below apply to the entries on this page; every entry must be reviewed before later processing.</p>
     <div class="mt-6 space-y-4">
@@ -19,7 +20,7 @@
                 @if ($issues[$entry->id])
                     <p class="mt-3 font-semibold text-amber-900">Needs review: {{ $issues[$entry->id] }} Saved values remain unchanged.</p>
                 @else
-                    <p class="mt-3 font-semibold text-teal-800">Salary source checked · Not calculated</p>
+                    <p class="mt-3 font-semibold text-teal-800">Salary source checked · {{ in_array($batch->status, ['draft', 'returned'], true) ? 'See calculation previews for calculated values' : 'See payroll review for preserved submitted values' }}</p>
                 @endif
                 @can('update', $batch)
                     <form method="POST" action="{{ route('payroll-employees.destroy', [$batch, $entry]) }}" class="mt-4">

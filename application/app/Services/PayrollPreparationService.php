@@ -114,6 +114,7 @@ class PayrollPreparationService
             throw ValidationException::withMessages(['record_version' => 'This draft changed in another session. Reload it before saving.']);
         }
         $current->updated_by = $actor->id;
+        $current->coverage_preparer_ids = array_values(array_unique([...($current->coverage_preparer_ids ?? []), $actor->id]));
 
         return $current;
     }

@@ -1,6 +1,6 @@
 # Requirements status
 
-Updated: 2026-10-26. Requirements derive from `master-prompt.md`.
+Updated: 2026-10-27. Requirements derive from `master-prompt.md`.
 Statuses reflect behavior and validation, not screen counts.
 
 Allowed statuses: Implemented and tested; Implemented but needs validation;
@@ -23,7 +23,8 @@ In progress; Not started; Blocked by client validation.
 | Configurable validated contributions and withholding | 7 | Implemented but needs validation | PHASE_7_AUDIT.md F1-F3 corrected: exact cumulative half-cent liability, suppressed cross-workflow rejected input and validated rule shapes/ranges. Engine v2 preserves earlier reviews. Full isolation suite passes 338 tests / 3502 assertions; 99 Phase 7 cases and expanded MySQL checks pass. No client-approved cases; production remains blocked. PHASE_7_HANDOFF.md records supported scope |
 | Taxable excess bonuses included in annual taxable compensation | 7 | Implemented and tested | Shared configurable qualifying-benefit exemption; excess added once to annual/cumulative taxable compensation. Literal varying-bonus, annual and cumulative cases pass; no fixed worksheet excess. Actual benefit qualification/annual inputs still need client validation |
 | Effective-dated versioned rules and controlled activation | 8 | Implemented but needs validation | PHASE_8_REAUDIT.md confirms original F1-F3 remain corrected; no new supported-path defect confirmed. Activation/retention pass for operator-recorded prototype conventions; actual client evidence unavailable and finalized lifecycle only partially verifiable before Phase 9. Re-audit isolation suite passes 396 tests / 4031 assertions (58 Phase 8 cases); 3 extra probes / 38 assertions, MySQL configuration/statutory/core checks and Pint pass. Browser/concurrency/recovery/capacity/client acceptance remains pending |
-| Submission, return, approval, finalization, separation of duties | 9 | Not started | Preparers cannot approve their own submissions |
+| Submission, return, approval, finalization, separation of duties | 9 | Implemented but needs validation | PHASE_9_REAUDIT.md confirms three acceptance criteria for exercised demonstration paths, F1 remains corrected and no new Phase 9 defect confirmed. Permanent Phase 9: 47 cases / 737 assertions; full isolation 443 tests / 4768 assertions, 15 applicable extra audit probes / 267 assertions and MySQL workflow/configuration/core/statutory checks pass. Rendered controls and locked independence checks agree; revoked actors and snapshot preservation pass. Real payroll, authority/policy acceptance, legacy overwritten coverage actors, browser, concurrency/recovery and capacity remain blocked/unverified |
+| Historical finalized values preserved after configuration activation | 8/9 | Implemented and tested | Real configuration-service activation leaves demonstration finalized snapshots, prior submission parameters and saved totals unchanged in SQLite and MySQL checks; actual approved payroll cases remain unavailable |
 | Payroll registers and payslips from finalized values | 10 | Not started | Obtain and validate client templates |
 | Deterministic snapshot and real blockchain anchoring | 11 | Not started | One SHA-256 commitment per finalized batch version |
 | Confirmed commitment comparison, mismatch detection, retries/history | 12 | Not started | Preserve original snapshots and correction versions |
@@ -45,7 +46,7 @@ In progress; Not started; Blocked by client validation.
 | Periodic withholding, annualization, exemptions, bonus treatment, reconciliation | Blocked by client validation | Approved BIR procedure and independently verified examples |
 | Absence/undertime formulas and override authorization | Blocked by client validation | Approved formulas and controlled adjustment policy |
 | Client document layouts | Blocked by client validation | Payroll register and payslip examples |
-| Finalization authority and configuration activation policy | Blocked by client validation | Role and separation-of-duties decisions |
+| Finalization authority and configuration activation policy | Blocked by client validation | Prototype permits independent Approvers to approve and finalize; the same Approver may perform both actions. Administrator maintains configuration. Confirm actual authority, review evidence and any additional reviewer requirements |
 | Blockchain network, governance, confirmations, outage policy | Blocked by client validation | Suitable genuine test network and operating policy |
 | Office network deployment, backups, and recovery | Blocked by client validation | Target infrastructure and operational acceptance |
 

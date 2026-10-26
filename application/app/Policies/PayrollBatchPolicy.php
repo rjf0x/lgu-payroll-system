@@ -25,6 +25,21 @@ class PayrollBatchPolicy
 
     public function update(User $user, PayrollBatch $batch): bool
     {
-        return $this->create($user) && $batch->status === 'draft';
+        return $this->create($user) && in_array($batch->status, ['draft', 'returned'], true);
+    }
+
+    public function submit(User $user, PayrollBatch $batch): bool
+    {
+        return $this->update($user, $batch);
+    }
+
+    public function review(User $user, PayrollBatch $batch): bool
+    {
+        return $user->is_active && $user->role === Role::Approver && in_array($batch->status, ['submitted', 'approved'], true);
+    }
+
+    public function finalize(User $user, PayrollBatch $batch): bool
+    {
+        return $user->is_active && $user->role === Role::Approver && $batch->status === 'approved';
     }
 }

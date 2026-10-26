@@ -1,14 +1,18 @@
 # Development progress
 
-Updated: 2026-10-26 (Asia/Manila).
+Updated: 2026-10-27 (Asia/Manila).
 
 ## Authorized work
 
-Phase 8 - Payroll Configuration is authorized by the instruction to proceed after
-Phase 7 commit `38ede94`, implement only the next phase, test and stop. Phase 9
-is not authorized. Client-approved rules/examples remain unavailable and real
-payroll processing remains blocked.
-The latest instruction authorizes review and fixes of Phase 8 only.
+Phase 9 - Payroll Review and Approval was authorized by the instruction to
+proceed to the next phase, follow the master prompt, implement only that phase,
+test and stop. Phase 8 is complete at `c837cf5`; subsequent login icon commits do
+not change phase sequencing. Phase 10 is not authorized. Client-approved rules
+and examples remain unavailable; real payroll processing remains blocked.
+
+The latest instruction authorizes reviewing, validating and creating one Git
+commit for Phase 9 only. No push or next-phase implementation is authorized.
+Earlier implementation, audit and correction evidence is preserved below.
 
 Phase 7 - Contributions and Withholding Tax was authorized by the user's
 instruction to proceed to the next phase, implement only that phase, test and stop.
@@ -521,8 +525,122 @@ state follow visibility; input content is preserved. Relevant authentication,
 username and interface tests pass (29 cases / 416 assertions), the JavaScript
 toggle smoke check and asset build pass. No payroll phase was advanced.
 
+## Phase 9 - Payroll Review and Approval
+
+Status: Implemented but needs validation.
+
+- Payroll review combines preserved employee/input/core/statutory values and exact
+  batch totals. Complete current demonstration reviews are required for submission.
+- Payroll Officers submit draft/returned batches. Independent Approvers approve,
+  return with a required reason, and finalize approved submissions. Returned batches
+  reuse existing preparation endpoints and retain prior submissions on resubmission.
+- All preparation writes are locked while submitted/approved/finalized. Current
+  actor/session/version and submission identity are rechecked inside transactions.
+  A local review token detects statutory changes that do not alter the batch version.
+- Preparation history and retained coverage-editor IDs prevent self-review after
+  role changes. Finalization requires a retained approval, stores a fixed version-1
+  snapshot with workflow evidence, and locks ordinary batch/entry/history mutations.
+- Later employee/configuration changes do not recalculate finalized snapshots.
+  Changes before approval/finalization require return/review/resubmission. Real
+  payroll, negative-net submission and unexecuted tax credits/refunds remain blocked.
+- One migration expands batch status, backfills known coverage actors and creates
+  submissions/events/finalizations. Applied to local MySQL; thirteen migrations Ran.
+  No production rules, dependency, document generation or blockchain work added.
+
+Acceptance evidence: 42 new cases / 569 assertions pass; full isolation suite passes
+438 tests / 4600 assertions including all 396 earlier cases. MySQL workflow and
+existing configuration/statutory/core verifiers pass with fixture rollback. Pint,
+Composer strict validation, production build, readiness and whitespace checks pass.
+See TESTING_STATUS.md and PHASE_9_HANDOFF.md for commands and manual steps.
+
+Client authority/payroll policies, live browser/accessibility, simultaneous MySQL
+writers, deadlock/connection-loss recovery and office capacity remain unverified.
+Historical coverage-only editors overwritten before this migration cannot be
+reconstructed; known creators/last editors and saved input/calculation/review
+authors are retained. Existing Phase 2/3 audit findings remain unchanged.
+
+## Phase 9 acceptance audit - 2026-10-27
+
+PHASE_9_AUDIT.md records all three acceptance criteria passing for exercised
+demonstration workflows and one low-severity F1 finding: preparation authors who
+become Approvers see forbidden review/finalization forms, although server-side
+independence correctly returns 403. No high/medium workflow defect or additional
+missing supported Phase 9 task area was confirmed. Real rules/authority, legacy
+coverage-history completeness, browser, concurrency/recovery and capacity remain
+limited or unverified.
+
+Full isolation regression passed 438 tests / 4600 assertions. Ten ignored audit
+diagnostics passed 156 assertions, reproducing F1 and checking additional stale
+submission, return rollback, finalizer revocation, history pagination, returned
+coverage correction and isolated migration-method preservation. MySQL workflow,
+configuration/core/statutory checks, readiness, thirteen-migration status and Pint
+passed. MySQL's original stopped state was restored. No application fix, permanent
+test change, migration, Git commit or Phase 10 work performed.
+
+## Phase 9 audit correction - 2026-10-27
+
+Corrected F1 only. The review controller evaluates the existing preparation-
+independence rule once for eligible Approvers, and the view hides approve/return/
+finalize forms for a creator, submitter or retained preparation author. The rule
+is shared with the existing transactional write guard; decisions still reload and
+lock the current actor/batch and recheck independence. Independent Approvers keep
+their existing actions. No approval policy, workflow, calculation or schema added.
+
+Five new permanent regressions cover submitter-only, input, core, statutory and
+coverage authors after role changes. The existing creator test also checks hidden
+controls. These verify submitted/approved markup, direct 403 denials, retained
+submission values and successful independent finalization. The focused six cases
+pass 179 assertions; full isolation passes 443 tests / 4768 assertions, including
+all 438 prior cases. Phase 9 now contributes 47 cases / 737 assertions.
+
+MySQL workflow verification, readiness, thirteen already-Ran migration status,
+Pint, Composer strict validation and whitespace checks passed. MySQL was restored
+to its initial stopped state. No migration, dependency, new feature, Git commit or
+Phase 10 work. Actual client/authority, legacy coverage-history, browser, concurrency/
+recovery and capacity limits remain unchanged. See TESTING_STATUS.md and the
+correction follow-up in PHASE_9_HANDOFF.md; the original audit/probes are historical.
+
+## Phase 9 post-correction re-audit - 2026-10-27
+
+PHASE_9_REAUDIT.md confirms F1 remains corrected, all seven supported task areas
+are present and all three acceptance criteria pass for exercised demonstration
+workflows. No new Phase 9 defect was confirmed. Current renderer and locked writes
+share independence checks; unrelated roles do not gain actions, rendered permission
+is not reused after revocation, and viewing preserves stored values.
+
+Full isolation passed 443 tests / 4768 assertions; new six-case diagnostics passed
+127 assertions and nine applicable prior probes passed 140 assertions. The original
+F1 reproducer was excluded because it asserts the superseded defective behavior.
+Permanent Phase 9 remains 47 cases / 737 assertions. MySQL workflow/configuration/
+core/statutory verifiers, readiness, thirteen already-Ran migration status, Pint
+and whitespace checks passed; MySQL's initial stopped state was restored.
+
+Real rules/authority, overwritten legacy coverage actors, live browser, simultaneous
+writers, recovery, MySQL downgrade and office capacity remain limited/unverified.
+Only re-audit/tracking documents and ignored diagnostics changed; no application
+fix, permanent-test change, migration, new feature, Git commit or Phase 10 work.
+
+## Phase 9 commit review - 2026-10-27
+
+Reviewed the pending Phase 9 implementation, F1 correction, permanent tests,
+MySQL verifier, README, handoff/audits and tracking records for a single scoped
+commit. No unrelated pending change or deleted file was identified. Existing
+configured Git author identity is available; no identity invented.
+
+Full isolation passed 443 tests / 4768 assertions. MySQL workflow/configuration/
+core/statutory verifiers passed with rollback; thirteen migrations were already
+Ran and readiness passed. MySQL's original stopped state was restored. Application/
+verifier Pint, Composer strict validation, production asset build and whitespace
+checks passed. Candidate-path/content review found no credential, dump, generated
+asset, dependency, debug-code or unrelated artifact to include. Local environment,
+build output and additional diagnostics remain ignored.
+
+No application behavior changed during commit review. Real payroll and the client,
+legacy-history, browser, concurrency/recovery and capacity limitations remain as
+recorded in PHASE_9_REAUDIT.md. No Phase 10 work or push.
+
 ## Next phase
 
-Phase 9 - Payroll Review and Approval. Do not proceed automatically.
+Phase 10 - Payroll Document Generation. Do not proceed automatically.
 
 Final status: STOPPED - Awaiting permission to continue.

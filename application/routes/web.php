@@ -7,6 +7,7 @@ use App\Http\Controllers\EmployeeSalaryController;
 use App\Http\Controllers\PayrollBatchController;
 use App\Http\Controllers\PayrollCalculationController;
 use App\Http\Controllers\PayrollInputController;
+use App\Http\Controllers\PayrollReviewController;
 use App\Http\Controllers\PayrollRuleVersionController;
 use App\Http\Controllers\SalaryScheduleController;
 use App\Http\Controllers\StatutoryPreviewController;
@@ -35,6 +36,10 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::view('/dashboard', 'dashboard')->name('dashboard');
     Route::resource('users', UserController::class)->except(['show', 'destroy'])->middleware('can:manage-users');
     Route::resource('employees', EmployeeController::class)->except('destroy');
+    Route::get('payroll-batches/{batch}/review', [PayrollReviewController::class, 'show'])->name('payroll-reviews.show');
+    Route::post('payroll-batches/{batch}/workflow/{action}', [PayrollReviewController::class, 'transition'])
+        ->whereIn('action', ['submit', 'return', 'approve', 'finalize'])
+        ->middleware([PreventStatutoryInputFlash::class, EnsureSalaryTextEncoding::class])->name('payroll-reviews.transition');
     Route::get('payroll-batches/{batch}/employees/{entry}/inputs', [PayrollInputController::class, 'show'])->name('payroll-inputs.show');
     Route::put('payroll-batches/{batch}/employees/{entry}/inputs', [PayrollInputController::class, 'update'])
         ->middleware([ScopePayrollInputErrors::class, EnsureSalaryTextEncoding::class])->name('payroll-inputs.update');

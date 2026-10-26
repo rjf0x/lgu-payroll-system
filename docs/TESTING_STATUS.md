@@ -988,3 +988,169 @@ or Phase 9 work.
   after the icon attribute toggle change. Generated assets remain ignored.
 - No schema, authentication behavior, dependencies, permanent tests or later-phase
   features were added. Live browser visual/assistive-technology checks were not run.
+
+## Phase 9 - Payroll Review and Approval - 2026-10-27
+
+| Check executed | Result |
+| --- | --- |
+| `php vendor/phpunit/phpunit/phpunit --colors=never --filter=PayrollWorkflowTest` | Passed: 42 tests / 569 assertions, 20.566 seconds; new permanent workflow coverage |
+| `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/verify-test-isolation.ps1` | Passed: 438 tests / 4600 assertions, 89.770 seconds, 74 MB; all 396 earlier cases retained; inherited production/MySQL/DB_URL settings remained isolated in-memory |
+| `php vendor/phpunit/phpunit/phpunit --colors=never --filter=PayrollPreparationTest` | Passed: 37 tests / 314 assertions; existing draft behavior after status/schema/model changes |
+| `php artisan test --compact --filter=PayrollPreparationTest` | Passed: 37 tests / 314 assertions; Artisan runner also verified |
+| `php ../scripts/verify-payroll-workflow.php` | Passed on MySQL: three-category combined totals, JSON tokens, role-change independence, return/correction/resubmission, version/event retention, locked/duplicate finalization, later configuration preservation, real block and rollback |
+| Existing MySQL core/statutory/configuration verifiers | Passed: `verify-payroll-calculations.php`, `verify-statutory-previews.php`, `verify-payroll-rule-versions.php`; all fictional fixtures rolled back |
+| `php artisan migrate --force` / `migrate:status` / `app:check` | Phase 9 migration applied successfully; all thirteen migrations Ran; database/base tables ready |
+| Application and workflow-verifier Pint `--test` | Passed |
+| `composer validate --strict` | Passed |
+| `npm.cmd run build` | Passed: 60 modules. Sandbox initially denied Vite access to parent directories; rerun with approved build escalation passed. Generated assets remain ignored |
+| `git diff --check` | Passed |
+
+Workflow assertions cover the three personnel categories and all four roles;
+current actor/session/CSRF/guest restrictions; self-review after role changes;
+historical preparation/coverage editors; every preparation write in submitted,
+approved and finalized states; stale/repeated transitions and statutory review
+tokens; wrong submission identity; required reasons/confirmation; UTF-8/escaping
+and rejected-input isolation; missing/incomplete/stale/real scenarios; negative net
+and tax credits; exact combined employee/batch totals; original values/history;
+actual configuration activation before/after finalization; five injected persistence
+rollback paths; and immutable models including a stale batch object.
+
+The first MySQL workflow fixture omitted the statutory demonstration confirmation
+and was rejected before submission, with its transaction rolled back. The fixture
+was corrected and the full MySQL workflow then printed its success result. No
+production rule or operator data was used. MySQL was initially stopped, temporarily
+started for migration/checks and stopped afterward; no fictional fixtures retained.
+
+No coverage percentage, live browser/visual/accessibility/mobile acceptance,
+simultaneous MySQL decision/source/configuration writes, deadlock/connection-loss
+recovery, MySQL migration rollback or office-scale capacity test performed. Actual
+approved payroll cases and authority policy remain client-validation items. New
+code preserves existing real-processing blocks and older Phase 2/3 findings.
+No Phase 10 feature, Git commit or publication.
+
+Final review: locked source results are explicitly compared against the saved
+entry using the freshly locked employee row before relying on historical preview
+checks. After that guard and the shared payroll navigation update, the focused
+`PayrollWorkflowTest|WorkspaceInterfaceTest` selection passed 48 tests / 641
+assertions (17.717 seconds). The MySQL workflow passed again against the final
+application sources and MySQL was stopped afterward. The final full isolation
+rerun passed 438 tests / 4600 assertions (76.908 seconds, 74 MB). Concurrent MySQL
+race/recovery behavior remains unverified.
+
+## Phase 9 acceptance audit - 2026-10-27
+
+- Full `scripts/verify-test-isolation.ps1` passed **438 tests / 4600 assertions**,
+  73.636 seconds, 74 MB. Conflicting inherited production/MySQL/DB_URL settings
+  remained isolated in-memory. Permanent Phase 9 remains 42 cases / 569 assertions.
+- Ignored diagnostics passed **10 tests / 156 assertions**, 6.473 seconds. One
+  probe reproduces F1: former preparers see approve/return/finalize forms after a
+  role change, but valid submissions return 403 and create no finalization. Other
+  probes verify same-batch stale submission IDs, return-event rollback, three
+  finalizer revocation modes, six-revision history pagination, returned coverage
+  refresh after an office change, migration-method legacy backfill/input preservation
+  and rollback refusal for retained finalization history.
+- The initial migration-method probe errored when SQLite could not disable foreign
+  keys within RefreshDatabase's outer transaction. The audit harness was adjusted
+  to run those methods outside that transaction, still strictly in-memory; all ten
+  probes then passed. No application migration/source was changed. This does not
+  verify populated transactional SQLite migration or MySQL downgrade/recovery.
+- MySQL workflow/configuration/core/statutory verifiers passed with fixture rollback.
+  `migrate:status`: thirteen already Ran; `app:check`: ready. No migration executed.
+  MySQL was started temporarily and restored to its original stopped state.
+- Application and workflow-verifier Pint `--test` and `git diff --check` passed.
+  Build not rerun: no application/asset source changed; preceding successful build
+  evidence remains above.
+
+PHASE_9_AUDIT.md records the low UI finding and acceptance/coverage limits. No
+high/medium workflow defect or additional missing supported task area confirmed.
+Actual rules/authority, legacy overwritten coverage actors, live browser/assistive
+technology, simultaneous MySQL writers, recovery and office-scale capacity remain
+blocked/unverified. Only audit/tracking documents and ignored diagnostics changed;
+no application fix, permanent-test change, migration, Git commit or Phase 10 work.
+
+## Phase 9 audit correction - 2026-10-27
+
+Corrected F1 only: read-time action visibility and the locked write-time guard now
+reuse the same preparation-independence determination. No approval policy change,
+new workflow, calculation, schema, dependency, Git commit or Phase 10 feature.
+
+| Check executed | Result |
+| --- | --- |
+| Five new rendered-control cases before the fix | Failed as expected: 5 cases / 57 assertions; each preparation source exposed a forbidden approval action |
+| Focused new cases plus enhanced existing creator test after correction | Passed: 6 tests / 179 assertions, 2.427 seconds |
+| `scripts/verify-test-isolation.ps1` | Passed: 443 tests / 4768 assertions, 79.250 seconds, 74 MB; all 438 earlier cases retained; inherited production/MySQL/DB_URL settings stayed isolated in-memory |
+| `php ../scripts/verify-payroll-workflow.php` | Passed on MySQL: existing three-category totals, role-change independence, return/resubmission, preserved snapshots/history, duplicate/finalization locks, later configuration retention, real block and fixture rollback |
+| `php artisan migrate:status` / `app:check` | Thirteen migrations already Ran; database/base tables ready. No migration executed |
+| Application Pint `--test` and `composer validate --strict` | Passed |
+| `git diff --check` | Passed |
+
+Five new cases isolate submitter-only, input-author, core-author, statutory-reviewer
+and coverage-editor identities; the enhanced existing creator test covers that
+path as well. Tests inspect submitted/approved pages, reject direct approve/return/
+finalize requests by former preparers, retain immutable submission values, and
+confirm independent Approvers still see and complete their existing actions.
+The new snapshot-preservation assertion was corrected to compare cast arrays
+rather than raw stored JSON before the final focused passing run.
+
+Permanent Phase 9 coverage is now 47 cases / 737 assertions. No coverage percentage
+measured. The old ignored F1 audit reproducer asserts the former visible-control
+behavior and is superseded by these permanent corrected-behavior cases; it was not
+rerun as a current acceptance test. Original audit evidence remains unchanged.
+
+MySQL was initially stopped, temporarily started for rollback-only checks and
+stopped again afterward; no fictional fixture or operator payroll value retained
+or changed. Build not rerun: CSS/JavaScript and utility classes did not change.
+Live browser/visual/keyboard/assistive-technology checks were not performed. Client
+rules/authority, legacy overwritten coverage actors, simultaneous writes, recovery,
+MySQL downgrade and office-scale performance remain limited/unverified as before.
+
+## Phase 9 post-correction re-audit - 2026-10-27
+
+- Full `scripts/verify-test-isolation.ps1` passed **443 tests / 4768 assertions**,
+  76.617 seconds, 74 MB. Inherited production/MySQL/DB_URL values stayed isolated
+  in-memory. Permanent Phase 9 remains 47 cases / 737 assertions.
+- New ignored re-audit diagnostics passed **6 tests / 127 assertions**, 3.927
+  seconds: all four roles across submitted/approved/finalized markup, no read-time
+  snapshot mutation, role/session revocation after rendering, independence helper
+  submission binding and cross-batch decision rejection.
+- Applicable prior ignored audit probes passed **9 tests / 140 assertions**, 5.770
+  seconds: same-batch old submission, return-event rollback, finalizer revocation,
+  six-revision pagination, returned-source refresh and isolated migration-method
+  preservation. The old F1 visible-control reproducer was excluded intentionally;
+  permanent corrected-behavior tests supersede it. No audit history rewritten.
+- MySQL workflow/configuration/core/statutory verifiers passed with fixture rollback.
+  `migrate:status`: all thirteen already Ran; `app:check`: ready. No migration
+  executed. MySQL's initial stopped state was restored after checks.
+- Application and workflow-verifier Pint `--test` and `git diff --check` passed.
+  Build/Composer validation not rerun because asset/dependency sources were unchanged;
+  their latest passing results remain recorded above.
+
+PHASE_9_REAUDIT.md confirms F1 remains corrected and no new Phase 9 defect or
+missing supported task area was confirmed. Fifteen applicable extra audit cases
+pass 267 assertions, separately from the permanent suite; no coverage percentage
+measured. Client/authority examples, legacy overwritten coverage actors, live
+browser/accessibility/mobile behavior, simultaneous MySQL writers, failure/migration
+recovery, MySQL downgrade and office capacity remain limited/unverified.
+Only re-audit/tracking documents and ignored diagnostics changed; no application
+fix, permanent-test change, migration, new feature, Git commit or Phase 10 work.
+
+## Phase 9 commit validation - 2026-10-27
+
+- Full `scripts/verify-test-isolation.ps1` passed **443 tests / 4768 assertions**,
+  78.061 seconds, 72 MB. All 396 prior-phase cases and 47 Phase 9 cases remain.
+- MySQL workflow/configuration/core/statutory verifiers passed with fixture rollback.
+  Thirteen migrations already Ran; `app:check` passed. No migration executed.
+  MySQL's initial stopped state was restored after checks.
+- Application and workflow-verifier Pint `--test`, `composer validate --strict`,
+  `npm.cmd run build` (60 modules) and `git diff --check` passed. Build used the
+  previously approved sandbox escalation; generated output remains ignored.
+- Reviewed tracked diffs, the initially empty staged diff, new Phase 9 files and
+  the intended 28-file commit scope. Candidate-path checks and private-key/provider-
+  key/hardcoded-credential/debug-marker scans returned no findings. No environment,
+  credential, dump, dependency, generated build or ignored diagnostic file belongs
+  in the commit. Local ignore checks confirm those exclusions. Git's inaccessible
+  user-global ignore warning is environmental; repository ignore rules were checked.
+- No application behavior changed during commit review. Client rules/authority,
+  legacy overwritten coverage actors, browser, concurrency/recovery, MySQL downgrade
+  and capacity acceptance remain pending. Real payroll remains blocked. No Phase 10
+  implementation or push.

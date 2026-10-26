@@ -551,3 +551,74 @@ References: [Laravel 13 upgrade guide](https://laravel.com/framework/docs/13.x/u
   icons. Keep a native non-submit button, accessible action labels/tooltips and
   pressed state; reserve a 44-pixel target. Keep the control hidden until JavaScript
   attaches its behavior. No dependency, authentication rule or phase progression.
+
+## 2026-10-27 - Phase 9 payroll review and finalization
+
+- Reuse existing employee coverage, input revisions, core runs and statutory
+  previews. Submit a fixed complete demonstration snapshot; never relabel a core-
+  only subtotal or incomplete statutory scenario as approved payroll.
+- Use draft/returned/submitted/approved/finalized batch states and immutable
+  submissions/events/finalizations. Returned edits require explicit recalculation
+  and reviewed statutory scenarios; resubmission preserves earlier revisions.
+- Permit only independent Approvers to approve, return and finalize. The same
+  Approver can approve and finalize using separate confirmed actions. Actual office
+  authority remains a client-validation item; no additional signature role invented.
+- Reject self-review after role changes using creator/submitter and historical
+  input/core/statutory authors plus retained coverage-editor IDs. Backfill only
+  knowable legacy creator/last-editor IDs; disclose that overwritten pre-migration
+  coverage-only actors cannot be reconstructed.
+- Lock the actor/batch and relevant employee/source/configuration rows during
+  transitions, enforce current version/submission identity and save history/state
+  atomically. A sorted local review token detects statutory changes outside the
+  core batch revision; it does not implement blockchain anchoring.
+- Revalidate current inputs/sources/configuration before approval/finalization.
+  Permit return from approved status so changed values can be corrected. Finalized
+  reads use preserved values and are independent of later configuration activation.
+- Block real payroll, negative-net submission and tax credits/refunds pending
+  validated policy. Retain original amounts; never silently cap, refund or recalculate.
+- Finalize version 1 only. No reopen, finalized correction, document generation or
+  blockchain feature in Phase 9. Refuse migration rollback if it would discard
+  retained workflow records. Keep legacy Phase 2/3 findings outside this change.
+
+## 2026-10-27 - Phase 9 acceptance audit
+
+- Audit the current implementation only; preserve application and permanent-test
+  sources. Put additional fictional diagnostics under ignored `.local/phase9-audit`.
+- Distinguish the low self-review control-display defect from server-side access
+  enforcement, which rejects the actions. Record F1 without implementing a fix.
+- Keep demonstrated acceptance separate from actual payroll rules/authority,
+  unknown legacy coverage actors, live browser, concurrency/recovery and capacity.
+- Keep MySQL checks rollback-only and restore its initial stopped state. Exercise
+  SQLite migration methods only in isolated memory outside the fixture transaction;
+  do not infer MySQL downgrade or transactional SQLite migration acceptance.
+
+## 2026-10-27 - Phase 9 F1 correction
+
+- Correct only the confirmed action-visibility defect. Extract the existing
+  independence determination into a side-effect-free shared service helper.
+  Compute eligibility once during review rendering for role/status-eligible users.
+- Keep the existing role/status policies and transactional independence guard.
+  Rendering does not authorize a later write or cache a decision across requests;
+  writes still lock/reload the actor/batch and re-evaluate current preparation history.
+- Hide forbidden forms without changing payroll values, approval authority,
+  correction/finalization behavior or data-use restrictions. Preserve independent
+  Approver actions and the current real-payroll block.
+- Add permanent HTTP regressions for each recorded preparation source and creator
+  coverage; verify hidden controls, direct denials, positive independent actions and
+  preserved snapshots. Leave the original audit/probe as historical defect evidence.
+- No new feature, schema, dependency or later-phase implementation. Keep existing
+  client, legacy-history, live browser, concurrency/recovery and capacity limits.
+
+## 2026-10-27 - Phase 9 post-correction re-audit
+
+- Preserve original audit/correction evidence and review the corrected sources
+  without changing application behavior or permanent tests. Record current
+  acceptance in PHASE_9_REAUDIT.md; put additional diagnostics under ignored
+  `.local/phase9-reaudit`.
+- Verify role/status rendering and snapshot preservation, foreign submission
+  binding, and transaction-time revocation after rendering. Keep the old F1
+  reproducer historical and exclude it from current corrected-behavior acceptance.
+- Rerun applicable prior probes and MySQL verifiers with owned fictional fixtures
+  and rollback, restoring MySQL's initial stopped state. Do not claim that passing
+  sequential probes establish client, browser, concurrency, recovery or capacity
+  acceptance. No new confirmed Phase 9 defect in exercised paths.

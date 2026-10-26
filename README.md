@@ -5,7 +5,8 @@ Includes authentication, administrator-managed accounts, four roles, server
 authorization, employee payroll records, and effective-dated salary schedules
 with preserved employee salary history, monthly payroll drafts, employee inputs
 and versioned demonstration core calculation previews, with separate contribution
-and withholding reference reviews.
+and withholding reference reviews, with demonstration payroll submission,
+independent approval/return and locked finalized snapshots.
 Phase 2 has two open findings;
 see [the employee-management audit](docs/PHASE_2_AUDIT.md). Phase 3 also needs
 validation; see [the salary-management audit](docs/PHASE_3_AUDIT.md) for salary
@@ -107,7 +108,8 @@ passwords are now rejected; existing hashes cannot reveal their original length.
 
 Each role has its own protected workspace and navigation. Account edits revoke
 previous sessions; the current session survives a self-edit. Disabled users cannot
-sign in. There is no remember-me login. Approval and finalization remain for later phases.
+sign in. There is no remember-me login. Demonstration approval and finalization
+use the separate Approver account described below.
 
 ## Employee records
 
@@ -194,7 +196,8 @@ an older real record is not substituted for a newer demonstration record.
 Saved entries that become invalid or differ from current source details display
 **Needs review**. Source checks cover the displayed page, not a whole-batch
 approval. Client validation is required for first-day eligibility, mid-month
-treatment and the one-batch-per-month convention. Approval is not implemented.
+treatment and the one-batch-per-month convention. Whole-batch approval uses the
+separate payroll review workflow below.
 Employee inputs and demonstration calculation previews are maintained separately below.
 
 ## Draft earnings, deductions and attendance
@@ -318,6 +321,37 @@ versions. Change history preserves calendar effective dates and original events.
 
 See [the Phase 8 handoff](docs/PHASE_8_HANDOFF.md) for browser steps, limits,
 file/database changes and remaining client validation needs.
+
+## Payroll review and approval (Phase 9)
+
+Open a monthly batch and select **Payroll review, approval and finalized snapshot**.
+Save a current core preview and a complete contribution/withholding review for
+every covered employee. Review combined totals and employee breakdowns, enter a
+reason, confirm demonstration use and **Submit for approval** as Payroll Officer.
+Unverified/missing reviews, changed sources, negative net and tax credits/refunds
+block submission. Real payroll processing remains disabled.
+
+Sign in using an independent **Approver**. Review the fixed submission, then
+approve or return with a correction reason. A returned batch can be edited and
+recalculated by a Payroll Officer and submitted as a new retained revision.
+Submitted and approved batches reject preparation writes. A preparer cannot
+review/finalize the same batch after changing role; coverage actors and historical
+input/core/statutory authors are checked as well as the submitter and creator.
+
+An Approver finalizes an approved submission using a separate confirmed action.
+The same independent Approver may approve and finalize. Finalized version 1 stores
+the submitted values, parameters and workflow evidence; later configuration or
+employee changes leave it untouched. Before finalization, changed sources or
+configuration require return and resubmission. Finalized payroll has no reopen or
+correction command in this phase. Blockchain anchoring has not been performed.
+
+Apply `php artisan migrate` before use. See [the Phase 9 handoff](docs/PHASE_9_HANDOFF.md)
+for manual verification, database changes, legacy history limits and pending client
+acceptance. Rollback-only MySQL verification, from `application/`:
+
+```powershell
+php ../scripts/verify-payroll-workflow.php
+```
 
 ## Interface and navigation
 

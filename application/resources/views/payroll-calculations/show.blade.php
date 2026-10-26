@@ -4,7 +4,8 @@
     <h1 class="mt-5 text-3xl font-bold">Core preview {{ $run->id }} · {{ $batch->period_start->format('F Y') }}</h1>
     <p class="mt-3 font-semibold text-amber-900">Provisional demonstration — not for real payroll. Core net excludes statutory deductions.</p>
     <p class="mt-2">Engine {{ $run->engine_version }} · Draft version {{ $run->batch_version }} · Saved {{ $run->created_at->format('Y-m-d H:i') }}</p>
-    @if ($run->batch_version !== $batch->record_version)<p class="mt-4 font-semibold text-amber-900">Draft changed since this preview. Saved results remain unchanged; review inputs and calculate a new version.</p>@endif
+    @if ($run->batch_version !== $batch->record_version && in_array($batch->status, ['draft', 'returned'], true))<p class="mt-4 font-semibold text-amber-900">Draft changed since this preview. Saved results remain unchanged; review inputs and calculate a new version.</p>@endif
+    <a href="{{ route('payroll-reviews.show', $batch) }}" class="mt-3 inline-block text-teal-800 underline">Payroll review and preserved approved values</a>
     <section class="mt-6 rounded border border-slate-200 bg-white p-6">
         <h2 class="text-xl font-semibold">Saved totals for all covered employees in this preview</h2>
         @include('payroll-calculations.totals', ['totals' => $run->totals])
