@@ -6,12 +6,14 @@ use App\Models\Employee;
 use App\Models\EmployeeSalaryRecord;
 use App\Models\PayrollBatch;
 use App\Models\PayrollInputRevision;
+use App\Models\PayrollRuleVersion;
 use App\Models\SalarySchedule;
 use App\Models\StatutoryPreview;
 use App\Models\User;
 use App\Services\PayrollCalculationService;
 use App\Services\PayrollInputService;
 use App\Services\PayrollPreparationService;
+use App\Services\PayrollRuleVersionService;
 use App\Services\StatutoryPreviewService;
 use Carbon\CarbonImmutable;
 use Illuminate\Contracts\Console\Kernel;
@@ -19,6 +21,7 @@ use Illuminate\Http\Request;
 use Illuminate\Session\ArraySessionHandler;
 use Illuminate\Session\Store;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 require __DIR__.'/../application/vendor/autoload.php';
@@ -38,9 +41,13 @@ try {
     $session->start();
     $session->put('auth_version', $actor->auth_version);
     $request->setLaravelSession($session);
+    $configurationAdmin = User::factory()->create(['role' => Role::Administrator, 'username' => 'statutory-config-'.$nonce]);
+    $configurationRequest = clone $request;
+    $configurationRequest->setUserResolver(fn () => $configurationAdmin);
     // Isolate fictional sources from operator data, including any existing 2026 schedules.
     $date = CarbonImmutable::create(random_int(8000, 8998), 12, 1);
-    while (PayrollBatch::whereYear('period_start', $date->year)->exists() || SalarySchedule::whereYear('effective_from', $date->year)->exists()) {
+    while (PayrollBatch::whereYear('period_start', $date->year)->exists() || SalarySchedule::whereYear('effective_from', $date->year)->exists()
+        || PayrollRuleVersion::whereYear('effective_from', $date->year)->exists()) {
         $date = $date->addYear();
         if ($date->year > 9990) {
             throw new RuntimeException('No isolated statutory-check year is available.');
@@ -54,6 +61,25 @@ try {
     $service = app(StatutoryPreviewService::class);
     $batch = $preparation->create($request, ['period' => $date->format('Y-m'), 'is_demonstration' => 1]);
     foreach (PersonnelClassification::cases() as $category) {
+        // Dated fictional configuration isolates the fixture from operator settings.
+        $template = config('payroll_statutory');
+        foreach ($template['contributions'] as &$rule) {
+            unset($rule['method']);
+            $rule['source'] = 'FICTIONAL STATUTORY SOURCE';
+            $rule['scope'] = 'Fictional verification only';
+        }
+        unset($rule);
+        $rules = app(PayrollRuleVersionService::class);
+        $configuration = $rules->save($configurationRequest, [
+            'submission_key' => (string) Str::uuid(), 'record_version' => 0, 'name' => 'FICTIONAL STATUTORY CONFIG '.$nonce,
+            'personnel_classification' => $category->value, 'is_demonstration' => 1,
+            'effective_from' => $date->format('Y-m-d'), 'change_reason' => 'Isolate rollback-only reference fixtures',
+            'parameters' => ['contributions' => $template['contributions'], 'tax' => $template['tax']],
+        ]);
+        $rules->activate($configurationRequest, $configuration, [
+            'record_version' => 1, 'approval_reference' => 'FICTIONAL APPROVAL',
+            'validation_reference' => 'FICTIONAL EXPECTED VECTORS', 'activation_reason' => 'Fictional scenario', 'authorization_confirmed' => 1,
+        ]);
         $employee = Employee::factory()->create(['employee_number' => 'STAT-'.$nonce.'-'.$category->value, 'personnel_classification' => $category]);
         $schedule = SalarySchedule::create(['name' => 'FICTIONAL STATUTORY CHECK '.$nonce, 'personnel_classification' => $category, 'is_demonstration' => 1, 'effective_from' => $date->format('Y-m-d'), 'created_by' => $actor->id]);
         $rate = $schedule->rates()->create(['grade' => 1, 'step' => 1, 'monthly_salary' => '30000.00']);
@@ -78,8 +104,13 @@ try {
     $beforeCore = $run->getAttributes();
     $beforeInputs = PayrollInputRevision::where('payroll_batch_id', $batch->id)->orderBy('id')->get()->map->getAttributes()->all();
     foreach ($run->items()->get() as $item) {
+        $configuration = app(PayrollRuleVersionService::class)->applicable($item->entry_snapshot['personnel_classification'], $date->format('Y-m-d'), true);
+        if (! $configuration || $configuration->created_by !== $configurationAdmin->id) {
+            throw new RuntimeException('Expected an isolated fictional configuration.');
+        }
         $data = [
             'record_version' => $batch->record_version, 'base_revision' => 0,
+            'configuration_version_id' => $configuration->id,
             'gsis_coverage' => 'applicable', 'gsis_basis' => '30000.00',
             'pagibig_coverage' => 'applicable', 'pagibig_basis' => '30000.00',
             'philhealth_coverage' => 'applicable', 'philhealth_basis' => '30000.00',
@@ -115,21 +146,26 @@ try {
             || $first->fresh()->getAttributes() !== $before) {
             throw new RuntimeException('Exact cumulative half-cent calculation, retry or history preservation failed.');
         }
-        $profile = config('payroll_statutory');
-        config(['payroll_statutory.contributions.pagibig.ceiling' => '0.00']);
+        $profile = $configuration->parameters;
+        $invalidProfile = $profile;
+        $invalidProfile['contributions']['pagibig']['ceiling'] = '0.00';
+        // Fault injection bypasses ordinary model locks only for this transaction's
+        // own fictional version. It never changes an operator configuration.
+        DB::table('payroll_rule_versions')->where('id', $configuration->id)->where('created_by', $configurationAdmin->id)->update(['parameters' => json_encode($invalidProfile, JSON_THROW_ON_ERROR)]);
         $data['base_revision'] = 4;
         $fifth = $service->save($request, $batch, $run, $item, $data)->refresh();
         if ($fifth->result['status'] !== 'incomplete' || $fifth->result['contributions']['pagibig']['amount'] !== null) {
             throw new RuntimeException('An invalid contribution ceiling produced a deduction.');
         }
-        config(['payroll_statutory' => $profile]);
-        config(['payroll_statutory.tax.monthly_brackets.1' => ['lower' => '20833.00', 'fixed' => '0.00', 'rate' => '0.15']]);
+        $invalidProfile = $profile;
+        $invalidProfile['tax']['monthly_brackets'][1] = ['lower' => '20833.00', 'fixed' => '0.00', 'rate' => '0.15'];
+        DB::table('payroll_rule_versions')->where('id', $configuration->id)->where('created_by', $configurationAdmin->id)->update(['parameters' => json_encode($invalidProfile, JSON_THROW_ON_ERROR)]);
         $data['base_revision'] = 5;
         $sixth = $service->save($request, $batch, $run, $item, $data)->refresh();
         if ($sixth->result['status'] !== 'incomplete' || $sixth->result['tax']['withholding'] !== null) {
             throw new RuntimeException('Malformed tax brackets did not produce an incomplete review.');
         }
-        config(['payroll_statutory' => $profile]);
+        DB::table('payroll_rule_versions')->where('id', $configuration->id)->where('created_by', $configurationAdmin->id)->update(['parameters' => json_encode($profile, JSON_THROW_ON_ERROR)]);
     }
     if ($run->fresh()->getAttributes() !== $beforeCore
         || PayrollInputRevision::where('payroll_batch_id', $batch->id)->orderBy('id')->get()->map->getAttributes()->all() !== $beforeInputs) {
@@ -149,6 +185,8 @@ try {
     $connection->rollBack();
 }
 if (User::where('username', 'statutory-check-'.$nonce)->exists()
+    || User::where('username', 'statutory-config-'.$nonce)->exists()
+    || PayrollRuleVersion::where('created_by', $configurationAdmin->id)->exists()
     || Employee::where('employee_number', 'like', 'STAT-'.$nonce.'%')->exists()
     || StatutoryPreview::where('created_by', $actor->id)->exists()) {
     throw new RuntimeException('Statutory verification retained fictional fixtures.');

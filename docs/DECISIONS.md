@@ -466,3 +466,81 @@ References: [Laravel 13 upgrade guide](https://laravel.com/framework/docs/13.x/u
 - Add permanent corrected-behavior regressions and expand rollback-only MySQL
   checks. Retain the audit's original evidence as historical; permanent tests
   supersede its ignored former-defect probes. Client validation remains pending.
+
+## 2026-10-26 - Phase 8 payroll configuration
+
+- Implement configuration maintenance only. Preserve Phase 7 methods/rounding and
+  the real-payroll block. No actual client rules are seeded or automatically approved.
+- Use immutable activated versions/events with revisable drafts, unique creation
+  keys, revision checks and locked current-actor authorization. Audit persistence
+  is atomic. A database constraint permits one activation per category/mode/date.
+- Administrators create/revise/copy/activate; other active roles read activated
+  settings only. Require authority and reviewed-example references, reason and
+  confirmation; external data use also needs client-validation confirmation.
+  These record operator claims, not independent external verification. A second
+  configuration approver policy remains for client validation.
+- Scope each version to one category/data use and a first-of-month date, matching
+  current monthly preparation while mid-month policy is unvalidated. Reference
+  review year comes from that effective date. Reject expired-year calculations.
+- Maintain existing formula families, two-decimal parameters and six-row tables.
+  Validate complete schema/sources and engine bounds at save/activation; do not
+  infer new formulas or operational entitlement rules.
+- Select active versions by effective date rather than creation time. Retain the
+  unverified built-in fallback when no maintained version applies; it is never
+  automatically made an approved database version.
+- Recheck the selected configuration ID before statutory persistence/retries,
+  including the first maintained activation. Stale forms require reload/review.
+  New explicit saves preserve full version metadata; prior results never change.
+- Remove rejected configuration input from shared session flash while preserving
+  errors. This prevents names/reasons prefilling other workflows.
+- Keep MySQL fixtures transactional. The statutory verifier owns dated fictional
+  configurations and confines malformed-data fault injection to those rows before
+  restoring/rolling back; it never edits operator configurations.
+- Test preservation of existing immutable snapshots. Actual finalized lifecycle
+  testing belongs to Phase 9. Stop after this phase's checks/documentation.
+
+## 2026-10-26 - Phase 8 audit
+
+- Audit current-phase acceptance without implementation fixes or Phase 9 work.
+  Change Phase 8 status to Implemented but needs validation because the source-
+  reference trust boundary, creation fingerprint ordering and date-only audit
+  representation have reproduced defects despite the passing existing suite.
+- Distinguish confirmed unsafe href rendering from inferred browser execution;
+  the diagnostic does not execute script, fetch employee records or exfiltrate
+  data. Record the click/administrator prerequisites and medium severity.
+- Distinguish the date serialization issue from actual effective-date selection:
+  current selection/preserved monetary values are unchanged in exercised paths.
+- Keep approved activation evidence as operator-recorded authority. Do not invent
+  client approval, a second-person policy or finalized records to satisfy criteria.
+- Preserve implementation/permanent tests and add only audit/tracking documents
+  plus ignored isolated reproductions. Prior work remains uncommitted; no next phase.
+
+## 2026-10-26 - Phase 8 audit corrections
+
+- Correct only F1-F3 under the user's current-phase instruction. Retain the original
+  audit evidence as historical and record corrected behavior separately.
+- Permit document references as input; consume them as escaped text unless they
+  are valid HTTP(S) URLs. Apply this at rendering so already stored references are
+  covered without mutating records or rejecting legitimate document identifiers.
+- Canonicalize associative keys recursively for creation fingerprints, preserving
+  list order/types. Match older records against the immutable creation event and
+  reason rather than the edited draft; retain original hashes/events unchanged.
+- Serialize effective dates as calendar dates in new events. Show legacy dates
+  using the configured application timezone while preserving raw JSON. Do not
+  change actual activation timestamps, rule selection or saved payroll values.
+- Add regressions and rollback-only MySQL compatibility checks. Fault injection
+  is limited to transaction-owned fictional fixtures. No new schema, dependency,
+  formula, actual approved rule, production switch, commit or Phase 9 feature.
+
+## 2026-10-26 - Phase 8 post-correction re-audit
+
+- Audit the corrected current phase only. Preserve application/permanent tests and
+  the original audit evidence; add a separate current acceptance report and ignored
+  isolated probes. No new defect was confirmed in exercised supported paths.
+- Separate operator-recorded activation/retention acceptance from actual approved
+  rules and finalized-record lifecycle acceptance. Keep client evidence unavailable
+  and real processing blocked; do not fabricate later-phase records or features.
+- Verify creation actor/reason identity, fail-closed legacy fallback and server
+  metadata/list boundaries in additional diagnostics. Keep MySQL checks transactional
+  and restore its initial stopped state. Document browser/concurrency/recovery/
+  performance gaps without implying the passing sequential suite covers them.

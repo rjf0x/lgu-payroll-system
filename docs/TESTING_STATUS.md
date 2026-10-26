@@ -1,7 +1,7 @@
 # Testing status
 
-Updated: 2026-10-26. The UI/UX refresh full regression passes 239 tests / 2974
-assertions. Phase 2/3 audit findings and Phase 4 validation limits remain open.
+Updated: 2026-10-26. Phase 8 corrections pass the full isolation suite: 396 tests /
+4031 assertions. Phase 2/3 audit findings and Phase 4 validation limits remain open.
 
 ## Automated checks
 
@@ -826,3 +826,153 @@ was added. Historical ignored audit probes assert former defects and are no long
 the current regression command. Client-approved cases/category applicability and
 rounding acceptance, live browser, statutory concurrency/recovery and office-scale
 performance remain unverified. Real payroll remains disabled.
+
+## Phase 8 - Payroll Configuration - 2026-10-26
+
+| Executed check | Result |
+| --- | --- |
+| Existing statutory/interface suite after initial integration | Passed: 105 tests / 600 assertions |
+| Initial new suite | 32 passed / 2 failed, 279 assertions; a Blade form loop used reserved `$component`, causing render errors. Renamed the variable |
+| Corrected initial configuration suite | Passed: 34 tests / 303 assertions |
+| Expanded configuration suite | Passed: 40 tests / 347 assertions before final configuration identity guard; later full run includes the activation-confirmation assertion |
+| Configuration/statutory workflow suite with identity guard | Passed: 64 tests / 676 assertions |
+| Final `scripts/verify-test-isolation.ps1` | Passed: 379 tests / 3866 assertions, 50.696 seconds, 72 MB; all 338 prior cases retained. Conflicting inherited production/MySQL/DB_URL values stayed isolated in-memory |
+| New MySQL configuration verifier | Passed: six scopes, draft revision/snapshots, creation/activation retries, authorization, external confirmation, effective dates, duplicate prevention, preserved versions, prepared preview arithmetic and rollback |
+| Updated MySQL statutory verifier | Passed with dated transaction-owned configuration fixtures, selected IDs, exact rounding, snapshots/retries, unavailable fault states, core preservation and rollback |
+| Existing MySQL core/input verifiers | Both passed with rollback |
+| Migration/readiness | One additive migration applied, two new tables; all twelve migrations Ran and readiness passed |
+| Application and configuration/statutory verifier Pint | Passed |
+| Production build | Passed: 60 modules; CSS 79.38 kB / gzip 16.65 kB, JS 55.37 kB / gzip 20.88 kB |
+| Strict Composer validation / whitespace | Passed; ordinary LF/CRLF notices |
+
+Phase 8 adds 41 permanent cases / 364 assertions: 38 configuration cases and three
+statutory integration cases. Coverage includes four roles/six scopes, validation,
+draft visibility, stale edits, repeat creation/activation, date boundaries/future/
+reverse-insertion selection, expired years, approval evidence/confirmation, forged
+activation fields, HTTP/model immutability, history pagination, audit failure
+rollback for all three mutation types, encoding/cross-form flash, guest/CSRF/
+role/session/inactivity checks, saved confirmations, selected-version identity
+changes, unchanged payroll snapshots and real processing rejection despite active
+external settings and forged readiness input. No coverage percentage is claimed.
+
+MySQL checks use fictional far-future versions and rollback. The statutory verifier
+owns its dated configuration fixtures instead of depending on runtime defaults
+when operator versions exist. Malformed-rule diagnostics bypass model locks only
+on those transaction-owned rows, restore them and roll back; operator settings
+are untouched. MySQL's original stopped state was restored after checks. No real
+rule seed, credential export, database reset, finalized-record fabrication or commit.
+
+HTTP tests render the new pages, but live browser visual/keyboard/responsive
+acceptance is unverified. No simultaneous MySQL activation/source race, deadlock/
+connection-loss recovery or capacity test. Client rules, rounding and activation
+policy require acceptance. Actual finalized-history lifecycle awaits Phase 9;
+existing immutable core/statutory snapshot preservation is tested. No Phase 9 work.
+
+## Phase 8 acceptance audit - 2026-10-26
+
+- Reran full isolation suite: **379 tests / 3866 assertions passed**, 49.735
+  seconds, 74 MB. Inherited production/MySQL/DB_URL values did not escape SQLite.
+- Three ignored diagnostics passed **21 assertions reproducing defects**:
+  administrator-entered `javascript:` source saved/activated and rendered in a
+  payroll user's href without a CSP response header; same creation payload/key
+  rejected after associative field reordering; and `2026-10-01` effective date
+  rendered in the event snapshot as `2026-09-30T16:00:00.000000Z`. These assert
+  observed defects, not corrected behavior. No browser script was executed.
+- MySQL configuration, statutory-preview and core-calculation checks passed with
+  fixture rollback. All twelve migrations already Ran; no migration executed.
+- Application and both configuration/statutory verifier Pint checks passed;
+  whitespace check passed. MySQL's original stopped state was restored.
+- No live browser, simultaneous configuration/statutory writer, recovery or capacity
+  test. Actual client-approved cases/finalized lifecycle remain unavailable.
+
+See PHASE_8_AUDIT.md for severities, source evidence, acceptance limits and the
+diagnostic command. Only documentation and ignored probes changed in this audit;
+no application fix, permanent regression change, commit or Phase 9 implementation.
+
+## Phase 8 audit corrections - 2026-10-26
+
+Corrected the three confirmed current-phase findings only. No new payroll feature,
+schema change, dependency, production activation, Git commit or Phase 9 work.
+
+| Check executed | Result |
+| --- | --- |
+| New regression selection before fixes | Reproduced defects: 15 failed, 2 passed / 127 assertions; confirms tests exercise the old behavior |
+| Same selection after fixes | Passed: 17 cases / 165 assertions |
+| `php artisan test --compact` | Passed: 396 tests / 4031 assertions, 56.60 seconds |
+| `scripts/verify-test-isolation.ps1` | Passed: 396 tests / 4031 assertions, 55.423 seconds, 74 MB; conflicting inherited production/MySQL/DB_URL values stayed isolated in-memory |
+| `php ../scripts/verify-payroll-rule-versions.php` | Passed on MySQL: all six scopes, canonical/legacy retries after edits, unchanged hashes/drafts/events, calendar dates, authorization, activation, dated selection, arithmetic, real blocking and rollback |
+| `php ../scripts/verify-statutory-previews.php` | Passed on MySQL with fictional owned configuration fixtures and rollback |
+| `php ../scripts/verify-payroll-calculations.php` | Passed on MySQL with rollback |
+| `php ../scripts/verify-payroll-inputs.php` | Passed on MySQL with rollback |
+| Application Pint `--test` and configuration/statutory verifier Pint `--test` | Passed after formatting changed files |
+| `npm run build` | Passed: 60 modules; generated assets remain ignored |
+| `composer validate --strict` | Passed |
+| `php artisan app:check` / `php artisan migrate:status` | Ready; all twelve migrations already Ran; no migration executed |
+| `git diff --check` | Passed; ordinary LF/CRLF notices |
+
+New permanent coverage:
+
+- Twelve saved-source rendering cases exercise JavaScript/mixed-case/control
+  character schemes, data/file/protocol-relative references, plain document IDs,
+  HTML input, valid HTTP(S), and Payroll Officer/Approver/Viewer consumption.
+  References remain stored unchanged, and unsafe values are escaped plain text.
+- Equivalent creation retries reorder nested associative fields and reject actual
+  changed values without modifying the existing version/event. Legacy fingerprint
+  and UTC-snapshot fixtures remain unchanged through reordered retries after edits;
+  the original creation is compared instead of the latest draft. MySQL checks
+  repeat these paths across all six scopes, exercising its JSON object ordering.
+- Three timezone cases cover creation/revision/activation snapshots in Asia/Manila,
+  UTC and Pacific/Auckland. Effective dates stay `Y-m-d`, actual activation times
+  remain ISO UTC instants, and history shows the correct effective date. Legacy raw
+  JSON is preserved with its date interpreted in the application timezone.
+
+Phase 8 now contributes 58 cases / 529 assertions (43 configuration and 15 statutory
+integration cases); all 338 prior cases remain. No coverage percentage is claimed.
+The ignored original audit diagnostics assert former defects and are superseded
+by permanent corrected-behavior tests.
+
+MySQL was initially stopped, temporarily started for rollback-only checks and
+stopped again afterward. Legacy fault injection touched only owned fictional
+transaction fixtures; no operator data, stored history, credential, dump or actual
+configuration was rewritten or retained. Client-approved calculations, actual
+finalized payroll, browser visual/accessibility acceptance, simultaneous writers,
+connection-loss/deadlock recovery and office-scale capacity remain unverified.
+
+## Phase 8 post-correction re-audit - 2026-10-26
+
+- `scripts/verify-test-isolation.ps1`: passed **396 tests / 4031 assertions**, 54.873
+  seconds, 72 MB, with conflicting inherited production/MySQL/DB_URL settings.
+- Ignored additional probes: passed **3 tests / 38 assertions**. Creation keys remain
+  bound to their original actor/reason; missing/invalid legacy creation history
+  rejects fallback without mutation/server error; nested server metadata cannot be
+  forged; tax list reversal is rejected. These are audit-only cases, not permanent
+  suite additions.
+- MySQL configuration/statutory/core verifiers passed with owned fictional fixtures
+  and rollback. Twelve migrations already Ran; none executed. MySQL was started
+  temporarily and restored to its initial stopped state.
+- Application and configuration/statutory verifier Pint `--test` passed; whitespace
+  check passed with ordinary LF/CRLF notices. Asset build was not rerun because no
+  application code changed; its preceding result remains recorded above.
+
+PHASE_8_REAUDIT.md confirms no new supported-path Phase 8 defect and verifies F1-F3
+remain corrected. Permanent Phase 8 coverage remains 58 cases / 529 assertions;
+all 338 prior cases remain. Client examples/approval policy, actual finalized-record
+acceptance, live browser/accessibility/mobile checks, simultaneous writers, recovery
+and office capacity remain unverified. Only audit/tracking documents and ignored
+diagnostics changed; no application fix, permanent-test change, migration, commit
+or Phase 9 work.
+
+## Phase 8 commit validation - 2026-10-26
+
+- Full `scripts/verify-test-isolation.ps1`: passed 396 tests / 4031 assertions,
+  58.762 seconds, 74 MB. All 338 earlier cases remain.
+- MySQL configuration, statutory, core and input verifiers passed with fixture
+  rollback; twelve migrations already Ran and `app:check` passed. No migration
+  executed. MySQL's initial stopped state was restored.
+- Application/verifier Pint `--test`, Composer strict validation and asset build
+  passed. The working-tree build includes the separate login icon update; generated
+  assets are ignored. Reviewed Phase 8 sources are independent of that UI change.
+- Commit scope excludes the four login-icon source files and their entries in the
+  four shared tracking documents. No application behavior changed during review.
+  Actual client rules and browser/concurrency/recovery/capacity acceptance remain
+  pending; real processing stays blocked. No Phase 9 work or push.

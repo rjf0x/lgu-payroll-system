@@ -19,6 +19,7 @@ class PreviewStatutoryRequest extends FormRequest
         $rules = [
             'record_version' => ['required', 'integer', 'min:1'],
             'base_revision' => ['required', 'integer', 'min:0'],
+            'configuration_version_id' => ['nullable', 'integer', 'min:1'],
             'tax_method' => ['required', Rule::in(['unknown', 'monthly_regular', 'cumulative', 'annual'])],
             'taxable_regular' => $money,
             'taxable_other' => $money,

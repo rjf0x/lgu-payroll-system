@@ -18,7 +18,7 @@ class StatutoryCalculator
             $data[$field] = isset($data[$field]) ? bcadd($data[$field], '0', 2) : null;
         }
         $data['elapsed_periods'] = isset($data['elapsed_periods']) ? (int) $data['elapsed_periods'] : null;
-        unset($data['record_version'], $data['base_revision'], $data['demonstration_confirmed']);
+        unset($data['record_version'], $data['base_revision'], $data['demonstration_confirmed'], $data['configuration_version_id']);
 
         return $data;
     }
@@ -103,6 +103,23 @@ class StatutoryCalculator
         return ['lower' => $lower, 'fixed' => $fixed, 'rate' => $rate,
             'unrounded_tax' => bcdiv($liability, (string) $periods, 8),
             'unrounded_liability' => $liability];
+    }
+
+    public function profileErrors(array $profile): array
+    {
+        $errors = [];
+        foreach (['gsis' => 'percentage', 'pagibig' => 'tiered_percentage', 'philhealth' => 'shared_premium'] as $component => $method) {
+            if (! $this->ruleValid($profile['contributions'][$component] ?? null, $method)) {
+                $errors['parameters.contributions.'.$component] = 'Enter positive parameters with rates/shares at most 1, an increasing tier, and valid floor/cap limits.';
+            }
+        }
+        foreach (['monthly_brackets', 'annual_brackets'] as $table) {
+            if ($this->tableTax('0.00', $profile['tax'][$table] ?? null, 1) === null) {
+                $errors['parameters.tax.'.$table] = 'Use ordered brackets starting with 0.00 / 0.00 / 0.00 and rates no greater than 1.';
+            }
+        }
+
+        return $errors;
     }
 
     public function calculate(array $core, array $input, array $profile, string $category, string $period): array

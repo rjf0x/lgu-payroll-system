@@ -11,8 +11,27 @@
     <section class="mt-6 rounded border border-slate-200 bg-white p-6">
         <h2 class="text-xl font-semibold">Available reference scenarios</h2>
         <p class="mt-2">{{ $profile['label'] ?? 'Reference profile unavailable' }}. Review year: {{ $profile['review_year'] ?? 'unavailable' }}. These are regulatory references, not approved LGU rules.</p>
+        @if (isset($profile['_configuration']))
+            <p class="mt-3">Selected configuration <a href="{{ route('payroll-rule-versions.show', $profile['_configuration']['version_id']) }}" class="text-teal-800 underline">V{{ $profile['_configuration']['version_id'] }}</a> · Effective {{ $profile['_configuration']['effective_from'] }} · Approval reference: {{ $profile['_configuration']['approval_reference'] }}.</p>
+        @else
+            <p class="mt-3">No maintained version applies to this category, date and data use. The existing unverified built-in reference is selected.</p>
+        @endif
+        @if ($latest && ($latest->parameters['id'] ?? null) !== ($profile['id'] ?? null))
+            <p class="mt-3 font-semibold text-amber-900">The applicable configuration changed since the latest saved review. Review and explicitly save a new revision; earlier amounts remain unchanged.</p>
+        @endif
         @foreach (($profile['contributions'] ?? []) as $name => $rule)
-            <p class="mt-3"><strong>{{ strtoupper($name) }}</strong>: {{ $rule['scope'] ?? 'Scope unavailable' }} <a href="{{ $rule['source'] ?? '#' }}" class="text-teal-800 underline">Reference source</a></p>
+            @php
+                $source = $rule['source'] ?? '';
+                $sourceIsWebUrl = filter_var($source, FILTER_VALIDATE_URL) !== false
+                    && in_array(strtolower(parse_url($source, PHP_URL_SCHEME) ?? ''), ['http', 'https'], true);
+            @endphp
+            <p class="mt-3"><strong>{{ strtoupper($name) }}</strong>: {{ $rule['scope'] ?? 'Scope unavailable' }}
+                @if ($sourceIsWebUrl)
+                    <a href="{{ $source }}" class="text-teal-800 underline">Reference source</a>
+                @else
+                    <span>Reference source: {{ $source }}</span>
+                @endif
+            </p>
         @endforeach
         <p class="mt-3">Rates and limits are recorded with each saved review. All percentage results use decimal arithmetic and half-up rounding to two decimals at the component total. Displayed cumulative averages retain eight decimals; tax liability uses exact bracket arithmetic before final rounding. Client rounding acceptance remains pending.</p>
     </section>
@@ -23,6 +42,7 @@
                 @csrf
                 <input type="hidden" name="record_version" value="{{ $batch->record_version }}">
                 <input type="hidden" name="base_revision" value="{{ $latest?->revision ?? 0 }}">
+                <input type="hidden" name="configuration_version_id" value="{{ $profile['_configuration']['version_id'] ?? '' }}">
                 <h2 class="text-xl font-semibold">Review a fictional scenario</h2>
                 <p>Enter each reviewed monthly contribution basis separately. GSIS uses actual monthly salary, Pag-IBIG uses fund salary and PhilHealth uses monthly basic salary. No basis is copied automatically.</p>
                 @foreach (['gsis' => 'GSIS', 'pagibig' => 'Pag-IBIG', 'philhealth' => 'PhilHealth'] as $name => $label)

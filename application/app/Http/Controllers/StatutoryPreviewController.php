@@ -8,6 +8,7 @@ use App\Models\PayrollCalculationItem;
 use App\Models\PayrollCalculationRun;
 use App\Models\StatutoryPreview;
 use App\Services\PayrollCalculationService;
+use App\Services\PayrollRuleVersionService;
 use App\Services\StatutoryPreviewService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Gate;
@@ -27,7 +28,7 @@ class StatutoryPreviewController extends Controller
         $history = StatutoryPreview::where('payroll_calculation_item_id', $item->id)->orderByDesc('revision')->paginate(5);
         $latest = StatutoryPreview::where('payroll_calculation_item_id', $item->id)->orderByDesc('revision')->first();
         $issue = $service->itemIssue($item, $batch);
-        $profile = config('payroll_statutory', []);
+        $profile = app(PayrollRuleVersionService::class)->profile($item->entry_snapshot['personnel_classification'], $batch->period_start->format('Y-m-d'), $batch->is_demonstration);
 
         return view('statutory-previews.show', compact('batch', 'run', 'item', 'history', 'latest', 'issue', 'profile'));
     }

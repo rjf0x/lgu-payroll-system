@@ -7,10 +7,12 @@ use App\Http\Controllers\EmployeeSalaryController;
 use App\Http\Controllers\PayrollBatchController;
 use App\Http\Controllers\PayrollCalculationController;
 use App\Http\Controllers\PayrollInputController;
+use App\Http\Controllers\PayrollRuleVersionController;
 use App\Http\Controllers\SalaryScheduleController;
 use App\Http\Controllers\StatutoryPreviewController;
 use App\Http\Controllers\UserController;
 use App\Http\Middleware\EnsureSalaryTextEncoding;
+use App\Http\Middleware\PreventConfigurationInputFlash;
 use App\Http\Middleware\PreventStatutoryInputFlash;
 use App\Http\Middleware\ScopePayrollInputErrors;
 use Illuminate\Support\Facades\Route;
@@ -25,6 +27,10 @@ Route::middleware('guest')->group(function () {
 });
 
 Route::middleware(['auth', 'active'])->group(function () {
+    Route::middleware([PreventConfigurationInputFlash::class, EnsureSalaryTextEncoding::class])->group(function () {
+        Route::resource('payroll-rule-versions', PayrollRuleVersionController::class)->parameters(['payroll-rule-versions' => 'version'])->except('destroy');
+        Route::post('payroll-rule-versions/{version}/activate', [PayrollRuleVersionController::class, 'activate'])->name('payroll-rule-versions.activate');
+    });
     Route::post('/logout', [AuthController::class, 'destroy'])->name('logout');
     Route::view('/dashboard', 'dashboard')->name('dashboard');
     Route::resource('users', UserController::class)->except(['show', 'destroy'])->middleware('can:manage-users');

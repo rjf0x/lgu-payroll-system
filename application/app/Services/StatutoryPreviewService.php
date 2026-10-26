@@ -51,7 +51,13 @@ class StatutoryPreviewService
             if ($checked->id !== $run->id) {
                 throw ValidationException::withMessages(['record_version' => 'Review the current core engine preview first.']);
             }
-            $profile = config('payroll_statutory', []);
+            $profile = app(PayrollRuleVersionService::class)->profile(
+                $item->entry_snapshot['personnel_classification'], $current->period_start->format('Y-m-d'), $current->is_demonstration, true,
+            );
+            $expectedConfiguration = isset($data['configuration_version_id']) ? (int) $data['configuration_version_id'] : null;
+            if ($expectedConfiguration !== ($profile['_configuration']['version_id'] ?? null)) {
+                throw ValidationException::withMessages(['configuration_version_id' => 'The applicable configuration changed. Reload this reference review and review the selected parameters before saving.']);
+            }
             $latest = StatutoryPreview::where('payroll_calculation_item_id', $item->id)->orderByDesc('revision')->lockForUpdate()->first();
             if ($latest && $this->canonical($latest->inputs) === $this->canonical($input)
                 && $this->canonical($latest->parameters) === $this->canonical($profile)

@@ -13,6 +13,7 @@
         @php
             $sectionTitle = match (true) {
                 request()->routeIs('users.*') => 'User accounts',
+                request()->routeIs('payroll-rule-versions.*') => 'Payroll configuration',
                 request()->routeIs('salary-schedules.*', 'salary-rates.*') => 'Salary schedules',
                 request()->routeIs('employees.*', 'employee-salaries.*') => 'Employees',
                 request()->routeIs('payroll-batches.*', 'payroll-employees.*', 'payroll-inputs.*', 'payroll-calculations.*') => 'Monthly payroll drafts',
@@ -46,6 +47,9 @@
                 @endcan
                 @can('manage-users')
                     <x-ui.nav-link :href="route('users.index')" :active="request()->routeIs('users.*')" icon="people">User accounts</x-ui.nav-link>
+                @endcan
+                @can('viewAny', \App\Models\PayrollRuleVersion::class)
+                    <x-ui.nav-link :href="route('payroll-rule-versions.index')" :active="request()->routeIs('payroll-rule-versions.*')" icon="layers">Payroll configuration</x-ui.nav-link>
                 @endcan
             </nav>
             <div class="sidebar-note"><x-ui.icon name="file" /><div><strong>One clear record.</strong><p>Prepare, review and preserve your payroll information.</p></div></div>

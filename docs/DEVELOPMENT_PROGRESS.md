@@ -4,10 +4,16 @@ Updated: 2026-10-26 (Asia/Manila).
 
 ## Authorized work
 
-Phase 7 - Contributions and Withholding Tax is now authorized by the user's
+Phase 8 - Payroll Configuration is authorized by the instruction to proceed after
+Phase 7 commit `38ede94`, implement only the next phase, test and stop. Phase 9
+is not authorized. Client-approved rules/examples remain unavailable and real
+payroll processing remains blocked.
+The latest instruction authorizes review and fixes of Phase 8 only.
+
+Phase 7 - Contributions and Withholding Tax was authorized by the user's
 instruction to proceed to the next phase, implement only that phase, test and stop.
 The user confirmed no client-approved rules/examples are available; production
-statutory processing remains blocked. Phase 8 has not been authorized.
+statutory processing remained blocked. Phase 8 was not authorized at that time.
 Phase 6 - Core Payroll Calculation was authorized after the Phase 5 commit.
 After Phase 6 commit `8217a68`, the user authorized replacing email-based login
 with usernames and removing email columns. This change does not begin Phase 7.
@@ -427,8 +433,88 @@ rate, schema, dependency, new payroll feature or Phase 8 work was introduced.
 Client rules, browser acceptance, concurrency/recovery and performance remain
 unverified. See PHASE_7_AUDIT.md and TESTING_STATUS.md for details.
 
+## Phase 8 - Payroll Configuration
+
+Status: Implemented but needs client validation. All three confirmed Phase 8
+audit findings are corrected and covered by permanent regressions.
+Client rules and operating policy remain unvalidated; real processing is blocked.
+
+- Administrator-maintained dated drafts, parameter revisions, copy-to-new-version,
+  evidence/confirmation-based activation and locked history. Other active roles
+  read activated versions only. Category/data-use scopes remain independent.
+- Existing contribution methods, qualifying-benefit exemption and six-row tax
+  tables with source/scope references and shared validation. No new statutory
+  formula, entitlement, production switch or payroll approval workflow.
+- Immutable change events retain snapshots, operator, reason, time and activation
+  evidence/confirmations. Audit persistence is atomic with each change. Creation
+  keys/revision checks prevent duplicate creation/activation and stale writes.
+- New statutory saves use the latest applicable activated first-day configuration.
+  Selected configuration IDs reject forms made stale by activation. Prior results
+  remain unchanged; explicit reviewed saves create separate statutory revisions.
+- Two tables in one applied migration; controller/policy/requests/service/models,
+  three pages, navigation, regressions and rollback-only MySQL verifier. See
+  PHASE_8_HANDOFF.md for files, manual checks, selection behavior and limits.
+
+Final isolation regression passed 379 tests / 3866 assertions, retaining all 338
+prior cases and adding 41 cases. MySQL configuration/statutory/core/input verifiers
+pass with rollback; build, Pint, Composer validation, readiness and twelve-migration
+status pass. Initial tests caught a Blade variable collision, corrected before
+passing. No dependency, Git commit or Phase 9 work was introduced.
+
+Finalized payroll does not exist until Phase 9; preservation of existing immutable
+snapshots is tested. Client rules/activation policy, live browser acceptance,
+concurrent activation/recovery and office-scale performance remain unverified.
+
+## Phase 8 audit
+
+PHASE_8_AUDIT.md records a medium unsafe source-link finding (stored javascript
+URL rendered as a payroll-user hyperlink), low object-key-order sensitivity in
+creation retries and low UTC serialization ambiguity for date-only history.
+Three isolated diagnostics reproduce these cases; browser script execution was
+not performed. Existing isolation tests still pass 379 cases / 3866 assertions,
+and MySQL configuration/statutory/core verifiers and Pint pass. No application
+fixes, permanent-test changes, migrations, commit or Phase 9 work were performed.
+Finalized history cannot yet be fully exercised because that lifecycle is Phase 9.
+
+## Phase 8 audit corrections
+
+Corrected F1-F3 only: safe HTTP(S) source links with escaped document references;
+canonical creation fingerprints with immutable legacy-event compatibility; and
+calendar effective dates in new change snapshots/readable legacy history. Existing
+hashes, snapshots, amounts and configurations are preserved. No schema, dependency,
+rule, new payroll feature, Git commit or Phase 9 work was added.
+
+Seventeen new regressions pass (165 assertions); the full suite passes 396 tests /
+4031 assertions, including all 338 pre-Phase-8 cases. Four rollback-only MySQL
+verifiers pass, including reordered/legacy retries and unchanged legacy events
+across six scopes. Pint, asset build, Composer validation and database readiness /
+migration status pass. TESTING_STATUS.md records the final checks. Client rules,
+live browser acceptance, concurrency/recovery, performance and the actual
+finalized lifecycle remain unverified; real processing remains blocked.
+
+## Phase 8 post-correction re-audit
+
+PHASE_8_REAUDIT.md confirms F1-F3 remain corrected and no new Phase 8 bug was
+confirmed in exercised supported paths. Operator-recorded activation and version
+retention pass; actual approved-rule acceptance is blocked by missing client
+evidence, and finalized-record preservation is only partially verifiable before
+Phase 9. The full isolation suite passes 396 tests / 4031 assertions; three ignored
+audit probes pass 38 assertions. MySQL configuration/statutory/core checks and
+Pint pass. Original database state was restored. Browser, simultaneous writers,
+recovery, capacity and actual finalized/client acceptance remain unverified.
+Only audit/tracking records and ignored diagnostics changed; no application fix,
+permanent-test change, migration, Git commit or next-phase implementation.
+
+## Phase 8 commit review - 2026-10-26
+
+Reviewed Phase 8 implementation, corrections, audits and verifiers for the requested
+single phase commit. Full isolation suite passes 396 tests / 4031 assertions; four
+MySQL verifiers, Pint, Composer validation, readiness and build pass. The separate
+login icon change and its documentation entries are excluded from Phase 8 staging.
+Client validation remains pending. No next-phase work or push is authorized.
+
 ## Next phase
 
-Phase 8 - Payroll Configuration. Do not proceed automatically.
+Phase 9 - Payroll Review and Approval. Do not proceed automatically.
 
 Final status: STOPPED - Awaiting permission to continue.

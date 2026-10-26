@@ -9,9 +9,11 @@ use App\Models\EmployeeSalaryRecord;
 use App\Models\PayrollBatch;
 use App\Models\PayrollCalculationRun;
 use App\Models\PayrollInputRevision;
+use App\Models\PayrollRuleVersion;
 use App\Models\SalarySchedule;
 use App\Models\StatutoryPreview;
 use App\Models\User;
+use App\Services\PayrollRuleVersionService;
 use App\Services\StatutoryCalculator;
 use App\Services\StatutoryPreviewService;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -87,7 +89,14 @@ class StatutoryPreviewTest extends TestCase
 
     private function data(array $fixture, array $overrides = []): array
     {
-        return StatutoryCalculatorTest::data(array_replace(['record_version' => $fixture[0]->fresh()->record_version], $overrides));
+        $profile = app(PayrollRuleVersionService::class)->profile(
+            $fixture[2]->entry_snapshot['personnel_classification'], $fixture[0]->period_start->format('Y-m-d'), $fixture[0]->fresh()->is_demonstration,
+        );
+
+        return StatutoryCalculatorTest::data(array_replace([
+            'record_version' => $fixture[0]->fresh()->record_version,
+            'configuration_version_id' => $profile['_configuration']['version_id'] ?? null,
+        ], $overrides));
     }
 
     public static function categories(): array
@@ -339,6 +348,114 @@ class StatutoryPreviewTest extends TestCase
         $this->post($this->url($fixture), $this->data($fixture))->assertStatus(500);
         $this->assertDatabaseCount('statutory_previews', 0);
         $this->assertSame($before, $fixture[2]->fresh()->getAttributes());
+    }
+
+    public function test_activated_configuration_only_changes_a_new_explicit_statutory_revision(): void
+    {
+        $fixture = $this->fixture();
+        $this->post($this->url($fixture), $this->data($fixture))->assertSessionHasNoErrors();
+        $old = StatutoryPreview::sole();
+        $before = $old->getAttributes();
+        $coreBefore = $fixture[2]->getAttributes();
+        $inputBefore = PayrollInputRevision::sole()->getAttributes();
+        $staleForm = $this->data($fixture, ['base_revision' => 1]);
+        $this->actor(User::factory()->create(['role' => Role::Administrator]));
+        $data = PayrollRuleVersionTest::data();
+        $data['parameters']['contributions']['gsis']['rate'] = '0.10';
+        $this->post('/payroll-rule-versions', $data)->assertSessionHasNoErrors();
+        $version = PayrollRuleVersion::sole();
+        $this->post('/payroll-rule-versions/'.$version->id.'/activate', PayrollRuleVersionTest::activation())->assertSessionHasNoErrors();
+        $this->assertSame($before, $old->fresh()->getAttributes());
+        $this->actor($this->officer);
+        $this->post($this->url($fixture), $staleForm)->assertSessionHasErrors('configuration_version_id');
+        $this->assertDatabaseCount('statutory_previews', 1);
+        $this->get($this->url($fixture))->assertOk()->assertSee('applicable configuration changed')->assertSee('25522.45');
+        $this->post($this->url($fixture), $this->data($fixture, ['base_revision' => 1]))->assertSessionHasNoErrors();
+        $latest = StatutoryPreview::orderByDesc('revision')->first();
+        $this->assertSame('3000.00', $latest->result['contributions']['gsis']['amount']);
+        $this->assertSame($version->id, $latest->parameters['_configuration']['version_id']);
+        $this->assertSame('0.09', $old->fresh()->parameters['contributions']['gsis']['rate']);
+        $this->assertSame($coreBefore, $fixture[2]->fresh()->getAttributes());
+        $this->assertSame($inputBefore, PayrollInputRevision::sole()->getAttributes());
+        $this->assertFalse($latest->result['production_ready']);
+    }
+
+    public static function configurationSourceReferences(): array
+    {
+        return [
+            ['javascript:alert(document.domain)', false, Role::PayrollOfficer],
+            ['JaVaScRiPt:alert(1)', false, Role::PayrollOfficer],
+            ["java\tscript:alert(1)", false, Role::PayrollOfficer],
+            ['data:text/html,<script>alert(1)</script>', false, Role::PayrollOfficer],
+            ['file:///C:/private.txt', false, Role::PayrollOfficer],
+            ['//example.test/reference', false, Role::PayrollOfficer],
+            ['CLIENT-APPROVAL-2026-001', false, Role::PayrollOfficer],
+            ['<img src=x onerror=alert(1)>', false, Role::PayrollOfficer],
+            ['https://example.test/reference?a=1&b=2', true, Role::PayrollOfficer],
+            ['http://example.test/reference', true, Role::PayrollOfficer],
+            ['javascript:alert(1)', false, Role::Approver],
+            ['javascript:alert(1)', false, Role::Viewer],
+        ];
+    }
+
+    #[DataProvider('configurationSourceReferences')]
+    public function test_stored_configuration_sources_only_link_safe_web_urls(string $reference, bool $shouldLink, Role $role): void
+    {
+        $fixture = $this->fixture();
+        $this->actor(User::factory()->create(['role' => Role::Administrator]));
+        $data = PayrollRuleVersionTest::data();
+        $data['parameters']['contributions']['gsis']['source'] = $reference;
+        $this->post('/payroll-rule-versions', $data)->assertSessionHasNoErrors();
+        $version = PayrollRuleVersion::sole();
+        $this->post('/payroll-rule-versions/'.$version->id.'/activate', PayrollRuleVersionTest::activation())->assertSessionHasNoErrors();
+        $before = $version->fresh()->getAttributes();
+        $this->actor(User::factory()->create(['role' => $role]));
+        $response = $this->get($this->url($fixture))->assertOk()->assertSee($reference);
+        $document = new \DOMDocument;
+        @$document->loadHTML($response->getContent());
+        $links = [];
+        foreach ($document->getElementsByTagName('a') as $link) {
+            $links[] = $link->getAttribute('href');
+        }
+        if ($shouldLink) {
+            $this->assertContains($reference, $links);
+        } else {
+            $this->assertNotContains($reference, $links);
+        }
+        $this->assertSame($before, $version->fresh()->getAttributes());
+    }
+
+    public function test_older_maintained_configuration_identity_cannot_be_used_after_new_activation(): void
+    {
+        $fixture = $this->fixture();
+        $this->actor(User::factory()->create(['role' => Role::Administrator]));
+        $this->post('/payroll-rule-versions', PayrollRuleVersionTest::data(['effective_from' => '2026-09-01']))->assertSessionHasNoErrors();
+        $first = PayrollRuleVersion::sole();
+        $this->post('/payroll-rule-versions/'.$first->id.'/activate', PayrollRuleVersionTest::activation())->assertSessionHasNoErrors();
+        $staleForm = $this->data($fixture);
+        $this->post('/payroll-rule-versions', PayrollRuleVersionTest::data())->assertSessionHasNoErrors();
+        $second = PayrollRuleVersion::orderByDesc('id')->first();
+        $this->post('/payroll-rule-versions/'.$second->id.'/activate', PayrollRuleVersionTest::activation())->assertSessionHasNoErrors();
+        $this->actor($this->officer);
+        $this->post($this->url($fixture), $staleForm)->assertSessionHasErrors('configuration_version_id');
+        $this->assertDatabaseCount('statutory_previews', 0);
+        $this->post($this->url($fixture), $this->data($fixture))->assertSessionHasNoErrors();
+        $this->assertSame($second->id, StatutoryPreview::sole()->parameters['_configuration']['version_id']);
+    }
+
+    public function test_activated_external_configuration_cannot_enable_real_payroll(): void
+    {
+        $fixture = $this->fixture();
+        $this->actor(User::factory()->create(['role' => Role::Administrator]));
+        $this->post('/payroll-rule-versions', PayrollRuleVersionTest::data(['is_demonstration' => 0]))->assertSessionHasNoErrors();
+        $version = PayrollRuleVersion::sole();
+        $this->post('/payroll-rule-versions/'.$version->id.'/activate', PayrollRuleVersionTest::activation(['client_validation_confirmed' => 1]))->assertSessionHasNoErrors();
+        $this->actor($this->officer);
+        PayrollBatch::whereKey($fixture[0]->id)->update(['is_demonstration' => false]);
+        $this->post($this->url($fixture), $this->data($fixture, ['production_ready' => true]))->assertSessionHasErrors('batch');
+        $this->post('/payroll-batches/'.$fixture[0]->id.'/calculations', ['record_version' => $fixture[0]->record_version])->assertSessionHasErrors('batch');
+        $this->assertDatabaseCount('statutory_previews', 0);
+        $this->assertDatabaseCount('payroll_calculation_runs', 1);
     }
 
     public function test_guest_csrf_and_current_actor_rechecks(): void

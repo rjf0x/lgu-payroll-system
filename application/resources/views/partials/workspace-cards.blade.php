@@ -1,4 +1,7 @@
 <div class="workspace-cards">
+    @can('viewAny', \App\Models\PayrollRuleVersion::class)
+        <a href="{{ route('payroll-rule-versions.index') }}" class="workspace-card"><span class="card-icon"><x-ui.icon name="layers" /></span><span class="card-copy"><strong>Payroll configuration</strong><span>{{ auth()->user()->can('create', \App\Models\PayrollRuleVersion::class) ? 'Maintain dated settings, record activation authority and preserve changes.' : 'Review activated settings, source references and preserved configuration versions.' }}</span><span class="card-action">View configuration versions <x-ui.icon name="arrow" /></span></span></a>
+    @endcan
     @can('viewAny', \App\Models\Employee::class)
         <a href="{{ route('employees.index') }}" class="workspace-card"><span class="card-icon"><x-ui.icon name="people" /></span><span class="card-copy"><strong>Employee records</strong><span>Find employee details, classifications and authorized salary history.</span><span class="card-action">{{ auth()->user()->role === \App\Enums\Role::PayrollOfficer ? 'Manage employees' : 'View employees' }} <x-ui.icon name="arrow" /></span></span></a>
     @endcan

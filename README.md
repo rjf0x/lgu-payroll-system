@@ -282,13 +282,42 @@ revisions; unchanged retries reuse the latest matching review. Outdated drafts o
 salary/input sources prevent new reviews. Credits/refunds remain separate from
 reference net and need review. All results remain demonstration-only; real
 payroll is blocked. The reference review window is limited to 2026 pending review
-for other years. Configuration maintenance/activation remains Phase 8.
+for other years unless a reviewed maintained version covers that year.
+Administrators maintain dated versions under **Payroll configuration**.
 
 New reviews use the corrected v2 engine. Earlier-engine reviews stay unchanged
 and display a notice; review and save a new revision to apply the corrections.
 
 See [the Phase 7 handoff](docs/PHASE_7_HANDOFF.md) for sources, supported procedures,
 remaining validation needs and a browser scenario with expected amounts.
+
+## Payroll configuration versions (Phase 8)
+
+As Administrator, open **Payroll configuration**, create a draft for one category,
+data use and first-of-month effective date, and review supported contribution
+parameters and six-row tax tables. Record sources, membership scope and a change
+reason. Draft revisions retain prior values in immutable change events. Copy an
+existing version to prepare a separately dated change.
+
+Activation requires the current revision, authority and reviewed-example references,
+a reason and confirmation; external data use also requires confirmation of client
+validation. These record operator authority rather than independently verifying
+external approval. Activated versions are locked and readable by active roles;
+only Administrators see drafts or change settings. Real payroll stays disabled.
+
+New statutory reviews select the latest activated version effective on the batch's
+first day for its category/data use. Future/draft versions do not override earlier
+months; expired review years remain incomplete. A form made stale by activation
+requires reload/review. Existing payroll inputs and results stay unchanged; an
+explicit new save creates a review with its selected configuration snapshot.
+Where no maintained version applies, the unverified built-in reference remains.
+
+Source references link only to valid HTTP(S) URLs; other references display as
+escaped text. Creation retries tolerate reordered fields, including older saved
+versions. Change history preserves calendar effective dates and original events.
+
+See [the Phase 8 handoff](docs/PHASE_8_HANDOFF.md) for browser steps, limits,
+file/database changes and remaining client validation needs.
 
 ## Interface and navigation
 
@@ -321,6 +350,7 @@ php ../scripts/verify-payroll-drafts.php
 php ../scripts/verify-payroll-inputs.php
 php ../scripts/verify-payroll-calculations.php
 php ../scripts/verify-statutory-previews.php
+php ../scripts/verify-payroll-rule-versions.php
 ```
 
 PHPUnit pins in-memory SQLite in both server and environment variables. The base
