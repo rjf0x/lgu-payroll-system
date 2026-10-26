@@ -544,3 +544,10 @@ References: [Laravel 13 upgrade guide](https://laravel.com/framework/docs/13.x/u
   metadata/list boundaries in additional diagnostics. Keep MySQL checks transactional
   and restore its initial stopped state. Document browser/concurrency/recovery/
   performance gaps without implying the passing sequential suite covers them.
+
+## 2026-10-26 - Login password icons
+
+- Replace the existing login visibility text with reusable inline eye/crossed-eye
+  icons. Keep a native non-submit button, accessible action labels/tooltips and
+  pressed state; reserve a 44-pixel target. Keep the control hidden until JavaScript
+  attaches its behavior. No dependency, authentication rule or phase progression.

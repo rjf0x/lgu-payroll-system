@@ -976,3 +976,15 @@ or Phase 9 work.
   four shared tracking documents. No application behavior changed during review.
   Actual client rules and browser/concurrency/recovery/capacity acceptance remain
   pending; real processing stays blocked. No Phase 9 work or push.
+
+## Login password visibility icons - 2026-10-26
+
+- `php artisan test --compact --filter='AuthenticationTest|UsernameAuthenticationTest|WorkspaceInterfaceTest'`:
+  passed 29 tests / 416 assertions, 7.08 seconds.
+- JavaScript toggle smoke check using the actual password-toggle handler: passed
+  reveal/conceal input types, both icon states, action labels/tooltips/pressed state,
+  initial activation and unchanged input value. This uses DOM stubs, not a browser.
+- `node --check resources/js/workspace.js` passed; final `npm run build` passed
+  after the icon attribute toggle change. Generated assets remain ignored.
+- No schema, authentication behavior, dependencies, permanent tests or later-phase
+  features were added. Live browser visual/assistive-technology checks were not run.

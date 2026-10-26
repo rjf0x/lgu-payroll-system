@@ -513,6 +513,14 @@ MySQL verifiers, Pint, Composer validation, readiness and build pass. The separa
 login icon change and its documentation entries are excluded from Phase 8 staging.
 Client validation remains pending. No next-phase work or push is authorized.
 
+## Login password visibility icons - 2026-10-26
+
+User-requested existing-interface change: replaced the login's visible show/hide
+password text with eye/crossed-eye icons. Accessible labels/tooltips and pressed
+state follow visibility; input content is preserved. Relevant authentication,
+username and interface tests pass (29 cases / 416 assertions), the JavaScript
+toggle smoke check and asset build pass. No payroll phase was advanced.
+
 ## Next phase
 
 Phase 9 - Payroll Review and Approval. Do not proceed automatically.
