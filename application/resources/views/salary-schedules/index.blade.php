@@ -1,19 +1,13 @@
 @extends('layouts.app')
+@section('title', 'Salary schedules · LGU Payroll')
 @section('content')
-    <div class="flex flex-wrap items-center justify-between gap-4">
-        <h1 class="text-3xl font-bold">Salary schedules</h1>
-        @can('create', \App\Models\SalarySchedule::class)<a href="{{ route('salary-schedules.create') }}" class="rounded bg-teal-800 px-4 py-3 font-semibold text-white">Create schedule</a>@endcan
-    </div>
-    <p class="mt-3 text-slate-600">Published schedules retain their original rates. Demo schedules must not be used for real payroll.</p>
-    <div class="mt-6 space-y-3">
+    <div class="page-heading"><div><p class="eyebrow">Authorized compensation sources</p><h1>Salary schedules</h1><p>Effective-dated grades and steps, organized by personnel classification.</p></div>@can('create', \App\Models\SalarySchedule::class)<a href="{{ route('salary-schedules.create') }}" class="button button-primary"><x-ui.icon name="plus" />Create schedule</a>@endcan</div>
+    <p class="text-sm text-slate-600">Published schedules are locked. Demonstration rates must not be used for real payroll.</p>
+    <div class="record-list">
         @forelse ($schedules as $schedule)
-            <article class="rounded border border-slate-200 bg-white p-5">
-                <a href="{{ route('salary-schedules.show', $schedule) }}" class="text-lg font-semibold text-teal-800 underline">{{ $schedule->name }}</a>
-                <p class="mt-2">{{ $schedule->personnel_classification->label() }} · Effective {{ $schedule->effective_from->format('Y-m-d') }}</p>
-                <p class="mt-1 text-sm">{{ $schedule->is_demonstration ? 'Demonstration only' : 'External authorization required' }} · {{ $schedule->published_at ? 'Published / locked' : 'Draft' }}</p>
-            </article>
+            <article class="record-list-card"><div class="record-list-icon"><span class="card-icon"><x-ui.icon name="layers" /></span><div><h2><a href="{{ route('salary-schedules.show', $schedule) }}">{{ $schedule->name }}</a></h2><p>{{ $schedule->personnel_classification->label() }} · Effective {{ $schedule->effective_from->format('Y-m-d') }}</p><div class="record-tags"><span @class(['status-badge', 'is-active' => $schedule->published_at])>{{ $schedule->published_at ? 'Published / locked' : 'Draft' }}</span><span @class(['status-badge', 'is-demo' => $schedule->is_demonstration])>{{ $schedule->is_demonstration ? 'Demonstration only' : 'External authorization required' }}</span></div></div></div><a href="{{ route('salary-schedules.show', $schedule) }}" class="button button-secondary" aria-label="View {{ $schedule->name }}">View schedule<x-ui.icon name="arrow" /></a></article>
         @empty
-            <p class="rounded bg-white p-6">No salary schedules are available.</p>
+            <div class="empty-state"><span class="card-icon"><x-ui.icon name="layers" /></span><h2>No salary schedules are available.</h2><p>{{ auth()->user()->can('create', \App\Models\SalarySchedule::class) ? 'Create a schedule, enter its rates and publish it with an authorization reference.' : 'Published schedules will appear here after an Administrator authorizes them.' }}</p>@can('create', \App\Models\SalarySchedule::class)<a href="{{ route('salary-schedules.create') }}" class="button button-primary">Create schedule<x-ui.icon name="arrow" /></a>@endcan</div>
         @endforelse
     </div>
     <div class="mt-5">{{ $schedules->links() }}</div>

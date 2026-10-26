@@ -15,10 +15,12 @@
         <div>
             <label for="name" class="block text-sm font-semibold">Name</label>
             <input id="name" name="name" value="{{ is_string($oldName) ? $oldName : '' }}" required maxlength="255" autocomplete="name" class="mt-2 w-full rounded border border-slate-300 p-3">
+            <x-ui.field-error field="name" />
         </div>
         <div>
             <label for="username" class="block text-sm font-semibold">Username</label>
             <input id="username" name="username" type="text" value="{{ is_string($oldUsername) ? $oldUsername : '' }}" required minlength="3" maxlength="50" autocomplete="off" class="mt-2 w-full rounded border border-slate-300 p-3">
+            <x-ui.field-error field="username" />
             <p class="mt-2 text-sm text-slate-600">3–50 letters, numbers, dots, underscores or hyphens. Start with a letter or number. Usernames are case-insensitive.</p>
         </div>
         <div>
@@ -28,6 +30,7 @@
                     <option value="{{ $option->value }}" @selected($roleValue === $option->value)>{{ $option->label() }}</option>
                 @endforeach
             </select>
+            <x-ui.field-error field="role" />
         </div>
         <div>
             <label for="is_active" class="block text-sm font-semibold">Account status</label>
@@ -35,16 +38,19 @@
                 <option value="1" @selected($statusValue === '1')>Active</option>
                 <option value="0" @selected($statusValue === '0')>Inactive</option>
             </select>
+            <x-ui.field-error field="is_active" />
             @if ($account->is(auth()->user()))<p class="mt-2 text-sm text-slate-600">Your own account must remain an active administrator.</p>@endif
         </div>
         <div>
             <label for="password" class="block text-sm font-semibold">{{ $account->exists ? 'New password (leave blank to keep current)' : 'Password' }}</label>
             <p id="password-help" class="mt-1 text-sm text-slate-600">At least 12 characters, including uppercase, lowercase and numbers. Maximum 72 bytes; some characters use more than one byte.</p>
             <input id="password" name="password" type="password" @required(! $account->exists) maxlength="72" autocomplete="new-password" aria-describedby="password-help" class="mt-2 w-full rounded border border-slate-300 p-3">
+            <x-ui.field-error field="password" />
         </div>
         <div>
             <label for="password_confirmation" class="block text-sm font-semibold">Confirm password</label>
             <input id="password_confirmation" name="password_confirmation" type="password" @required(! $account->exists) maxlength="72" autocomplete="new-password" class="mt-2 w-full rounded border border-slate-300 p-3">
+            <x-ui.field-error field="password_confirmation" />
         </div>
         <div class="flex items-center gap-5">
             <button class="rounded bg-teal-800 px-4 py-3 font-semibold text-white">Save account</button>

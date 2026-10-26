@@ -13,7 +13,7 @@
             <tbody>
                 @foreach ($users as $account)
                     <tr class="border-t border-slate-200">
-                        <td class="p-4">{{ $account->name }}</td><td class="p-4">{{ $account->username }}</td><td class="p-4">{{ $account->role->label() }}</td><td class="p-4">{{ $account->is_active ? 'Active' : 'Inactive' }}</td>
+                        <td class="p-4">{{ $account->name }}</td><td class="p-4">{{ $account->username }}</td><td class="p-4">{{ $account->role->label() }}</td><td class="p-4"><span @class(['status-badge', 'is-active' => $account->is_active, 'is-inactive' => ! $account->is_active])>{{ $account->is_active ? 'Active' : 'Inactive' }}</span></td>
                         <td class="p-4"><a href="{{ route('users.edit', $account) }}" class="font-semibold text-teal-800 underline" aria-label="Edit {{ $account->name }}">Edit</a></td>
                     </tr>
                 @endforeach

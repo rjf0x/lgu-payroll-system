@@ -27,12 +27,14 @@
             <label for="employee_number" class="block text-sm font-semibold">Employee number</label>
             <p id="number-help" class="mt-1 text-sm text-slate-600">Unique number, up to 50 characters. Letters, numbers, dots, underscores, slashes and hyphens are accepted.</p>
             <input id="employee_number" name="employee_number" value="{{ $oldText('employee_number', $employee->employee_number) }}" required maxlength="50" aria-describedby="number-help" class="mt-2 w-full rounded border border-slate-300 p-3">
+            <x-ui.field-error field="employee_number" />
         </div>
         <div class="grid gap-5 sm:grid-cols-2">
             @foreach (['first_name' => 'First name', 'middle_name' => 'Middle name (optional)', 'last_name' => 'Last name', 'suffix' => 'Suffix (optional)'] as $field => $label)
                 <div>
                     <label for="{{ $field }}" class="block text-sm font-semibold">{{ $label }}</label>
                     <input id="{{ $field }}" name="{{ $field }}" value="{{ $oldText($field, $employee->$field) }}" @required(in_array($field, ['first_name', 'last_name'])) maxlength="{{ $field === 'suffix' ? 20 : 100 }}" class="mt-2 w-full rounded border border-slate-300 p-3">
+                    <x-ui.field-error field="{{ $field }}" />
                 </div>
             @endforeach
         </div>
@@ -41,6 +43,7 @@
                 <div>
                     <label for="{{ $field }}" class="block text-sm font-semibold">{{ $label }}</label>
                     <input id="{{ $field }}" name="{{ $field }}" value="{{ $oldText($field, $employee->$field) }}" required maxlength="150" class="mt-2 w-full rounded border border-slate-300 p-3">
+                    <x-ui.field-error field="{{ $field }}" />
                 </div>
             @endforeach
         </div>
@@ -52,10 +55,12 @@
                     <option value="{{ $classification->value }}" @selected($oldClassification === $classification->value)>{{ $classification->label() }}</option>
                 @endforeach
             </select>
+            <x-ui.field-error field="personnel_classification" />
         </div>
         <div>
             <label for="employment_start_date" class="block text-sm font-semibold">Employment start date</label>
             <input id="employment_start_date" name="employment_start_date" type="date" value="{{ $oldText('employment_start_date', $employee->employment_start_date?->format('Y-m-d')) }}" min="1000-01-01" max="9999-12-31" required class="mt-2 w-full rounded border border-slate-300 p-3">
+            <x-ui.field-error field="employment_start_date" />
         </div>
         <div>
             <label for="is_active" class="block text-sm font-semibold">Record status</label>
@@ -63,6 +68,7 @@
                 <option value="1" @selected($statusValue === '1')>Active</option>
                 <option value="0" @selected($statusValue === '0')>Inactive</option>
             </select>
+            <x-ui.field-error field="is_active" />
         </div>
         <div class="flex items-center gap-5">
             <button class="rounded bg-teal-800 px-4 py-3 font-semibold text-white">Save employee</button>

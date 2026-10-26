@@ -10,7 +10,7 @@
     <form method="GET" action="{{ route('employees.index') }}" class="mt-6 flex flex-wrap items-end gap-3">
         <div class="min-w-0 flex-1">
             <label for="q" class="block text-sm font-semibold">Search by employee number, name, position, or office</label>
-            <input id="q" name="q" value="{{ $search }}" maxlength="100" class="mt-2 w-full rounded border border-slate-300 bg-white p-3">
+            <input id="q" name="q" value="{{ $search }}" maxlength="100" placeholder="Search employees…" class="mt-2 w-full rounded border border-slate-300 bg-white p-3">
         </div>
         <button class="rounded bg-teal-800 px-4 py-3 font-semibold text-white">Search</button>
         <a href="{{ route('employees.index') }}" class="px-3 py-3 text-teal-800 underline">Clear</a>
@@ -27,7 +27,7 @@
                     <tr class="border-t border-slate-200">
                         <td class="p-4">{{ $employee->employee_number }}</td><td class="p-4">{{ $employee->full_name }}</td>
                         <td class="p-4">{{ $employee->position }}<span class="mt-1 block text-slate-500">{{ $employee->office }}</span></td>
-                        <td class="p-4">{{ $employee->personnel_classification->label() }}</td><td class="p-4">{{ $employee->is_active ? 'Active' : 'Inactive' }}</td>
+                        <td class="p-4">{{ $employee->personnel_classification->label() }}</td><td class="p-4"><span @class(['status-badge', 'is-active' => $employee->is_active, 'is-inactive' => ! $employee->is_active])>{{ $employee->is_active ? 'Active' : 'Inactive' }}</span></td>
                         <td class="p-4"><a href="{{ route('employees.show', $employee) }}" class="font-semibold text-teal-800 underline" aria-label="View {{ $employee->full_name }}">View</a></td>
                     </tr>
                 @empty

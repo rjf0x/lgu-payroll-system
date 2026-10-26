@@ -1,12 +1,9 @@
 @extends('layouts.app')
+@section('title', 'Overview · LGU Payroll')
 @section('content')
-    <h1 class="text-3xl font-bold">Dashboard</h1>
-    <p class="mt-3 text-slate-600">Signed in as {{ auth()->user()->role->label() }}.</p>
-    <section class="mt-8 rounded-xl border border-slate-200 bg-white p-6">
-        <h2 class="text-xl font-semibold">Your workspace</h2>
-        <a class="mt-4 inline-block font-semibold text-teal-800 underline" href="{{ route(auth()->user()->role->workspace()) }}">Open {{ auth()->user()->role->label() }} workspace</a>
-        @can('manage-users')
-            <p class="mt-4"><a href="{{ route('users.index') }}" class="font-semibold text-teal-800 underline">Manage user accounts</a></p>
-        @endcan
-    </section>
+    <div class="page-heading"><div><p class="eyebrow">Your daily workspace</p><h1>Dashboard</h1><p>A clear starting point for your payroll work.</p></div><span class="page-date">{{ now()->format('l, F j, Y') }}</span></div>
+    <section class="welcome-panel"><div><span class="role-badge">{{ auth()->user()->role->label() }}</span><h2>Welcome, {{ auth()->user()->name }}.</h2><p>{{ auth()->user()->role === \App\Enums\Role::Administrator ? 'Keep account access and authorized salary schedules organized for your team.' : 'Pick up your employee records or monthly payroll preparation from one place.' }}</p><a href="{{ route(auth()->user()->role->workspace()) }}" class="button button-primary">Open {{ auth()->user()->role->label() }} workspace <x-ui.icon name="arrow" /></a></div><div class="welcome-mark" aria-hidden="true"><x-ui.icon name="building" /></div></section>
+    <div class="section-heading"><div><h2>Where would you like to start?</h2><p>Tools available for your assigned role.</p></div></div>
+    @include('partials.workspace-cards')
+    <section class="workspace-guidance"><x-ui.icon name="file" /><div><h2>Keep a clear preparation trail</h2><p>Review source information before saving. Employee salary history, input revisions and calculation previews retain previous values for reference.</p></div></section>
 @endsection

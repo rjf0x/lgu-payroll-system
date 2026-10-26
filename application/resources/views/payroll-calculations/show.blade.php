@@ -22,7 +22,7 @@
             <p class="mt-4 text-sm text-slate-600">{{ $item->breakdown['basis'] }}</p>
             <h3 class="mt-4 font-semibold">Line-by-line inputs</h3>
             @forelse ($item->breakdown['lines'] as $line)
-                <p class="mt-2">{{ $line['label'] }} · {{ str_replace('_', ' ', $line['bucket']) }} · PHP {{ $line['amount'] }} · {{ $line['included'] ? 'Included' : 'Excluded — not applicable' }}@if ($line['original_amount'] !== null) · Original reference PHP {{ $line['original_amount'] }} · Reason: {{ $line['reason'] }}@endif</p>
+                <div class="calculation-line"><div><strong>{{ $line['label'] }}</strong><p>{{ ucfirst(str_replace('_', ' ', $line['bucket'])) }} · {{ $line['included'] ? 'Included' : 'Excluded — not applicable' }}</p>@if ($line['original_amount'] !== null)<p>Original reference PHP {{ $line['original_amount'] }} · Reason: {{ $line['reason'] }}</p>@endif</div><strong>PHP {{ $line['amount'] }}</strong></div>
             @empty<p class="mt-2">No extra earnings, loans or adjustments entered.</p>@endforelse
         </article>
     @endforeach

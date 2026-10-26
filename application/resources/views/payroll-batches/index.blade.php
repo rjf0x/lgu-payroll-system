@@ -1,19 +1,17 @@
 @extends('layouts.app')
+@section('title', 'Monthly payroll drafts · LGU Payroll')
 @section('content')
-    <div class="flex flex-wrap items-center justify-between gap-4">
-        <h1 class="text-3xl font-bold">Monthly payroll drafts</h1>
-        @can('create', \App\Models\PayrollBatch::class)<a href="{{ route('payroll-batches.create') }}" class="rounded bg-teal-800 px-4 py-3 text-white">Create monthly draft</a>@endcan
-    </div>
-    <p class="mt-3 text-slate-600">Prepare employee coverage and authorized monthly salary sources. Amounts have not been calculated, approved or finalized.</p>
-    <div class="mt-6 space-y-3">
+    <div class="page-heading"><div><p class="eyebrow">Payroll preparation</p><h1>Monthly payroll drafts</h1><p>Open a payroll month to review coverage, inputs and calculation previews.</p></div>@can('create', \App\Models\PayrollBatch::class)<a href="{{ route('payroll-batches.create') }}" class="button button-primary"><x-ui.icon name="plus" />Create monthly draft</a>@endcan</div>
+    <div class="record-list">
         @forelse ($batches as $batch)
-            <article class="rounded border border-slate-200 bg-white p-5">
-                <a href="{{ route('payroll-batches.show', $batch) }}" class="font-semibold text-teal-800 underline">{{ $batch->period_start->format('F Y') }}</a>
-                <p class="mt-2">Draft · {{ $batch->entries_count }} employees covered · {{ $batch->is_demonstration ? 'Demonstration only' : 'Externally authorized salary sources' }}</p>
+            <article class="record-list-card">
+                <div class="record-list-icon"><span class="card-icon"><x-ui.icon name="calendar" /></span><div><h2><a href="{{ route('payroll-batches.show', $batch) }}">{{ $batch->period_start->format('F Y') }}</a></h2><p>{{ $batch->entries_count }} employees covered · Salary reference {{ $batch->period_start->format('F j, Y') }}</p><div class="record-tags"><span class="status-badge">Draft</span><span @class(['status-badge', 'is-demo' => $batch->is_demonstration])>{{ $batch->is_demonstration ? 'Demonstration only' : 'Externally authorized salary sources' }}</span></div></div></div>
+                <a href="{{ route('payroll-batches.show', $batch) }}" class="button button-secondary" aria-label="Open {{ $batch->period_start->format('F Y') }} {{ $batch->is_demonstration ? 'demonstration' : 'externally authorized' }} draft">Open draft<x-ui.icon name="arrow" /></a>
             </article>
         @empty
-            <p class="rounded bg-white p-6">No monthly drafts yet.</p>
+            <div class="empty-state"><span class="card-icon"><x-ui.icon name="calendar" /></span><h2>No monthly drafts yet.</h2><p>{{ auth()->user()->can('create', \App\Models\PayrollBatch::class) ? 'Start by creating a payroll month, then select its covered employees.' : 'Monthly drafts will appear here after a Payroll Officer creates them.' }}</p>@can('create', \App\Models\PayrollBatch::class)<a href="{{ route('payroll-batches.create') }}" class="button button-primary">Create monthly draft<x-ui.icon name="arrow" /></a>@endcan</div>
         @endforelse
     </div>
+    <p class="mt-6 text-sm text-slate-600">Drafts are not approved or finalized payroll. Core calculation previews are available for supported demonstration inputs only.</p>
     <div class="mt-5">{{ $batches->links() }}</div>
 @endsection

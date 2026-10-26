@@ -8,7 +8,7 @@
     <a href="{{ route('payroll-batches.show', $batch) }}" class="text-teal-800 underline">Back to monthly draft</a>
     <h1 class="mt-5 text-3xl font-bold">Draft inputs · {{ $entry->employee_name }}</h1>
     <p class="mt-3">{{ $entry->employee_number }} · {{ $batch->period_start->format('F Y') }} · {{ $batch->is_demonstration ? 'Demonstration only — not for real payroll' : 'Externally authorized inputs' }}</p>
-    <p class="mt-2 text-slate-600">No basic pay, attendance deductions, bonus tax treatment, total deductions or net pay have been calculated.</p>
+    <p class="mt-2 text-slate-600">This screen saves inputs only. Review calculated core amounts separately in the monthly draft's calculation previews. Attendance formulas and statutory deductions remain unavailable.</p>
     @if ($sourceIssue)<p class="mt-4 rounded border border-amber-200 p-4 text-amber-900">Salary source needs review: {{ $sourceIssue }} Refresh the employee's saved draft coverage before saving inputs. Input history is retained if coverage is removed and re-added.</p>@endif
     @if ($contextChanged)<p class="mt-4 rounded border border-amber-200 p-4 text-amber-900">These inputs were saved against different employee/salary details. Review and save a new revision before later processing.</p>@endif
     @if ($historical)<a href="{{ route('payroll-inputs.show', [$batch, $entry]) }}" class="mt-4 inline-block text-teal-800 underline">Return to latest inputs</a>@endif
@@ -57,6 +57,7 @@
                         </div>
                         <template data-input-template>@include('payroll-inputs.row', ['group' => $group, 'index' => '__INDEX__', 'row' => [], 'safe' => $safe])</template>
                         <button type="button" data-add-input class="mt-4 text-teal-800 underline">Add {{ strtolower($heading) }} line</button>
+                        <p class="input-group-status" data-input-count aria-live="polite" aria-atomic="true"></p>
                     </section>
                 @endforeach
                 @php
