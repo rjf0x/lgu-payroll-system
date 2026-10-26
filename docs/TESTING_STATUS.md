@@ -1,6 +1,6 @@
 # Testing status
 
-Updated: 2026-10-26. The username sign-in full regression passes 233 tests / 2902
+Updated: 2026-10-26. The UI/UX refresh full regression passes 239 tests / 2974
 assertions. Phase 2/3 audit findings and Phase 4 validation limits remain open.
 
 ## Automated checks
@@ -670,3 +670,45 @@ registration, payroll formula or Phase 7 feature was added.
 Live browser interaction and office acceptance remain unverified. Earlier Phase
 2/3 findings and the existing intermittent employee-search fixture issue remain
 open. No Git commit was created for this change.
+
+## User-requested UI/UX refresh after Phase 6 - 2026-10-26
+
+The named UI UX Pro Max 2.13.0 skill was read from the local installed plugin.
+The verified government/navy palette, accessible style, data-dense dashboard
+result and Laravel/error-summary guidance were applied to existing screens only.
+No backend rule, route permission, database schema or Phase 7 feature changed.
+
+| Executed check | Result |
+| --- | --- |
+| Initial selected auth/account/calculation suite | Passed, 52 tests / 732 assertions |
+| First full run with interface regressions | 237 passed / 2 failed, 2967 assertions. Both new validation tests omitted the session cookie on the redirect follow-up; corrected to carry the actual cookie, matching the existing regression helpers |
+| Corrected interface suite | Passed, 6 tests / 72 assertions |
+| Final `composer test` | Passed, 239 tests / 2974 assertions, 39.63 seconds (all 233 existing cases retained) |
+| Pint `--test` | Passed |
+| `node --check resources/js/workspace.js` and `payroll-inputs.js` | Both passed syntax checks; no browser-execution claim |
+| `npm.cmd run build` | Passed, 60 modules; final CSS 79.31 kB / gzip 16.62 kB and JS 55.37 kB / gzip 20.88 kB |
+| Served HTTP/asset checks on isolated review server | Passed, 36 page/asset checks across all four roles, plus username login and dashboard landmarks. Covered accounts, employees, salary lists/forms, monthly drafts, inputs and calculation history/detail as authorized |
+| Measured palette contrast | Passed: text/white 10.35:1; muted/white 6.31:1; primary button 5.93:1; sidebar link 11.34:1; input border/white 3.24:1; error text 6.36:1 |
+| Whitespace check | Passed |
+| Browser visual review | Unavailable: browser inventory empty; creating an in-app tab returned `Browser is not available: iab` |
+
+`WorkspaceInterfaceTest.php` covers navigation/shortcuts for all four roles, active
+and controlled navigation landmarks, linked/inline login errors, exclusion of
+rejected passwords, employee field errors and preservation of rejected form values.
+Existing input-isolation, permissions, calculation exactness and historical
+preservation regressions all still pass.
+
+The ignored `.local/ui-review.sqlite` database was migrated/seeded solely for
+served-HTTP review with explicitly fictional users, employees and monthly values.
+It is separate from configured MySQL; no real account or employee was altered.
+Review fixtures/build outputs are not included as application data or source assets.
+The temporary review server was stopped after checks; the original MySQL runtime
+state was left unchanged.
+
+No rendered screenshots or viewport measurements were obtained. Browser menu
+open/close/Escape, password toggle, field-error focus, add/remove/30-line cap,
+submit pending/back-forward feedback, live screen-reader announcements, reduced
+motion, 200% zoom and 375/768/1024/1440px layouts remain manual verification gaps.
+Contrast values above measure specified token pairs, not every rendered state.
+No accessibility certification, measured CLS, office acceptance or performance
+capacity claim is made. See UI_UX_GUIDE.md for the manual review checklist.

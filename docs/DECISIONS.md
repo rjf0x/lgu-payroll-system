@@ -367,3 +367,26 @@ References: [Laravel 13 upgrade guide](https://laravel.com/framework/docs/13.x/u
   Rollback restores placeholder addresses, not deleted original emails.
 - Update account/login views, factory, existing regressions and all MySQL verifier
   fixtures to the username schema. Keep old audit documents as historical evidence.
+
+## 2026-10-26 - UI/UX refresh requested after Phase 6
+
+- Apply the named UI UX Pro Max skill from its installed 2.13.0 plugin directory.
+  Use the verified government/navy accessibility palette and the narrower
+  operational-dashboard style result; disregard the initial marketing landing
+  pattern. Keep a local system-font stack for office/offline operation.
+- Extend the current Laravel/Blade/Tailwind interface with shared components and
+  semantic CSS tokens. Do not add another framework, remote font or dependency.
+  Generic decorative SVG icons do not impersonate an official LGU seal.
+- Retain existing route authorization for every navigation item and dashboard
+  shortcut. Use actual existing tools; do not fabricate metrics, later-phase
+  controls, payroll amounts or a production-readiness claim.
+- Preserve server validation, scoped payroll retry state and saved revisions.
+  Add visible field errors and a linked summary; enhance focus/ARIA descriptions
+  with JavaScript only when a field match is unique. Do not highlight an arbitrary
+  row when multiple forms share field names.
+- Keep navigation available without JavaScript, use a mobile disclosure instead
+  of a modal/focus trap, retain password-manager support and respect reduced motion.
+  Input add/remove limits and business safeguards remain existing backend rules.
+- Verify through the full tests, a separate fictional SQLite review database,
+  served HTTP checks and measured color-token contrast. Record the unavailable
+  browser connection rather than claim visual/responsive interaction acceptance.

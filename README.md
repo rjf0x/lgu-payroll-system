@@ -260,6 +260,18 @@ reopens the existing run; saving new inputs or changing coverage allows a new ru
 History preserves employee, salary, input revision and line-by-line calculation
 snapshots. Old results stay unchanged and show draft/source review notices.
 
+## Interface and navigation
+
+The workspace uses a navy sidebar, active navigation, role-specific starting
+cards and a consistent blue action style. Small screens use collapsible navigation;
+the login screen includes a password visibility toggle. Forms preserve existing
+retry behavior and display field feedback with an error summary. Payroll previews
+show aligned totals and clearer line-by-line breakdowns with their existing warnings.
+
+The design uses local assets and system fonts. No CDN or additional frontend
+dependency is required. See [the interface guide](docs/UI_UX_GUIDE.md) for design
+tokens, interaction behavior and the pending visual browser checks.
+
 ## Verification
 
 Run inside `application/`:
