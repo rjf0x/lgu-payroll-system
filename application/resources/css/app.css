@@ -191,8 +191,8 @@ button:disabled { cursor: not-allowed; opacity: .6; }
 .login-form label { display: block; margin-bottom: 9px; }
 .login-form input { width: 100%; min-height: 50px; }
 .password-field { position: relative; }
-.password-field input { padding-right: 124px; }
-.password-toggle { position: absolute; top: 3px; right: 4px; height: 44px; padding: 0 10px; color: var(--ui-primary); font-size: 11px; font-weight: 650; }
+.password-field input { padding-right: 56px; }
+.password-toggle { position: absolute; top: 3px; right: 4px; display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; color: var(--ui-primary); }
 .password-toggle:hover { border-radius: 5px; background: var(--ui-primary-soft); }
 .login-submit { width: 100%; min-height: 50px; margin-top: 3px; font-size: 14px; }
 .login-submit .ui-icon { margin-left: auto; }

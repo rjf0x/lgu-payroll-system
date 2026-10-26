@@ -14,7 +14,13 @@
             </div>
             <div>
                 <label for="password">Password</label>
-                <div class="password-field"><input id="password" name="password" type="password" required maxlength="72" autocomplete="current-password" placeholder="Enter your password" @if ($errors->has('password')) aria-invalid="true" @endif><button type="button" class="password-toggle" data-password-toggle="password" aria-pressed="false" hidden>Show password</button></div>
+                <div class="password-field">
+                    <input id="password" name="password" type="password" required maxlength="72" autocomplete="current-password" placeholder="Enter your password" @if ($errors->has('password')) aria-invalid="true" @endif>
+                    <button type="button" class="password-toggle" data-password-toggle="password" aria-controls="password" aria-label="Show password" title="Show password" aria-pressed="false" hidden>
+                        <x-ui.icon name="eye" data-password-show />
+                        <x-ui.icon name="eye-off" data-password-hide hidden />
+                    </button>
+                </div>
                 <x-ui.field-error field="password" />
             </div>
             <button class="button button-primary login-submit">Sign in<x-ui.icon name="arrow" /></button>

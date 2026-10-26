@@ -28,8 +28,12 @@ document.querySelectorAll('[data-password-toggle]').forEach((button) => {
     button.addEventListener('click', () => {
         const reveal = input.type === 'password';
         input.type = reveal ? 'text' : 'password';
-        button.textContent = reveal ? 'Hide password' : 'Show password';
+        const label = reveal ? 'Hide password' : 'Show password';
+        button.setAttribute('aria-label', label);
+        button.setAttribute('title', label);
         button.setAttribute('aria-pressed', String(reveal));
+        button.querySelector('[data-password-show]').toggleAttribute('hidden', reveal);
+        button.querySelector('[data-password-hide]').toggleAttribute('hidden', !reveal);
     });
 });
 
