@@ -426,6 +426,32 @@ record unavailable attempts. Submission callers must finish any outer database
 transaction before invoking the interface.
 Blockchain verification and finalized correction workflows remain future work.
 
+## Integrity checks and retained history (Phase 12-A)
+
+Apply `php artisan migrate`, then open **Payroll integrity checks and history**
+from a finalized fictional payroll review. Payroll Officers and Approvers can
+**Run integrity check**; Viewers read saved results only. Checks preserve the
+snapshot, local commitment, submission attempts and earlier check results.
+
+The page separates current local SHA-256 consistency from blockchain evidence.
+No authorized network reader is configured, so ordinary checks report **Not
+anchored** or **Unavailable**; a local match never establishes blockchain
+verification. Confirmed-receipt comparison is tested using explicit test doubles
+only. No genuine transaction has been retrieved or verified.
+
+History records checked hashes, status/reason, actor/time and any independently
+retrieved receipt metadata. Results describe their check time, not continuous
+network state. Changed local records require a fresh check. Reposting the same
+request key reuses its result; a fresh check retains a new history row. No network
+submission, auto-retry or background polling occurs in this flow.
+
+Phase 12 is divided as permitted by the master prompt: verification/history is
+Phase 12-A; authorized correction versions spanning approval, documents and
+anchoring are Phase 12-B and remain unimplemented. See the
+[Phase 12-A handoff](docs/PHASE_12A_HANDOFF.md) for scope, states, access, tests and
+remaining network/client validation. The rollback-only MySQL workflow verifier
+also checks history/key idempotency and an isolated snapshot-copy mismatch.
+
 ## Interface and navigation
 
 The workspace uses a navy sidebar, active navigation, role-specific starting

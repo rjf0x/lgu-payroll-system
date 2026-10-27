@@ -12,7 +12,9 @@ use App\Policies\EmployeePolicy;
 use App\Policies\PayrollBatchPolicy;
 use App\Policies\PayrollRuleVersionPolicy;
 use App\Policies\SalarySchedulePolicy;
+use App\Services\Blockchain\BlockchainReader;
 use App\Services\Blockchain\BlockchainSubmitter;
+use App\Services\Blockchain\UnavailableBlockchainReader;
 use App\Services\Blockchain\UnavailableBlockchainSubmitter;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
@@ -25,6 +27,7 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->bind(BlockchainSubmitter::class, UnavailableBlockchainSubmitter::class);
+        $this->app->bind(BlockchainReader::class, UnavailableBlockchainReader::class);
     }
 
     /**

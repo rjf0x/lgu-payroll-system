@@ -1,9 +1,10 @@
 # Testing status
 
-Updated: 2026-10-27. Phase 11 local-interface fallback passes full isolation:
-505 tests / 6044 assertions. Phase 11 re-audit confirms F1/H1 remain corrected
-and finds no new supported-path defect. Live anchoring
-remains incomplete: no authorized test network. Earlier audit/client limits remain.
+Updated: 2026-10-27. Phase 12-A verification/history passes full isolation:
+537 tests / 6539 assertions, including all 505 earlier cases. Its audit found no
+new confirmed supported-path bug. Genuine blockchain
+verification remains incomplete without an authorized network; correction versions
+are deferred to Phase 12-B. Earlier audit/client/operational limits remain.
 
 ## Automated checks
 
@@ -1533,3 +1534,121 @@ re-audit report, four tracking documents and ignored diagnostics changed.
   execution evidence remains in PHASE_11_REAUDIT.md. Live network acceptance and
   existing client/concurrency/recovery/browser/capacity limits remain unchanged.
   One local-interface commit authorized; no push or Phase 12 implementation.
+
+## Phase 12-A verification and check history - 2026-10-27
+
+Authorized scope: next-phase implementation, tests and stop. The master prompt
+permits reviewable subphases; Phase 12-A covers verification/history and Phase 12-B
+will cover authorized correction versions across the locked payroll lifecycle.
+No Phase 12-B or Phase 13 feature is implemented. No genuine blockchain result
+is claimed: the default receipt reader is unavailable, with no transport.
+
+| Executed check | Result |
+| --- | --- |
+| Final focused `PayrollVerificationTest` | **32 tests / 495 assertions passed**, 19.749 seconds, 70 MB; includes the stored/displayed application-clock regression |
+| Prior combined anchoring/verification focused run | **55 tests / 922 assertions passed**, 28.747 seconds, 70 MB; before the final additional actor-revocation case |
+| Final full `scripts/verify-test-isolation.ps1` | **537 tests / 6539 assertions passed**, 182.547 seconds, 100 MB, including all 505 earlier cases; hostile inherited production/MySQL values remained pinned to in-memory SQLite |
+| Local MySQL migration | Applied only `2026_10_27_000003_create_payroll_verifications_table`; all 15 migrations Ran afterward. Existing finalized/commitment tables unchanged |
+| MySQL workflow/document/commitment/check-history verifier | Passed and reran successfully after the check-time correction: exact three-category workflow/document checks plus saved hash/history JSON persistence, UUID idempotency and isolated snapshot-copy mismatch. No original snapshot modification. All fictional business fixtures rolled back; initial stopped MySQL state restored |
+| Application/verifier Pint, JS syntax | Passed |
+| Composer strict validation/platform requirements | Passed; no dependency/lockfile change or installation |
+| Production asset build | Passed, 60 modules; generated assets remain ignored |
+| `git diff --check` | Passed; ordinary existing verifier LF/CRLF notice only |
+
+The initial focused run had 51 cases / 850 assertions and two failures: newly
+inserted pending-attempt fixtures had not loaded database-default creation times
+before strict attribute comparison. Refreshing the fixture before capturing its
+attributes corrected the tests. The application did not alter those attempts;
+the preservation checks remain strict. Corrected focused/full execution passes.
+
+Final review also caught a check-time defect: relying on the database's default
+timestamp can disagree with the application's timezone/clock. A new frozen-clock
+regression first failed (1 case / 11 assertions), then passed after both new-record
+paths explicitly stamp `created_at` from the application clock. No older payroll
+or anchoring timestamps were changed. The final focused/full counts above include
+this regression. The earlier pre-correction full run also passed 536 tests / 6526
+assertions; it did not yet contain the timestamp regression.
+
+New permanent tests cover all three categories, unchanged Phase 11 envelope bytes,
+GET without events, local unanchored/match states, unavailable defaults and no
+network submissions, confirmed matching test receipts, isolated amount tampering
+even with invalid arithmetic, confirmed network-hash disagreement, pending/failed
+receipts, wrong receipt identity, suppressed provider exceptions and required
+confirmed hash/block/positive confirmations. They retain previous history across
+explicit new checks and reuse the same actor/finalization request UUID on retry.
+
+Role controls, hidden/visible Run buttons, guest/inactive/revoked sessions, CSRF,
+cross-batch scope, cross-actor/key misuse, unfinalized/real batches, changed actor
+state after request construction, malformed snapshots/format/references, history
+pagination/overflow, model retention and migration rollback protection also pass.
+Stored and displayed check time matches the frozen application time.
+The server accepts only a request UUID, never operator-provided receipt or hash
+confirmation fields. Test doubles are not runtime proof of real blockchain use.
+
+The original Phase 11 fixture methods moved unchanged to a shared test trait;
+all 25 anchoring tests and earlier regression cases remain. No percentage line/
+branch coverage was measured. Logs are ignored under `.local/phase12a`.
+
+Remaining unverified: genuine network reader/chain/receipt identity and authorized
+confirmation/reorganization policy, independent real retrieval, bounded adapter
+timeouts and lock latency, concurrent writers/request-key races, process-crash/
+storage/network failures, office-scale capacity and live browser/accessibility
+acceptance. There is no confirmation poller, transaction reconciliation/retry or
+correction-version workflow. Earlier payroll/client/document/deployment limits
+remain unchanged. No new commit, push or publication.
+
+## Phase 12-A audit - 2026-10-27
+
+Audit-only scope: no application fix, permanent-test change, migration, dependency
+or Phase 12-B/13 implementation. See PHASE_12A_AUDIT.md for criteria and limits.
+
+- Full hostile-environment isolation passes **537 tests / 6539 assertions**,
+  172.426 seconds, 100 MB. All 505 earlier cases remain; permanent Phase 12-A
+  coverage is still **32 cases / 495 assertions**, with no measured coverage percentage.
+- New ignored audit probes pass **9 cases / 155 assertions**, 3.092 seconds,
+  62 MB: separate network/transaction identity rejection; invalid-reference clock
+  and UUID retention; workflow/null/float tampering; escaped receipt metadata;
+  injected key conflict returning 409; injected history insert failure with rollback
+  and read-only retry; SQL FK retention; Viewer/stale GET with no lookup/write;
+  and refusal of client-provided success/hash/confirmation/actor/time overrides.
+- MySQL workflow/document/history/JSON/idempotency/isolated-copy mismatch checks
+  pass with fictional fixture rollback. All 15 migrations already Ran; none
+  executed. Initial stopped MySQL state restored. No real chain calls were made.
+- Application/verifier Pint, JS syntax and whitespace pass. SHA-256 comparisons
+  across **175 source/config/route/view/migration/permanent-test/verifier files**
+  confirm no changes during this audit. No asset build/dependency install needed;
+  their earlier implementation evidence remains historical.
+- No new confirmed Phase 12-A bug found. Genuine chain verification/retrieval,
+  confirmation/reorganizations and authorized correction versions remain
+  incomplete under the current network constraint and documented subphase split.
+  Fault injection does not establish actual multi-process concurrency, physical
+  persistence/network failure handling or full crash recovery. Live browser/
+  accessibility, capacity, client acceptance and earlier payroll limits remain.
+
+Probes, source manifest and execution logs are ignored under
+`.local/phase12a-audit`. Only the audit report, four tracking documents and ignored
+diagnostics changed. No application fix, permanent test, commit or next phase.
+
+## Phase 12-A commit validation - 2026-10-27
+
+- Reran full hostile-environment isolation: **537 tests / 6539 assertions pass**,
+  182.287 seconds, 100 MB. Includes all 505 earlier cases and 32 Phase 12-A
+  cases / 495 assertions. Log is ignored at `.local/phase12a-commit/isolation.log`.
+- MySQL workflow/document/anchoring/check-history verification passes with
+  fictional fixture rollback: saved JSON digest/history, scoped UUID idempotency,
+  original-value preservation and isolated snapshot-copy mismatch. All 15
+  migrations already Ran; none executed. Original stopped MySQL state restored.
+- Application/verifier Pint `--test`, JS syntax, Composer strict validation and
+  platform checks, production build (60 modules) and whitespace checks pass.
+  No dependency/lockfile change, new package or generated output included.
+- Reviewed the initially empty index and intended 25-file source/test/migration/
+  UI/documentation scope. No deleted/unrelated file, secret/database/generated/
+  diagnostic path or private/cloud/provider key, credential assignment, debugging
+  statement or incomplete marker found by the executed review/scans. Local ignore
+  checks cover environment, dependencies, database/config, builds and logs.
+- SHA-256 comparisons across 175 source/config/route/view/migration/test/verifier
+  files confirm no application change during commit review. Earlier ignored
+  audit probes were not rerun; their evidence remains in PHASE_12A_AUDIT.md.
+- Genuine network confirmation/retrieval, live concurrency/recovery/browser/
+  capacity acceptance and authorized correction versions remain incomplete or
+  deferred. One local-integrity/history commit authorized; no push or Phase 12-B/13.

@@ -47,4 +47,9 @@ class PayrollBatchPolicy
     {
         return $user->is_active && $user->role === Role::Approver && $batch->status === 'finalized';
     }
+
+    public function verifyIntegrity(User $user, PayrollBatch $batch): bool
+    {
+        return $user->is_active && in_array($user->role, [Role::PayrollOfficer, Role::Approver], true) && $batch->status === 'finalized';
+    }
 }

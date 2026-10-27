@@ -10,6 +10,7 @@ use App\Models\PayrollCommitment;
 use App\Models\PayrollFinalization;
 use App\Models\PayrollRuleVersion;
 use App\Models\PayrollSubmission;
+use App\Models\PayrollVerification;
 use App\Models\PayrollWorkflowEvent;
 use App\Models\SalarySchedule;
 use App\Models\User;
@@ -21,6 +22,7 @@ use App\Services\PayrollDocumentService;
 use App\Services\PayrollInputService;
 use App\Services\PayrollPreparationService;
 use App\Services\PayrollRuleVersionService;
+use App\Services\PayrollVerificationService;
 use App\Services\PayrollWorkflowService;
 use App\Services\StatutoryPreviewService;
 use Carbon\CarbonImmutable;
@@ -234,6 +236,20 @@ try {
         || $final->fresh()->getAttributes() !== $finalBefore) {
         throw new RuntimeException('Local commitment retry, JSON round-trip, outer-transaction rejection or finalization preservation failed.');
     }
+    $verification = app(PayrollVerificationService::class);
+    $checkData = ['request_key' => (string) Str::uuid()];
+    $check = $verification->check($reviewRequest, $batch, $final, $checkData);
+    $checkAgain = $verification->check($reviewRequest, $batch, $final, $checkData);
+    $isolatedCopy = clone $final;
+    $isolatedSnapshot = $final->snapshot;
+    $isolatedSnapshot['workflow'][0]['reason'] = 'ISOLATED FICTIONAL HASH CHANGE';
+    $isolatedCopy->snapshot = $isolatedSnapshot;
+    if ($check->id !== $checkAgain->id || $check->fresh()->current_hash !== $digest
+        || $check->status !== 'not_anchored' || $check->local_status !== 'match' || $check->network_hash !== null
+        || $verification->inspect($batch->fresh(), $isolatedCopy)['status'] !== 'mismatched'
+        || $final->fresh()->getAttributes() !== $finalBefore) {
+        throw new RuntimeException('Verification history/JSON digest, idempotency, isolated mismatch or preservation failed.');
+    }
     $real = $preparation->create($request, ['period' => $date->format('Y-m'), 'is_demonstration' => 0]);
     try {
         $workflow->transition($request, $real, 'submit', ['record_version' => 1, 'review_token' => str_repeat('a', 64), 'reason' => 'FICTIONAL real block', 'review_confirmed' => 1]);
@@ -250,7 +266,8 @@ if (User::where('username', 'like', 'workflow-%'.$nonce)->exists()
     || Employee::where('employee_number', 'like', 'WF-'.$nonce.'%')->exists()
     || PayrollFinalization::where('payroll_batch_id', $batch->id)->exists()
     || PayrollCommitment::whereKey($commitment->id)->exists()
-    || PayrollAnchorAttempt::where('payroll_commitment_id', $commitment->id)->exists()) {
+    || PayrollAnchorAttempt::where('payroll_commitment_id', $commitment->id)->exists()
+    || PayrollVerification::whereKey($check->id)->exists()) {
     throw new RuntimeException('Payroll workflow check retained fictional fixtures.');
 }
-echo "MySQL payroll workflow passed: three categories, exact employee/batch totals, JSON review tokens, independent approval, return/correction/resubmission, retained versions/events, locked finalization, register/CSV/payslip PDF generation, duplicate prevention, later configuration/document preservation, local commitment idempotency/JSON round-trip, outer-transaction submission rejection without attempt, real block and fixture rollback.\n";
+echo "MySQL payroll workflow passed: three categories, exact employee/batch totals, JSON review tokens, independent approval, return/correction/resubmission, retained versions/events, locked finalization, register/CSV/payslip PDF generation, duplicate prevention, later configuration/document preservation, local commitment idempotency/JSON round-trip, outer-transaction submission rejection without attempt, verification history/idempotency/isolated mismatch, real block and fixture rollback.\n";

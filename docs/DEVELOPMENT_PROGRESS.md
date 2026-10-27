@@ -5,13 +5,17 @@ Updated: 2026-10-27 (Asia/Manila).
 ## Authorized work
 
 The current instruction authorizes reviewing, validating and creating one Git
-commit for Phase 11, including its corrections and audit records, with no push
-or history rewriting. The preceding re-audit confirmed F1/H1 remain corrected
-and found no new supported local-interface defect.
-Phase 10 is committed at `b4e62fe`. The user confirmed that no
+commit for Phase 12-A, including its tests and audit records, with no push or
+history rewriting. The preceding audit found no new confirmed supported-path
+defect. Phase 11 is committed at `f448daf`. Under the master prompt's subphase
+rule, Phase 12 is split into A (verification/history) and B (authorized finalized
+correction versions). Only Phase 12-A has been implemented because
+correction versions span the locked approval/finalization, document and anchoring
+lifecycle and merit separate review. The user confirmed that no
 authorized blockchain test network is available and explicitly selected the
 master prompt's local-interface fallback. Live anchoring must remain incomplete;
-Phase 12 and publication are not authorized by this instruction.
+Phase 12-B, Phase 13 and publication are not authorized in
+this execution.
 Client-approved rules/examples and document templates remain unavailable; real
 payroll processing remains blocked. Earlier phase/audit evidence is preserved below.
 
@@ -893,11 +897,84 @@ Status: Implemented but needs validation. Live anchoring remains incomplete.
   interface; live anchoring/confirmation/independent retrieval remain incomplete.
   No push, history rewriting, publication, production activation or Phase 12 work.
 
+## Phase 12-A - Verification and Check History - 2026-10-27
+
+Status: Implemented but needs validation; genuine blockchain acceptance incomplete.
+
+- Added scoped integrity checks and immutable history with local consistency
+  separated from network comparison. The default reader is unavailable and has
+  no transport, simulated receipt or activation path. Only matching independently
+  confirmed receipts can produce verified; all such tests use explicit doubles.
+- Reused the exact Phase 11 v1 envelope through a shared encoder helper. Changed
+  snapshot amounts hash differently even if document arithmetic becomes invalid;
+  no source/snapshot/commitment/attempt is repaired or overwritten.
+- Existing payroll read roles remain; Payroll Officer/Approver may run checks,
+  Viewer reads only, Administrator has no payroll access. Active/session/role,
+  finalized demonstration scope and UUID retry ownership are checked server-side.
+  Safe reason codes, CSRF, throttling, private responses and overflow-safe history
+  navigation are implemented; raw provider exceptions are not retained.
+- Added `payroll_verifications` in one migration; all 15 MySQL migrations Ran.
+  Rollback-only workflow checks pass JSON/history retention, idempotency and an
+  isolated snapshot-copy mismatch. Fictional fixtures rolled back; MySQL's initial
+  stopped state restored. Details and acceptance limits: PHASE_12A_HANDOFF.md.
+- Focused new verification tests pass **32 cases / 495 assertions**. Full hostile-
+  environment isolation passes **537 tests / 6539 assertions**, including all 505
+  earlier cases. Pint, JS syntax, Composer strict/platform validation, build
+  (60 modules) and whitespace checks pass. Evidence is in TESTING_STATUS.md.
+- A final-review regression reproduced database-default time differing from the
+  application check time. New verification records now use the application clock
+  explicitly; the frozen-clock stored/displayed-time test and full rerun pass.
+- No authorized correction-version workflow, real network, confirmed live anchor,
+  independent real receipt, Phase 13 feature, commit or publication. Original
+  finalized version 1 and prior values/history remain unchanged/retrievable.
+
+## Phase 12-A audit - 2026-10-27
+
+Status: Implemented but needs validation; genuine verification remains incomplete.
+
+- PHASE_12A_AUDIT.md maps all four parent acceptance criteria to current evidence.
+  No new confirmed bug was found in tested Phase 12-A paths. Confirmed comparison
+  succeeds only with explicit test doubles; the default reader remains unavailable.
+  Authorized correction versions remain deferred to Phase 12-B, so full Phase 12
+  acceptance is partial rather than complete.
+- Full isolation passes **537 tests / 6539 assertions**, including all 505 earlier
+  cases and 32 Phase 12-A cases / 495 assertions. Nine ignored probes pass 155
+  assertions: independent receipt identities, time/idempotency, malformed/tampered
+  snapshots, escaped metadata, injected uniqueness/storage faults, FK retention,
+  read-only stale history and ignored client-provided success fields.
+- MySQL workflow/document/history/JSON checks pass with fixture rollback; all 15
+  migrations already Ran, none executed; original stopped state restored. Pint,
+  JS syntax and whitespace pass. All 175 compared source/test/verifier files
+  retain their pre-audit hashes; no code/permanent-test change.
+- Real chain confirmation/retrieval/reorganizations, actual concurrent races and
+  recovery, capacity and live browser/client acceptance remain unverified. Only
+  audit/tracking documents and ignored probes changed. No fix, new feature,
+  migration, commit, publication or Phase 12-B/13 work.
+
+## Phase 12-A commit validation - 2026-10-27
+
+- Full hostile-environment isolation passes **537 tests / 6539 assertions**,
+  182.287 seconds, 100 MB, including all 505 earlier cases and 32 Phase 12-A
+  cases / 495 assertions. MySQL workflow/document/check-history/JSON/idempotency/
+  isolated-copy mismatch verification passes with fixture rollback; all 15
+  migrations already Ran, none executed; original stopped state restored.
+- Application/verifier Pint, JS syntax, Composer strict/platform checks, production
+  asset build (60 modules) and whitespace checks pass. No dependency/lock change.
+- Reviewed the initially empty staged diff and all 25 phase-related modified/new
+  files. No deleted/unrelated file or secret/database/generated/diagnostic candidate
+  path; no private/cloud/provider-key, credential-assignment, debug-code or
+  incomplete-marker scan finding. Local environment, dependencies, database and
+  generated outputs remain ignored. All 175 compared source/test/verifier paths
+  retain pre-review hashes; no application behavior changed during commit review.
+- One Phase 12-A local-integrity/history commit is authorized. Genuine network
+  verification and correction versions remain incomplete/deferred. No push,
+  history rewriting, publication or Phase 12-B/13 work.
+
 ## Next phase
 
-Phase 12 - Blockchain Verification and History, only after authorization. Complete
-Phase 11's live-network acceptance when an authorized network becomes available.
-Do not proceed automatically.
+Phase 12-B - Authorized Correction Versions, only after authorization. Complete
+the outstanding genuine Phase 11/12 network acceptance when a suitable authorized
+test network is available. Do not proceed automatically to 12-B or Phase 13.
 
-Final status: STOPPED - Phase 11 commit validation complete; F1/H1 remain
-corrected and live anchoring incomplete. No Phase 12, push or publication.
+Final status: STOPPED - Phase 12-A commit validation complete; genuine verification
+incomplete. Phase 12-B and Phase 13 not started. No push or publication.

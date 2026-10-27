@@ -814,3 +814,64 @@ References: [Laravel 13 upgrade guide](https://laravel.com/framework/docs/13.x/u
 - Identify the implementation as a local interface in the commit message. Real
   blockchain anchoring, confirmation and independent retrieval remain incomplete
   under the user's authorized no-network fallback.
+
+## 2026-10-27 - Phase 12-A verification/history scope
+
+- Use the master prompt's subphase rule to separate verification/history (12-A)
+  from authorized finalized corrections (12-B). Corrections require coordinated
+  changes to approval/preparation locks, finalization uniqueness, document scope
+  and anchoring identity. Do not implement that lifecycle or Phase 13 here.
+- Continue the user-confirmed unavailable-network boundary. Bind a receipt reader
+  with no transport; no runtime simulator or manually entered confirmation.
+  Confirmed comparisons in tests use explicit doubles and do not satisfy genuine
+  blockchain acceptance.
+- Retain Phase 11's exact v1 envelope bytes in a shared encoder helper. Hash changed
+  snapshots before arithmetic validation so isolated inconsistent tampering still
+  yields a mismatch; reject invalid/unserializable values and never repair sources.
+- Keep local consistency and network evidence separate. Require an identity-matched
+  confirmed receipt with valid SHA-256, block and positive confirmations before a
+  verified outcome. A future real adapter must enforce authorized chain identity,
+  exact successful payload and confirmation/reorganization policy, with bounded
+  timeouts; current read-only lookups occur under the local consistency lock.
+- Permit active Payroll Officers and Approvers to run comparisons, without granting
+  approval/finalization authority. Viewers read results only; Administrator's
+  existing no-payroll-record scope remains. Recheck actor/session/policy and
+  finalization scope under locks; apply CSRF, throttle and private response headers.
+- Retain append-only verification evidence with scoped UUID request idempotency,
+  comparison hashes, safe reason codes, receipt metadata and actor/time. Receipt
+  retrieval never submits/retries transactions or changes anchor attempts. Display
+  saved checks as historical; no continuous verification or automatic polling.
+- Reuse the unchanged finalized fixture in a shared test trait, keeping Phase 11's
+  permanent tests and base in-memory safety guard intact. Isolate test tampering
+  and extend rollback-only MySQL verification without real chain traffic.
+- Stamp new verification evidence using the application clock explicitly. Database
+  defaults can use another timezone and do not follow an isolated test clock.
+  Keep a frozen-clock regression for stored/displayed check time; do not alter
+  timestamps or records from previous phases.
+
+## 2026-10-27 - Phase 12-A audit boundary
+
+- Audit current verification/history only, without changing application behavior,
+  permanent tests, schema, dependencies or implementing Phase 12-B/13.
+- Map all four parent acceptance criteria honestly: comparison/mismatch/history
+  paths pass tested local/test-double cases, while genuine verification and the
+  correction-version lifecycle remain incomplete. No new confirmed supported-path
+  defect found; do not equate fake-receipt success with a real network commitment.
+- Keep diagnostics isolated/ignored and source hashes unchanged. Treat injected
+  unique-key/storage failures as fault probes, not proof of actual simultaneous
+  writers, process-crash recovery or network/disk failure handling.
+- Preserve MySQL fixture rollback and its original stopped state. Retain earlier
+  limitations; no application fix, commit, push or next-subphase implementation.
+
+## 2026-10-27 - Phase 12-A commit scope
+
+- Follow the user's explicit instruction to review, validate and create one
+  Conventional Commit for Phase 12-A's local verification/check history, its
+  tests, shared fixture, migration and audit records. Use the configured Git
+  identity. Do not amend, rewrite history, push or start Phase 12-B/13.
+- Explicitly stage the reviewed 25-file scope. Exclude local credentials and
+  environment, databases, dependencies, generated builds/caches and ignored
+  diagnostic probes/logs. Do not change application behavior during commit review.
+- Describe the implementation as local integrity checks/history. Genuine receipt
+  retrieval/verification remains incomplete without an authorized test network;
+  correction versions remain Phase 12-B and are not part of this commit.

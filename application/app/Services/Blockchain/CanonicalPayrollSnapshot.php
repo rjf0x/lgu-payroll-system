@@ -14,6 +14,15 @@ class CanonicalPayrollSnapshot
         return json_encode($this->ordered($value), JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     }
 
+    public function encodeFinalization(int $batchId, int $finalizationId, int $version, array $snapshot): string
+    {
+        return $this->encode([
+            'canonicalization' => self::VERSION,
+            'payroll_batch_id' => $batchId, 'payroll_finalization_id' => $finalizationId,
+            'version' => $version, 'snapshot' => $snapshot,
+        ]);
+    }
+
     private function ordered(mixed $value): mixed
     {
         if (is_array($value)) {

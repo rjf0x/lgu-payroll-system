@@ -31,11 +31,7 @@ class PayrollAnchoringService
         app(PayrollDocumentService::class)->prepare($batch, $finalization);
         abort_unless(($finalization->snapshot['submission_id'] ?? null) === $finalization->payroll_submission_id, 409, 'Finalization metadata is inconsistent.');
         try {
-            return $this->canonical->encode([
-                'canonicalization' => CanonicalPayrollSnapshot::VERSION,
-                'payroll_batch_id' => $batch->id, 'payroll_finalization_id' => $finalization->id,
-                'version' => $finalization->version, 'snapshot' => $finalization->snapshot,
-            ]);
+            return $this->canonical->encodeFinalization($batch->id, $finalization->id, $finalization->version, $finalization->snapshot);
         } catch (InvalidArgumentException|JsonException) {
             abort(409, 'The preserved snapshot cannot be serialized using the commitment format.');
         }

@@ -11,6 +11,7 @@ use App\Http\Controllers\PayrollDocumentController;
 use App\Http\Controllers\PayrollInputController;
 use App\Http\Controllers\PayrollReviewController;
 use App\Http\Controllers\PayrollRuleVersionController;
+use App\Http\Controllers\PayrollVerificationController;
 use App\Http\Controllers\SalaryScheduleController;
 use App\Http\Controllers\StatutoryPreviewController;
 use App\Http\Controllers\UserController;
@@ -38,6 +39,8 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::view('/dashboard', 'dashboard')->name('dashboard');
     Route::resource('users', UserController::class)->except(['show', 'destroy'])->middleware('can:manage-users');
     Route::resource('employees', EmployeeController::class)->except('destroy');
+    Route::get('payroll-batches/{batch}/integrity/{finalization}', [PayrollVerificationController::class, 'show'])->name('payroll-verification.show');
+    Route::post('payroll-batches/{batch}/integrity/{finalization}', [PayrollVerificationController::class, 'store'])->middleware('throttle:10,1')->name('payroll-verification.store');
     Route::get('payroll-batches/{batch}/anchoring/{finalization}', [PayrollAnchoringController::class, 'show'])->name('payroll-anchoring.show');
     Route::post('payroll-batches/{batch}/anchoring/{finalization}/{action}', [PayrollAnchoringController::class, 'act'])
         ->whereIn('action', ['prepare', 'submit'])->middleware('throttle:10,1')->name('payroll-anchoring.act');
