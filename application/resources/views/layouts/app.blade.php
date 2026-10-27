@@ -16,7 +16,7 @@
                 request()->routeIs('payroll-rule-versions.*') => 'Payroll configuration',
                 request()->routeIs('salary-schedules.*', 'salary-rates.*') => 'Salary schedules',
                 request()->routeIs('employees.*', 'employee-salaries.*') => 'Employees',
-                request()->routeIs('payroll-batches.*', 'payroll-employees.*', 'payroll-inputs.*', 'payroll-calculations.*', 'payroll-reviews.*') => 'Monthly payroll',
+                request()->routeIs('payroll-batches.*', 'payroll-employees.*', 'payroll-inputs.*', 'payroll-calculations.*', 'payroll-reviews.*', 'payroll-documents.*') => 'Monthly payroll',
                 request()->routeIs('dashboard') => 'Overview',
                 default => 'Your workspace',
             };
@@ -40,7 +40,7 @@
                     <x-ui.nav-link :href="route('employees.index')" :active="request()->routeIs('employees.*', 'employee-salaries.*')" icon="people">Employees</x-ui.nav-link>
                 @endcan
                 @can('viewAny', \App\Models\PayrollBatch::class)
-                    <x-ui.nav-link :href="route('payroll-batches.index')" :active="request()->routeIs('payroll-batches.*', 'payroll-employees.*', 'payroll-inputs.*', 'payroll-calculations.*', 'payroll-reviews.*')" icon="calendar">Monthly payroll</x-ui.nav-link>
+                    <x-ui.nav-link :href="route('payroll-batches.index')" :active="request()->routeIs('payroll-batches.*', 'payroll-employees.*', 'payroll-inputs.*', 'payroll-calculations.*', 'payroll-reviews.*', 'payroll-documents.*')" icon="calendar">Monthly payroll</x-ui.nav-link>
                 @endcan
                 @can('viewAny', \App\Models\SalarySchedule::class)
                     <x-ui.nav-link :href="route('salary-schedules.index')" :active="request()->routeIs('salary-schedules.*', 'salary-rates.*')" icon="layers">Salary schedules</x-ui.nav-link>

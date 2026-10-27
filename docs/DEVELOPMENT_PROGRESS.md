@@ -4,15 +4,13 @@ Updated: 2026-10-27 (Asia/Manila).
 
 ## Authorized work
 
-Phase 9 - Payroll Review and Approval was authorized by the instruction to
-proceed to the next phase, follow the master prompt, implement only that phase,
-test and stop. Phase 8 is complete at `c837cf5`; subsequent login icon commits do
-not change phase sequencing. Phase 10 is not authorized. Client-approved rules
-and examples remain unavailable; real payroll processing remains blocked.
-
 The latest instruction authorizes reviewing, validating and creating one Git
-commit for Phase 9 only. No push or next-phase implementation is authorized.
-Earlier implementation, audit and correction evidence is preserved below.
+commit for Phase 10 only, with no push or history rewriting. The prior re-audit
+confirmed the pagination correction (F1) and tested demonstration criteria.
+Phase 10 implementation followed the earlier instruction to proceed, test and
+stop. Phase 9 is committed at `30023f9`; Phase 11 is not authorized.
+Client-approved rules/examples and document templates remain unavailable; real
+payroll processing remains blocked. Earlier phase/audit evidence is preserved below.
 
 Phase 7 - Contributions and Withholding Tax was authorized by the user's
 instruction to proceed to the next phase, implement only that phase, test and stop.
@@ -639,8 +637,130 @@ No application behavior changed during commit review. Real payroll and the clien
 legacy-history, browser, concurrency/recovery and capacity limitations remain as
 recorded in PHASE_9_REAUDIT.md. No Phase 10 work or push.
 
+## Phase 10 - Payroll Document Generation
+
+Status: Implemented but needs validation.
+
+- Finalized document index, full-batch register and individual payslips from
+  immutable Phase 9 snapshots, with authorized HTML viewing/native printing,
+  register/payslip PDF downloads and UTF-8 register CSV export.
+- Exact preserved line/component/batch totals and identities, frozen-version
+  references, excluded allowance/original-adjustment handling and fail-closed
+  missing/inconsistent snapshot checks. No current employee/rule recalculation.
+- Existing payroll read roles, finalization/batch/employee scope checks, private
+  response headers, escaped text, CSV formula neutralization, safe attachment
+  names and restricted offline PDF rendering. No public payroll files or new table.
+- Locked Dompdf 3.1.6 and four transitive dependencies added, with no existing
+  dependency upgrade. Generic A4 landscape/portrait layouts remain subject to
+  client template acceptance; real payroll stays blocked.
+- Permanent Phase 10 coverage adds 36 cases / 802 assertions. Final full isolation
+  passed 479 tests / 5570 assertions, including all 443 earlier cases. MySQL
+  workflow now verifies register/CSV/payslip PDFs and retained document values;
+  other configuration/core/statutory verifiers also pass with rollback.
+- Final fictional PDF stress outputs were rendered/extracted and visually
+  inspected: 28-row long-identity register across eight pages and long payslip
+  across six pages. Unicode, totals, last records/lines, repeated warnings/page
+  references and page bounds passed. A register-footer row-variable leak was
+  reproduced and corrected with a permanent regression before final verification.
+- Pint, JavaScript syntax, Composer validation/platform checks, production build
+  and whitespace checks pass. Thirteen existing migrations remain Ran; no migration
+  executed. MySQL's original stopped state was restored after rollback-only checks.
+
+See PHASE_10_HANDOFF.md and TESTING_STATUS.md for files, verification and limits.
+Actual templates, client payroll rules/authority, office print/CSV acceptance,
+browser/accessibility, concurrent rendering/recovery and capacity remain unverified.
+Existing Phase 2/3 findings and legacy-history limits remain unchanged. No Git
+commit, document uploads, finalized correction or Phase 11 feature implemented.
+
+## Phase 10 audit - 2026-10-27
+
+Status: Implemented but needs validation.
+
+- PHASE_10_AUDIT.md maps all three acceptance criteria to reviewed source and
+  executed evidence. Values and ordinary retrieval pass for tested demonstrations.
+  One low-severity defect is confirmed: an extreme index page number overflows
+  its array-slice offset and returns HTTP 500 (F1). No fix made in this audit.
+- Full isolation rerun passed 479 tests / 5570 assertions. Ten separate ignored
+  audit cases passed 161 assertions, covering additional malformed snapshots and
+  maximum document identity/line-length boundaries. A separate 1-case / 12-assertion
+  reproducer confirms F1; this diagnostic passes by asserting the existing bug.
+  MySQL workflow/document
+  verification passed with fixture rollback and the initial stopped state restored.
+- Existing eight-page register/six-page payslip QA passed extraction/bounds checks
+  and visual review. New synthetic boundary PDFs retained all identity fields and
+  lines across a one-page register/eleven-page payslip, with references and totals.
+- Pint, Composer strict/platform validation, JavaScript syntax and whitespace
+  checks pass. Permanent coverage remains 36 Phase 10 cases / 802 assertions;
+  no coverage percentage measured.
+- Client templates and actual office print/CSV acceptance remain pending.
+  Permanent tests do not parse PDF values/layout; ignored QA supplements them.
+  Browser/accessibility, simultaneous rendering, failure recovery and office-scale
+  capacity remain unverified. Earlier Phase 2/3 and legacy-history limits remain.
+- Only audit/tracking documentation and ignored probes changed during this audit.
+  No application fix, permanent test change, migration, commit or Phase 11 work.
+
+## Phase 10 correction - 2026-10-27
+
+Status: Implemented but needs validation.
+
+- Fixed F1 by checking the last available document-index page before calculating
+  the array-slice offset. Extreme and ordinary out-of-range pages now return 404;
+  valid pagination and preserved payroll/export values remain unchanged.
+- Added a permanent regression covering PHP_INT_MAX, an overflowing-offset boundary,
+  an ordinary unavailable page, subsequent normal retrieval and unchanged finalized
+  batch/snapshot/workflow history. It first failed with the original HTTP 500;
+  corrected pagination plus the existing multi-page test pass 2 cases / 36 assertions.
+- Full isolation passes 480 tests / 5586 assertions, including 37 Phase 10 cases /
+  818 assertions and all 443 prior cases. Application Pint and whitespace checks
+  pass. No schema, dependency, asset or PDF-template change required rerunning
+  the earlier MySQL/build/manual PDF QA checks.
+- Client templates, office print/CSV acceptance, production rules and the audit's
+  other operational coverage gaps remain pending. Earlier Phase 2/3 and legacy
+  history limits are unchanged.
+- No new feature, migration, dependency, commit or Phase 11 work.
+
+## Phase 10 re-audit - 2026-10-27
+
+Status: Implemented but needs validation.
+
+- PHASE_10_REAUDIT.md confirms all three criteria for tested demonstrations.
+  F1 remains corrected; no new confirmed Phase 10 bug or missing supported task
+  area was found. Actual templates and office acceptance remain pending.
+- Full isolation passes 480 tests / 5586 assertions, 151.140 seconds, 98 MB.
+  Four new ignored probes pass 91 assertions, and ten applicable earlier audit
+  probes pass 161 assertions. The historical F1 failure reproducer was excluded.
+- Exact 20/40/41-row pagination boundaries, malformed query fallback and
+  authorization/snapshot-check ordering pass without mutation. Permanent phase
+  coverage remains 37 cases / 818 assertions; no coverage percentage measured.
+- MySQL workflow/document checks pass with fixture rollback and initial stopped
+  state restored. PDF extraction/bounds, sampled boundary visual review, Pint,
+  Composer strict validation, JavaScript syntax and whitespace checks pass.
+- Detailed PDF assertions outside the permanent suite, live browser/printing/
+  accessibility/spreadsheet acceptance, concurrency/recovery/capacity and client
+  validation remain pending. Earlier Phase 2/3 and legacy-history limits remain.
+- Thirteen reviewed application paths retain identical hashes. Only re-audit/
+  tracking documents and ignored probes changed; no application/permanent-test
+  change, migration, dependency, commit or Phase 11 work.
+
+## Phase 10 commit validation - 2026-10-27
+
+- Full isolation passes 480 tests / 5586 assertions, 141.059 seconds, 98 MB;
+  all 443 earlier cases and 37 Phase 10 cases remain. MySQL workflow/document
+  verification passes with fixture rollback and initial stopped state restored.
+- Application/workflow-verifier Pint, Composer strict/platform checks and locked
+  security audit, JavaScript syntax, production build (60 modules) and whitespace
+  checks pass. No vulnerability advisory reported by the executed Composer audit.
+- Reviewed the initially empty staged diff and the complete 22-file Phase 10
+  source/test/dependency/documentation scope. No deleted file, unrelated change,
+  sensitive/generated candidate path or credential/private-key/provider-key/debug
+  scan finding. Local environment, dependencies, build/cache and diagnostics are
+  confirmed ignored. Dompdf plus four dependencies added; no existing version upgrade.
+- No application behavior changed during commit review. Client/operational and
+  earlier audit limitations remain in PHASE_10_REAUDIT.md. One Phase 10 commit is
+  authorized; no push, history rewriting or Phase 11 implementation.
+
 ## Next phase
 
-Phase 10 - Payroll Document Generation. Do not proceed automatically.
+Phase 11 - Blockchain Anchoring. Do not proceed automatically.
 
-Final status: STOPPED - Awaiting permission to continue.
+Final status: STOPPED - Phase 10 commit validation complete; Phase 11 not started.

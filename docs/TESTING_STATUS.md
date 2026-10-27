@@ -1154,3 +1154,183 @@ fix, permanent-test change, migration, new feature, Git commit or Phase 10 work.
   legacy overwritten coverage actors, browser, concurrency/recovery, MySQL downgrade
   and capacity acceptance remain pending. Real payroll remains blocked. No Phase 10
   implementation or push.
+
+## Phase 10 - Payroll Document Generation - 2026-10-27
+
+| Check executed | Result |
+| --- | --- |
+| Initial focused `PayrollDocumentTest` run | Passed: 33 cases / 754 assertions, 61.028 seconds; authorization, exact HTML/CSV values, PDF generation, preserved identities/amounts, invalid snapshots and CSV/XSS cases |
+| Initial full isolation regression | Passed: 477 tests / 5542 assertions; included the added snapshot-index pagination/full-register case |
+| Intermediate full isolation after strict ID case/layout update | Passed: 478 tests / 5557 assertions |
+| Footer regression before/after fix | Reproduced wrong individual identifier in register footer: 1 failed / 11 assertions; corrected targeted test passed 1 case / 13 assertions |
+| Final `scripts/verify-test-isolation.ps1` | Passed: 479 tests / 5570 assertions, 130.533 seconds, 98 MB; all 443 earlier cases remain; hostile inherited production/MySQL/DB_URL settings stayed isolated in-memory |
+| Ignored PDF render fixture and inspection | Passed: 1 test / 10 assertions; final 28-employee long-identity register generated 8 pages, long payslip 6 pages. Extracted Unicode/net values, last employee/continued line, every repeated warning/page/identity reference and all text bounds passed; PNG pages/contact sheets visually inspected |
+| `php ../scripts/verify-payroll-workflow.php` | Passed on MySQL, including new register projection/CSV/register PDF/payslip PDF checks, preserved documents after configuration activation, exact existing workflow values and fixture rollback; rerun after final footer fix passed |
+| Existing MySQL configuration/core/statutory verifiers | Passed with owned fictional fixtures and rollback |
+| `php artisan migrate:status` / `app:check` | Thirteen migrations already Ran; database/base tables ready. No migration executed |
+| Application Pint and workflow-verifier Pint `--test` | Passed |
+| `node --check resources/js/workspace.js` | Passed |
+| `composer validate --strict` / `composer check-platform-reqs` | Passed |
+| `npm.cmd run build` | Passed: 60 modules; generated assets remain ignored |
+| `git diff --check` | Passed; ordinary LF/CRLF notice on the verifier |
+
+Phase 10 contributes **36 permanent cases / 802 assertions**. No coverage
+percentage measured. Cases exercise three categories, all four roles/all six
+document endpoints, frozen identities and multiple employees, exact register/
+payslip/CSV arithmetic, index pagination versus full-batch export, multi-page PDF
+generation, missing/unfinalized/cross-batch/uncovered records, guests/inactive/
+expired sessions, later profile/configuration activation, no history mutation,
+eleven malformed snapshot scenarios, eight CSV text scenarios and escaped stored
+HTML. A specific footer test prevents the register from inheriting the final loop
+employee while keeping the individual identifier on payslip continuation pages.
+
+Visual QA found crowded register headings/excessive spacing and a shared Blade
+row-variable footer leak. Header spacing/labels were refined, then the leak was
+reproduced by the permanent test and corrected. The final re-rendered PDFs and
+full suite passed afterward. QA adds no operator data or permanent payroll record.
+Ignored diagnostic sources/output are under `.local/phase10-qa`; temporary Python
+PDF inspection packages are under `.local/pdf-tools`. They are not runtime
+application dependencies and are not staged or publicly served.
+
+The interrupted setup initially failed downloads under the old sandbox. After
+network access was available, Composer installed Dompdf 3.1.6 plus four new locked
+font/parser dependencies, with zero existing upgrades and no reported security
+advisories. The temporary unbounded require constraint resolved to `^3.1` when
+Composer finished; final strict validation passed. PyMuPDF was installed only for
+ignored visual/extraction QA; it is not required by the PHP application.
+
+MySQL was initially stopped, started temporarily for rollback-only verification
+and stopped again afterward. No fictional fixture, actual payroll/configuration,
+credential export, database reset or migration change retained by diagnostics.
+No real payroll activation, supporting-document upload, finalized correction,
+blockchain behavior, Git commit or Phase 11 work.
+
+Remaining unverified: actual LGU templates/headings/signatories, client payroll
+rules/authority and confidential distribution policy; native browser/physical
+printing, keyboard/mobile/screen-reader behavior; CSV viewer differences; large
+office capacity, concurrent rendering/font cache use, disk/memory/time failures,
+interrupted downloads and office deployment. Earlier Phase 2/3 and legacy-history
+limits remain. Generic PDF QA does not certify an official payroll form or payment.
+
+## Phase 10 audit - 2026-10-27
+
+- Full `scripts/verify-test-isolation.ps1` rerun passed **479 tests / 5570
+  assertions**, 148.538 seconds, 98 MB. The recorded run completed successfully
+  under conflicting inherited production/MySQL settings with in-memory SQLite.
+- Extra ignored audit probes passed **10 tests / 161 assertions**, 80.149 seconds,
+  90 MB. Nine snapshot/data-use faults return 409 across all six routes without
+  mutation; a synthetic 120-line projection with maximum-length employee identity
+  fields renders HTML and PDFs successfully. These are not permanent test additions.
+- F1 ignored fault reproducer passed **1 test / 12 assertions**, 2.815 seconds,
+  64 MB, by observing the existing HTTP 500 and array_slice offset TypeError at
+  `?page=9223372036854775807`. This confirms a bug, not corrected behavior.
+- MySQL workflow/document verifier passed with fictional fixture rollback,
+  preserved values after configuration activation and register/CSV/payslip PDFs.
+  MySQL was initially stopped and stopped again afterward. No migration executed.
+- Re-inspection of existing fictional PDFs passed: eight-page register, six-page
+  payslip, Unicode/net/last-line values, repeated warnings/references/page numbers
+  and page bounds. Contact sheets visually reviewed.
+- New boundary PDF inspection passed: one-page register, eleven-page payslip,
+  full 350-character name, 50-character employee number, 150-character office and
+  position, all 114 added 100-character zero-value lines, preserved net and repeated
+  references/warnings/page numbers within page bounds. First/last pages reviewed.
+- Application/workflow-verifier Pint `--test`, Composer strict/platform checks,
+  JavaScript syntax and whitespace checks passed. The existing implementation
+  production-build result above was not rerun; this audit changes no asset source.
+
+PHASE_10_AUDIT.md records preserved values/ordinary retrieval passing for exercised
+demonstrations, plus one low-severity confirmed extreme-pagination defect (F1).
+Permanent phase coverage remains
+36 cases / 802 assertions; no line/branch percentage measured. Extra sources,
+regression log, boundary PDFs and inspection scripts are ignored under
+`.local/phase10-audit`; existing QA and inspection packages remain ignored.
+
+Remaining coverage gaps include a permanent extreme-page regression for F1,
+detailed PDF text/layout assertions outside the
+permanent suite, native browser/physical printing, keyboard/mobile/screen-reader
+behavior, actual spreadsheet imports/precision, office templates/distribution,
+concurrent cache/rendering, disk/memory/time failures, interrupted downloads and
+office-scale memory/time capacity. Earlier validation/history findings remain.
+No application fix, permanent-test change, commit, migration or Phase 11 work.
+
+## Phase 10 correction - 2026-10-27
+
+- New permanent F1 regression first failed **1 test / 9 assertions** with the
+  expected original HTTP 500 and array_slice offset TypeError. After the guard,
+  it and the existing multi-page identity/full-register test passed **2 tests /
+  36 assertions**, 3.343 seconds, 86 MB.
+- Full `scripts/verify-test-isolation.ps1` passed **480 tests / 5586 assertions**,
+  137.762 seconds, 98 MB. Hostile inherited production/MySQL configuration stayed
+  isolated to in-memory SQLite. All 443 prior cases remain; Phase 10 now has
+  **37 permanent cases / 818 assertions**. No coverage percentage measured.
+- The new case verifies 404 for PHP_INT_MAX, the first overflowing offset boundary
+  and an ordinary out-of-range page, then successful normal retrieval and unchanged
+  finalized batch/snapshot/workflow events. The original ignored F1 reproducer
+  asserts the former HTTP 500 and was intentionally not rerun as current acceptance.
+- Application Pint `--test` and `git diff --check` passed. Earlier MySQL, build,
+  dependency and visual/extracted PDF checks were not rerun because this follow-up
+  changes only the controller's index guard, its regression and phase records.
+  The full suite still exercises all document generation and authorization cases.
+
+The permanent extreme-page coverage gap is closed. Other PDF text/layout,
+browser/print/accessibility, spreadsheet, concurrency/resource-failure, capacity
+and client-validation gaps from PHASE_10_AUDIT.md remain. Red/green diagnostic
+logs are ignored under `.local/phase10-audit`. No schema, dependency, new feature,
+Git commit or Phase 11 work.
+
+## Phase 10 re-audit - 2026-10-27
+
+- Full `scripts/verify-test-isolation.ps1` rerun passed **480 tests / 5586
+  assertions**, 151.140 seconds, 98 MB. The permanent F1 regression passes under
+  hostile inherited production/MySQL settings with in-memory SQLite.
+- New ignored probes passed **4 tests / 91 assertions**, 21.437 seconds, 68 MB:
+  20/40/41-row page boundaries, unavailable/extreme pages, malformed query fallback,
+  unchanged snapshots, and authorization/invalid-snapshot checks before pagination.
+- Applicable earlier ignored probes passed **10 tests / 161 assertions**, 80.978
+  seconds, 90 MB. The historical F1 HTTP 500 reproducer was excluded deliberately;
+  the permanent corrected-behavior test supersedes it.
+- MySQL workflow/document verifier passed with owned fictional fixtures and
+  rollback, including PDF/CSV/register values retained after configuration changes.
+  MySQL's initial stopped state was restored; no migration executed.
+- PDF extraction/bounds checks passed for existing eight-page Unicode register/
+  six-page payslip and regenerated one-page boundary register/eleven-page payslip.
+  Long identities, all 114 added lines, totals, repeated references/warnings/page
+  numbers remain intact. Boundary register and final payslip page visually reviewed.
+- Application/workflow-verifier Pint, Composer strict validation, JavaScript syntax
+  and whitespace checks passed. No new build or dependency installation. SHA-256
+  comparisons confirm all thirteen reviewed application paths stayed unchanged.
+
+PHASE_10_REAUDIT.md records all three criteria passing for tested demonstrations,
+F1 still corrected and no new confirmed Phase 10 defect/missing supported task
+area. Permanent phase coverage remains **37 cases / 818 assertions**; fourteen
+extra ignored diagnostic cases pass 252 assertions separately. No line/branch
+percentage measured. New probes/log are ignored under `.local/phase10-reaudit`.
+
+Client forms/distribution, real payroll rules, native browser/physical printing,
+accessibility/mobile/spreadsheet acceptance, concurrent rendering, resource failure
+recovery and office capacity remain unverified. Detailed PDF text/layout assertions
+remain outside the permanent suite. Earlier Phase 2/3 and legacy-history limits
+remain. Only audit/tracking documents and ignored diagnostics changed; no
+application fix, permanent-test change, migration, commit or Phase 11 work.
+
+## Phase 10 commit validation - 2026-10-27
+
+- Full `scripts/verify-test-isolation.ps1` passed **480 tests / 5586 assertions**,
+  141.059 seconds, 98 MB. Includes 37 Phase 10 cases / 818 assertions and all
+  443 prior cases under isolated in-memory SQLite despite hostile inherited settings.
+- MySQL workflow/document verification passed with owned fictional fixture rollback,
+  preserved documents after configuration activation and PDF/CSV outputs. MySQL's
+  original stopped state restored. No migration executed.
+- Application/workflow-verifier Pint, Composer strict/platform checks,
+  `composer audit --locked --no-interaction`, JavaScript syntax, production build
+  (60 modules) and `git diff --check` passed. Composer reported no vulnerability
+  advisories. Build outputs remain ignored.
+- Reviewed modified and new Phase 10 files and the initially empty staged diff.
+  All 22 candidate paths match the intended phase scope, with no deleted/unrelated
+  file or sensitive/generated path. Private-key/provider-key/hardcoded-credential/
+  debug scans returned no findings; local ignore checks confirm environment,
+  dependency, renderer-cache, build and diagnostic exclusions.
+- No application/permanent-test change during commit review. The earlier ignored
+  probes and visual QA were not rerun; their evidence remains in PHASE_10_REAUDIT.md.
+  Remaining client, browser/print/spreadsheet, concurrency/recovery and capacity
+  limitations are unchanged. No production activation, push or Phase 11 work.

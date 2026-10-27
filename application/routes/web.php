@@ -6,6 +6,7 @@ use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\EmployeeSalaryController;
 use App\Http\Controllers\PayrollBatchController;
 use App\Http\Controllers\PayrollCalculationController;
+use App\Http\Controllers\PayrollDocumentController;
 use App\Http\Controllers\PayrollInputController;
 use App\Http\Controllers\PayrollReviewController;
 use App\Http\Controllers\PayrollRuleVersionController;
@@ -36,6 +37,14 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::view('/dashboard', 'dashboard')->name('dashboard');
     Route::resource('users', UserController::class)->except(['show', 'destroy'])->middleware('can:manage-users');
     Route::resource('employees', EmployeeController::class)->except('destroy');
+    Route::get('payroll-batches/{batch}/documents', [PayrollDocumentController::class, 'index'])->name('payroll-documents.index');
+    Route::prefix('payroll-batches/{batch}/documents/{finalization}')->group(function () {
+        Route::get('register', [PayrollDocumentController::class, 'register'])->name('payroll-documents.register');
+        Route::get('register.pdf', [PayrollDocumentController::class, 'registerPdf'])->name('payroll-documents.register-pdf');
+        Route::get('register.csv', [PayrollDocumentController::class, 'registerCsv'])->name('payroll-documents.register-csv');
+        Route::get('payslips/{employee}', [PayrollDocumentController::class, 'payslip'])->where('employee', '[1-9][0-9]{0,18}')->name('payroll-documents.payslip');
+        Route::get('payslips/{employee}.pdf', [PayrollDocumentController::class, 'payslipPdf'])->where('employee', '[1-9][0-9]{0,18}')->name('payroll-documents.payslip-pdf');
+    });
     Route::get('payroll-batches/{batch}/review', [PayrollReviewController::class, 'show'])->name('payroll-reviews.show');
     Route::post('payroll-batches/{batch}/workflow/{action}', [PayrollReviewController::class, 'transition'])
         ->whereIn('action', ['submit', 'return', 'approve', 'finalize'])

@@ -6,7 +6,9 @@ authorization, employee payroll records, and effective-dated salary schedules
 with preserved employee salary history, monthly payroll drafts, employee inputs
 and versioned demonstration core calculation previews, with separate contribution
 and withholding reference reviews, with demonstration payroll submission,
-independent approval/return and locked finalized snapshots.
+independent approval/return and locked finalized snapshots. Finalized demonstration
+payroll now supports printable registers and individual payslips, downloadable
+PDFs and register CSV export.
 Phase 2 has two open findings;
 see [the employee-management audit](docs/PHASE_2_AUDIT.md). Phase 3 also needs
 validation; see [the salary-management audit](docs/PHASE_3_AUDIT.md) for salary
@@ -348,6 +350,48 @@ correction command in this phase. Blockchain anchoring has not been performed.
 Apply `php artisan migrate` before use. See [the Phase 9 handoff](docs/PHASE_9_HANDOFF.md)
 for manual verification, database changes, legacy history limits and pending client
 acceptance. Rollback-only MySQL verification, from `application/`:
+
+```powershell
+php ../scripts/verify-payroll-workflow.php
+```
+
+## Finalized payroll documents (Phase 10)
+
+After `composer install` and building assets, open a finalized payroll review and
+select **Finalized payroll register and payslips**. Payroll Officers, Approvers and
+Viewers can retrieve documents; Administrator retains its existing configuration/
+account responsibilities and does not gain payroll-record access.
+
+- **Register:** view or print the whole finalized batch, download an A4 landscape
+  PDF, or export UTF-8 CSV with employee rows and full-batch totals.
+- **Payslip:** view or print one employee's preserved earnings, deductions and net
+  pay, or download an A4 portrait PDF. The employee list is paginated; registers
+  include the entire batch. Employee identities come from the finalized snapshot.
+- **Printing:** use the document's **Print document** button or the browser's Print
+  command. Downloaded PDFs can also be printed from a PDF viewer.
+
+Documents are regenerated on demand from the selected immutable finalization,
+without reading current employee, input or rule values. No PDF is saved in public
+storage. Authorized responses use private/no-store headers. Stored line/component/
+batch amounts must reconcile exactly; incomplete or inconsistent snapshots return
+409 without repair. Unfinalized or out-of-scope records cannot produce documents.
+These consistency checks are not blockchain verification.
+
+All pages/CSV rows identify demonstration use. The layouts are generic prototypes;
+client payroll-register and payslip templates remain unprovided. Documents are
+not proof of payment or approval for actual payroll processing. Existing real-mode
+blocks and unresolved client rules remain unchanged.
+
+PDF export uses locked `dompdf/dompdf` with bundled Unicode fonts; no Python or
+external PDF service is required by the application. Its temporary/font cache is
+under `application/storage/framework/cache/dompdf`, which must be writable by PHP.
+Remote assets, embedded PHP and PDF JavaScript are disabled. CSV quoting preserves
+commas/newlines; potentially active formula text is prefixed with an apostrophe in
+the export only. Saved payroll values are unchanged.
+
+See [the Phase 10 handoff](docs/PHASE_10_HANDOFF.md) for verification steps and
+limits. The existing rollback-only MySQL workflow check now additionally verifies
+register projection, CSV, register/payslip PDFs and retained document values:
 
 ```powershell
 php ../scripts/verify-payroll-workflow.php

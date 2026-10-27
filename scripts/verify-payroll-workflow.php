@@ -12,6 +12,7 @@ use App\Models\PayrollWorkflowEvent;
 use App\Models\SalarySchedule;
 use App\Models\User;
 use App\Services\PayrollCalculationService;
+use App\Services\PayrollDocumentService;
 use App\Services\PayrollInputService;
 use App\Services\PayrollPreparationService;
 use App\Services\PayrollRuleVersionService;
@@ -172,6 +173,20 @@ try {
     $workflow->transition($reviewRequest, $batch, 'finalize', $finalize);
     $final = PayrollFinalization::where('payroll_batch_id', $batch->id)->sole();
     $finalBefore = $final->getAttributes();
+    $documents = app(PayrollDocumentService::class);
+    $document = $documents->prepare($batch->fresh(), $final);
+    $csvBefore = $documents->csv($document, $final);
+    if ($document['totals']['net_pay'] !== '76467.34' || count($document['rows']) !== 3
+        || ! str_starts_with($csvBefore, "\xEF\xBB\xBF") || ! str_contains($csvBefore, 'DEMONSTRATION ONLY')) {
+        throw new RuntimeException('Finalized document totals or CSV metadata differ from the preserved payroll.');
+    }
+    $pdfData = ['batch' => $batch->fresh(), 'finalization' => $final, 'document' => $document];
+    $registerPdf = $documents->pdf('payroll-documents.register', $pdfData, true);
+    $row = $documents->employee($document, (string) $entry->employee_id);
+    $payslipPdf = $documents->pdf('payroll-documents.payslip', [...$pdfData, 'row' => $row], false);
+    if (! str_starts_with($registerPdf, '%PDF-') || ! str_starts_with($payslipPdf, '%PDF-')) {
+        throw new RuntimeException('Finalized register or payslip did not generate a PDF.');
+    }
     if ($final->snapshot['payroll']['totals'] != ['total_earnings' => '90000.00', 'total_deductions' => '13532.66', 'net_pay' => '76467.34']
         || $first->fresh()->getAttributes() !== $before
         || PayrollSubmission::where('payroll_batch_id', $batch->id)->count() !== 2
@@ -187,6 +202,9 @@ try {
     workflowCheckConfiguration($admin, PersonnelClassification::Permanent->value, $date->format('Y-m-d'), '0.10');
     if ($final->fresh()->getAttributes() !== $finalBefore) {
         throw new RuntimeException('Configuration activation changed finalized payroll.');
+    }
+    if ($documents->csv($documents->prepare($batch->fresh(), $final->fresh()), $final) !== $csvBefore) {
+        throw new RuntimeException('Configuration activation changed retrieved payroll documents.');
     }
     $real = $preparation->create($request, ['period' => $date->format('Y-m'), 'is_demonstration' => 0]);
     try {
@@ -205,4 +223,4 @@ if (User::where('username', 'like', 'workflow-%'.$nonce)->exists()
     || PayrollFinalization::where('payroll_batch_id', $batch->id)->exists()) {
     throw new RuntimeException('Payroll workflow check retained fictional fixtures.');
 }
-echo "MySQL payroll workflow passed: three categories, exact employee/batch totals, JSON review tokens, independent approval, return/correction/resubmission, retained versions/events, locked finalization, duplicate prevention, later configuration preservation, real block and fixture rollback.\n";
+echo "MySQL payroll workflow passed: three categories, exact employee/batch totals, JSON review tokens, independent approval, return/correction/resubmission, retained versions/events, locked finalization, register/CSV/payslip PDF generation, duplicate prevention, later configuration/document preservation, real block and fixture rollback.\n";

@@ -1,4 +1,8 @@
 const navigation = document.getElementById('primary-navigation');
+document.querySelectorAll('[data-print-document]').forEach((button) => {
+    button.hidden = false;
+    button.addEventListener('click', () => window.print());
+});
 const navigationToggle = document.querySelector('[data-navigation-toggle]');
 
 if (navigation && navigationToggle) {

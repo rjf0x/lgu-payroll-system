@@ -622,3 +622,92 @@ References: [Laravel 13 upgrade guide](https://laravel.com/framework/docs/13.x/u
   and rollback, restoring MySQL's initial stopped state. Do not claim that passing
   sequential probes establish client, browser, concurrency, recovery or capacity
   acceptance. No new confirmed Phase 9 defect in exercised paths.
+
+## 2026-10-27 - Phase 10 finalized payroll documents
+
+- Generate registers and individual payslips only from Phase 9's immutable
+  finalization snapshot. Keep current payroll read roles, scope every finalization
+  to its batch, and resolve employee IDs from preserved rows rather than live
+  Employee route binding. Never recalculate statutory rules or refresh identity
+  from current profiles during document retrieval.
+- Use on-demand authenticated HTML/print, PDF exports and register CSV. Stable
+  batch/finalization/employee URLs and preserved source values support retrieval
+  without another table or public payroll files. PDF bytes may contain renderer
+  metadata; no byte-stability or archival signing promise is made.
+- Add `dompdf/dompdf` (^3.1, locked 3.1.6) directly, plus its four locked parser/font
+  dependencies. No framework wrapper, PDF service or application Python dependency.
+  Follow the [official project usage](https://github.com/dompdf/dompdf/tree/v3.1.6).
+  Keep remote resources, embedded PHP and PDF JavaScript disabled, restrict local
+  resources to bundled fonts and use ignored application storage for renderer cache.
+- Check snapshot schemas, scope/data-use flags, canonical money, unique snapshot
+  identities, included line subtotals, saved component deductions/net and aggregate
+  totals before issuing any document. Compare stored amounts using BCMath only;
+  do not repair inconsistent snapshots or treat these checks as blockchain integrity.
+- Keep UTF-8 CSV quoting explicit and neutralize leading formula/control text in
+  textual cells with an export-only apostrophe. Keep saved values untouched.
+  Use private/no-store responses and filenames built from period/version/numeric
+  identifiers rather than names or operator-entered text.
+- Use clearly marked generic A4 landscape register and A4 portrait payslip layouts
+  while actual templates remain unprovided. Do not invent an LGU seal, legal form,
+  signatory certification, payment-release workflow or production calculation rule.
+- Retain PDF page headings, warning, period/finalization/version references and
+  individual payslip identity on continuation pages. Use separate table rows for
+  long payslips, avoiding non-pageable giant table cells. Verify generated PDFs
+  visually and by extracted values/page bounds using fictional ignored QA fixtures.
+- No new schema, document uploads, finalized corrections, blockchain feature,
+  Git commit or Phase 11 implementation in this phase.
+
+## 2026-10-27 - Phase 10 audit boundary
+
+- Audit only the current document-generation implementation against its own
+  criteria. Report client-template and operational validation gaps separately
+  from confirmed bugs. Record the low-severity extreme-pagination HTTP 500 as F1;
+  do not fix it during an audit or infer production approval from generic PDFs.
+- Retain existing application/permanent tests. Add isolated ignored probes for
+  extra malformed snapshots and document layout boundaries; count their ten
+  acceptance cases / 161 assertions and the separate F1 reproducer / 12 assertions
+  apart from the 479-case permanent suite. The reproducer asserts the current bug.
+- Keep detailed PDF extraction/visual QA distinct from permanent binary-generation
+  checks. Passing sequential SQLite/MySQL checks does not establish concurrent
+  rendering, browser/print/CSV acceptance, resource failure recovery or capacity.
+- Record the evidence in PHASE_10_AUDIT.md and the required tracking documents.
+  Do not fix unrelated earlier findings, commit changes or begin Phase 11.
+
+## 2026-10-27 - Phase 10 pagination correction
+
+- Under the user's current-phase-only correction authorization, fix F1 by
+  rejecting document-index pages beyond the preserved row count with HTTP 404
+  before offset multiplication. Keep valid page links, snapshot totals, read
+  authorization and exports unchanged.
+- Add a permanent regression for PHP_INT_MAX, the first overflowing page offset
+  and an ordinary unavailable page. Verify subsequent normal retrieval and
+  unchanged finalized batch/snapshot/workflow events. Retain the existing
+  multi-page identity/full-register test.
+- Preserve the original audit and its ignored HTTP 500 reproducer as historical
+  evidence. Current acceptance uses the new corrected-behavior regression.
+- No new feature, schema, dependency, official template, payroll-rule change,
+  Git commit or Phase 11 implementation.
+
+## 2026-10-27 - Phase 10 re-audit scope
+
+- Re-audit Phase 10 without changing application behavior or permanent tests.
+  Verify F1 against corrected-behavior tests; retain the original HTTP 500
+  reproducer as historical evidence and exclude it from current acceptance.
+- Add ignored in-memory probes for exact page boundaries, malformed queries,
+  authorization ordering and inconsistent snapshots. Keep those separate from
+  permanent coverage and the original applicable audit probes.
+- Record missing client templates and office acceptance as validation blocks,
+  and PDF regression/printing/concurrency/recovery/capacity gaps as unverified.
+  Do not infer production approval or implement Phase 11 from passing tests.
+
+## 2026-10-27 - Phase 10 commit scope
+
+- Follow the user's authorization to review and create one Conventional Commit
+  for Phase 10, including its correction, tests and audit records. Do not push,
+  rewrite history or start Phase 11.
+- Explicitly stage the reviewed 22-file scope. Keep local environment/credentials,
+  database files, dependency directories, builds, renderer caches, PDF/PNG QA and
+  ignored diagnostics excluded. No unrelated source changes during commit review.
+- Retain the demonstration-only boundary and unresolved client/operational
+  validation limitations. A clean commit does not approve real payroll or certify
+  official client forms.
