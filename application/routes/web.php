@@ -4,6 +4,7 @@ use App\Enums\Role;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\EmployeeSalaryController;
+use App\Http\Controllers\PayrollAnchoringController;
 use App\Http\Controllers\PayrollBatchController;
 use App\Http\Controllers\PayrollCalculationController;
 use App\Http\Controllers\PayrollDocumentController;
@@ -37,6 +38,9 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::view('/dashboard', 'dashboard')->name('dashboard');
     Route::resource('users', UserController::class)->except(['show', 'destroy'])->middleware('can:manage-users');
     Route::resource('employees', EmployeeController::class)->except('destroy');
+    Route::get('payroll-batches/{batch}/anchoring/{finalization}', [PayrollAnchoringController::class, 'show'])->name('payroll-anchoring.show');
+    Route::post('payroll-batches/{batch}/anchoring/{finalization}/{action}', [PayrollAnchoringController::class, 'act'])
+        ->whereIn('action', ['prepare', 'submit'])->middleware('throttle:10,1')->name('payroll-anchoring.act');
     Route::get('payroll-batches/{batch}/documents', [PayrollDocumentController::class, 'index'])->name('payroll-documents.index');
     Route::prefix('payroll-batches/{batch}/documents/{finalization}')->group(function () {
         Route::get('register', [PayrollDocumentController::class, 'register'])->name('payroll-documents.register');

@@ -397,6 +397,35 @@ register projection, CSV, register/payslip PDFs and retained document values:
 php ../scripts/verify-payroll-workflow.php
 ```
 
+## Blockchain anchoring local interface (Phase 11)
+
+No authorized test network is available. Phase 11 implements the master prompt's
+local-interface fallback; live anchoring and independent transaction retrieval
+remain incomplete. No local hash or simulated transaction is reported as anchored.
+
+Apply `php artisan migrate`, then open a finalized demonstration payroll review
+and select **Blockchain anchoring status and local commitment**. An independent
+Approver can confirm the displayed version and **Prepare local commitment**.
+One immutable SHA-256 commitment is retained per finalization. Payroll Officers,
+Approvers and Viewers can read status; Administrator has no payroll-record access.
+
+**Attempt submission through configured interface** records **Unavailable** with
+no network or transaction reference. The application binds an unavailable adapter
+with no transport or credentials. Retrying does not replace the digest. The
+submission contract accepts only the digest and an opaque retry key. A future
+real adapter must establish confirmation and independent retrieval; a returned
+reference alone stays pending. Uncertain/interrupted sends block blind retries.
+
+The [canonical v1 specification](docs/CANONICAL_PAYROLL_COMMITMENT_V1.md) defines
+the exact saved snapshot envelope, JSON bytes and SHA-256 vector. The
+[Phase 11 handoff](docs/PHASE_11_HANDOFF.md) records access, states, migration,
+manual checks and remaining network work. The existing rollback-only MySQL workflow
+verifier additionally checks commitment persistence and rejection of submissions
+inside its rollback-only transaction. Normal standalone fallback submissions still
+record unavailable attempts. Submission callers must finish any outer database
+transaction before invoking the interface.
+Blockchain verification and finalized correction workflows remain future work.
+
 ## Interface and navigation
 
 The workspace uses a navy sidebar, active navigation, role-specific starting

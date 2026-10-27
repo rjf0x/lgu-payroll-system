@@ -7,6 +7,7 @@
     @if ($issue)<p class="mt-5 rounded bg-amber-50 p-4 font-semibold text-amber-900">Needs review: {{ $issue }}</p>@endif
     @if ($finalization)
         <a href="{{ route('payroll-documents.index', $batch) }}" class="mt-4 inline-block font-semibold text-teal-800 underline">Finalized payroll register and payslips</a>
+        <a href="{{ route('payroll-anchoring.show', [$batch, $finalization]) }}" class="mt-4 inline-block font-semibold text-teal-800 underline">Blockchain anchoring status and local commitment</a>
         <p class="mt-5 rounded bg-teal-50 p-4 font-semibold">Finalized version {{ $finalization->version }} · {{ $finalization->created_at->format('Y-m-d H:i') }}. Preserved values are locked. Blockchain anchoring has not been performed.</p>
     @elseif ($submission && in_array($batch->status, ['submitted', 'approved'], true))
         <p class="mt-5">Submission {{ $submission->revision }} · {{ $submission->created_at->format('Y-m-d H:i') }}. Inputs and coverage are locked. Changed sources or configuration require return and resubmission.</p>

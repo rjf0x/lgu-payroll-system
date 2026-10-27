@@ -4,13 +4,18 @@ use App\Enums\PersonnelClassification;
 use App\Enums\Role;
 use App\Models\Employee;
 use App\Models\EmployeeSalaryRecord;
+use App\Models\PayrollAnchorAttempt;
 use App\Models\PayrollBatch;
+use App\Models\PayrollCommitment;
 use App\Models\PayrollFinalization;
 use App\Models\PayrollRuleVersion;
 use App\Models\PayrollSubmission;
 use App\Models\PayrollWorkflowEvent;
 use App\Models\SalarySchedule;
 use App\Models\User;
+use App\Services\Blockchain\BlockchainSubmitter;
+use App\Services\Blockchain\UnavailableBlockchainSubmitter;
+use App\Services\PayrollAnchoringService;
 use App\Services\PayrollCalculationService;
 use App\Services\PayrollDocumentService;
 use App\Services\PayrollInputService;
@@ -206,6 +211,29 @@ try {
     if ($documents->csv($documents->prepare($batch->fresh(), $final->fresh()), $final) !== $csvBefore) {
         throw new RuntimeException('Configuration activation changed retrieved payroll documents.');
     }
+    // This rollback-only check must never use an adapter capable of broadcasting.
+    if (! app(BlockchainSubmitter::class) instanceof UnavailableBlockchainSubmitter) {
+        throw new RuntimeException('Rollback-only verification requires the unavailable blockchain interface.');
+    }
+    $anchoring = app(PayrollAnchoringService::class);
+    $digest = $anchoring->digest($batch->fresh(), $final->fresh());
+    $anchorData = ['sha256' => $digest, 'demonstration_confirmed' => 1];
+    $commitment = $anchoring->act($reviewRequest, $batch, $final, 'prepare', $anchorData);
+    $repeated = $anchoring->act($reviewRequest, $batch, $final, 'prepare', $anchorData);
+    try {
+        $anchoring->act($reviewRequest, $batch, $final, 'submit', $anchorData);
+        throw new RuntimeException('Submission was allowed inside the rollback-only outer transaction.');
+    } catch (HttpException $exception) {
+        if ($exception->getStatusCode() !== 409) {
+            throw $exception;
+        }
+    }
+    if ($commitment->id !== $repeated->id || $commitment->sha256 !== $digest
+        || $commitment->fresh()->sha256 !== $anchoring->digest($batch->fresh(), $final->fresh())
+        || PayrollAnchorAttempt::where('payroll_commitment_id', $commitment->id)->exists()
+        || $final->fresh()->getAttributes() !== $finalBefore) {
+        throw new RuntimeException('Local commitment retry, JSON round-trip, outer-transaction rejection or finalization preservation failed.');
+    }
     $real = $preparation->create($request, ['period' => $date->format('Y-m'), 'is_demonstration' => 0]);
     try {
         $workflow->transition($request, $real, 'submit', ['record_version' => 1, 'review_token' => str_repeat('a', 64), 'reason' => 'FICTIONAL real block', 'review_confirmed' => 1]);
@@ -220,7 +248,9 @@ try {
 }
 if (User::where('username', 'like', 'workflow-%'.$nonce)->exists()
     || Employee::where('employee_number', 'like', 'WF-'.$nonce.'%')->exists()
-    || PayrollFinalization::where('payroll_batch_id', $batch->id)->exists()) {
+    || PayrollFinalization::where('payroll_batch_id', $batch->id)->exists()
+    || PayrollCommitment::whereKey($commitment->id)->exists()
+    || PayrollAnchorAttempt::where('payroll_commitment_id', $commitment->id)->exists()) {
     throw new RuntimeException('Payroll workflow check retained fictional fixtures.');
 }
-echo "MySQL payroll workflow passed: three categories, exact employee/batch totals, JSON review tokens, independent approval, return/correction/resubmission, retained versions/events, locked finalization, register/CSV/payslip PDF generation, duplicate prevention, later configuration/document preservation, real block and fixture rollback.\n";
+echo "MySQL payroll workflow passed: three categories, exact employee/batch totals, JSON review tokens, independent approval, return/correction/resubmission, retained versions/events, locked finalization, register/CSV/payslip PDF generation, duplicate prevention, later configuration/document preservation, local commitment idempotency/JSON round-trip, outer-transaction submission rejection without attempt, real block and fixture rollback.\n";

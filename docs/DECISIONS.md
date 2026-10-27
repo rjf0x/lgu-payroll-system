@@ -711,3 +711,106 @@ References: [Laravel 13 upgrade guide](https://laravel.com/framework/docs/13.x/u
 - Retain the demonstration-only boundary and unresolved client/operational
   validation limitations. A clean commit does not approve real payroll or certify
   official client forms.
+
+## 2026-10-27 - Phase 11 local-interface fallback
+
+- Follow the user's explicit no-test-network answer and the master prompt's
+  fallback. Implement the local interface only; do not install a network,
+  introduce signer credentials, manufacture transactions or claim anchoring.
+- Hash an explicit versioned envelope over the entire saved finalization
+  snapshot and batch/finalization/version IDs. Define application-specific
+  canonical JSON rather than claiming RFC 8785: recursively sorted map keys,
+  ordered lists, exact strings/integers/booleans/null, no floats, unescaped Unicode
+  and slashes, no Unicode normalization/BOM/trailing newline. Preserve the
+  existing decoded empty-array convention and document it. Reuse frozen-value
+  document validation without recalculating or repairing source payroll.
+- Keep one immutable commitment per finalization, enforced by a unique FK, with
+  a separate opaque UUID retry key. Retain attempts separately from payroll
+  status; never modify finalized snapshots, existing workflow events or inputs.
+- Preserve existing payroll read roles. Permit local preparation and explicit
+  submission only for active independent Approvers, with transaction-time actor,
+  session, scope, digest, demonstration confirmation and historical preparer
+  checks. A preparer changed to Approver still cannot anchor their own batch.
+- Bind the submission contract to an unavailable adapter with no transport.
+  Pass only digest and opaque idempotency key across that boundary. Return real
+  references as pending only; no confirmed/verified state exists in this fallback.
+- Reserve an attempt before calling the interface outside the service's database
+  transaction; never automatically retry a side effect in a transaction callback.
+  Unavailable/definite rejection permit explicit safe retry using the same
+  digest/key. Pending, unknown and interrupted sends block blind resubmission.
+  Suppress raw provider exceptions, which may contain credentials. A future real
+  adapter must enforce durable reservation outside ambient caller transactions,
+  network idempotency/reconciliation, receipt identity and confirmation policy.
+- Extend the rollback-only MySQL verifier only with the unavailable binding,
+  checking JSON persistence and retained finalization values without broadcasting.
+  Refuse schema rollback that would discard saved commitments.
+- Keep live anchoring and independent retrieval incomplete. Do not implement
+  Phase 12 chain verification/correction workflows or change unresolved payroll,
+  client-template, deployment and earlier audit findings in this phase.
+
+## 2026-10-27 - Phase 11 audit boundary
+
+- Audit the user-authorized no-network fallback without fixing application code,
+  adding permanent tests, running migrations, committing or beginning Phase 12.
+  Keep real anchoring/retrieval explicitly incomplete; missing network acceptance
+  is not evidence of a successful deployment.
+- Record the reproduced extreme attempt-history pagination HTTP 500 as F1, low
+  severity. Preserve its original failing diagnostic output and a separate
+  current-behavior reproducer; passing that reproducer does not fix the bug.
+- Record outer-transaction loss of a test-double submission record as conditional
+  hazard H1. Distinguish this from a current live-broadcast defect: the production
+  adapter remains unavailable, and the HTTP controller adds no outer transaction.
+- Keep exploratory probes ignored and isolated/rolled back. Report permanent
+  coverage separately, and compare application/test/verifier hashes to establish
+  the audit-only change boundary. No concurrency or real-chain claim from
+  sequential/reentrant test doubles.
+
+## 2026-10-27 - Phase 11 review corrections
+
+- Correct F1 and H1 within the existing local-interface scope; do not add a
+  network, confirmation/reconciliation commands or Phase 12 functionality.
+- Validate the resolved page before SQL offset multiplication using the maximum
+  safe integer page for 20 rows. Preserve ordinary empty out-of-range responses,
+  malformed-query fallback, existing role checks and snapshot-validation order.
+- Reject every submission inside an outer caller transaction before recording
+  an attempt. Do not special-case unavailable/test adapters or defer a network
+  side effect into a transaction that a caller may still roll back. Permit local
+  preparation in transactions; a standalone submission commits its own reservation
+  before invoking the interface with the same digest/key.
+- Test the boundary using fresh in-memory SQLite databases without the usual
+  wrapping test transaction. The base test case's destructive-migration safety
+  check stays intact, with no environment bypass or shared database access.
+- Adapt the rollback-only MySQL verifier to expect 409 and no attempt, rather
+  than weaken the service guard to allow smoke-test submission inside a caller
+  transaction. Continue verifying local commitment persistence and idempotency.
+- Preserve original audit reproducers and logs as historical evidence. Execute
+  permanent corrected-behavior regressions and applicable independent probes;
+  do not rewrite bug reproducers to hide their original results.
+
+## 2026-10-27 - Phase 11 re-audit boundary
+
+- Re-audit corrected Phase 11 only. Preserve original F1/H1 diagnostics, exclude
+  their assertions of former buggy behavior, and rerun current permanent tests
+  plus applicable independent probes without modifying application/test sources.
+- Separate successful local-fallback tests from unfulfilled genuine anchoring and
+  independent-transaction retrieval acceptance. No new confirmed supported-path
+  defect was found; no real network or confirmed transaction is implied.
+- Inject result-persistence failure only in an isolated test double. Retention
+  and blocked duplicate sends demonstrate a local safety property, not real chain
+  reconciliation, live-network durability or full process-crash recovery.
+- Keep new probes ignored, preserve all fixture isolation/rollback and original
+  MySQL state, and compare source hashes. No application fix, permanent test,
+  migration, new dependency, commit, publication or Phase 12 implementation.
+
+## 2026-10-27 - Phase 11 commit scope
+
+- Follow the user's explicit instruction to review, validate and create one
+  Conventional Commit for Phase 11's local anchoring interface, corrections,
+  permanent tests and audit records. Do not amend, rewrite history, push or start
+  Phase 12. Use the existing configured Git identity.
+- Explicitly stage the reviewed 27-file scope. Exclude local environment and
+  credentials, database files, dependencies, generated builds/caches and ignored
+  diagnostic probes/logs. Keep application behavior unchanged during commit review.
+- Identify the implementation as a local interface in the commit message. Real
+  blockchain anchoring, confirmation and independent retrieval remain incomplete
+  under the user's authorized no-network fallback.

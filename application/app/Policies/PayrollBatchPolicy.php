@@ -42,4 +42,9 @@ class PayrollBatchPolicy
     {
         return $user->is_active && $user->role === Role::Approver && $batch->status === 'approved';
     }
+
+    public function anchor(User $user, PayrollBatch $batch): bool
+    {
+        return $user->is_active && $user->role === Role::Approver && $batch->status === 'finalized';
+    }
 }

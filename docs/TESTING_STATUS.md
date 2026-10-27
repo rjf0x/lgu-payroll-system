@@ -1,7 +1,9 @@
 # Testing status
 
-Updated: 2026-10-26. Phase 8 corrections pass the full isolation suite: 396 tests /
-4031 assertions. Phase 2/3 audit findings and Phase 4 validation limits remain open.
+Updated: 2026-10-27. Phase 11 local-interface fallback passes full isolation:
+505 tests / 6044 assertions. Phase 11 re-audit confirms F1/H1 remain corrected
+and finds no new supported-path defect. Live anchoring
+remains incomplete: no authorized test network. Earlier audit/client limits remain.
 
 ## Automated checks
 
@@ -1334,3 +1336,200 @@ application fix, permanent-test change, migration, commit or Phase 11 work.
   probes and visual QA were not rerun; their evidence remains in PHASE_10_REAUDIT.md.
   Remaining client, browser/print/spreadsheet, concurrency/recovery and capacity
   limitations are unchanged. No production activation, push or Phase 11 work.
+
+## Phase 11 local-interface fallback - 2026-10-27
+
+Authorized scope: Phase 11 only. User confirmed no authorized test network is
+available and selected the master prompt's local-interface fallback. No genuine
+network submission, confirmation, independently retrieved transaction, simulated
+anchoring success or Phase 12 verification is claimed.
+
+| Executed check | Result |
+| --- | --- |
+| Focused `PayrollAnchoringTest` | **22 tests / 363 assertions passed**, 14.354 seconds, 70 MB |
+| `scripts/verify-test-isolation.ps1` | **502 tests / 5949 assertions passed**, 172.995 seconds, 100 MB; includes all 480 prior tests and 22 new cases. Hostile inherited production/MySQL configuration remains pinned to in-memory SQLite |
+| Local MySQL migration | Applied only `2026_10_27_000002_create_payroll_commitment_tables`; adds commitments and attempts. All 14 migrations Ran afterward |
+| `php ../scripts/verify-payroll-workflow.php` | Passed exact three-category workflow/document checks plus unique local preparation, digest JSON round-trip, unavailable/no-transaction attempts and retained finalization values. All fictional business fixtures rolled back. The verifier refuses a transport-capable binding |
+| Application Pint `--test` | Passed; new source/test/migration files included |
+| MySQL verifier Pint | Passed after formatting; no logic change from formatting |
+| `npm.cmd run build` | Passed, 60 modules; generated assets remain ignored |
+| `git diff --check` | Passed; existing verifier LF/CRLF normalization notice only |
+
+The first focused run passed 21 cases and encountered one test-fixture error:
+the cross-batch fixture attempted to recreate an existing unique salary schedule.
+The fixture now reuses that schedule; the corrected focused run and full suite
+pass. No existing payroll functionality was changed to bypass this constraint.
+
+New permanent tests cover the independently reproducible canonical byte/hash
+vector, recursive maps, numeric-key map identity, list order, Unicode/slashes,
+exact monetary strings and float rejection. End-to-end fixtures cover all three
+personnel categories, GET without writes, idempotent preparation, unchanged batch/
+snapshot/workflow values, unchanged digest after live profile changes, stale hash,
+invalid confirmation, missing preparation, cross-batch and metadata/data-use
+rejection, roles, guest/inactive/revoked sessions, CSRF and preparer role changes.
+
+The production binding is asserted unavailable. Attempts retain no fabricated
+network/reference, never send an HTTP request and do not change payroll status.
+Injected test doubles independently exercise hash/key-only arguments, a pending
+reference without confirmation, definite rejection and safe retry with the same
+key, suppressed provider details, ambiguous acceptance and interrupted sends with
+blocked retry. These test-double references are not blockchain transactions.
+Model-level mutation/deletion rejection and private status headers also pass.
+
+MySQL began stopped and was restored to stopped after verification. The schema
+migration is retained; fictional users/payroll/commitments/attempts were rolled
+back. Full-suite execution output is ignored at `.local/phase11-isolation.log`.
+No dependency installation, network adapter, signer credential or commit.
+
+Remaining unverified: genuine anchoring, chain/receipt identity, independent
+retrieval, confirmation/reorganization policy, transport idempotency, network
+outage/recovery, simultaneous submissions/process interruption and operational
+capacity. A future live adapter must not broadcast inside an ambient caller
+transaction. No live browser/accessibility acceptance or line/branch coverage
+percentage was measured. Client/statutory/attendance/document/deployment and
+earlier audit limitations remain as previously recorded.
+
+## Phase 11 audit - 2026-10-27
+
+Audit-only scope; no application fix, permanent-test change, migration, dependency
+installation, commit or Phase 12 work. PHASE_11_AUDIT.md records acceptance,
+findings, reproduction details and coverage gaps.
+
+- Full hostile-environment isolation passes **502 tests / 5949 assertions**,
+  167.302 seconds, 100 MB. All 480 earlier tests and 22 Phase 11 cases remain.
+- **11 ignored audit cases / 181 assertions pass**, 25.869 seconds, 66 MB.
+  These include an intentional current-behavior reproducer for F1's HTTP 500 and
+  a conditional H1 test-double reproduction, not corrected-behavior acceptance.
+- F1 first appeared as an expected-200 failure on `PHP_INT_MAX` history pagination.
+  A separate probe confirms both that value and the first overflowing-offset
+  boundary return 500, while normal retrieval afterward succeeds and saved
+  commitment/attempt/finalization attributes remain unchanged. No fix made.
+- The first diagnostic run also had three ignored-harness errors from supplying
+  a session manager to a synthetic request. Supplying the session store corrected
+  the harness only. The original log is retained; current probe execution passes.
+- Other audit probes pass recursive full-snapshot key reorder, hidden float and
+  schema/metadata/amount rejection, post-request actor revocation, invalid provider
+  result, saved format/algorithm disagreement, reentrant reservation visibility,
+  ordinary/malformed pagination, ten-request throttling and retained-record
+  rollback protection. They are separate from permanent tests.
+- MySQL workflow/document/local-commitment verification passes with fictional
+  fixture rollback. All 14 migrations already Ran; none executed. The original
+  stopped MySQL state was restored. No transport-capable adapter was used.
+- Application Pint, JavaScript syntax and whitespace pass. SHA-256 checks across
+  **165 application/config/route/view/migration/test/verifier files** show no
+  changes during the audit. Prior asset build evidence was not rerun.
+- Permanent Phase 11 coverage remains **22 cases / 363 assertions**. No permanent
+  extreme-history-page regression, ambient-transaction safety regression, real
+  network, multi-process submission, process-crash/post-send persistence recovery,
+  capacity or live browser/accessibility coverage. No measured coverage percentage.
+
+Ignored probes, original/current diagnostic logs, full-suite output and the source
+hash manifest are under `.local/phase11-audit`. No real transaction was created;
+live anchoring and independent retrieval remain incomplete under the fallback.
+
+## Phase 11 correction - 2026-10-27
+
+User-authorized scope: review/fix Phase 11 only, with no new features or next-phase
+work. F1 and H1 are corrected. The original audit and reproducer logs remain
+historical evidence; they were not rewritten to assert corrected behavior.
+
+| Executed check | Result |
+| --- | --- |
+| New pre-fix regressions | Original code failed the offset boundary and outer-transaction cases. The separate populated-history test reproduced HTTP 500 instead of expected 404 (1 failed / 14 assertions); initial three-case run reported 2 failures / 53 assertions |
+| Corrected focused `PayrollAnchoringTest` | **25 tests / 458 assertions passed**, 16.831 seconds, 70 MB |
+| Full `scripts/verify-test-isolation.ps1` | **505 tests / 6044 assertions passed**, 169.778 seconds, 100 MB. Includes all 480 pre-Phase-11 tests and 25 Phase 11 cases; hostile inherited production/MySQL settings remain pinned to in-memory SQLite |
+| Applicable ignored audit probes | **9 tests / 161 assertions passed**, 28.063 seconds, 64 MB. Original F1/H1 bug reproducers excluded, not modified |
+| MySQL workflow/document/commitment verifier | Passed with fictional fixture rollback. Local preparation is idempotent and JSON digest preserved; submission inside the verifier's outer transaction returns 409 with no attempt. All 14 migrations already Ran; none executed. Initial stopped MySQL state restored |
+| Application and verifier Pint `--test` | Passed |
+| JavaScript syntax and `git diff --check` | Passed; ordinary verifier LF/CRLF notice only |
+
+Three new permanent cases verify:
+
+1. `PHP_INT_MAX` and the first unrepresentable page offset return 404, the largest
+   representable offset remains safe, normal retrieval works afterward, and
+   batch/snapshot/commitment/attempt/workflow records remain unchanged.
+2. Exactly 20 first-page attempts and one second-page attempt remain correctly
+   scoped; existing empty out-of-range behavior, malformed-query fallback and
+   Administrator denial still work.
+3. Submissions inside committed or rolled-back outer transactions return 409
+   without an attempt or interface call. A subsequent standalone call uses the
+   original hash/key, enters the test-double interface at transaction level zero
+   with a retained `submitting` reservation, records pending, and is not resent.
+
+The Phase 11 test class now migrates its fresh disposable in-memory database
+without a wrapping test transaction. This allows the ordinary production
+transaction guard to run without adapter or testing-environment exemptions. The
+base TestCase still rejects unsafe resolved database configuration before any
+destructive migration; the hostile-environment full suite passes.
+
+Correction code changes are confined to the anchoring controller/service,
+permanent Phase 11 tests and the existing MySQL verifier. No schema, dependency,
+asset-source, canonical format, new feature or Phase 12 change. No build rerun was
+needed for backend guards; the earlier asset build remains historical evidence.
+Execution logs are ignored under `.local/phase11-correction`.
+
+No real transaction was created. Genuine network submission, confirmation,
+independent retrieval, transport idempotency/reconciliation, actual multi-process
+concurrency, process-crash/post-send persistence recovery, capacity and live
+browser/accessibility acceptance remain unverified. The fixes do not resolve
+earlier payroll/client/operational limitations or authorize real payroll.
+
+## Phase 11 re-audit - 2026-10-27
+
+Scope: audit current Phase 11 after correction; no application fix, permanent-test
+change, migration, dependency, commit or Phase 12 work. See PHASE_11_REAUDIT.md.
+
+- Full hostile-environment isolation passes **505 tests / 6044 assertions**,
+  180.758 seconds, 100 MB; all 480 earlier cases remain. Permanent Phase 11
+  coverage is unchanged at **25 cases / 458 assertions**, including F1/H1 guards.
+- Five new ignored re-audit cases pass **92 assertions**, 5.751 seconds, 64 MB.
+  They cover empty/exact-40 attempt histories and offset boundaries, private
+  responses, auth/snapshot-error ordering, actual unavailable-adapter rejection
+  inside outer transactions, subsequent standalone unavailable submission,
+  injected post-interface result-storage failure with retained reservation and
+  blocked resend, and the database's unique-finalization commitment constraint.
+- Nine applicable earlier ignored audit cases pass **161 assertions**, 33.066
+  seconds, 64 MB. The original F1/H1 bug reproducers remain historical/excluded.
+  Fourteen applicable ignored cases therefore pass **253 assertions**, separately
+  from the permanent suite; no coverage percentage was measured.
+- MySQL workflow/document/local-commitment verification passes with fixture
+  rollback and nested-submission rejection before any attempt. All 14 migrations
+  already Ran; none executed. MySQL began stopped and was restored to stopped.
+- Application/verifier Pint, JavaScript syntax and whitespace pass. Hash checks
+  across **165 source/config/route/view/migration/permanent-test/verifier files**
+  confirm no change during the re-audit. No new build/dependency install required.
+- No new confirmed supported-path defect was found. Genuine anchoring and
+  independent transaction retrieval remain incomplete under the authorized
+  fallback. Tests do not establish live transport idempotency/confirmation,
+  chain identity/reorganization handling, network reconciliation, actual parallel
+  writers/process kills, all persistence failures, full crash recovery, capacity
+  or live browser/accessibility/client acceptance.
+
+Ignored new probes, full/current/prior execution logs and source hash manifest
+are under `.local/phase11-reaudit`. No real transaction was created. Only the
+re-audit report, four tracking documents and ignored diagnostics changed.
+
+## Phase 11 commit validation - 2026-10-27
+
+- Reran full hostile-environment isolation: **505 tests / 6044 assertions pass**,
+  170.067 seconds, 100 MB. This includes all 480 earlier tests and the 25 Phase 11
+  cases / 458 assertions. Execution log: ignored `.local/phase11-commit/isolation.log`.
+- Reran MySQL workflow/document/commitment verification: passed local JSON digest
+  retention/idempotency and outer-transaction rejection without an attempt, plus
+  existing three-category workflow and document checks. Fictional fixtures rolled
+  back; all 14 migrations already Ran, none executed; MySQL's stopped state restored.
+- Application/verifier Pint `--test`, `node --check resources/js/app.js`,
+  `composer validate --strict`, `composer check-platform-reqs`, production asset
+  build (60 modules) and `git diff --check` all pass. Build outputs remain ignored.
+- Reviewed the initially empty index and full 27-file Phase 11 source/test/
+  migration/UI/documentation scope. No deleted/unrelated file, sensitive/generated
+  candidate path, private key, cloud/provider token, credential assignment,
+  debug statement or incomplete marker found by the executed review/scans.
+  Ignore checks cover environment, dependencies, database/config, build and logs.
+- SHA-256 comparisons across 165 source/config/route/view/migration/test/verifier
+  files show no application change during this commit review. No dependency or
+  lockfile change; no installation or new security-advisory audit was needed.
+- Earlier ignored diagnostic probes were not rerun for this commit review; their
+  execution evidence remains in PHASE_11_REAUDIT.md. Live network acceptance and
+  existing client/concurrency/recovery/browser/capacity limits remain unchanged.
+  One local-interface commit authorized; no push or Phase 12 implementation.

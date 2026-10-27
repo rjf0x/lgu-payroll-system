@@ -4,11 +4,14 @@ Updated: 2026-10-27 (Asia/Manila).
 
 ## Authorized work
 
-The latest instruction authorizes reviewing, validating and creating one Git
-commit for Phase 10 only, with no push or history rewriting. The prior re-audit
-confirmed the pagination correction (F1) and tested demonstration criteria.
-Phase 10 implementation followed the earlier instruction to proceed, test and
-stop. Phase 9 is committed at `30023f9`; Phase 11 is not authorized.
+The current instruction authorizes reviewing, validating and creating one Git
+commit for Phase 11, including its corrections and audit records, with no push
+or history rewriting. The preceding re-audit confirmed F1/H1 remain corrected
+and found no new supported local-interface defect.
+Phase 10 is committed at `b4e62fe`. The user confirmed that no
+authorized blockchain test network is available and explicitly selected the
+master prompt's local-interface fallback. Live anchoring must remain incomplete;
+Phase 12 and publication are not authorized by this instruction.
 Client-approved rules/examples and document templates remain unavailable; real
 payroll processing remains blocked. Earlier phase/audit evidence is preserved below.
 
@@ -759,8 +762,142 @@ Status: Implemented but needs validation.
   earlier audit limitations remain in PHASE_10_REAUDIT.md. One Phase 10 commit is
   authorized; no push, history rewriting or Phase 11 implementation.
 
+## Phase 11 - Blockchain Anchoring local-interface fallback - 2026-10-27
+
+Status: Implemented but needs validation. Live anchoring is incomplete.
+
+- Added a documented, versioned canonical snapshot envelope and SHA-256 digest;
+  full finalized payroll and workflow evidence are covered without live source
+  recalculation. One immutable commitment is retained per finalization, with
+  idempotent preparation and a stable opaque submission key.
+- Added an authorized status page and prepare/submit actions. Existing payroll
+  read roles remain; only an independent active Approver may write. Rechecks
+  include session version, finalization scope, reviewed digest, demonstration
+  confirmation and preparer history. Finalized payroll/snapshots remain unchanged.
+- Added a hash-only submission contract with an unavailable production binding.
+  No network transport, credentials, real or simulated transaction. Attempts are
+  explicitly unavailable; test doubles additionally exercise pending, definite
+  rejection, uncertain response and interrupted sends. Uncertain/pending attempts
+  block blind retry; safe failures retain history and the original digest/key.
+- Added one migration for local commitments and retained attempts. It was applied
+  on local MySQL; all 14 migrations are Ran. The extended rollback-only workflow
+  verifier passes persistence/JSON round-trip, idempotency, unavailable/no-reference
+  results and preserved payroll/documents. Fictional fixtures rolled back and
+  MySQL's original stopped state was restored. Production asset build passes.
+- Full isolation passes **502 tests / 5949 assertions**, including all 480 prior
+  cases and 22 Phase 11 cases / 363 assertions. Application/verifier Pint and
+  whitespace checks pass. Detailed execution evidence is in TESTING_STATUS.md.
+- Scope, files, manual steps and incomplete live-network criteria are in
+  PHASE_11_HANDOFF.md; the canonical bytes are specified in
+  CANONICAL_PAYROLL_COMMITMENT_V1.md.
+- No real network submission, confirmation, independent transaction retrieval,
+  on-chain verification or correction version workflow. Existing client/rule,
+  document/deployment and earlier audit limitations remain unchanged.
+
+## Phase 11 audit - 2026-10-27
+
+Status: Implemented but needs validation. Live anchoring remains incomplete.
+
+- PHASE_11_AUDIT.md maps all three acceptance criteria to source and execution
+  evidence. Live anchoring and independently retrievable transactions remain
+  incomplete under the user-authorized fallback; tested failures are never
+  represented as successful or verified anchors.
+- Confirmed F1 (low): an extreme positive history page overflows the SQL offset
+  and returns HTTP 500 when attempts exist. Normal subsequent retrieval and saved
+  records remain intact. No fix made; permanent pagination-boundary coverage is
+  missing.
+- Reproduced H1, a documented conditional integration hazard: an outer transaction
+  can roll back an attempt after an injected interface call, allowing another
+  call. No real send is possible with the current unavailable binding. Durable
+  reservation and network-specific idempotency are required before real transport.
+- Full isolation passes 502 tests / 5949 assertions. Eleven ignored audit probes
+  pass 181 assertions, including intentional reproductions of F1/H1. Permanent
+  Phase 11 coverage remains 22 cases / 363 assertions; no coverage percentage.
+- MySQL workflow/document/commitment checks pass with fixture rollback and the
+  initial stopped state restored. No migration; all 14 already Ran. Pint, JS
+  syntax and whitespace pass; 165 reviewed application/permanent-test/verifier
+  files retain identical hashes. Only audit/tracking documents and ignored probes
+  changed. No application fix, permanent-test change, commit or Phase 12 work.
+
+## Phase 11 correction - 2026-10-27
+
+Status: Implemented but needs validation. F1 and H1 corrected; live anchoring
+remains incomplete under the authorized no-network fallback.
+
+- F1: reject history page values before an offset can overflow, returning 404.
+  Valid/safe offset boundaries, 21-attempt page navigation, ordinary empty pages,
+  malformed-query fallback, authorization and saved values remain intact.
+- H1: reject submission inside any outer caller transaction with 409 before an
+  attempt or interface call. The guard applies to all adapters. Local preparation
+  remains transaction-safe, and a later standalone submission retains the same
+  digest/key and commits its reservation before the interface executes.
+- Added three permanent regressions; the two safety cases first reproduced the
+  old failures, and all three now pass.
+  The 25 Phase 11 cases pass 458 assertions. Phase tests use fresh in-memory
+  databases without wrapping transactions to exercise actual commit boundaries;
+  the base test isolation check is unchanged. Nine applicable audit probes pass
+  161 assertions; original F1/H1 bug reproducers remain historical and excluded.
+- Full hostile-environment isolation passes **505 tests / 6044 assertions**,
+  including all 480 earlier cases. No inherited MySQL configuration can direct
+  the test migrations away from in-memory SQLite in the executed check.
+- Updated the rollback-only MySQL verifier to expect the nested-call rejection
+  with no attempt. Its local commitment/JSON/workflow/document checks pass with
+  fictional fixture rollback. All 14 migrations already Ran; none executed.
+  MySQL's initial stopped state was restored. Pint, JS syntax and whitespace pass.
+- Only the anchoring controller/service, permanent tests, existing verifier and
+  documentation changed during the correction. No schema/dependency/asset-source
+  or canonical format change. Full execution evidence is in TESTING_STATUS.md.
+- No new feature, real network, confirmation/reconciliation command, on-chain
+  verification, correction-version workflow, commit, publication or Phase 12 work.
+
+## Phase 11 re-audit - 2026-10-27
+
+Status: Implemented but needs validation. Live anchoring remains incomplete.
+
+- PHASE_11_REAUDIT.md maps all three acceptance criteria to current code and
+  execution evidence. F1 and H1 remain corrected; no new confirmed local-interface
+  bug or missing supported fallback task was found. Genuine anchoring and
+  independent transaction retrieval remain incomplete under the authorized fallback.
+- Five new ignored probes pass 92 assertions; nine applicable earlier audit
+  probes pass 161 assertions. Original bug reproducers are excluded and retained.
+  New probes verify empty/exact history bounds, validation ordering, the actual
+  unavailable adapter under an outer transaction, retained reservations after
+  injected result-persistence failure and database commitment uniqueness.
+- MySQL workflow/document/commitment checks pass with fixture rollback and the
+  original stopped state restored. All 14 migrations already Ran; none executed.
+  Application/verifier Pint, JS syntax and whitespace pass. All 165 reviewed
+  application/permanent-test/verifier files retain identical hashes.
+- Full isolation passes **505 tests / 6044 assertions**, including all 480 earlier
+  cases. Permanent Phase 11 coverage remains 25 cases / 458 assertions. Detailed
+  evidence is recorded in TESTING_STATUS.md. Genuine network/concurrency/crash
+  recovery, reconciliation, capacity and browser/client acceptance remain unverified.
+- Only re-audit/tracking documents and ignored diagnostics changed. No application
+  fix, permanent-test change, migration, dependency, commit or Phase 12 work.
+
+## Phase 11 commit validation - 2026-10-27
+
+- Full hostile-environment isolation passes **505 tests / 6044 assertions**,
+  170.067 seconds, 100 MB, including all 480 earlier cases and 25 Phase 11 cases.
+  MySQL workflow/document/commitment verification passes with fixture rollback;
+  all 14 migrations already Ran and the original stopped state was restored.
+- Application/verifier Pint, JavaScript syntax, Composer strict validation and
+  platform checks, production asset build (60 modules) and whitespace checks pass.
+  No dependency manifest/lock change or new package introduced in Phase 11.
+- Reviewed the initially empty staged diff, all 27 intended modified/new phase
+  files and existing Git identity. No deleted/unrelated file, sensitive/generated
+  candidate path, private/provider/cloud key, credential assignment, debugging or
+  incomplete-code scan finding. Local environment, dependencies, database, builds
+  and audit diagnostics remain ignored. All 165 compared source/test/verifier
+  paths retain their pre-review hashes; no application change during commit review.
+- One Phase 11 commit is authorized. The commit message identifies the local
+  interface; live anchoring/confirmation/independent retrieval remain incomplete.
+  No push, history rewriting, publication, production activation or Phase 12 work.
+
 ## Next phase
 
-Phase 11 - Blockchain Anchoring. Do not proceed automatically.
+Phase 12 - Blockchain Verification and History, only after authorization. Complete
+Phase 11's live-network acceptance when an authorized network becomes available.
+Do not proceed automatically.
 
-Final status: STOPPED - Phase 10 commit validation complete; Phase 11 not started.
+Final status: STOPPED - Phase 11 commit validation complete; F1/H1 remain
+corrected and live anchoring incomplete. No Phase 12, push or publication.
