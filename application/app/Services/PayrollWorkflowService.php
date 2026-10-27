@@ -114,12 +114,17 @@ class PayrollWorkflowService
             ];
         }
 
-        return [
+        $snapshot = [
             'schema' => 'payroll-review-v1', 'payroll_batch_id' => $batch->id,
             'period' => $batch->period_start->format('Y-m'), 'is_demonstration' => true, 'production_ready' => false,
             'calculation_run_id' => $run->id, 'core_engine' => $run->engine_version,
             'core_totals' => $run->totals, 'totals' => $totals, 'employees' => $rows,
         ];
+        if ($batch->payroll_version > 1) {
+            $snapshot['correction'] = app(PayrollCorrectionService::class)->context($batch);
+        }
+
+        return $snapshot;
     }
 
     public function isIndependent(User $actor, PayrollBatch $batch, PayrollSubmission $submission): bool
@@ -206,9 +211,9 @@ class PayrollWorkflowService
             if ($action === 'finalize') {
                 $events = PayrollWorkflowEvent::where('payroll_submission_id', $submission->id)->orderBy('id')->get();
                 PayrollFinalization::forceCreate([
-                    'payroll_batch_id' => $current->id, 'payroll_submission_id' => $submission->id, 'version' => 1,
+                    'payroll_batch_id' => $current->id, 'payroll_submission_id' => $submission->id, 'version' => $current->payroll_version,
                     'snapshot' => [
-                        'schema' => 'finalized-payroll-v1', 'version' => 1, 'payroll' => $submission->snapshot,
+                        'schema' => 'finalized-payroll-v1', 'version' => $current->payroll_version, 'payroll' => $submission->snapshot,
                         'submission_id' => $submission->id, 'submission_revision' => $submission->revision,
                         'submitted_by' => $submission->created_by, 'submitted_at' => $submission->created_at->toISOString(),
                         'workflow' => $events->map(fn ($event) => [

@@ -33,6 +33,7 @@ class PayrollPreparationService
 
                 return PayrollBatch::forceCreate([
                     'period_start' => $data['period'].'-01', 'is_demonstration' => $data['is_demonstration'],
+                    'payroll_version' => 1,
                     'status' => 'draft', 'record_version' => 1, 'created_by' => $actor->id, 'updated_by' => $actor->id,
                 ]);
             }, 3);

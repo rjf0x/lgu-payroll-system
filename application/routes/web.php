@@ -7,6 +7,7 @@ use App\Http\Controllers\EmployeeSalaryController;
 use App\Http\Controllers\PayrollAnchoringController;
 use App\Http\Controllers\PayrollBatchController;
 use App\Http\Controllers\PayrollCalculationController;
+use App\Http\Controllers\PayrollCorrectionController;
 use App\Http\Controllers\PayrollDocumentController;
 use App\Http\Controllers\PayrollInputController;
 use App\Http\Controllers\PayrollReviewController;
@@ -39,6 +40,10 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::view('/dashboard', 'dashboard')->name('dashboard');
     Route::resource('users', UserController::class)->except(['show', 'destroy'])->middleware('can:manage-users');
     Route::resource('employees', EmployeeController::class)->except('destroy');
+    Route::get('payroll-batches/{batch}/corrections', [PayrollCorrectionController::class, 'index'])->name('payroll-corrections.index');
+    Route::post('payroll-batches/{batch}/corrections/{finalization}', [PayrollCorrectionController::class, 'store'])->middleware(['throttle:10,1', EnsureSalaryTextEncoding::class])->name('payroll-corrections.store');
+    Route::post('payroll-batches/{batch}/corrections/{finalization}/requests/{correction}/{action}', [PayrollCorrectionController::class, 'decide'])
+        ->whereIn('action', ['authorize', 'return'])->middleware(['throttle:10,1', EnsureSalaryTextEncoding::class])->name('payroll-corrections.decide');
     Route::get('payroll-batches/{batch}/integrity/{finalization}', [PayrollVerificationController::class, 'show'])->name('payroll-verification.show');
     Route::post('payroll-batches/{batch}/integrity/{finalization}', [PayrollVerificationController::class, 'store'])->middleware('throttle:10,1')->name('payroll-verification.store');
     Route::get('payroll-batches/{batch}/anchoring/{finalization}', [PayrollAnchoringController::class, 'show'])->name('payroll-anchoring.show');

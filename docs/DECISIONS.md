@@ -875,3 +875,94 @@ References: [Laravel 13 upgrade guide](https://laravel.com/framework/docs/13.x/u
 - Describe the implementation as local integrity checks/history. Genuine receipt
   retrieval/verification remains incomplete without an authorized test network;
   correction versions remain Phase 12-B and are not part of this commit.
+
+## 2026-10-27 - Phase 12-B correction boundary
+
+- Implement only the authorized next subphase after Phase 12-A commit `5ba1bd4`.
+  Preserve the no-network fallback; do not implement Phase 13, commit or publish.
+- Represent a correction as a new monthly batch linked to its finalized source
+  and family root. Never reopen or overwrite a finalized batch/submission/document/
+  commitment/check. Use consecutive version numbers and database uniqueness to
+  prevent forks while retaining one normal version-1 root per month/data use.
+- Require a Payroll Officer's immutable reason/authority request and an independent
+  Approver's immutable authorization/return. Check original preparation history
+  and requester identity even after role changes. The authorizing Approver may
+  later approve/finalize the fully prepared replacement if still independent.
+- Start the authorized draft empty. Operators must review current coverage,
+  entitlements and inputs, then use all normal calculation/statutory/approval
+  gates. A correction replaces the whole version; it is not a payment or delta.
+  Do not infer changed amounts or auto-copy old attendance, loans or coverage.
+- Bind requests and authorization to a freshly recalculated source hash, including
+  a saved commitment consistency check when present. Reject altered sources,
+  mismatched lineage and missing authorization. Returning an invalid-source
+  request remains possible without repairing or replacing integrity evidence.
+- Freeze reason, authority, actor, time and source/version lineage into corrected
+  submission snapshots, which the existing canonical encoder hashes. Leave legacy
+  version-1 snapshot shape and canonicalization unchanged. Keep records local;
+  external adapters receive only the existing hash payload.
+- Serialize requests/decisions with family locks. Scope exact UUID retries to
+  source/actor/reviewed content, retain immutable decisions and reject conflicting
+  retries. Transactions roll back draft creation if evidence insertion fails.
+- Use UTF-8 sanitation, CSRF, throttling and private/no-store history responses.
+  FK retention and model guards preserve lineage/history; migration rollback
+  refuses retained corrections. Short explicit constraint names support MySQL.
+- Authority references are operator attestations, not verified legal instruments.
+  Real payroll, office authority/replacement policy, live browser/concurrency/
+  recovery and genuine blockchain acceptance still require validation.
+
+## 2026-10-27 - Phase 12-B audit boundary
+
+- Audit current correction-version behavior without changing application code,
+  permanent tests, schema, dependencies or implementing Phase 13. Preserve source
+  hashes and keep diagnostic fixtures/probes/logs isolated and ignored.
+- Report F1 as a low-severity stale-source display defect with a reproduced
+  server-side 409/no-draft protection. Do not equate a passing defect-reproduction
+  probe with successful acceptance or silently fix it in an audit-only turn.
+- Separate tested local behavior and explicit test-double corrected receipts from
+  genuine network acceptance, which remains blocked by the no-network constraint.
+  Treat draft cancellation/payment/reopen exclusions as design limits, not new
+  acceptance requirements. Retain office/concurrency/recovery/browser validation gaps.
+- Restore initially stopped MySQL after rollback-only verification. Update only
+  audit/tracking documentation; do not commit, push or start the next phase.
+
+## 2026-10-27 - Phase 12-B F1 fix scope
+
+- Follow the user's current-phase review/fix instruction. Resolve the confirmed
+  F1 view inconsistency without adding correction features or implementing Phase 13.
+- Offer authorization only when the current valid source digest matches that
+  request's captured hash. Explain pending source mismatches to readers; preserve
+  independent review permissions and the return path. Leave the locked POST
+  source comparison and all persisted payroll/authorization evidence unchanged.
+- Add a permanent failing-before/passing-after regression covering the exact
+  no-commitment case, valid controls, Viewer/Approver behavior, read-only history,
+  rejection of forged authorization POST and safe return with retained evidence.
+- Preserve audit-time observations as historical evidence and append the fix
+  resolution. Live network, office policy, real payroll, concurrency/recovery and
+  live browser acceptance remain outstanding; no new feature or commit is implied.
+
+## 2026-10-27 - Phase 12-B re-audit scope
+
+- Re-audit the current phase after F1's fix without application, permanent-test,
+  schema, dependency or business-rule changes. Do not implement Phase 13 or commit.
+- Recheck F1 with corrected expectations; the original defect-reproduction probe
+  remains historical. Exercise corrected return/recalculate/resubmit separately
+  in an ignored test to assess a known permanent-coverage gap without changing code.
+- Report no new confirmed local defect only within reviewed/executed limits. Keep
+  genuine-network, client policy, operational concurrency/recovery/capacity and
+  browser acceptance separate from local/test-double success.
+- Preserve source hashes, roll back MySQL fixtures and restore its initially
+  stopped state. Update only re-audit/tracking documents and ignored diagnostics.
+
+## 2026-10-27 - Phase 12-B commit scope
+
+- Follow the user's explicit instruction to review/validate and create one
+  Conventional Commit for Phase 12-B demonstration correction versions, the F1
+  fix/permanent regression, migration/verifier and related audit/handoff records.
+  Use the configured Git identity; do not amend, rewrite history or push.
+- Explicitly stage only the reviewed 24-file phase scope. Exclude environment/
+  credentials, database/configuration, dependencies, generated build/cache files,
+  logs/PDFs and ignored diagnostic probes. No application behavior change during
+  commit review and no next-phase feature or new test implementation.
+- Describe the result as authorized demonstration correction versions. Genuine
+  anchoring/verification and office/client/operational acceptance remain incomplete;
+  local and test-double results do not establish genuine network acceptance.

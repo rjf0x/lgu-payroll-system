@@ -5,16 +5,15 @@ Updated: 2026-10-27 (Asia/Manila).
 ## Authorized work
 
 The current instruction authorizes reviewing, validating and creating one Git
-commit for Phase 12-A, including its tests and audit records, with no push or
-history rewriting. The preceding audit found no new confirmed supported-path
-defect. Phase 11 is committed at `f448daf`. Under the master prompt's subphase
-rule, Phase 12 is split into A (verification/history) and B (authorized finalized
-correction versions). Only Phase 12-A has been implemented because
-correction versions span the locked approval/finalization, document and anchoring
-lifecycle and merit separate review. The user confirmed that no
-authorized blockchain test network is available and explicitly selected the
-master prompt's local-interface fallback. Live anchoring must remain incomplete;
-Phase 12-B, Phase 13 and publication are not authorized in
+commit for Phase 12-B's demonstration correction versions, F1 fix and audit
+records, with no push or history rewriting. Its earlier F1 stale-source display
+defect has been fixed and has a permanent regression; the re-audit found no new
+confirmed local bug. Phase 12-B followed Phase 12-A commit `5ba1bd4`. Under the master
+prompt's subphase rule, Phase 12 is
+split into A (verification/history) and B (authorized finalized corrections).
+The user confirmed no authorized blockchain test network is available and
+selected the local-interface fallback. Live anchoring/verification remains
+incomplete. Phase 13, push and publication are not authorized in
 this execution.
 Client-approved rules/examples and document templates remain unavailable; real
 payroll processing remains blocked. Earlier phase/audit evidence is preserved below.
@@ -970,11 +969,111 @@ Status: Implemented but needs validation; genuine verification remains incomplet
   verification and correction versions remain incomplete/deferred. No push,
   history rewriting, publication or Phase 12-B/13 work.
 
+## Phase 12-B - Authorized Correction Versions - 2026-10-27
+
+- Payroll Officers request a correction of the latest finalized demonstration
+  version using a reviewed source digest, reason and authority reference.
+  An independent Approver authorizes or returns it with retained review evidence.
+  Requester/source preparer role changes cannot bypass separation of duties.
+- Authorization creates a separate empty replacement draft. Coverage and inputs
+  must be prepared again, with complete core/statutory reviews and the existing
+  independent submission/approval/finalization workflow. It is a full replacement,
+  not an additional payment or a delta to disburse. No old payroll is reopened.
+- Monthly version families are linear, numbered 1, 2, 3; only the latest finalized
+  head accepts a new correction. Exact retries reuse evidence; conflicting reuse,
+  duplicate pending requests, ancestor forks and changed source hashes are blocked.
+- Corrected snapshots retain authorization/source-hash lineage and use their own
+  finalization version, documents, commitments and integrity history. Original
+  v1 snapshot shape/canonical bytes remain unchanged. Prior values and links stay
+  available. Requests/decisions and lineage cannot be edited or deleted via models.
+- Added one migration for version lineage and retained request/decision tables;
+  all 16 local MySQL migrations Ran. MySQL's full replacement workflow and JSON/
+  hash/document preservation checks pass with fixture rollback; initial stopped
+  state restored. No dependency or statutory rule change.
+- New permanent correction tests pass **28 cases / 540 assertions**. Full hostile-
+  environment isolation passes **565 tests / 7079 assertions**, including all 537
+  earlier cases. Pint, JS syntax, Composer strict/platform, build (60 modules)
+  and whitespace checks pass; details in TESTING_STATUS.md/PHASE_12B_HANDOFF.md.
+  No real blockchain submission/receipt, financial release, commit or Phase 13 work.
+
+## Phase 12-B audit - 2026-10-27
+
+- Audited against all four parent Phase 12 criteria and the authorized correction
+  subphase. PHASE_12B_AUDIT.md records one low-severity F1 display defect: without
+  a saved commitment, a changed source still shows authorize on history GET;
+  the locked POST correctly rejects it with 409 and creates no draft/decision.
+- Full isolation passes **565 tests / 7079 assertions**, including 28 correction
+  cases / 540 assertions. Seven additional ignored probes pass 177 assertions,
+  including explicit reproduction of F1, corrected PDFs/lineage preservation,
+  hash-only/test-double receipt behavior, unavailable fallback and removed-context
+  HTTP rejection. Passing the F1 probe means reproduction, not defect resolution.
+- MySQL replacement/original-preservation checks pass with fixture rollback;
+  all 16 migrations already Ran, none executed; initial stopped state restored.
+  Pint, JS syntax and whitespace pass. All 190 compared source/test/verifier
+  files retain pre-audit hashes. Only audit/tracking docs and ignored probes changed.
+- No application fix or permanent-test change. Genuine verification and client/
+  concurrency/recovery/browser/capacity acceptance remain incomplete. Current
+  status: implemented but needs validation; F1 remains open. No Phase 13 or commit.
+
+## Phase 12-B F1 fix - 2026-10-27
+
+- Fixed only the audited stale-source display defect. Each displayed correction
+  request compares its captured source hash with the freshly calculated digest.
+  Pending mismatches show an integrity warning, with no authorize form; an
+  independent Approver can still return the request. Read-only viewers see the
+  warning without review controls. The locked authorization POST is unchanged.
+- Added one permanent regression that fails before the fix and passes afterward:
+  valid-source controls, isolated source tampering without a saved commitment,
+  Approver/Viewer GET behavior with no evidence writes, direct POST 409/no draft,
+  return and preservation of source/request evidence. Focused correction tests
+  pass **29 cases / 576 assertions**. Full isolation passes **566 tests / 7115
+  assertions**, including all 565 earlier cases. Pint, JS syntax, production
+  build (60 modules) and whitespace checks pass. Details in TESTING_STATUS.md.
+- Scope is one Blade view and one permanent test, plus tracking/handoff records.
+  No service/controller, schema, dependency, statutory rule or network change.
+  F1 is resolved; genuine network/client/concurrency/browser acceptance remains
+  incomplete. No new feature, Phase 13, commit, push or publication.
+
+## Phase 12-B re-audit - 2026-10-27
+
+- PHASE_12B_REAUDIT.md maps current evidence to all four parent Phase 12 criteria.
+  F1 remains resolved and no new confirmed defect was found in exercised local
+  behavior. Genuine original/corrected blockchain verification remains incomplete.
+- Full isolation passes **566 tests / 7115 assertions**, including permanent
+  correction coverage of 29 cases / 576 assertions. Eight ignored
+  probes pass 221 assertions, including a new corrected return/recalculate/
+  resubmit/finalize scenario preserving both submissions and the original version,
+  plus F1, corrected PDF/lineage, own test-double receipt/hash-only payload,
+  unavailable fallback and malformed/missing-source/context checks.
+- MySQL replacement/original-preservation verifier passes with fixture rollback;
+  all 16 migrations already Ran, none executed; initial stopped state restored.
+  Pint, JS syntax and whitespace pass. Final full-suite results: TESTING_STATUS.md.
+- All 190 compared source/test/verifier files retain their pre-re-audit hashes.
+  No application fix, permanent test, migration, dependency, commit or Phase 13 work.
+  Client/network/concurrency/recovery/capacity/live browser limits remain.
+
+## Phase 12-B commit validation - 2026-10-27
+
+- Full hostile-environment isolation passes **566 tests / 7115 assertions**,
+  including all 29 correction cases / 576 assertions and the permanent F1 fix.
+  MySQL full replacement/original JSON/hash/document/check preservation passes
+  with fictional fixture rollback; initial stopped helper state restored.
+- Application/verifier Pint, JS syntax, Composer strict/platform, production
+  asset build (60 modules) and whitespace checks pass. No dependency/lock change.
+- Reviewed all 24 phase-related modified/new paths and the initially empty staged
+  diff. No deleted/unrelated, secret/database/generated/diagnostic candidate path,
+  private/provider key, credential assignment, debugging or incomplete-marker
+  finding. Environment, credentials, dependencies and generated outputs stay ignored.
+- All 190 compared source/config/route/view/migration/test/verifier files retain
+  their pre-review hashes. Only commit-validation tracking records changed during
+  review. One authorized demonstration-correction commit; no push or Phase 13.
+
 ## Next phase
 
-Phase 12-B - Authorized Correction Versions, only after authorization. Complete
-the outstanding genuine Phase 11/12 network acceptance when a suitable authorized
-test network is available. Do not proceed automatically to 12-B or Phase 13.
+Phase 13 - Integration Testing and Mock Defense, only after authorization.
+Outstanding genuine Phase 11/12 acceptance still needs an authorized test network.
+Do not proceed automatically.
 
-Final status: STOPPED - Phase 12-A commit validation complete; genuine verification
-incomplete. Phase 12-B and Phase 13 not started. No push or publication.
+Final status: STOPPED - Phase 12-B commit validation complete; F1 remains fixed,
+genuine verification incomplete. One reviewed demonstration-correction commit
+authorized. No Phase 13, push or publication.

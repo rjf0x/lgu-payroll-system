@@ -52,4 +52,14 @@ class PayrollBatchPolicy
     {
         return $user->is_active && in_array($user->role, [Role::PayrollOfficer, Role::Approver], true) && $batch->status === 'finalized';
     }
+
+    public function requestCorrection(User $user, PayrollBatch $batch): bool
+    {
+        return $this->create($user) && $batch->status === 'finalized' && $batch->is_demonstration;
+    }
+
+    public function reviewCorrection(User $user, PayrollBatch $batch): bool
+    {
+        return $user->is_active && $user->role === Role::Approver && $batch->status === 'finalized' && $batch->is_demonstration;
+    }
 }

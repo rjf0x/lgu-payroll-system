@@ -7,6 +7,8 @@ use App\Models\EmployeeSalaryRecord;
 use App\Models\PayrollAnchorAttempt;
 use App\Models\PayrollBatch;
 use App\Models\PayrollCommitment;
+use App\Models\PayrollCorrectionDecision;
+use App\Models\PayrollCorrectionRequest;
 use App\Models\PayrollFinalization;
 use App\Models\PayrollRuleVersion;
 use App\Models\PayrollSubmission;
@@ -18,6 +20,7 @@ use App\Services\Blockchain\BlockchainSubmitter;
 use App\Services\Blockchain\UnavailableBlockchainSubmitter;
 use App\Services\PayrollAnchoringService;
 use App\Services\PayrollCalculationService;
+use App\Services\PayrollCorrectionService;
 use App\Services\PayrollDocumentService;
 use App\Services\PayrollInputService;
 use App\Services\PayrollPreparationService;
@@ -135,7 +138,8 @@ try {
             'authority_reference' => 'FICTIONAL INPUTS', 'change_reason' => 'Fictional zero attendance',
         ]);
     }
-    $saveReviews = function () use ($request, $batch, $core, $statutory) {
+    $saveReviews = function (?PayrollBatch $target = null) use ($request, $batch, $core, $statutory) {
+        $batch = $target ?? $batch;
         $run = $core->calculate($request, $batch, $batch->fresh()->record_version);
         foreach ($run->items as $item) {
             $profile = app(PayrollRuleVersionService::class)->profile($item->entry_snapshot['personnel_classification'], $batch->period_start->format('Y-m-d'), true);
@@ -250,6 +254,48 @@ try {
         || $final->fresh()->getAttributes() !== $finalBefore) {
         throw new RuntimeException('Verification history/JSON digest, idempotency, isolated mismatch or preservation failed.');
     }
+    $corrections = app(PayrollCorrectionService::class);
+    $proposalData = [
+        'request_key' => (string) Str::uuid(), 'source_hash' => $digest,
+        'reason' => 'FICTIONAL replacement review', 'authority_reference' => 'FICTIONAL CORRECTION', 'review_confirmed' => 1,
+    ];
+    $proposal = $corrections->act($request, $batch, $final, 'request', $proposalData);
+    $decisionData = ['source_hash' => $digest, 'reason' => 'FICTIONAL independent correction authority', 'authority_reference' => 'FICTIONAL APPROVAL', 'review_confirmed' => 1];
+    $decision = $corrections->act($reviewRequest, $batch, $final, 'authorize', $decisionData, $proposal);
+    $replacement = PayrollBatch::findOrFail($decision->correction_batch_id);
+    if ($replacement->payroll_version !== 2 || $replacement->status !== 'draft' || $replacement->entries()->exists()
+        || $replacement->root_payroll_batch_id !== $batch->id || $replacement->correction_of_finalization_id !== $final->id
+        || $corrections->act($request, $batch, $final, 'request', $proposalData)->id !== $proposal->id
+        || $corrections->act($reviewRequest, $batch, $final, 'authorize', $decisionData, $proposal)->id !== $decision->id) {
+        throw new RuntimeException('Correction authorization, empty version lineage or retry idempotency failed.');
+    }
+    foreach ($batch->entries as $oldEntry) {
+        $preparation->add($request, $replacement, ['record_version' => $replacement->fresh()->record_version, 'employee_ids' => [$oldEntry->employee_id]]);
+        $newEntry = $replacement->entries()->where('employee_id', $oldEntry->employee_id)->sole();
+        $inputs->save($request, $replacement, $newEntry, [
+            'record_version' => $replacement->fresh()->record_version, 'loans' => [['label' => 'FICTIONAL replacement loan', 'amount' => '200.02']],
+            'attendance' => ['absence_days' => '0.00', 'undertime_minutes' => 0],
+            'authority_reference' => 'FICTIONAL INPUTS', 'change_reason' => 'Fictional full replacement preparation',
+        ]);
+    }
+    $saveReviews($replacement);
+    $workflow->transition($request, $replacement, 'submit', workflowCheckData($replacement, 'submit'));
+    $workflow->transition($reviewRequest, $replacement, 'approve', workflowCheckData($replacement, 'approve'));
+    $workflow->transition($reviewRequest, $replacement, 'finalize', workflowCheckData($replacement, 'finalize'));
+    $replacementFinal = PayrollFinalization::where('payroll_batch_id', $replacement->id)->sole();
+    $replacementHash = $anchoring->digest($replacement->fresh(), $replacementFinal);
+    $replacementCommitment = $anchoring->act($reviewRequest, $replacement, $replacementFinal, 'prepare', ['sha256' => $replacementHash, 'demonstration_confirmed' => 1]);
+    $replacementCheck = $verification->check($reviewRequest, $replacement, $replacementFinal, ['request_key' => (string) Str::uuid()]);
+    if ($replacementFinal->version !== 2 || $replacementFinal->snapshot['version'] !== 2
+        || $replacementFinal->snapshot['payroll']['correction']['source_sha256'] !== $digest
+        || $replacementFinal->snapshot['payroll']['correction']['authorized_by'] !== $approver->id
+        || $replacementHash === $digest || $replacementCheck->local_status !== 'match'
+        || $replacementCommitment->sha256 !== $replacementHash
+        || $final->fresh()->getAttributes() !== $finalBefore || $first->fresh()->getAttributes() !== $before
+        || $documents->csv($documents->prepare($batch->fresh(), $final->fresh()), $final) !== $csvBefore
+        || $documents->csv($documents->prepare($replacement->fresh(), $replacementFinal), $replacementFinal) === $csvBefore) {
+        throw new RuntimeException('Corrected JSON finalization/hash/check/documents or original version preservation failed.');
+    }
     $real = $preparation->create($request, ['period' => $date->format('Y-m'), 'is_demonstration' => 0]);
     try {
         $workflow->transition($request, $real, 'submit', ['record_version' => 1, 'review_token' => str_repeat('a', 64), 'reason' => 'FICTIONAL real block', 'review_confirmed' => 1]);
@@ -267,7 +313,13 @@ if (User::where('username', 'like', 'workflow-%'.$nonce)->exists()
     || PayrollFinalization::where('payroll_batch_id', $batch->id)->exists()
     || PayrollCommitment::whereKey($commitment->id)->exists()
     || PayrollAnchorAttempt::where('payroll_commitment_id', $commitment->id)->exists()
-    || PayrollVerification::whereKey($check->id)->exists()) {
+    || PayrollVerification::whereKey($check->id)->exists()
+    || PayrollCorrectionRequest::whereKey($proposal->id)->exists()
+    || PayrollCorrectionDecision::whereKey($decision->id)->exists()
+    || PayrollBatch::whereKey($replacement->id)->exists()
+    || PayrollFinalization::whereKey($replacementFinal->id)->exists()
+    || PayrollCommitment::whereKey($replacementCommitment->id)->exists()
+    || PayrollVerification::whereKey($replacementCheck->id)->exists()) {
     throw new RuntimeException('Payroll workflow check retained fictional fixtures.');
 }
-echo "MySQL payroll workflow passed: three categories, exact employee/batch totals, JSON review tokens, independent approval, return/correction/resubmission, retained versions/events, locked finalization, register/CSV/payslip PDF generation, duplicate prevention, later configuration/document preservation, local commitment idempotency/JSON round-trip, outer-transaction submission rejection without attempt, verification history/idempotency/isolated mismatch, real block and fixture rollback.\n";
+echo "MySQL payroll workflow passed: three categories, exact employee/batch totals, JSON review tokens, independent approval, return/correction/resubmission, retained versions/events, locked finalization, register/CSV/payslip PDF generation, duplicate prevention, later configuration/document preservation, local commitment idempotency/JSON round-trip, outer-transaction submission rejection without attempt, verification history/idempotency/isolated mismatch, authorized empty correction version and retries, full replacement preparation/approval/finalization/JSON/hash/documents/check with original preservation, real block and fixture rollback.\n";

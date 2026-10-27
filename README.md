@@ -344,8 +344,9 @@ An Approver finalizes an approved submission using a separate confirmed action.
 The same independent Approver may approve and finalize. Finalized version 1 stores
 the submitted values, parameters and workflow evidence; later configuration or
 employee changes leave it untouched. Before finalization, changed sources or
-configuration require return and resubmission. Finalized payroll has no reopen or
-correction command in this phase. Blockchain anchoring has not been performed.
+configuration require return and resubmission. Finalized payroll stays locked;
+Phase 12-B adds separately authorized correction versions (described below).
+Genuine blockchain anchoring has not been performed.
 
 Apply `php artisan migrate` before use. See [the Phase 9 handoff](docs/PHASE_9_HANDOFF.md)
 for manual verification, database changes, legacy history limits and pending client
@@ -424,7 +425,8 @@ verifier additionally checks commitment persistence and rejection of submissions
 inside its rollback-only transaction. Normal standalone fallback submissions still
 record unavailable attempts. Submission callers must finish any outer database
 transaction before invoking the interface.
-Blockchain verification and finalized correction workflows remain future work.
+Phase 12 adds local verification/history and authorized correction versions below;
+genuine network anchoring and verification remain incomplete.
 
 ## Integrity checks and retained history (Phase 12-A)
 
@@ -447,10 +449,37 @@ submission, auto-retry or background polling occurs in this flow.
 
 Phase 12 is divided as permitted by the master prompt: verification/history is
 Phase 12-A; authorized correction versions spanning approval, documents and
-anchoring are Phase 12-B and remain unimplemented. See the
+anchoring are Phase 12-B, described below. See the
 [Phase 12-A handoff](docs/PHASE_12A_HANDOFF.md) for scope, states, access, tests and
 remaining network/client validation. The rollback-only MySQL workflow verifier
 also checks history/key idempotency and an isolated snapshot-copy mismatch.
+
+## Authorized correction versions (Phase 12-B)
+
+Apply `php artisan migrate`. From a finalized demonstration payroll, open
+**Correction requests and payroll versions**. A Payroll Officer enters a reason,
+authority reference and review confirmation. An independent Approver reviews and
+authorizes or returns the request; requesters and source preparers cannot review
+their own correction, including after a role change.
+
+Authorization opens an **empty replacement draft**, retaining the original month
+and demonstration use with version 2 (then 3, etc.). Select coverage and enter
+reviewed inputs again, calculate, complete statutory review, submit, approve and
+finalize through the existing workflow. This is a complete replacement payroll,
+not an additional payment or a difference to disburse. No disbursement is performed.
+
+Each corrected finalization includes the source hash and authorization lineage
+and has its own documents, local commitment and integrity checks. The history
+page links every version's retained review, register/payslips and integrity
+evidence. Prior finalized values and hashes remain unchanged. Only the latest
+finalized version accepts another correction; an existing correction draft must
+be completed first. Returned requests remain visible and allow a new revision.
+
+Real payroll corrections remain blocked. Local hashes cannot establish genuine
+blockchain verification without an authorized network. The rollback-only MySQL
+verifier also prepares and finalizes a complete corrected version, checks JSON/
+hash/document preservation and removes all its fixtures. See the
+[Phase 12-B handoff](docs/PHASE_12B_HANDOFF.md) for acceptance evidence and limits.
 
 ## Interface and navigation
 

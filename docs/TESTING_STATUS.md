@@ -1652,3 +1652,197 @@ diagnostics changed. No application fix, permanent test, commit or next phase.
 - Genuine network confirmation/retrieval, live concurrency/recovery/browser/
   capacity acceptance and authorized correction versions remain incomplete or
   deferred. One local-integrity/history commit authorized; no push or Phase 12-B/13.
+
+## Phase 12-B - Authorized Correction Versions - 2026-10-27
+
+Scope: current next-phase instruction after Phase 12-A commit `5ba1bd4`. Only the
+authorized correction subphase is implemented. PHASE_12B_HANDOFF.md maps parent
+acceptance and records manual verification and remaining limits.
+
+- `php vendor/phpunit/phpunit/phpunit --colors=never --filter=PayrollCorrectionTest`
+  in application/: **28 cases / 540 assertions pass**, 25.894 seconds, 70 MB.
+  Covers an independently authorized empty draft and full three-version lifecycle,
+  separate commitments/source lineage, changed replacement amounts, old document/
+  hash/check preservation, four roles and role-change independence, return/revision,
+  duplicate/fork/conflicting-retry prevention, hash/route/input/UTF-8 failures,
+  source tampering before/after authorization, missing/wrong context, authorization
+  storage-fault rollback, stale/inactive session/requester checks, model/FK retention,
+  guarded and empty migration rollback, application timestamps, pagination/escaping,
+  CSRF and demonstration-only/finalized-only gates. No coverage percentage measured.
+- `php vendor/phpunit/phpunit/phpunit --colors=never --filter='Payroll(Workflow|Preparation)Test'`:
+  **84 tests / 1051 assertions pass**, 22.968 seconds, 68 MB.
+- `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/verify-test-isolation.ps1`:
+  **565 tests / 7079 assertions pass**, 203.311 seconds, 100 MB. This includes all
+  537 earlier cases plus the 28 correction cases, under conflicting inherited
+  production/MySQL configuration. The base safety guard retains in-memory SQLite;
+  no test migrates the configured application database. Log:
+  `.local/phase12b/isolation.log` (ignored).
+- Started the initially stopped local MySQL helper. Applied only
+  `2026_10_27_000004_create_payroll_correction_versions`; forward migration succeeds,
+  all **16 migrations Ran**. The explicit short decision-request FK/unique names
+  avoid MySQL's identifier-length limit. Empty rollback/reapply is exercised in
+  isolated SQLite; a MySQL down/up with retained application data was not run.
+- `php scripts/verify-payroll-workflow.php` passes: three categories, exact original
+  totals, JSON review tokens, independent approval, return/resubmit, fixed original
+  documents/PDFs, configuration preservation, commitment/check retries and isolated
+  mismatch, then authorized empty correction/retries, full replacement coverage/
+  input/calculation/statutory/approval/finalization and separate JSON/hash/documents/
+  local check with original preservation. All fictional records rolled back;
+  explicit cleanup checks include correction requests/decisions and replacement
+  batch/finalization/commitment/check. Initial stopped MySQL state restored.
+- Application `php vendor/laravel/pint/builds/pint --test` and root
+  `php application/vendor/laravel/pint/builds/pint --test scripts/verify-payroll-workflow.php`
+  pass. `node --check resources/js/app.js`, `composer validate --strict`,
+  `composer check-platform-reqs`, `npm.cmd run build` (60 modules) and
+  `git diff --check` pass. No dependency/lock change or generated artifact tracked.
+- The first correction run caught an incorrect test URL missing the document
+  finalization parameter; corrected the test and reran successfully. No failing
+  test remains. Injected storage faults and source changes are isolated tests;
+  they do not establish real concurrent-writer or process-crash recovery behavior.
+
+No authorized test network is available, no genuine transaction/confirmed receipt
+was produced, and no payroll/authority information was sent externally. Local
+correction tests do not complete genuine Phase 11/12 blockchain acceptance.
+Office authority/replacement policy, real payroll rules/examples/templates,
+actual concurrency/recovery, capacity and live browser/accessibility/printing
+acceptance remain unvalidated. No Phase 13, commit, push or publication.
+
+## Phase 12-B audit - 2026-10-27
+
+Audit-only scope. See PHASE_12B_AUDIT.md for criterion mapping, open F1 and limits.
+No application fix, permanent-test change, migration, dependency or Phase 13 work.
+
+- Full hostile-environment isolation rerun passes **565 tests / 7079 assertions**,
+  209.217 seconds, 100 MB. Includes 28 permanent correction cases / 540 assertions
+  and all 537 earlier cases. No measured coverage percentage.
+- Seven new ignored audit probes pass **7 cases / 177 assertions**, 11.653 seconds,
+  88 MB: F1 no-commitment changed-source display/409 reproduction; corrected PDF/
+  original/lineage-time/hash preservation and isolated authorization-hash mismatch;
+  ignored actor/version/action/time overrides and actor-bound/uppercase retry keys;
+  corrected hash-only submission/own test-double receipt; corrected unavailable
+  default with no invented transaction; invalid source shape; and HTTP rejection
+  of submit/approve when correction authorization context is removed.
+- F1 is reproduced, not fixed: a valid current digest without a local commitment
+  still causes the view to offer authorize despite the request's earlier hash.
+  POST rejects with 409, writes no draft/decision, and return remains available.
+  The passing probe asserts this observed undesirable display behavior explicitly.
+- MySQL workflow verifier passes full corrected/original JSON/hash/document/check
+  preservation with all fictional fixtures rolled back. All 16 migrations already
+  Ran; none executed. Initially stopped helper stopped again. No genuine network
+  call or receipt; corrected receipt success uses explicit test doubles only.
+- Application/verifier Pint, JS syntax and whitespace checks pass. All **190**
+  compared source/config/route/view/migration/permanent-test/verifier files retain
+  pre-audit SHA-256 values. Build/Composer were not rerun; no source/dependency
+  changes justified them and their implementation evidence remains historical.
+- Probes/logs/manifests/generated PDFs remain ignored at `.local/phase12b-audit`.
+  PDF response/signature checks do not establish visual/printed layout or extracted
+  text acceptance. No additional permanent regression or concurrency test added.
+
+Permanent gaps: F1's exact no-commitment case, correction-specific PDF/receipt
+coverage and dedicated corrected return/recalculate/resubmit (common workflow
+return/resubmit already covered). Genuine blockchain, client policy/real payroll,
+actual concurrent races/recovery/capacity and live browser acceptance remain
+incomplete. F1 remains open. No fix, commit, push, publication or Phase 13.
+
+## Phase 12-B F1 fix validation - 2026-10-27
+
+User-authorized current-phase review/fix only; no new correction capability or
+next-phase work. F1 is resolved in the view and its exact regression is permanent.
+
+- Added `test_changed_source_without_commitment_displays_warning_and_only_allows_return`.
+  Ran it against the old view first: **1 case, 17 assertions, 1 expected failure**
+  because the integrity warning was missing. This establishes defect reproduction;
+  the original failure log remains ignored under `.local/phase12b-fix`.
+- After the fix, `php vendor/phpunit/phpunit/phpunit --colors=never --filter=PayrollCorrectionTest`
+  passes **29 cases / 576 assertions**, 23.988 seconds, 70 MB. New coverage verifies
+  the valid-source forms, pending mismatched-source warning without commitment,
+  Approver return-only and Viewer read-only controls, no GET history writes,
+  locked POST 409/no draft, return and preserved source/request evidence.
+- `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/verify-test-isolation.ps1`
+  passes **566 tests / 7115 assertions**, 203.385 seconds, 102 MB, including all
+  565 earlier cases under conflicting inherited production/MySQL configuration.
+  Log: `.local/phase12b-fix/isolation.log` (ignored). No measured coverage percentage.
+- Application Pint `--test`, `node --check resources/js/app.js`, production
+  `npm.cmd run build` (60 modules) and `git diff --check` pass. The initial sandbox
+  build could not read a parent directory/configuration; the approved rerun outside
+  the sandbox succeeded. No package/configuration change was needed.
+- SHA-256 comparison across 190 source/config/route/view/migration/permanent-test/
+  verifier files confirms only the correction Blade view and test changed.
+  Other edits this turn are phase audit/handoff/tracking records. No service,
+  controller, schema, dependency or formula change; generated assets/logs remain
+  ignored, and the staged diff remains empty.
+- No migration or MySQL helper/verifier operation this turn; MySQL remains stopped.
+  The earlier implementation/audit MySQL results are historical, not new execution
+  evidence. Composer and ignored audit probes were not rerun. The old F1 audit
+  probe intentionally expects the defect and is retained only as historical evidence.
+
+Genuine network anchoring/verification, real payroll/client policy, actual
+concurrency/recovery/capacity and live browser acceptance remain unvalidated.
+Current-phase F1 is fixed; no new feature, Phase 13, commit, push or publication.
+
+## Phase 12-B re-audit - 2026-10-27
+
+Audit-only review following F1's fix; PHASE_12B_REAUDIT.md maps acceptance and
+coverage limits. No new confirmed defect or required local task area wholly
+missing. Genuine verification remains incomplete under the no-network fallback.
+
+- `scripts/verify-test-isolation.ps1`: **566 tests / 7115 assertions pass**,
+  214.552 seconds, 102 MB. Includes **29 correction cases / 576 assertions**, F1's
+  permanent regression and all earlier cases under conflicting inherited
+  production/MySQL configuration. No measured coverage percentage.
+- Eight ignored re-audit probes: **8 cases / 221 assertions pass**, 14.176 seconds,
+  88 MB. Updated the historical F1 probe to expect the corrected warning/no-authorize
+  behavior and added a corrected return/recalculate/resubmit/finalize probe.
+  Other checks cover original/corrected PDF responses and frozen lineage times,
+  isolated authority-hash mismatch, ignored actor/version/action/time overrides,
+  actor-bound UUID retries, corrected hash-only submit/own test-double receipt,
+  unavailable default, malformed source and missing-context HTTP blocking.
+- The corrected return cycle rejects stale submission input, recalculates changed
+  loan inputs, preserves the first submission and frozen correction authority
+  lineage in both revisions, finalizes the second submission as payroll version 2,
+  retains five events and leaves the original finalized payroll unchanged.
+- MySQL `scripts/verify-payroll-workflow.php` passes full replacement/original JSON/
+  hash/document/check preservation with all fictional fixtures rolled back. All
+  **16 migrations already Ran**; none executed. Initially stopped MySQL restored
+  to stopped. No genuine network operation, transaction or receipt was produced;
+  successful corrected confirmation uses explicit test doubles only.
+- Application/verifier Pint `--test`, JavaScript syntax and whitespace pass.
+  SHA-256 comparisons across **190** source/config/route/view/migration/permanent-
+  test/verifier files confirm no changes. Build/Composer were not rerun; previous
+  evidence remains historical because no source/dependency change required them.
+- Probes/logs/PDFs/manifests remain ignored at `.local/phase12b-reaudit`. No
+  permanent-test change or new regression was added. PDF checks establish HTTP
+  success/signature, not extracted text, visual layout or printed acceptance.
+
+F1 remains resolved. Permanent correction-specific PDF/receipt and dedicated
+return-cycle coverage remains absent, despite their ignored-probe execution.
+Real-network verification, client policy/real payroll, simultaneous writers,
+crash/deadlock recovery, capacity and live browser acceptance remain unverified.
+Only re-audit/tracking documents and ignored diagnostics changed. No fix, feature,
+schema/dependency change, Phase 13, commit, push or publication.
+
+## Phase 12-B commit validation - 2026-10-27
+
+- Reran `scripts/verify-test-isolation.ps1`: **566 tests / 7115 assertions pass**,
+  217.549 seconds, 102 MB, including all 29 correction cases / 576 assertions and
+  F1's permanent regression. Log: `.local/phase12b-commit/isolation.log` (ignored).
+- Reran MySQL workflow verifier: complete replacement preparation/approval/
+  finalization, original and corrected JSON/hash/document/check preservation,
+  retry semantics, real-payroll block and fixture rollback pass. No migration
+  executed; original stopped helper state restored. No genuine network operation.
+- Application/verifier Pint `--test`, JS syntax, Composer strict validation and
+  platform requirements, production asset build (60 modules) and whitespace pass.
+  No new dependency, lock change or generated build/database artifact included.
+- Reviewed the initially empty staged diff and all 24 phase-related modified/new
+  files: no deleted/unrelated path and no sensitive/database/generated/diagnostic
+  path, private/provider key, credential assignment, debug or incomplete marker
+  found by the executed checks. Environment/configuration, credentials, dependencies,
+  generated build/cache files and ignored probe/log/PDF files remain excluded.
+- SHA-256 comparison across 190 source/config/route/view/migration/permanent-test/
+  verifier files confirms no application change during commit review. Ignored
+  re-audit probes were not rerun; their prior eight-case/221-assertion evidence
+  remains in PHASE_12B_REAUDIT.md. No coverage percentage was measured.
+- Genuine chain verification, client policy/real payroll, actual concurrency/
+  recovery/capacity/browser acceptance and permanent correction-specific PDF/
+  receipt/return-cycle coverage remain incomplete/unverified. One reviewed
+  demonstration-correction commit is authorized; no push or Phase 13 work.

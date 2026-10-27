@@ -4,6 +4,7 @@
     <h1 class="mt-5 text-3xl font-bold">Payroll review · {{ $batch->period_start->format('F Y') }}</h1>
     <p class="mt-3 font-semibold">Status: {{ ucfirst($batch->status) }} · {{ $batch->is_demonstration ? 'Demonstration only — not for real payroll' : 'Real payroll processing blocked' }}</p>
     <p class="mt-2">A separate Approver must review and finalize payroll. Preparation and submission do not authorize approval.</p>
+    <p class="mt-3">Payroll version {{ $batch->payroll_version }}. <a class="underline" href="{{ route('payroll-corrections.index', $batch) }}">Correction requests and preserved versions</a></p>
     @if ($issue)<p class="mt-5 rounded bg-amber-50 p-4 font-semibold text-amber-900">Needs review: {{ $issue }}</p>@endif
     @if ($finalization)
         <a href="{{ route('payroll-documents.index', $batch) }}" class="mt-4 inline-block font-semibold text-teal-800 underline">Finalized payroll register and payslips</a>
