@@ -40,9 +40,10 @@ class PayrollRuleVersionController extends Controller
             'submission_key' => (string) Str::uuid(), 'record_version' => 0, 'is_demonstration' => true,
             'parameters' => $source?->parameters ?? config('payroll_statutory'),
             'personnel_classification' => $source?->personnel_classification,
+            'department' => $source?->department,
         ]);
 
-        return view('payroll-rule-versions.form', ['version' => $version, 'classifications' => PersonnelClassification::cases()]);
+        return view('payroll-rule-versions.form', ['version' => $version, 'classifications' => PersonnelClassification::cases(), 'departments' => PayrollRuleVersion::departmentOptions()]);
     }
 
     public function store(SavePayrollRuleVersionRequest $request, PayrollRuleVersionService $service): RedirectResponse
@@ -67,7 +68,7 @@ class PayrollRuleVersionController extends Controller
         Gate::authorize('update', $version);
         abort_if($version->activated_at !== null, 409, 'Activated versions are locked. Create a new dated draft.');
 
-        return view('payroll-rule-versions.form', ['version' => $version, 'classifications' => PersonnelClassification::cases()]);
+        return view('payroll-rule-versions.form', ['version' => $version, 'classifications' => PersonnelClassification::cases(), 'departments' => PayrollRuleVersion::departmentOptions()]);
     }
 
     public function update(SavePayrollRuleVersionRequest $request, PayrollRuleVersion $version, PayrollRuleVersionService $service): RedirectResponse
@@ -81,6 +82,6 @@ class PayrollRuleVersionController extends Controller
     {
         $version = $service->activate($request, $version, $request->validated());
 
-        return redirect()->route('payroll-rule-versions.show', $version)->with('status', 'Configuration version activated and locked for its category, data use and effective date. Real payroll remains disabled.');
+        return redirect()->route('payroll-rule-versions.show', $version)->with('status', 'Configuration version activated and locked for its department/classification coverage, data use and effective date. Real payroll remains disabled.');
     }
 }

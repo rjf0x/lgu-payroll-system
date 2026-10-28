@@ -61,6 +61,9 @@ try {
     $service = app(StatutoryPreviewService::class);
     $batch = $preparation->create($request, ['period' => $date->format('Y-m'), 'is_demonstration' => 1]);
     foreach (PersonnelClassification::cases() as $category) {
+        $department = 'Fictional statutory '.$nonce.'-'.$category->value;
+        $employee = Employee::factory()->create(['employee_number' => 'STAT-'.$nonce.'-'.$category->value,
+            'personnel_classification' => $category, 'office' => $department]);
         // Dated fictional configuration isolates the fixture from operator settings.
         $template = config('payroll_statutory');
         foreach ($template['contributions'] as &$rule) {
@@ -72,7 +75,7 @@ try {
         $rules = app(PayrollRuleVersionService::class);
         $configuration = $rules->save($configurationRequest, [
             'submission_key' => (string) Str::uuid(), 'record_version' => 0, 'name' => 'FICTIONAL STATUTORY CONFIG '.$nonce,
-            'personnel_classification' => $category->value, 'is_demonstration' => 1,
+            'personnel_classification' => $category->value, 'department_scope' => 'department:'.$department, 'is_demonstration' => 1,
             'effective_from' => $date->format('Y-m-d'), 'change_reason' => 'Isolate rollback-only reference fixtures',
             'parameters' => ['contributions' => $template['contributions'], 'tax' => $template['tax']],
         ]);
@@ -80,8 +83,8 @@ try {
             'record_version' => 1, 'approval_reference' => 'FICTIONAL APPROVAL',
             'validation_reference' => 'FICTIONAL EXPECTED VECTORS', 'activation_reason' => 'Fictional scenario', 'authorization_confirmed' => 1,
         ]);
-        $employee = Employee::factory()->create(['employee_number' => 'STAT-'.$nonce.'-'.$category->value, 'personnel_classification' => $category]);
-        $schedule = SalarySchedule::create(['name' => 'FICTIONAL STATUTORY CHECK '.$nonce, 'personnel_classification' => $category, 'is_demonstration' => 1, 'effective_from' => $date->format('Y-m-d'), 'created_by' => $actor->id]);
+        $schedule = SalarySchedule::forceCreate(['name' => 'FICTIONAL STATUTORY CHECK '.$nonce, 'department' => $department,
+            'coverage_key' => SalarySchedule::coverageKey($department), 'is_demonstration' => 1, 'effective_from' => $date->format('Y-m-d'), 'created_by' => $actor->id]);
         $rate = $schedule->rates()->create(['grade' => 1, 'step' => 1, 'monthly_salary' => '30000.00']);
         $schedule->authority_reference = 'FICTIONAL AUTHORITY';
         $schedule->published_at = now();
@@ -104,7 +107,7 @@ try {
     $beforeCore = $run->getAttributes();
     $beforeInputs = PayrollInputRevision::where('payroll_batch_id', $batch->id)->orderBy('id')->get()->map->getAttributes()->all();
     foreach ($run->items()->get() as $item) {
-        $configuration = app(PayrollRuleVersionService::class)->applicable($item->entry_snapshot['personnel_classification'], $date->format('Y-m-d'), true);
+        $configuration = app(PayrollRuleVersionService::class)->applicable($item->entry_snapshot['personnel_classification'], $date->format('Y-m-d'), true, false, $item->entry_snapshot['office']);
         if (! $configuration || $configuration->created_by !== $configurationAdmin->id) {
             throw new RuntimeException('Expected an isolated fictional configuration.');
         }

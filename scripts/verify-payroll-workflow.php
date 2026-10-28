@@ -71,7 +71,7 @@ function workflowCheckData(PayrollBatch $batch, string $action): array
     ];
 }
 
-function workflowCheckConfiguration(User $admin, string $category, string $date, string $rate): PayrollRuleVersion
+function workflowCheckConfiguration(User $admin, string $category, string $date, string $rate, string $department): PayrollRuleVersion
 {
     $template = config('payroll_statutory');
     foreach ($template['contributions'] as &$component) {
@@ -86,6 +86,7 @@ function workflowCheckConfiguration(User $admin, string $category, string $date,
     $version = $service->save($request, [
         'submission_key' => (string) Str::uuid(), 'record_version' => 0,
         'name' => 'FICTIONAL WORKFLOW CONFIGURATION', 'personnel_classification' => $category,
+        'department_scope' => 'department:'.$department,
         'is_demonstration' => 1, 'effective_from' => $date, 'change_reason' => 'Fictional workflow configuration',
         'parameters' => ['contributions' => $template['contributions'], 'tax' => $template['tax']],
     ]);
@@ -120,9 +121,12 @@ try {
     $workflow = app(PayrollWorkflowService::class);
     $batch = $preparation->create($request, ['period' => $date->format('Y-m'), 'is_demonstration' => 1]);
     foreach (PersonnelClassification::cases() as $category) {
-        workflowCheckConfiguration($admin, $category->value, $date->startOfYear()->format('Y-m-d'), '0.09');
-        $employee = Employee::factory()->create(['employee_number' => 'WF-'.$nonce.'-'.$category->value, 'personnel_classification' => $category, 'employment_start_date' => '2020-01-01']);
-        $schedule = SalarySchedule::create(['name' => 'FICTIONAL WORKFLOW SOURCE', 'personnel_classification' => $category, 'is_demonstration' => true, 'effective_from' => $date->format('Y-m-d'), 'created_by' => $officer->id]);
+        $department = 'Fictional workflow '.$nonce.'-'.$category->value;
+        $employee = Employee::factory()->create(['employee_number' => 'WF-'.$nonce.'-'.$category->value, 'personnel_classification' => $category,
+            'office' => $department, 'employment_start_date' => '2020-01-01']);
+        workflowCheckConfiguration($admin, $category->value, $date->startOfYear()->format('Y-m-d'), '0.09', $department);
+        $schedule = SalarySchedule::forceCreate(['name' => 'FICTIONAL WORKFLOW SOURCE', 'department' => $department,
+            'coverage_key' => SalarySchedule::coverageKey($department), 'is_demonstration' => true, 'effective_from' => $date->format('Y-m-d'), 'created_by' => $officer->id]);
         $rate = $schedule->rates()->create(['grade' => 1, 'step' => 1, 'monthly_salary' => '30000.00']);
         $schedule->forceFill(['published_at' => now(), 'authority_reference' => 'FICTIONAL AUTHORITY'])->save();
         EmployeeSalaryRecord::forceCreate([
@@ -142,7 +146,7 @@ try {
         $batch = $target ?? $batch;
         $run = $core->calculate($request, $batch, $batch->fresh()->record_version);
         foreach ($run->items as $item) {
-            $profile = app(PayrollRuleVersionService::class)->profile($item->entry_snapshot['personnel_classification'], $batch->period_start->format('Y-m-d'), true);
+            $profile = app(PayrollRuleVersionService::class)->profile($item->entry_snapshot['personnel_classification'], $batch->period_start->format('Y-m-d'), true, false, $item->entry_snapshot['office']);
             $statutory->save($request, $batch, $run, $item, [
                 'record_version' => $batch->fresh()->record_version, 'base_revision' => 0, 'configuration_version_id' => $profile['_configuration']['version_id'],
                 'gsis_coverage' => 'applicable', 'gsis_basis' => '30000.00', 'pagibig_coverage' => 'applicable', 'pagibig_basis' => '30000.00',
@@ -210,7 +214,7 @@ try {
     } catch (AuthorizationException) {
         // Finalized status disallows every further transition.
     }
-    workflowCheckConfiguration($admin, PersonnelClassification::Permanent->value, $date->format('Y-m-d'), '0.10');
+    workflowCheckConfiguration($admin, PersonnelClassification::Permanent->value, $date->format('Y-m-d'), '0.10', 'Fictional workflow '.$nonce.'-permanent');
     if ($final->fresh()->getAttributes() !== $finalBefore) {
         throw new RuntimeException('Configuration activation changed finalized payroll.');
     }

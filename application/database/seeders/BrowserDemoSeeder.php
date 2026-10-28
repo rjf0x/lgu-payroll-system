@@ -114,7 +114,7 @@ class BrowserDemoSeeder extends Seeder
             }
             $run = app(PayrollCalculationService::class)->calculate($officerRequest, $batch, $batch->fresh()->record_version);
             foreach ($run->items as $item) {
-                $profile = app(PayrollRuleVersionService::class)->profile($item->entry_snapshot['personnel_classification'], self::PERIOD.'-01', true);
+                $profile = app(PayrollRuleVersionService::class)->profile($item->entry_snapshot['personnel_classification'], self::PERIOD.'-01', true, false, $item->entry_snapshot['office']);
                 app(StatutoryPreviewService::class)->save($officerRequest, $batch, $run, $item, [
                     'record_version' => $batch->fresh()->record_version, 'base_revision' => 0,
                     'configuration_version_id' => $profile['_configuration']['version_id'] ?? null,

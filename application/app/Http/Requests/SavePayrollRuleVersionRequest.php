@@ -22,7 +22,18 @@ class SavePayrollRuleVersionRequest extends FormRequest
         $rules = [
             'submission_key' => ['required', 'uuid'], 'record_version' => ['required', 'integer', 'min:0'],
             'name' => ['required', 'string', new Utf8Text, 'max:150'],
-            'personnel_classification' => ['required', Rule::enum(PersonnelClassification::class)],
+            'personnel_classification' => ['bail', 'required', 'string', Rule::in(['all', ...array_column(PersonnelClassification::cases(), 'value')])],
+            // Older forms omitted department; their original scope was all departments.
+            'department_scope' => ['bail', 'sometimes', 'required', 'string', new Utf8Text, function ($attribute, $value, $fail) {
+                if ($value === 'all') {
+                    return;
+                }
+                if (! str_starts_with($value, 'department:') || ! PayrollRuleVersion::departmentOptions()->contains(
+                    fn ($name) => mb_strtolower(trim($name)) === mb_strtolower(trim(substr($value, strlen('department:'))))
+                )) {
+                    $fail('Select All departments or an existing department.');
+                }
+            }],
             'is_demonstration' => ['required', 'boolean'],
             'effective_from' => ['required', 'string', 'date_format:Y-m-d', 'after_or_equal:1000-01-01', 'before_or_equal:9999-12-31'],
             'change_reason' => ['required', 'string', new Utf8Text, 'max:500'],

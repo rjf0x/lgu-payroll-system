@@ -52,7 +52,7 @@ class StatutoryPreviewService
                 throw ValidationException::withMessages(['record_version' => 'Review the current core engine preview first.']);
             }
             $profile = app(PayrollRuleVersionService::class)->profile(
-                $item->entry_snapshot['personnel_classification'], $current->period_start->format('Y-m-d'), $current->is_demonstration, true,
+                $item->entry_snapshot['personnel_classification'], $current->period_start->format('Y-m-d'), $current->is_demonstration, true, $item->entry_snapshot['office'],
             );
             $expectedConfiguration = isset($data['configuration_version_id']) ? (int) $data['configuration_version_id'] : null;
             if ($expectedConfiguration !== ($profile['_configuration']['version_id'] ?? null)) {

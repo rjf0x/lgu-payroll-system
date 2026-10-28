@@ -2,6 +2,7 @@
 
 use App\Enums\PersonnelClassification;
 use App\Enums\Role;
+use App\Models\Employee;
 use App\Models\PayrollBatch;
 use App\Models\PayrollRuleEvent;
 use App\Models\PayrollRuleVersion;
@@ -11,6 +12,7 @@ use App\Services\StatutoryCalculator;
 use Carbon\CarbonImmutable;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Contracts\Console\Kernel;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\Request;
 use Illuminate\Session\ArraySessionHandler;
 use Illuminate\Session\Store;
@@ -194,6 +196,44 @@ try {
             throw $exception;
         }
     }
+    $department = 'Fictional configuration '.$nonce;
+    Employee::factory()->create(['office' => $department]);
+    foreach ([true, false] as $demo) {
+        $data['is_demonstration'] = (int) $demo;
+        $approval['client_validation_confirmed'] = 1;
+        $versions = [];
+        foreach (['global' => ['all', 'all', $date->subMonth()],
+            'department' => ['department:'.$department, 'all', $date],
+            'exact' => ['department:'.$department, 'permanent', $date->addMonths(2)]] as $scope => [$departmentScope, $classification, $effective]) {
+            $data['submission_key'] = (string) Str::uuid();
+            $data['department_scope'] = $departmentScope;
+            $data['personnel_classification'] = $classification;
+            $data['effective_from'] = $effective->format('Y-m-d');
+            $draft = $service->save($request, $data);
+            $versions[$scope] = $service->activate($request, $draft, $approval);
+        }
+        foreach (PersonnelClassification::cases() as $category) {
+            if ($service->applicable($category->value, $date->subMonth()->format('Y-m-d'), $demo, false, 'Other')->id !== $versions['global']->id
+                || $service->applicable($category->value, $date->addMonth()->format('Y-m-d'), $demo, true, strtoupper($department))->id !== $versions['department']->id) {
+                throw new RuntimeException('Shared configuration or department-first priority failed.');
+            }
+        }
+        if ($service->applicable('permanent', $date->addMonths(2)->format('Y-m-d'), $demo, false, $department)->id !== $versions['exact']->id
+            || $service->applicable('part_time', $date->addMonths(2)->format('Y-m-d'), $demo, false, $department)->id !== $versions['department']->id) {
+            throw new RuntimeException('Exact department/classification priority failed.');
+        }
+        $data['submission_key'] = (string) Str::uuid();
+        $data['department_scope'] = 'department: '.strtoupper($department).' ';
+        $data['personnel_classification'] = 'all';
+        $data['effective_from'] = $date->format('Y-m-d');
+        $duplicate = $service->save($request, $data);
+        try {
+            DB::table('payroll_rule_versions')->where('id', $duplicate->id)->update(['activation_slot' => 1, 'activated_at' => now()]);
+            throw new RuntimeException('MySQL accepted duplicate normalized department activation.');
+        } catch (UniqueConstraintViolationException) {
+            // Database protection also covers concurrent service preflight checks.
+        }
+    }
     $viewer = User::factory()->create(['username' => 'configuration-viewer-'.$nonce, 'role' => Role::Viewer]);
     try {
         $service->save(configurationCheckRequest($viewer), $data);
@@ -210,4 +250,4 @@ if (User::where('username', 'configuration-check-'.$nonce)->exists()
     || PayrollRuleEvent::where('actor_id', $actor->id)->exists()) {
     throw new RuntimeException('Configuration smoke fixtures were retained.');
 }
-echo "MySQL payroll configuration passed: six explicit category/data-use scopes, draft revisions and snapshots, canonical and legacy creation retries, unchanged legacy history, activation retries, authorization, external validation confirmation, calendar effective dates, preserved versions, duplicate prevention, prepared preview arithmetic, production blocking and rollback.\n";
+echo "MySQL payroll configuration passed: category and shared department/classification scopes in both data modes, department-first priority, normalized database uniqueness, draft revisions and snapshots, canonical and legacy creation retries, unchanged legacy history, activation retries, authorization, external validation confirmation, calendar effective dates, preserved versions, duplicate prevention, prepared preview arithmetic, production blocking and rollback.\n";

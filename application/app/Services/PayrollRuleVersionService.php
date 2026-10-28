@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\PersonnelClassification;
 use App\Http\Requests\ActivatePayrollRuleVersionRequest;
 use App\Http\Requests\SavePayrollRuleVersionRequest;
 use App\Models\PayrollRuleEvent;
@@ -52,7 +53,8 @@ class PayrollRuleVersionService
             'id' => 'maintained-profile', 'label' => $data['name'],
             'review_year' => (int) substr($data['effective_from'], 0, 4),
             'rounding' => 'half_up_2_at_component_total',
-            'category_validation' => [$data['personnel_classification'] => 'unverified'],
+            'category_validation' => array_fill_keys($data['personnel_classification'] === 'all'
+                ? array_column(PersonnelClassification::cases(), 'value') : [$data['personnel_classification']], 'unverified'),
         ], $parameters);
     }
 
@@ -77,7 +79,7 @@ class PayrollRuleVersionService
 
     private function event(PayrollRuleVersion $version, User $actor, string $action, string $reason): void
     {
-        $snapshot = $version->only(['id', 'name', 'personnel_classification', 'is_demonstration', 'effective_from',
+        $snapshot = $version->only(['id', 'name', 'department', 'coverage_key', 'personnel_classification', 'is_demonstration', 'effective_from',
             'record_version', 'parameters', 'approval_reference', 'validation_reference', 'activated_at', 'activated_by']);
         $snapshot['effective_from'] = $version->effective_from->format('Y-m-d');
         if ($action === 'activated') {
@@ -110,6 +112,12 @@ class PayrollRuleVersionService
 
     private function fingerprint(array $attributes, string $reason): string
     {
+        if (($attributes['department'] ?? null) === null) {
+            unset($attributes['department']); // Preserve original global/classification creation fingerprints.
+        } else {
+            $attributes['department'] = mb_strtolower(trim($attributes['department']));
+        }
+
         return hash('sha256', json_encode($this->canonical([$attributes, $reason]), JSON_THROW_ON_ERROR));
     }
 
@@ -122,6 +130,12 @@ class PayrollRuleVersionService
         // creation event, rather than the potentially edited draft or stored hash.
         $event = PayrollRuleEvent::where('payroll_rule_version_id', $version->id)->where('action', 'created')->orderBy('id')->first();
         $fields = ['name', 'personnel_classification', 'is_demonstration', 'effective_from', 'parameters'];
+        if (isset($event?->snapshot['department'])) {
+            if (! is_string($event->snapshot['department'])) {
+                return false;
+            }
+            $fields[] = 'department';
+        }
         $attributes = array_intersect_key($event?->snapshot ?? [], array_flip($fields));
         if (count($attributes) !== count($fields) || $event->effectiveDate() === null) {
             return false;
@@ -143,7 +157,8 @@ class PayrollRuleVersionService
                 $parameters = $this->parameters($data);
                 $this->validateParameters($parameters);
                 $attributes = [
-                    'name' => $data['name'], 'personnel_classification' => $data['personnel_classification'],
+                    'name' => $data['name'], 'personnel_classification' => $data['personnel_classification'] === 'all' ? null : $data['personnel_classification'],
+                    'department' => ($data['department_scope'] ?? 'all') === 'all' ? null : trim(substr($data['department_scope'], strlen('department:'))),
                     'is_demonstration' => (bool) $data['is_demonstration'], 'effective_from' => $data['effective_from'], 'parameters' => $parameters,
                 ];
                 // A normalized creation fingerprint makes the initial form idempotent.
@@ -205,11 +220,11 @@ class PayrollRuleVersionService
                     throw ValidationException::withMessages(['record_version' => 'This draft changed. Review its latest saved parameters before activation.']);
                 }
                 $this->validateParameters($current->parameters);
-                $duplicate = PayrollRuleVersion::where('personnel_classification', $current->personnel_classification)
+                $duplicate = PayrollRuleVersion::where('coverage_key', $current->coverage_key)
                     ->where('is_demonstration', $current->is_demonstration)->whereDate('effective_from', $current->effective_from)
                     ->whereNotNull('activated_at')->exists();
                 if ($duplicate) {
-                    throw ValidationException::withMessages(['effective_from' => 'An activated version already covers this category, data use and date. Choose another month.']);
+                    throw ValidationException::withMessages(['effective_from' => 'An activated version already covers this department/classification scope, data use and date. Choose another month.']);
                 }
                 $current->forceFill([
                     'activation_slot' => 1, 'activated_at' => now(), 'activated_by' => $actor->id, 'updated_by' => $actor->id,
@@ -221,21 +236,35 @@ class PayrollRuleVersionService
                 return $current;
             }, 3);
         } catch (UniqueConstraintViolationException) {
-            throw ValidationException::withMessages(['effective_from' => 'Another version was activated for this category, data use and date. Reload the configuration list.']);
+            throw ValidationException::withMessages(['effective_from' => 'Another version was activated for this department/classification scope, data use and date. Reload the configuration list.']);
         }
     }
 
-    public function applicable(string $category, string $date, bool $demonstration, bool $lock = false): ?PayrollRuleVersion
+    public function applicable(string $category, string $date, bool $demonstration, bool $lock = false, ?string $department = null): ?PayrollRuleVersion
     {
-        $query = PayrollRuleVersion::where('personnel_classification', $category)->where('is_demonstration', $demonstration)
-            ->whereNotNull('activated_at')->whereDate('effective_from', '<=', $date)->orderByDesc('effective_from');
+        $keys = [];
+        if ($department !== null) {
+            $keys[] = PayrollRuleVersion::coverageKey($department, $category);
+            $keys[] = PayrollRuleVersion::coverageKey($department, null);
+        }
+        $keys[] = PayrollRuleVersion::coverageKey(null, $category);
+        $keys[] = PayrollRuleVersion::coverageKey(null, null);
+        $query = PayrollRuleVersion::whereIn('coverage_key', $keys)->where('is_demonstration', $demonstration)
+            ->whereNotNull('activated_at')->whereDate('effective_from', '<=', $date)->orderByDesc('effective_from')->orderByDesc('id');
 
-        return ($lock ? $query->lockForUpdate() : $query)->first();
+        $versions = ($lock ? $query->lockForUpdate() : $query)->get();
+        foreach ($keys as $key) {
+            if ($version = $versions->firstWhere('coverage_key', $key)) {
+                return $version;
+            }
+        }
+
+        return null;
     }
 
-    public function profile(string $category, string $date, bool $demonstration, bool $lock = false): array
+    public function profile(string $category, string $date, bool $demonstration, bool $lock = false, ?string $department = null): array
     {
-        $version = $this->applicable($category, $date, $demonstration, $lock);
+        $version = $this->applicable($category, $date, $demonstration, $lock, $department);
         if (! $version) {
             return config('payroll_statutory', []);
         }
