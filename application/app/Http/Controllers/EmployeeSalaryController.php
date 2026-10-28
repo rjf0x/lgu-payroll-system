@@ -31,7 +31,7 @@ class EmployeeSalaryController extends Controller
         return view('employee-salaries.index', [
             'employee' => $employee, 'date' => $date, 'current' => $current,
             'review' => $service->stepReview($current, $date),
-            'latestSchedule' => $current ? $service->applicableSchedule($employee->personnel_classification, $date, $current->is_demonstration) : null,
+            'latestSchedule' => $current ? $service->applicableSchedule($employee, $date, $current->is_demonstration) : null,
             'history' => EmployeeSalaryRecord::with('rate.schedule')->where('employee_id', $employee->id)->orderByDesc('effective_from')->paginate(20)->appends(['as_of' => $date]),
         ]);
     }
@@ -42,7 +42,7 @@ class EmployeeSalaryController extends Controller
         $date = $this->queryDate($request, 'effective_from');
         $demo = $request->query('is_demonstration', '1');
         abort_unless(in_array($demo, ['0', '1'], true), 422, 'Select demonstration or externally authorized data.');
-        $schedule = $service->applicableSchedule($employee->personnel_classification, $date, $demo === '1');
+        $schedule = $service->applicableSchedule($employee, $date, $demo === '1');
 
         return view('employee-salaries.form', [
             'employee' => $employee, 'date' => $date, 'demo' => $demo, 'schedule' => $schedule,

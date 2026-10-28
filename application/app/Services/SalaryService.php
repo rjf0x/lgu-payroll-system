@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\PersonnelClassification;
+use App\Http\Requests\SaveSalaryScheduleRequest;
 use App\Models\Employee;
 use App\Models\EmployeeSalaryRecord;
 use App\Models\SalaryRate;
@@ -11,16 +12,45 @@ use App\Models\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 
 class SalaryService
 {
-    public function applicableSchedule(PersonnelClassification $classification, string $date, bool $demo): ?SalarySchedule
+    public function scheduleCandidates(Employee $employee, string $date, bool $demo, bool $lock = false): Collection
     {
-        return SalarySchedule::where('personnel_classification', $classification)->where('is_demonstration', $demo)
-            ->whereNotNull('published_at')->whereDate('effective_from', '<=', $date)->orderByDesc('effective_from')->first();
+        $query = SalarySchedule::where('is_demonstration', $demo)->whereDate('effective_from', '<=', $date)
+            ->where(fn ($query) => $query->whereIn('coverage_key', [SalarySchedule::coverageKey($employee->office), SalarySchedule::coverageKey(null)])
+                ->orWhere(fn ($legacy) => $legacy->whereNull('coverage_key')->where('personnel_classification', $employee->personnel_classification)))
+            ->orderByDesc('effective_from')->orderByDesc('id');
+
+        return ($lock ? $query->lockForUpdate() : $query)->get()->whereNotNull('published_at');
+    }
+
+    public function resolveSchedule(Employee $employee, Collection $schedules, string $date): ?SalarySchedule
+    {
+        foreach ([SalarySchedule::coverageKey($employee->office), SalarySchedule::coverageKey(null), null] as $key) {
+            $match = $schedules->first(fn ($schedule) => $schedule->coverage_key === $key && $schedule->effective_from->format('Y-m-d') <= $date);
+            if ($match) {
+                return $match;
+            }
+        }
+
+        return null;
+    }
+
+    public function applicableSchedule(Employee|PersonnelClassification $employee, string $date, bool $demo): ?SalarySchedule
+    {
+        if ($employee instanceof PersonnelClassification) {
+            // Compatibility for historical classification-only lookups; employee workflows use department coverage.
+            return SalarySchedule::whereNull('coverage_key')->where('personnel_classification', $employee)->where('is_demonstration', $demo)
+                ->whereNotNull('published_at')->whereDate('effective_from', '<=', $date)->orderByDesc('effective_from')->first();
+        }
+
+        return $this->resolveSchedule($employee, $this->scheduleCandidates($employee, $date, $demo), $date);
     }
 
     public function salaryAsOf(Employee $employee, string $date): ?EmployeeSalaryRecord
@@ -62,7 +92,13 @@ class SalaryService
                 Gate::forUser($actor)->authorize($schedule ? 'update' : 'create', $schedule ?? SalarySchedule::class);
                 $current = $schedule ? SalarySchedule::whereKey($schedule->id)->lockForUpdate()->firstOrFail() : new SalarySchedule;
                 $this->draft($current);
+                $data = Validator::make($data, (new SaveSalaryScheduleRequest)->rules())->validate();
+                $department = $data['department_scope'] === 'all' ? null : trim(substr($data['department_scope'], strlen('department:')));
+                unset($data['department_scope']);
                 $current->fill($data);
+                $current->department = $department;
+                $current->coverage_key = SalarySchedule::coverageKey($department);
+                $current->personnel_classification = null;
                 if (! $current->exists) {
                     $current->created_by = $actor->id;
                 }
@@ -71,7 +107,7 @@ class SalaryService
                 return $current;
             }, 3);
         } catch (UniqueConstraintViolationException) {
-            throw ValidationException::withMessages(['effective_from' => 'A schedule already exists for this classification, date, and data use.']);
+            throw ValidationException::withMessages(['effective_from' => 'A schedule already exists for this department coverage, date, and data use.']);
         }
     }
 
@@ -120,9 +156,9 @@ class SalaryService
                 $rate = SalaryRate::findOrFail($data['salary_rate_id']);
                 $schedule = SalarySchedule::whereKey($rate->salary_schedule_id)->lockForUpdate()->firstOrFail();
                 $rate = $schedule->rates()->whereKey($rate->id)->lockForUpdate()->firstOrFail();
-                $applicable = $this->applicableSchedule($current->personnel_classification, $data['effective_from'], $schedule->is_demonstration);
+                $applicable = $this->applicableSchedule($current, $data['effective_from'], $schedule->is_demonstration);
                 if (! $applicable || $applicable->id !== $schedule->id) {
-                    throw ValidationException::withMessages(['salary_rate_id' => 'Select a rate from the published schedule applicable to this category and effective date.']);
+                    throw ValidationException::withMessages(['salary_rate_id' => 'Select a rate from the published schedule applicable to this department and effective date.']);
                 }
                 $previous = EmployeeSalaryRecord::with('rate')->where('employee_id', $current->id)->orderByDesc('effective_from')->first();
                 if ($data['effective_from'] < $current->employment_start_date->format('Y-m-d')

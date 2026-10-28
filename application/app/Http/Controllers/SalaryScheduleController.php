@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\PersonnelClassification;
 use App\Enums\Role;
 use App\Http\Requests\SaveSalaryScheduleRequest;
 use App\Models\SalaryRate;
@@ -31,7 +30,7 @@ class SalaryScheduleController extends Controller
     {
         Gate::authorize('create', SalarySchedule::class);
 
-        return view('salary-schedules.form', ['schedule' => new SalarySchedule, 'classifications' => PersonnelClassification::cases()]);
+        return view('salary-schedules.form', ['schedule' => new SalarySchedule, 'departments' => SalarySchedule::departmentOptions()]);
     }
 
     public function store(SaveSalaryScheduleRequest $request, SalaryService $service): RedirectResponse
@@ -51,7 +50,7 @@ class SalaryScheduleController extends Controller
         Gate::authorize('update', $schedule);
         abort_if($schedule->published_at !== null, 409, 'Published schedules are locked.');
 
-        return view('salary-schedules.form', ['schedule' => $schedule, 'classifications' => PersonnelClassification::cases()]);
+        return view('salary-schedules.form', ['schedule' => $schedule, 'departments' => SalarySchedule::departmentOptions()]);
     }
 
     public function update(SaveSalaryScheduleRequest $request, SalarySchedule $schedule, SalaryService $service): RedirectResponse

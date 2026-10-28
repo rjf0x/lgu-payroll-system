@@ -223,7 +223,7 @@ class EmployeeManagementTest extends TestCase
     {
         $this->signIn(Role::Viewer);
         $target = Employee::factory()->create(['employee_number' => 'FIND-001', 'first_name' => 'Fictional Maria', 'last_name' => 'ExactName', 'middle_name' => 'UniqueMiddle', 'office' => 'Percent %_! Office', 'position' => 'Specialist-Unique', 'is_active' => false]);
-        Employee::factory()->count(21)->create(['last_name' => 'Other']);
+        Employee::factory()->count(21)->create(['first_name' => 'Fictional Unrelated', 'last_name' => 'Other']);
         foreach (['find-001', 'maria', 'exactname', 'uniquemiddle', 'Fictional Maria UniqueMiddle ExactName', 'specialist-unique', '%_!'] as $term) {
             $response = $this->get('/employees?'.http_build_query(['q' => $term]))->assertOk();
             $this->assertSame([$target->id], $response->viewData('employees')->pluck('id')->all());

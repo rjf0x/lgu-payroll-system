@@ -6,7 +6,6 @@ use App\Models\Employee;
 use App\Models\EmployeeSalaryRecord;
 use App\Models\PayrollBatch;
 use App\Models\PayrollEntry;
-use App\Models\SalarySchedule;
 use App\Models\User;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\Request;
@@ -50,10 +49,9 @@ class PayrollPreparationService
         if (! $employee->is_active || $employee->employment_start_date->format('Y-m-d') > $start) {
             return ['record' => null, 'issue' => 'Employee must be active and employed by the first day of the month.'];
         }
-        $schedulesQuery = SalarySchedule::where('personnel_classification', $employee->personnel_classification)
-            ->where('is_demonstration', $batch->is_demonstration)->whereDate('effective_from', '<=', $end)->orderByDesc('effective_from');
-        $schedules = ($lock ? $schedulesQuery->lockForUpdate() : $schedulesQuery)->get()->whereNotNull('published_at');
-        $applicable = $schedules->first(fn ($schedule) => $schedule->effective_from->format('Y-m-d') <= $start);
+        $salary = app(SalaryService::class);
+        $schedules = $salary->scheduleCandidates($employee, $end, $batch->is_demonstration, $lock);
+        $applicable = $salary->resolveSchedule($employee, $schedules, $start);
         $recordsQuery = EmployeeSalaryRecord::with('rate.schedule')->where('employee_id', $employee->id)
             ->whereDate('effective_from', '<=', $end)->orderByDesc('effective_from');
         $records = ($lock ? $recordsQuery->lockForUpdate() : $recordsQuery)->get();
@@ -72,7 +70,8 @@ class PayrollPreparationService
             return ['record' => null, 'issue' => 'Salary source is missing or superseded. Record an authorized applicable salary update first.'];
         }
         if ($records->contains(fn ($row) => $row->effective_from->format('Y-m-d') > $start)
-            || $schedules->contains(fn ($schedule) => $schedule->effective_from->format('Y-m-d') > $start)) {
+            || $schedules->contains(fn ($schedule) => $schedule->effective_from->format('Y-m-d') > $start
+                && $salary->resolveSchedule($employee, $schedules, $schedule->effective_from->format('Y-m-d'))?->id !== $applicable->id)) {
             return ['record' => null, 'issue' => 'A salary or schedule change occurs within this month. Mid-month treatment requires validated rules.'];
         }
 

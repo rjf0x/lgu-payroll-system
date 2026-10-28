@@ -4,7 +4,7 @@
     @php($text = function ($field) { $value = old($field); return is_scalar($value) ? (string) $value : ''; })
     <a href="{{ route('salary-schedules.index') }}" class="text-teal-800 underline">Back to schedules</a>
     <h1 class="mt-5 text-3xl font-bold">{{ $schedule->name }}</h1>
-    <p class="mt-3">{{ $schedule->personnel_classification->label() }} · Effective {{ $schedule->effective_from->format('Y-m-d') }} · {{ $schedule->published_at ? 'Published / locked' : 'Draft' }}</p>
+    <p class="mt-3">{{ $schedule->coverage_label }} · Effective {{ $schedule->effective_from->format('Y-m-d') }} · {{ $schedule->published_at ? 'Published / locked' : 'Draft' }}</p>
     <p class="mt-2 font-semibold text-teal-800">{{ $schedule->is_demonstration ? 'Demonstration only — not for real payroll' : 'Externally authorized schedule' }}</p>
     @if ($schedule->published_at)<p class="mt-2">Authority: {{ $schedule->authority_reference }}</p>@endif
     @if ($editable)<a href="{{ route('salary-schedules.edit', $schedule) }}" class="mt-4 inline-block text-teal-800 underline">Edit schedule details</a>@endif
@@ -45,7 +45,7 @@
             @csrf
             <h2 class="text-xl font-semibold">Publish and lock</h2>
             <label class="block font-semibold">External authority / demonstration reference<input name="authority_reference" required maxlength="255" value="{{ $text('authority_reference') }}" class="mt-2 block w-full rounded border border-slate-300 p-3"></label>
-            <label class="flex items-start gap-3"><input type="checkbox" name="authorization_confirmed" value="1" required class="mt-1"><span>I confirm the source authorizes these rates for this classification and effective date, or is clearly fictional for demonstration use.</span></label>
+            <label class="flex items-start gap-3"><input type="checkbox" name="authorization_confirmed" value="1" required class="mt-1"><span>I confirm the source authorizes these rates for the displayed coverage and effective date, or is clearly fictional for demonstration use.</span></label>
             <p class="text-sm text-slate-600">Published rates cannot be edited. Salary assignments require their own authorization; existing employee history will be retained.</p>
             <button class="rounded bg-teal-800 px-4 py-3 font-semibold text-white">Publish schedule</button>
         </form>

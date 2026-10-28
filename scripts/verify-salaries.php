@@ -62,10 +62,10 @@ try {
         }
     }
     foreach (PersonnelClassification::cases() as $classification) {
-        $employee = Employee::factory()->create(['employee_number' => 'SAL-'.$nonce.'-'.$classification->value, 'personnel_classification' => $classification]);
+        $employee = Employee::factory()->create(['employee_number' => 'SAL-'.$nonce.'-'.$classification->value, 'personnel_classification' => $classification, 'office' => 'FICTIONAL '.$nonce.' '.$classification->value]);
         $schedules = [];
         foreach ([$base, $base->addYear()] as $index => $date) {
-            $data = ['name' => 'FICTIONAL SALARY CHECK '.$nonce, 'personnel_classification' => $classification->value, 'effective_from' => $date->format('Y-m-d'), 'is_demonstration' => 1];
+            $data = ['name' => 'FICTIONAL SALARY CHECK '.$nonce, 'department_scope' => 'department:'.$employee->office, 'effective_from' => $date->format('Y-m-d'), 'is_demonstration' => 1];
             $request = salaryCheckRequest($admin, SaveSalaryScheduleRequest::class, $data);
             $schedule = $service->saveSchedule($request, $request->validated());
             foreach ([[1, 1, '12345.67'], [1, 2, $index === 0 ? '12400.08' : '15000.31'], [2, 1, '16000.09']] as [$grade, $step, $amount]) {
@@ -99,8 +99,8 @@ try {
                 throw new RuntimeException('MySQL historical salary record changed.');
             }
         }
-        if ($service->applicableSchedule($classification, $base->subDay()->format('Y-m-d'), true)?->id === $schedules[0]->id
-            || $service->applicableSchedule($classification, $base->addYear()->format('Y-m-d'), true)?->id !== $schedules[1]->id) {
+        if ($service->applicableSchedule($employee, $base->subDay()->format('Y-m-d'), true)?->id === $schedules[0]->id
+            || $service->applicableSchedule($employee, $base->addYear()->format('Y-m-d'), true)?->id !== $schedules[1]->id) {
             throw new RuntimeException('MySQL effective schedule resolution failed.');
         }
         try {

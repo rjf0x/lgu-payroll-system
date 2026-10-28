@@ -9,12 +9,15 @@
         @if ($schedule->exists) @method('PUT') @endif
         <div><label for="name" class="block font-semibold">Schedule name</label><input id="name" name="name" value="{{ $text('name', $schedule->name) }}" required maxlength="150" class="mt-2 w-full rounded border border-slate-300 p-3"></div>
         <x-ui.field-error field="name" />
-        <div><label for="classification" class="block font-semibold">Covered personnel classification</label>
-            <select id="classification" name="personnel_classification" required class="mt-2 w-full rounded border border-slate-300 p-3">
-                <option value="">Select a classification</option>
-                @foreach ($classifications as $classification)<option value="{{ $classification->value }}" @selected($text('personnel_classification', $schedule->personnel_classification?->value) === $classification->value)>{{ $classification->label() }}</option>@endforeach
+        @php($selectedScope = $text('department_scope', $schedule->department === null ? 'all' : 'department:'.$schedule->department))
+        <div><label for="department" class="block font-semibold">Covered department</label>
+            <select id="department" name="department_scope" required class="mt-2 w-full rounded border border-slate-300 p-3">
+                <option value="all" @selected($selectedScope === 'all')>All departments</option>
+                @foreach ($departments as $department)<option value="{{ 'department:'.$department }}" @selected(str_starts_with($selectedScope, 'department:') && \App\Models\SalarySchedule::coverageKey(substr($selectedScope, strlen('department:'))) === \App\Models\SalarySchedule::coverageKey($department))>{{ $department }}</option>@endforeach
             </select>
-            <x-ui.field-error field="personnel_classification" />
+            <p class="mt-2 text-sm text-slate-600">Choose all departments or one department. Names come from employee Office / department records. A department-specific published schedule takes priority over an all-departments schedule.</p>
+            @if ($schedule->exists && $schedule->coverage_key === null)<p class="mt-2 text-amber-900">This draft used {{ $schedule->coverage_label }}. Saving assigns the department coverage selected above.</p>@endif
+            <x-ui.field-error field="department_scope" />
         </div>
         <div><label for="effective_from" class="block font-semibold">Effective from</label><input id="effective_from" name="effective_from" type="date" value="{{ $text('effective_from', $schedule->effective_from?->format('Y-m-d')) }}" min="1000-01-01" max="9999-12-31" required class="mt-2 w-full rounded border border-slate-300 p-3"></div>
         <x-ui.field-error field="effective_from" />
@@ -25,7 +28,7 @@
             </select>
             <x-ui.field-error field="is_demonstration" />
         </div>
-        <p class="text-sm text-slate-600">Enter approved rates separately. Publishing requires an external authority reference and permanently locks this schedule.</p>
+        <p class="text-sm text-slate-600">Enter approved rates separately. Publishing authorizes the selected department coverage and permanently locks this schedule.</p>
         <button class="rounded bg-teal-800 px-4 py-3 font-semibold text-white">Save draft</button>
         <a href="{{ route('salary-schedules.index') }}" class="ml-4 text-teal-800 underline">Cancel</a>
     </form>

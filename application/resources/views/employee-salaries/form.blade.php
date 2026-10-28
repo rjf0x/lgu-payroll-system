@@ -12,9 +12,9 @@
         <button class="rounded bg-teal-800 px-4 py-3 font-semibold text-white">Find applicable schedule</button>
     </form>
     @if (! $schedule)
-        <p class="mt-6 rounded border border-amber-200 bg-white p-5">No published schedule matches this category, date, and data use. An Administrator must enter an authorized schedule first.</p>
+        <p class="mt-6 rounded border border-amber-200 bg-white p-5">No published schedule matches this department, date, and data use. An Administrator must enter an authorized schedule first.</p>
     @else
-        <p class="mt-6 font-semibold text-teal-800">{{ $schedule->name }} · {{ $schedule->is_demonstration ? 'Demonstration only — not for real payroll' : 'Externally authorized' }}</p>
+        <p class="mt-6 font-semibold text-teal-800">{{ $schedule->name }} · {{ $schedule->coverage_label }} · {{ $schedule->is_demonstration ? 'Demonstration only — not for real payroll' : 'Externally authorized' }}</p>
         <form method="POST" action="{{ route('employee-salaries.store', $employee) }}" class="mt-4 max-w-3xl space-y-5 rounded border border-slate-200 bg-white p-6">
             @csrf
             <input type="hidden" name="effective_from" value="{{ $date }}">

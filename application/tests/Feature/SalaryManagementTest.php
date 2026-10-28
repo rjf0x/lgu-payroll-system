@@ -44,14 +44,17 @@ class SalaryManagementTest extends TestCase
 
     private function scheduleData(array $changes = []): array
     {
-        return array_replace(['name' => 'Fictional Salary Schedule', 'personnel_classification' => 'permanent', 'effective_from' => '2020-01-01', 'is_demonstration' => '1'], $changes);
+        return array_replace(['name' => 'Fictional Salary Schedule', 'department_scope' => 'all', 'effective_from' => '2020-01-01', 'is_demonstration' => '1'], $changes);
     }
 
     private function schedule(array $changes = [], bool $publish = true): SalarySchedule
     {
         $this->actor($this->admin);
-        $this->post('/salary-schedules', $this->scheduleData($changes))->assertRedirect()->assertSessionHasNoErrors();
-        $schedule = SalarySchedule::orderByDesc('id')->firstOrFail();
+        // Migration-era fixtures retain classification coverage; new header CRUD is tested below.
+        $schedule = SalarySchedule::create(array_replace([
+            'name' => 'Fictional Salary Schedule', 'personnel_classification' => 'permanent',
+            'effective_from' => '2020-01-01', 'is_demonstration' => true, 'created_by' => $this->admin->id,
+        ], $changes));
         foreach ([[5, 1, '10000.07'], [5, 2, '10100.08'], [6, 1, '11000.09']] as [$grade, $step, $amount]) {
             $this->post('/salary-schedules/'.$schedule->id.'/rates', ['grade' => $grade, 'step' => $step, 'monthly_salary' => $amount])->assertRedirect()->assertSessionHasNoErrors();
         }
@@ -260,7 +263,7 @@ class SalaryManagementTest extends TestCase
 
     public function test_invalid_headers_authority_and_text_shapes_are_rejected_and_render_safely(): void
     {
-        $this->from('/salary-schedules/create')->post('/salary-schedules', $this->scheduleData(['name' => ['bad'], 'personnel_classification' => 'unknown', 'effective_from' => '2030-02-30', 'is_demonstration' => 'yes']))->assertSessionHasErrors(['name', 'personnel_classification', 'effective_from', 'is_demonstration']);
+        $this->from('/salary-schedules/create')->post('/salary-schedules', $this->scheduleData(['name' => ['bad'], 'department_scope' => 'unknown', 'effective_from' => '2030-02-30', 'is_demonstration' => 'yes']))->assertSessionHasErrors(['name', 'department_scope', 'effective_from', 'is_demonstration']);
         $this->withCookie(config('session.cookie'), session()->getId())->get('/salary-schedules/create')->assertOk();
         $this->post('/salary-schedules', $this->scheduleData(['name' => "Invalid\xFFName"]))->assertSessionHasErrors('name');
         $draft = $this->schedule([], false);
