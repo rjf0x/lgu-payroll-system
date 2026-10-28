@@ -1,6 +1,12 @@
 # Testing status
 
-Updated: 2026-10-27. Phase 12-A verification/history passes full isolation:
+Updated: 2026-10-28. BESU-00 repository assessment passes the current full
+in-memory SQLite suite: **615 tests / 7568 assertions**, 3m25.741s, 102 MB.
+Composer strict/platform checks and read-only MySQL readiness/migration checks
+pass. No real Besu network/contract/transaction was tested; Docker engine is
+unavailable. See [BESU_00_ASSESSMENT.md](BESU_00_ASSESSMENT.md).
+
+Earlier Phase 12-A verification/history passed full isolation:
 537 tests / 6539 assertions, including all 505 earlier cases. Its audit found no
 new confirmed supported-path bug. Genuine blockchain
 verification remains incomplete without an authorized network; correction versions
@@ -1846,3 +1852,166 @@ schema/dependency change, Phase 13, commit, push or publication.
   recovery/capacity/browser acceptance and permanent correction-specific PDF/
   receipt/return-cycle coverage remain incomplete/unverified. One reviewed
   demonstration-correction commit is authorized; no push or Phase 13 work.
+
+## User-requested browser-demo seeder - 2026-10-28
+
+Scope: opt-in fictional browser fixtures for the existing prototype. No Phase 13,
+Besu integration, application database population, schema or dependency change.
+
+- New BrowserDemoSeederTest passes **10 cases / 86 assertions**, 2.751 seconds,
+  66 MB: four working login accounts/roles, three salary/employee fixtures,
+  prepared November draft and exact combined reference totals, no automatic
+  submissions/finalizations/anchors/configuration activation, idempotent reruns,
+  changed-password retention, finalized snapshot retention, identity collisions,
+  late-conflict transaction rollback, empty default seed and production/staging
+  rejection even through `db:seed --force`.
+- Initial new-test execution revealed two test harness assumptions: raw attributes
+  of a just-created user differ in scalar types/order from a fresh database read,
+  and production Artisan seeding asks for confirmation before invoking the class.
+  Compare fresh raw records and invoke --force in the guard test to verify that
+  the class itself still refuses nonlocal environments. All 10 cases then pass.
+- The first full isolation attempt reached **576 tests / 7180 assertions** with
+  one failure in the existing employee literal-search test. Its 21 random control
+  employees can include another Maria, legitimately matching the search that
+  expects only its named target. Made only those control first names deterministic;
+  employee search code/factory remain unchanged. Combined focused rerun passes
+  **11 cases / 113 assertions**, 6.770 seconds, 74 MB.
+- Application Pint --test and whitespace checks pass. No frontend/dependency
+  changes require a new asset build or Composer run. All test fixtures use
+  isolated SQLite; no MySQL helper or persistent seeding operation was executed.
+  The documented seed command remains an explicit user step for their local DB.
+- The pre-existing untracked docs/HYPERLEGER_BESU_INTEGRATION.md is untouched.
+  Logs remain ignored under `.local/browser-demo-seeder`. No commit or push.
+- Final hostile-environment isolation rerun passes **576 tests / 7201 assertions**,
+  212.913 seconds, 102 MB, including all 566 earlier cases and 10 new seeder cases.
+  No cases skipped; no remaining failure. Evidence:
+  `.local/browser-demo-seeder/isolation-final.log` (ignored).
+
+## User-requested department salary schedules - 2026-10-28
+
+Scope: replace new salary schedule classification selection with All departments
+or one existing department. The user explicitly chose specific-department priority.
+No statutory formula/activation, finalized snapshot, phase or blockchain change.
+
+- New DepartmentSalaryScheduleTest passes **15 cases / 158 assertions**, 3.162
+  seconds, 64 MB: dropdown/escaped/accent-distinct labels, known scope validation,
+  dates/modes/publication, specific-over-newer-global priority, all personnel
+  classifications, wrong-department rates, transfer source invalidation, relevant
+  and irrelevant midmonth changes, normalized duplicates, forged headers, valid
+  draft edits/locked publication, case-only name edits, legacy schema round-trip
+  preservation and retained department rollback refusal.
+- Focused salary/preparation/demo/department run passes **97 cases / 1115
+  assertions**, 16.505 seconds, 70 MB. Legacy classification fixture sources remain
+  tested through direct migration-era model fixtures; header HTTP CRUD now uses
+  department coverage. Demo setup now uses a shared All departments source while
+  preserving already-seeded legacy sources and all manual payroll workflow state.
+- Applied `2026_10_28_000001_add_department_coverage_to_salary_schedules` to local
+  MySQL successfully; all **17 migrations Ran**. Before/after SHA-256 values over
+  existing columns match for salary schedules/rates/employee history and finalized
+  payroll/commitment/check tables. No existing source or snapshot was rewritten.
+- MySQL salary verifier (now department-scoped) and full payroll workflow verifier
+  pass with fictional fixtures rolled back. An ignored MySQL probe confirms both
+  Nino/Niño choices survive DB collation and upper-case/space-varied selection
+  validates using the same normalization; its fixtures also roll back. Original
+  source/history hashes still match afterward. Local MySQL is left available for
+  browser use; no demo fixture population performed by these checks.
+- Application/verifier Pint --test, JavaScript syntax and production asset build
+  (60 modules) pass. Sandbox esbuild initially could not read parent/config paths;
+  the approved out-of-sandbox build succeeds. No dependency/lock change.
+- New legacy round-trip test initially compared unsynchronized new-model raw
+  attributes with freshly read rows; compare fresh database attributes on both
+  sides to verify exact retained values. No application-data repair was involved.
+- Additional review fixed capitalization changes defaulting an edit form to All
+  when its saved name differed from deduplicated option casing. Selected options
+  and server validation now use normalized scope identities; a permanent case-only
+  regression passes. Both original full checks passed (590 tests / 7262 then 7264
+  assertions); the final suite additionally includes this regression.
+
+No live browser screenshot/printing, office authority/department convention or
+real concurrent writer acceptance is claimed. Real payroll remains blocked.
+The existing untracked Besu document and earlier seeder work remain intact.
+No commit, push or Phase 13 implementation.
+
+Final full hostile-environment isolation passes **591 tests / 7273 assertions**,
+220.230 seconds, 102 MB, including all prior 576 cases and 15 department cases.
+Log: `.local/department-schedules/isolation-verified.log` (ignored). No failing or
+skipped tests remain; no coverage percentage measured. Whitespace passes.
+
+## Payroll configuration coverage - 2026-10-28
+
+- Full hostile-environment isolation via `scripts/verify-test-isolation.ps1`:
+  **615 tests / 7568 assertions**, 206.147 seconds, 100 MB. All pass, none skipped.
+  Includes all prior 591 cases and 24 new coverage cases. Ignored log:
+  `.local/payroll-configuration-coverage/isolation.log`.
+- `PayrollConfigurationCoverageTest`: **24 tests / 295 assertions**, passing.
+  Covers all four scope combinations, existing/escaped/accent-distinct department
+  options, invalid values, draft edits/copy, immutable coverage events, normalized
+  creation retries, activation uniqueness including direct database enforcement,
+  scope precedence, latest effective activation and data-mode filtering.
+- Legacy migration round-trip preserves every original configuration column and
+  event; rollback refuses new shared/department coverage. Existing configuration
+  regression tests retain canonical/legacy creation and timezone compatibility.
+- Browser-route workflow regression seeds three classifications, selects the
+  shared global profile, then activates a department-wide profile ahead of a newer
+  global classification profile. Old review submissions fail, explicitly saved
+  reviews use department-specific GSIS amounts, and independent submission,
+  approval/finalization succeed. Later activation preserves all saved reviews and
+  the finalized snapshot; documents remain accessible.
+- Local MySQL migration applied successfully: all 18 migrations Ran. Original
+  columns in 11 source/history tables have unchanged SHA-256 digests before/after
+  migration and smoke checks; new scope columns and migration metadata are excluded
+  from that comparison. Existing configuration/event tables were empty locally;
+  populated legacy backfill is covered by the isolated migration regression.
+- MySQL `verify-payroll-rule-versions.php`, `verify-statutory-previews.php` and
+  `verify-payroll-workflow.php` pass with fixture rollback. New checks cover shared
+  scopes in both data modes, exact/department/global priority and normalized
+  unique-index enforcement. Two original preview/workflow probes first failed
+  because a retained global salary schedule superseded legacy fixture sources;
+  fixtures now use isolated departments and the reruns pass. No operator data repair.
+- Full application Pint, targeted changed PHP/script Pint, JavaScript syntax,
+  production asset build (60 modules) and `git diff --check` pass. Generated build
+  files and local verification artifacts remain ignored. No dependency changes.
+
+No live browser visual, actual concurrent writer, statutory/client approval or
+genuine blockchain validation is claimed. Real payroll remains blocked. No
+Phase 13, commit or push; unrelated existing documentation is retained.
+
+## 2026-10-28 - BESU-00 repository assessment
+
+Assessment only; existing tests reused with no new executable behavior. Commands
+below were executed from `application/` unless otherwise specified.
+
+| Command | Actual result |
+| --- | --- |
+| `php vendor/phpunit/phpunit/phpunit --colors=never` | PASS: 615 tests, 7568 assertions; 03:25.741; 102 MB; exit 0. Includes calculation, workflow, frozen snapshots/documents, canonical hashes, local anchoring failure states, verification test doubles, correction history and access regressions. |
+| `composer validate --strict` | PASS: composer.json valid. |
+| `composer check-platform-reqs` | PASS: installed dependencies satisfy platform requirements. |
+| `php artisan app:check-foundation` | PASS: configured local database connection and base tables ready. |
+| `php artisan migrate:status --no-ansi` | PASS: all 18 application migrations Ran; read-only inspection, no migrations applied. |
+| `php artisan route:list --path=payroll-batches --no-ansi` | PASS: 29 payroll routes, including workflow, anchoring, integrity and correction endpoints. Route enumeration alone is not authorization evidence; access checks are covered by PHPUnit. |
+| `php artisan --version` | Laravel Framework 13.38.0. |
+| `php --version`, `php -m` | PHP 8.5.10; BCMath, PDO MySQL/SQLite, cURL and OpenSSL available. Sodium absent; not required by current installed dependencies. |
+| `composer --version`, `node --version`, `npm.cmd --version` | Composer 2.10.3; Node.js 24.19.0; npm 11.17.0. |
+| `docker version` (root) | FAIL for engine connectivity: CLI 29.7.2 available, Docker Linux engine named pipe absent. No container/network acceptance established. |
+| `docker compose version` (root) | Compose v5.4.0 installed; engine execution untested. |
+| `docker context show` (root) | `desktop-linux`. |
+| `wsl --status`, `wsl --list --verbose`, `wsl --version` (root) | Ubuntu and docker-desktop stopped, both WSL2; WSL 2.7.12.0, kernel 6.18.33.2-2. Status also reports WSL1 unsupported. |
+| `java -version` (root) | Microsoft OpenJDK 17.0.20.1 available; native Besu runtime compatibility not established. |
+| `Get-Command besu,solc,forge,anvil,curl.exe -ErrorAction SilentlyContinue` | Only curl.exe found among these commands. |
+| `Get-CimInstance Win32_OperatingSystem`, `Get-PSDrive C` (root; selected resource fields only) | Windows 11 Pro; 15.87 GB usable RAM, 5.97 GB free RAM, approximately 0.58 GB free on C: at inspection. |
+| `Get-NetTCPConnection -State Listen` (root; filtered to 8545, 8546, 30303) | No listeners on these candidate Besu TCP ports. Other ports/remote hosts were not scanned. |
+| `git diff --check` (root) | PASS: no whitespace errors in the working-tree diff. |
+
+Tests are pinned to `APP_ENV=testing`, SQLite `:memory:` and empty DB_URL by
+`phpunit.xml`; `tests/TestCase.php` refuses unsafe database configuration before
+destructive test migrations. This run did not rerun the separate conflicting-env
+isolation helper or live MySQL payroll write verifiers. MySQL checks above were
+read-only. No seeding, live payroll edits, schema/dependency changes or key creation.
+
+No blockchain RPC/transaction test was possible or appropriate in BESU-00.
+Confirmed-receipt unit tests use explicit doubles and do not demonstrate real
+blockchain acceptance. No new build/formatting run is needed for documentation-only
+changes. The official Besu Quickstart and QBFT documentation were consulted for
+the assessment; no version-dependent network configuration was implemented.
+
+Final status: STOPPED - Awaiting authorization for BESU-01.

@@ -1,6 +1,8 @@
 # Requirements status
 
-Updated: 2026-10-27. Requirements derive from `master-prompt.md`.
+Updated: 2026-10-28. Requirements derive from `master-prompt.md` and the separate
+`HYPERLEGER_BESU_INTEGRATION.md` plan. BESU-00 assesses the existing local
+interfaces; it does not satisfy live anchoring/verification acceptance.
 Statuses reflect behavior and validation, not screen counts.
 
 Allowed statuses: Implemented and tested; Implemented but needs validation;
@@ -8,6 +10,8 @@ In progress; Not started; Blocked by client validation.
 
 | Requirement | Phase | Status | Evidence or remaining work |
 | --- | --- | --- | --- |
+| Besu repository assessment and minimal integration approach | BESU-00 | Implemented and tested | BESU_00_ASSESSMENT.md identifies existing finalization, snapshot/hash/version history, schema, interfaces and environment prerequisites; current validation is recorded in TESTING_STATUS.md. No blockchain implementation. |
+| Private QBFT network: four validators and one RPC node | BESU-01 | Not started | Docker/Compose CLI and WSL2 installed, but Docker Linux engine unavailable and C: has approximately 0.58 GB free. No node, chain ID, peer, block or validator acceptance evidence. Awaiting phase authorization. |
 | Application starts, database connects, initial tests pass | 0 | Implemented and tested | HTTP 200; MySQL readiness/persistence; 6 tests, 14 assertions |
 | Environment setup and directory conventions | 0 | Implemented and tested | Root README, application/, scripts/; build and DB restart checks passed |
 | Progress, decisions, requirements, and testing records | 0 | Implemented and tested | Four tracking documents created and reviewed |
@@ -32,6 +36,9 @@ In progress; Not started; Blocked by client validation.
 | Authorized finalized correction versions | 12-B | Implemented but needs validation | PHASE_12B_REAUDIT.md: F1 remains resolved, no new confirmed local defect. Full isolation 566 tests / 7115 assertions, including 29 correction cases / 576 assertions; eight ignored probes / 221 assertions and MySQL replacement/original preservation pass. Corrected return/recalculate/resubmit is exercised by an ignored probe; permanent PDF/receipt/return-cycle and genuine network/client/concurrency/recovery/capacity/browser coverage gaps remain. Pint, JS syntax and whitespace pass; no application change |
 | Genuine blockchain integrity verification | 12 | Blocked by client validation | No authorized test network, real confirmed commitment or independent receipt available. Local hash comparisons and test-double success do not satisfy live verification acceptance |
 | End-to-end demo, role checks, failure recovery, completion report | 13 | Not started | Fictional personnel only |
+| User-requested opt-in browser demo data | Current prototype setup | Implemented and tested | BrowserDemoSeeder creates fictional accounts/salary sources/employees and a prepared November draft through existing services. Ten new cases / 86 assertions and full isolation 576 tests / 7201 assertions pass, plus Pint/whitespace. Covers usable accounts/totals, reruns/password retention, finalized-history retention, collision rollback and local/testing-only enforcement. Existing employee-search test control names stabilized after random collision; search code unchanged. BROWSER_DEMO.md documents execution; default seeding stays empty. No automatic approval/finalization, blockchain operation or Phase 13 |
+| User-requested department salary schedule coverage | Current salary management | Implemented but needs validation | DEPARTMENT_SALARY_SCHEDULES.md: All departments or one existing Office / department replaces new schedule classification. User-selected specific-over-global priority, date/mode filtering, assignment/preparation enforcement and legacy preservation implemented. Fifteen new cases / 158 assertions and focused 97 cases / 1115 assertions pass; MySQL migration preserves six source/history table hashes, salary/payroll verifiers and accent/case validation pass. Final full results: TESTING_STATUS.md. Office department/authority conventions, visual browser and actual concurrency still need validation |
+| User-requested shared payroll configuration coverage | Current payroll configuration | Implemented and tested | PAYROLL_CONFIGURATION_COVERAGE.md: independent All/one department and All/one classification; user-selected department-first precedence; effective-date/mode filtering, audited immutable activation, legacy preservation and stale review guards. 24 new cases / 295 assertions; full suite 615 tests / 7568 assertions. MySQL migration, configuration/statutory/workflow rollback checks, Pint and asset build pass. Actual office approval/eligibility and concurrency still require validation; real payroll stays blocked |
 
 ## Business and deployment rules requiring validation
 

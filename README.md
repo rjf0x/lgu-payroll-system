@@ -82,6 +82,14 @@ and numbers, at most 72 bytes, and no null characters. Some characters use more
 than one byte. The command refuses reuse once an administrator exists. There is no
 public registration or default account/password; `db:seed` creates no accounts.
 
+For the optional fictional browser walkthrough, explicitly run
+`php artisan db:seed --class=BrowserDemoSeeder` in `application/`. It creates four
+demo-role accounts, three employees with a shared published salary schedule, and a prepared
+November 2026 demonstration payroll draft. New demo accounts use `LocalDemo2026!`.
+It is restricted to local/testing, preserves existing passwords/workflow on rerun,
+and never approves/finalizes payroll. See [browser demo data](docs/BROWSER_DEMO.md)
+for usernames, expected amounts, collision behavior and correction testing.
+
 Sign in at <http://127.0.0.1:8000/login>. Administrators can create/edit accounts,
 assign Administrator, Payroll Officer, Approver, or Viewer, reset passwords, and
 activate/deactivate access under **User accounts**. Leave an edit password blank
@@ -136,12 +144,15 @@ client-specific organizational visibility needs validation before deployment.
 Use inactive status to retain a record; no deletion or document upload is provided.
 No salary amount or grade/step is assigned by employee entry. Use the separate
 salary authorization/history workflow described below. Employment
-start dates are not salary-effective dates. No demonstration records are seeded.
+start dates are not salary-effective dates. Default seeding creates no demo
+records; the optional BrowserDemoSeeder above creates explicitly fictional fixtures.
 
 ## Salary schedules and employee salary history
 
-As **Administrator**, open **Salary schedules**, create a draft with a classification,
-effective date, and data use (demonstration or externally authorized). Add the
+As **Administrator**, open **Salary schedules**, create a draft covering **All
+departments** or one department, with an effective date and data use
+(demonstration or externally authorized). Department names come from employees'
+Office / department values. Add the
 approved grade/step monthly amounts individually and correct draft entries as
 needed. Publishing requires a source reference and confirmation. Published
 schedules and their rates are permanently locked; changes require another dated
@@ -149,11 +160,21 @@ schedule. No government salary table or rate is prefilled.
 
 As **Payroll Officer**, open an employee's **Salary and preserved history**, then
 **Record authorized change**. Choose the effective date and data use to find the
-latest published schedule for that classification and date. Select a grade/step,
+applicable published schedule for that department and date. A department-specific
+schedule takes priority over an all-departments schedule, even when the latter
+has a newer effective date; the latest effective version within that coverage wins.
+Select a grade/step,
 change type, authorized position, service-review basis date, authority reference,
 and reason. Confirm external authorization (or explicitly fictional demo use).
 Initial assignment, same-grade step increase, different-grade promotion, and
 same-grade/step schedule update are distinct records.
+
+New salary schedules do not restrict personnel classification. Employee
+classification remains on employee/salary/payroll records for statutory review.
+Previously published classification-based schedules remain locked legacy sources;
+they are used only when no department-specific or all-departments schedule applies.
+Existing assignments and finalized amounts are not rewritten. Apply migrations
+before opening the updated forms; see [department salary schedules](docs/DEPARTMENT_SALARY_SCHEDULES.md).
 
 Use **Salary as of** to retrieve the last authorized employee record effective on
 that date. Its exact decimal amount and source are preserved. A newer schedule
@@ -298,8 +319,9 @@ remaining validation needs and a browser scenario with expected amounts.
 
 ## Payroll configuration versions (Phase 8)
 
-As Administrator, open **Payroll configuration**, create a draft for one category,
-data use and first-of-month effective date, and review supported contribution
+As Administrator, open **Payroll configuration**, choose All departments or one
+existing department, and independently choose All classifications or one
+classification. Set the data use and first-of-month effective date, and review supported contribution
 parameters and six-row tax tables. Record sources, membership scope and a change
 reason. Draft revisions retain prior values in immutable change events. Copy an
 existing version to prepare a separately dated change.
@@ -310,12 +332,17 @@ validation. These record operator authority rather than independently verifying
 external approval. Activated versions are locked and readable by active roles;
 only Administrators see drafts or change settings. Real payroll stays disabled.
 
-New statutory reviews select the latest activated version effective on the batch's
-first day for its category/data use. Future/draft versions do not override earlier
+New statutory reviews use department + classification first, department + all
+classifications second, all departments + classification third, then both All.
+Each level selects its latest activated version effective on the batch's first
+day for its data use. Future/draft versions do not override earlier
 months; expired review years remain incomplete. A form made stale by activation
 requires reload/review. Existing payroll inputs and results stay unchanged; an
 explicit new save creates a review with its selected configuration snapshot.
 Where no maintained version applies, the unverified built-in reference remains.
+Existing classification-only configurations retain their original all-departments
+coverage. Apply migrations before using these selectors; see
+[payroll configuration coverage](docs/PAYROLL_CONFIGURATION_COVERAGE.md).
 
 Source references link only to valid HTTP(S) URLs; other references display as
 escaped text. Creation retries tolerate reordered fields, including older saved

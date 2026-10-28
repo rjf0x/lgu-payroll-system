@@ -1,5 +1,27 @@
 # Decisions
 
+## 2026-10-28 - BESU-00 assessment and reuse boundary
+
+- The separate Besu plan starts with BESU-00. Existing payroll Phases 11/12
+  provide local interfaces and test-double evidence, not a completed Besu phase.
+  The current next-phase authorization covers repository assessment only.
+- Retain Laravel/Blade/Tailwind/MySQL, payroll calculations, independent approval,
+  finalized snapshots, correction lineage and current access rules. Reuse the
+  existing blockchain interfaces when their transport phases are authorized.
+- Preserve historical `payroll-commitment-json-v1` digests. BESU-03 must address
+  exact canonical-byte retention explicitly; changing existing JSON/amount
+  representation would break commitments. A review-form hash is not an anchor.
+- Future automatic anchoring must persist a durable pending intent with the
+  finalization and process transport after commit. Existing unknown/pending
+  reservations must be reconciled against the registry before another send.
+- Do not start Docker/network setup in BESU-00. The Docker Linux engine is
+  unavailable and C: has approximately 0.58 GB free; reassess storage and engine
+  readiness before BESU-01. Do not clean files, install tools or change Docker
+  settings as part of this assessment.
+- Network/contract/writer identity, real receipts and direct registry reads must
+  precede claims of anchoring or verification. Document-release outage policy
+  remains unresolved. See [BESU_00_ASSESSMENT.md](BESU_00_ASSESSMENT.md).
+
 ## 2026-10-25 - Phase 0 architecture
 
 - Adopt the master prompt's provisional Laravel / Blade / Tailwind CSS / MySQL
@@ -966,3 +988,68 @@ References: [Laravel 13 upgrade guide](https://laravel.com/framework/docs/13.x/u
 - Describe the result as authorized demonstration correction versions. Genuine
   anchoring/verification and office/client/operational acceptance remain incomplete;
   local and test-double results do not establish genuine network acceptance.
+
+## 2026-10-28 - Explicit browser-demo seeder
+
+- Fulfill the user's request for the fictional browser walkthrough's seeder as a
+  setup convenience; do not begin Phase 13 or integrate Besu. Keep DatabaseSeeder
+  empty so ordinary/default seeding does not add public demo credentials.
+- Restrict BrowserDemoSeeder to local/testing even with --force. Create the four
+  named demo accounts and three fictional salary/employee fixtures, then prepare
+  the November 2026 draft through existing services. Submission, independent
+  authorization, approval, finalization and blockchain operations remain manual.
+- Preserve existing passwords and owned payroll workflow/history on repeat runs.
+  Reject conflicting identifiers/source metadata and roll back the entire seed;
+  never truncate, overwrite records, reset accounts or infer changes to payroll.
+- Respect existing maintained statutory profiles instead of activating/replacing
+  rules. Expected walkthrough totals assume the shipped reference profile. Test
+  using isolated SQLite only; let the user explicitly populate their local database.
+- Stabilize only the existing employee-search test's random control first names
+  after a randomly generated Maria caused a valid search to fail the test. Keep
+  application search behavior and employee factories unchanged.
+
+## 2026-10-28 - Department salary schedule coverage
+
+- Follow the user's explicit request to replace new salary schedule classification
+  selection with All departments or one department. Use existing employee Office /
+  department names plus retained schedule names; add no department CRUD module.
+- Follow the user's explicit precedence choice: a published department-specific
+  schedule effective by the date wins over a newer applicable global; newest
+  source within that scope wins. Globals are fallback, then legacy classification.
+- Preserve old published classification authorizations rather than silently
+  expanding them to all departments or discarding them. Add nullable department/
+  coverage key, retain old classification values and uniqueness for legacy data,
+  and clear classification only on newly saved department coverage headers.
+- Derive coverage keys server-side using trimmed/case-normalized names; normalize
+  choice lists in PHP using the same rule so accent-insensitive DB collations do
+  not hide a distinct department. Reject unknown scopes, overposted classification
+  and duplicate coverage/date/data-use. Keep published coverage permanently locked.
+- Reuse coverage resolution in employee assignment and whole-month payroll source
+  checks. Block genuine midmonth winning-source changes, not irrelevant other-
+  department or lower-priority global updates. Leave statutory category reviews
+  and immutable employee/finalized payroll snapshots unchanged.
+- Update fresh demo setup to one shared All departments salary schedule while
+  preserving existing legacy demo sources. Retain legacy fixture regressions and
+  add new department-specific acceptance tests. No phase advance or blockchain work.
+
+## 2026-10-28 - Independent payroll configuration coverage
+
+- Resume only the interrupted user request: All/one department and All/one
+  classification are independent choices. Departments reuse recorded Office /
+  department values and retained schedule/configuration values; no department
+  management module is introduced.
+- The user explicitly selected department priority over classification priority.
+  Resolve department + classification, department + all, global + classification,
+  then global + all; choose the latest effective activated version within a tier
+  and matching demonstration/external mode. Keep built-in fallback unchanged.
+- Use normalized department/classification SHA-256 keys for selection and database
+  uniqueness, retaining one activation per exact scope/date/mode. Preserve accent
+  distinctions and case-insensitive department identity consistently across databases.
+- Backfill only new keys for legacy global/classification versions. Preserve old
+  fingerprints, event JSON, parameters and saved statutory profile metadata.
+  Old submissions omitting department retain global scope. New forms require the
+  explicit selector. Rollback refuses to discard newly supported coverage.
+- Use the calculation's saved employee office/classification for review selection;
+  activation requires explicit new reference reviews before workflow can proceed.
+  All classifications remain unverified individually; broad coverage does not
+  confer statutory eligibility, authorize real payroll or recalculate history.

@@ -1,14 +1,25 @@
 # Development progress
 
-Updated: 2026-10-27 (Asia/Manila).
+Updated: 2026-10-28 (Asia/Manila).
 
 ## Authorized work
 
-The current instruction authorizes reviewing, validating and creating one Git
-commit for Phase 12-B's demonstration correction versions, F1 fix and audit
-records, with no push or history rewriting. Its earlier F1 stale-source display
-defect has been fixed and has a permanent regression; the re-audit found no new
-confirmed local bug. Phase 12-B followed Phase 12-A commit `5ba1bd4`. Under the master
+The latest instruction authorizes the next Hyperledger Besu integration phase
+only. Inspection found no completed BESU checkpoint, so **BESU-00 - Repository
+Assessment** is the current phase. The assessment is documented in
+[BESU_00_ASSESSMENT.md](BESU_00_ASSESSMENT.md); no blockchain functionality or
+payroll behavior was changed. Docker's Linux engine is unavailable and C: has
+approximately 0.58 GB free. BESU-01 and payroll Phase 13 have not begun. Earlier
+authorization and implementation history follows below.
+
+The preceding instruction resumed payroll configuration coverage: All departments
+or one existing department, independently combined with All classifications or
+one classification. The user explicitly chose department-specific configuration
+before a global configuration for one classification. Salary department coverage
+and the browser demo seeder were committed at `a217ec4`. This task does not start
+Phase 13 or Besu integration. Phase 12-B's corrections/F1 fix and audit records
+are committed at `dfaad70`; no new commit/push is requested. Phase
+12-B followed Phase 12-A commit `5ba1bd4`. Under the master
 prompt's subphase rule, Phase 12 is
 split into A (verification/history) and B (authorized finalized corrections).
 The user confirmed no authorized blockchain test network is available and
@@ -1068,12 +1079,112 @@ Status: Implemented but needs validation; genuine verification remains incomplet
   their pre-review hashes. Only commit-validation tracking records changed during
   review. One authorized demonstration-correction commit; no push or Phase 13.
 
+## User-requested browser-demo seeder - 2026-10-28
+
+- Added opt-in BrowserDemoSeeder for local/testing only: four demo-role accounts,
+  three fictional employees, published demonstration schedules/initial salaries,
+  and a prepared November 2026 draft with saved zero-attendance inputs, core
+  preview and contribution/withholding reviews. Approval/finalization remain manual.
+- Uses existing salary/preparation/input/calculation/review services; no statutory
+  configuration, schema, blockchain or approval gate change. Default DatabaseSeeder
+  remains empty. Reruns preserve passwords and owned payroll history; conflicting
+  identities/sources cause full transactional rollback instead of overwrites.
+- Added 10 focused cases / 86 assertions for fixture/login/amounts, safe reruns,
+  post-finalization retention, collisions/rollback, empty default seed and forced
+  production/staging refusal. Full isolation passes **576 tests / 7201 assertions**;
+  Pint and whitespace pass. Evidence is in TESTING_STATUS.md.
+- Full validation exposed a pre-existing random-name collision in the employee
+  literal-search test. Made its nonmatching control first names deterministic;
+  search implementation is unchanged. Seeder plus that search case pass 11 cases /
+  113 assertions. No cases are skipped to hide the failure.
+- BROWSER_DEMO.md and README document the explicit command, public local-only
+  credentials, expected amounts and browser steps. No demo rows inserted into the
+  configured application database in this turn; execute the command to populate it.
+- The pre-existing untracked HYPERLEGER_BESU_INTEGRATION.md belongs to separate
+  work and is untouched. No Phase 13, network integration, commit or publication.
+
+## User-requested department salary schedules - 2026-10-28
+
+- Replaced salary schedule classification selection with Covered department:
+  All departments or one employee Office / department. Department-specific sources
+  take priority over globals regardless of the global effective date; newest
+  effective published source within each scope wins, then legacy fallback.
+- Updated assignment/payroll source checks, midmonth-change detection, header
+  validation, list/detail/edit labels and browser-demo setup. New global/specific
+  schedules cover personnel classifications without changing employee statutory
+  classifications or saved payroll values. Cross-department assignments fail.
+- Added department/key columns and unique coverage/date/data-use constraint.
+  Original classification coverage remains immutable legacy data; no published
+  source is silently broadened. Migration applied to local MySQL, all 17 Ran;
+  six source/history table hashes remain unchanged across the schema change.
+- Fifteen new department cases pass 158 assertions; salary/preparation/demo/
+  department focused validation passes 97 cases / 1115 assertions, including
+  accent-distinct names and case-only edit selection. MySQL salary and payroll workflow verifiers pass with
+  rollback. Pint, JS syntax and production build pass. Final full-suite evidence
+  passes **591 tests / 7273 assertions** and is recorded in TESTING_STATUS.md.
+- Existing classification fixture sources remain as legacy regressions; new
+  header CRUD tests use department coverage. Fresh BrowserDemoSeeder uses one
+  shared All departments schedule and reuses already-seeded legacy schedules.
+- No department-management module, statutory activation, finalized snapshot change,
+  Phase 13, Besu integration, commit or push. Prior uncommitted seeder work and
+  the user's untracked Besu document are retained.
+
 ## Next phase
 
 Phase 13 - Integration Testing and Mock Defense, only after authorization.
 Outstanding genuine Phase 11/12 acceptance still needs an authorized test network.
 Do not proceed automatically.
 
-Final status: STOPPED - Phase 12-B commit validation complete; F1 remains fixed,
-genuine verification incomplete. One reviewed demonstration-correction commit
-authorized. No Phase 13, push or publication.
+Final status: STOPPED - Department salary coverage implemented and tested;
+Phase 12-B remains committed, genuine verification incomplete. No Phase 13,
+new commit, push or publication.
+
+## Payroll configuration coverage - 2026-10-28
+
+- Resumed the interrupted configuration request only. Added independent All/one
+  department and All/one classification choices, copied/editable draft coverage,
+  list/detail labels and immutable coverage snapshots for new change events.
+- Implemented the user's priority: department + classification, department + all
+  classifications, global + classification, then global + all classifications.
+  Date and data-use filtering apply within every tier. Employee department comes
+  from the saved calculation source, not submitted scope fields.
+- Migrated existing configurations to their original global/classification keys.
+  Original-column digests across 11 source/history tables remain identical. All
+  18 migrations ran on local MySQL; shared/department records prevent destructive
+  rollback. Previous creation fingerprints, events, saved profiles and finalized
+  values are preserved. No formula, statutory eligibility or real-payroll gate changed.
+- New regression cases cover scopes, validation, precedence, database uniqueness,
+  effective dates/modes, idempotency, draft edits, immutable audit/legacy migration,
+  stale review blocking, department-specific amounts and retained finalizations.
+  MySQL configuration, statutory preview and payroll workflow verifiers pass
+  with fictional fixtures rolled back. Old verifier fixtures now use isolated
+  departments to avoid operator-wide salary schedules overriding legacy sources.
+- Final full-suite, formatting and build evidence is recorded in TESTING_STATUS.md.
+  No Phase 13, blockchain implementation, commit or push.
+
+Final status: STOPPED - Payroll configuration coverage implemented and tested.
+Full isolated suite: 615 tests / 7568 assertions. Local MySQL remains available
+for browser use; no new demo configuration was left activated by verification.
+
+## BESU-00 - Repository assessment
+
+Status: Implemented and tested (assessment only), 2026-10-28.
+
+- [BESU_00_ASSESSMENT.md](BESU_00_ASSESSMENT.md) identifies the finalization
+  transaction, existing immutable snapshots/canonical hashing, version/correction
+  history, local submission/verification interfaces, database schema and tests.
+- Recorded missing real RPC/signing/contract support, exact canonical-byte
+  retention, automatic durable anchoring and on-chain reconciliation. These
+  implementation gaps remain assigned to their later authorized phases.
+- Confirmed Docker/Compose and WSL2 installation, unavailable Linux engine,
+  stopped WSL distributions and approximately 0.58 GB free on C:. No network
+  started; no image, toolchain or key generated.
+- Full PHPUnit suite passes 615 tests / 7568 assertions in 3m25.741s. Composer
+  strict/platform checks, MySQL readiness, all 18 migration statuses and 29
+  payroll-route inspection pass. Test database is in-memory SQLite.
+- Documentation only. No application/schema/environment changes, real blockchain
+  transaction, commit or push. Prior uncommitted documentation is retained.
+
+Next: BESU-01 - Private Blockchain Network (not started).
+
+Final status: STOPPED - Awaiting authorization to continue.
