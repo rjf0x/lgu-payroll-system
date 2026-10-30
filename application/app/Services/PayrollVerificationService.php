@@ -2,12 +2,14 @@
 
 namespace App\Services;
 
+use App\Models\BesuAnchor;
 use App\Models\PayrollAnchorAttempt;
 use App\Models\PayrollBatch;
 use App\Models\PayrollCommitment;
 use App\Models\PayrollFinalization;
 use App\Models\PayrollVerification;
 use App\Models\User;
+use App\Services\Blockchain\BesuIntegrityReader;
 use App\Services\Blockchain\BlockchainReader;
 use App\Services\Blockchain\BlockchainSubmission;
 use App\Services\Blockchain\BlockchainUnavailable;
@@ -25,6 +27,7 @@ use Throwable;
 class PayrollVerificationService
 {
     public const MESSAGES = [
+        'anchor_queued' => 'The finalized commitment is queued for anchoring. No confirmed blockchain check is available.',
         'not_prepared' => 'No local commitment has been prepared. No blockchain verification exists.',
         'invalid_snapshot' => 'The finalized snapshot is invalid or cannot be serialized. Verification is blocked.',
         'invalid_commitment' => 'The saved commitment has an unsupported format or invalid hash. Verification is blocked.',
@@ -42,7 +45,42 @@ class PayrollVerificationService
         'confirmed_match' => 'The finalized snapshot and saved digest match the independently retrieved confirmed commitment at the recorded check time.',
     ];
 
+    public const LABELS = ['verified' => 'Verified', 'mismatched' => 'Integrity Mismatch', 'invalid_snapshot' => 'Invalid snapshot',
+        'pending' => 'Pending', 'unavailable' => 'Unavailable', 'failed' => 'Failed', 'not_anchored' => 'Not anchored'];
+
     public function __construct(private CanonicalPayrollSnapshot $canonical, private BlockchainReader $reader) {}
+
+    /** Retain the context actually checked; a foreign key alone cannot detect later journal edits. */
+    private function anchorFingerprint(BesuAnchor $anchor): ?string
+    {
+        $identity = $anchor->identity;
+        $configured = array_intersect_key(config('besu'), array_flip(['chain_id', 'genesis_hash', 'contract_address', 'runtime_code_hash', 'administrator', 'writer']));
+        $configured = array_map(fn ($value) => is_string($value) ? strtolower($value) : $value, $configured);
+        // MySQL JSON storage can reorder object keys. Preserve typed values, not serialization order.
+        if (is_array($identity)) {
+            ksort($identity);
+        }
+        ksort($configured);
+        try {
+            return hash('sha256', json_encode([
+                'identity' => $identity, 'configured_identity' => $configured,
+                'commitment_id' => $anchor->payroll_commitment_id, 'reference' => $anchor->reference,
+                'transaction_hash' => $anchor->transaction_hash, 'nonce' => $anchor->nonce,
+            ], JSON_THROW_ON_ERROR));
+        } catch (JsonException) {
+            return null;
+        }
+    }
+
+    public function isStale(?PayrollVerification $latest, array $local): bool
+    {
+        return $latest && ($latest->current_hash !== $local['current_hash'] || $latest->saved_hash !== $local['saved_hash']
+            || $latest->payroll_anchor_attempt_id !== $local['payroll_anchor_attempt_id'] || $latest->besu_anchor_id !== $local['besu_anchor_id']
+            || $latest->local_status !== $local['local_status']
+            || ($local['besu_anchor_id'] && (! $local['besu_anchor_fingerprint'] || $latest->besu_anchor_fingerprint !== $local['besu_anchor_fingerprint']
+                || $latest->transaction_reference !== $local['transaction_reference']
+                || ($local['status'] === 'failed' && $latest->status !== 'failed'))));
+    }
 
     /** Local inspection only. It must also hash changed, arithmetically invalid snapshots. */
     public function inspect(PayrollBatch $batch, PayrollFinalization $finalization): array
@@ -51,11 +89,14 @@ class PayrollVerificationService
         abort_unless($batch->is_demonstration, 409, 'Real payroll verification remains blocked pending client validation.');
         $commitment = PayrollCommitment::where('payroll_finalization_id', $finalization->id)->first();
         $attempt = $commitment ? PayrollAnchorAttempt::where('payroll_commitment_id', $commitment->id)->orderByDesc('id')->first() : null;
+        $anchor = $commitment ? BesuAnchor::where('payroll_commitment_id', $commitment->id)->first() : null;
         $result = [
             'payroll_finalization_id' => $finalization->id, 'payroll_commitment_id' => $commitment?->id,
-            'payroll_anchor_attempt_id' => $attempt?->id, 'status' => 'invalid_snapshot', 'local_status' => 'invalid',
+            'payroll_anchor_attempt_id' => $anchor ? null : $attempt?->id, 'besu_anchor_id' => $anchor?->id, 'status' => 'invalid_snapshot', 'local_status' => 'invalid',
+            'besu_anchor_fingerprint' => $anchor ? $this->anchorFingerprint($anchor) : null,
             'reason_code' => 'invalid_snapshot', 'current_hash' => null, 'saved_hash' => $commitment?->sha256,
-            'network_hash' => null, 'network' => null, 'transaction_reference' => null,
+            'network_hash' => null, 'network' => $anchor ? 'besu:'.(is_int($anchor->identity['chain_id'] ?? null) ? $anchor->identity['chain_id'] : 'unknown') : null,
+            'transaction_reference' => $anchor?->transaction_hash,
             'block_reference' => null, 'confirmations' => 0,
         ];
         if (! is_array($finalization->snapshot)) {
@@ -88,6 +129,16 @@ class PayrollVerificationService
         }
         if (! $valid) {
             return $result;
+        }
+        if ($anchor) {
+            $state = match ($anchor->status) {
+                'queued' => ['pending', 'anchor_queued'],
+                'signed', 'pending', 'confirmed' => ['pending', 'receipt_pending'],
+                'failed' => ['failed', 'receipt_failed'],
+                default => ['failed', 'invalid_reference'],
+            };
+
+            return array_replace($result, ['status' => $state[0], 'local_status' => 'match', 'reason_code' => $state[1]]);
         }
         $state = match ($attempt?->status) {
             null => ['not_anchored', 'not_submitted'],
@@ -122,6 +173,13 @@ class PayrollVerificationService
                     return $previous;
                 }
                 $result = $this->inspect($current, $saved);
+                if ($result['besu_anchor_id'] && $result['status'] === 'pending' && $result['reason_code'] === 'receipt_pending') {
+                    $anchor = BesuAnchor::findOrFail($result['besu_anchor_id']);
+                    $commitment = PayrollCommitment::findOrFail($result['payroll_commitment_id']);
+                    $result = array_replace($result, app(BesuIntegrityReader::class)->check($anchor, $commitment));
+
+                    return PayrollVerification::forceCreate([...$result, 'request_key' => $key, 'created_by' => $actor->id, 'created_at' => now()]);
+                }
                 if ($result['status'] === 'pending' && $result['reason_code'] === 'receipt_pending') {
                     $attempt = PayrollAnchorAttempt::findOrFail($result['payroll_anchor_attempt_id']);
                     try {

@@ -140,7 +140,9 @@ class PayrollWorkflowTest extends TestCase
         $this->assertSame($inputs, PayrollInputRevision::sole()->getAttributes());
         $this->assertSame($core, PayrollCalculationRun::sole()->getAttributes());
         $this->assertSame($reference, StatutoryPreview::sole()->getAttributes());
-        $this->get(route('payroll-reviews.show', $batch))->assertOk()->assertSee('Preserved finalized payroll')->assertSee('25522.45')->assertSee('Blockchain anchoring has not been performed')->assertDontSee('name="review_confirmed"', false);
+        $this->get(route('payroll-reviews.show', $batch))->assertOk()->assertSee('Preserved finalized payroll')->assertSee('25522.45')
+            ->assertSee('An integrity check is required to establish a blockchain match')->assertSee('Blockchain integrity: Not anchored')
+            ->assertDontSee('name="review_confirmed"', false);
         $this->get(route('payroll-batches.index'))->assertOk()->assertSee('Finalized');
     }
 

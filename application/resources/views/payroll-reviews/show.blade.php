@@ -10,7 +10,19 @@
         <a href="{{ route('payroll-documents.index', $batch) }}" class="mt-4 inline-block font-semibold text-teal-800 underline">Finalized payroll register and payslips</a>
         <a href="{{ route('payroll-anchoring.show', [$batch, $finalization]) }}" class="mt-4 inline-block font-semibold text-teal-800 underline">Blockchain anchoring status and local commitment</a>
         <a href="{{ route('payroll-verification.show', [$batch, $finalization]) }}" class="mt-4 inline-block font-semibold text-teal-800 underline">Payroll integrity checks and history</a>
-        <p class="mt-5 rounded bg-teal-50 p-4 font-semibold">Finalized version {{ $finalization->version }} · {{ $finalization->created_at->format('Y-m-d H:i') }}. Preserved values are locked. Blockchain anchoring has not been performed.</p>
+        <p class="mt-5 rounded bg-teal-50 p-4 font-semibold">Finalized version {{ $finalization->version }} · {{ $finalization->created_at->format('Y-m-d H:i') }}. Preserved values are locked. An integrity check is required to establish a blockchain match.</p>
+        @if ($integrity)
+            @php
+                $integrityStatus = $integrity['latest'] && !$integrity['stale'] ? $integrity['latest']->status : $integrity['local']['status'];
+            @endphp
+            <section class="mt-4 rounded border bg-white p-4" aria-label="Blockchain integrity status">
+                <h2 class="text-xl font-semibold">Blockchain integrity: {{ \App\Services\PayrollVerificationService::LABELS[$integrityStatus] ?? 'Unable to verify' }}</h2>
+                @if ($integrity['local']['transaction_reference'])<p class="mt-2 break-all font-mono">Transaction: {{ $integrity['local']['transaction_reference'] }}</p>@endif
+                @if ($integrity['latest'] && !$integrity['stale'])<p class="mt-2">Last checked {{ $integrity['latest']->created_at->format('Y-m-d H:i:s') }}. Results describe that check time, not continuous network confirmation.</p>@endif
+                @if ($integrity['stale'])<p class="mt-2 font-semibold text-amber-900">The saved check is stale. Verify the current finalized snapshot again.</p>@endif
+                <a href="{{ route('payroll-verification.show', [$batch, $finalization]) }}" class="mt-3 inline-block text-teal-800 underline">View integrity result and verification history</a>
+            </section>
+        @endif
     @elseif ($submission && in_array($batch->status, ['submitted', 'approved'], true))
         <p class="mt-5">Submission {{ $submission->revision }} · {{ $submission->created_at->format('Y-m-d H:i') }}. Inputs and coverage are locked. Changed sources or configuration require return and resubmission.</p>
     @endif

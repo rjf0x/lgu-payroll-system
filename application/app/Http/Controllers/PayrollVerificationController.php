@@ -25,12 +25,12 @@ class PayrollVerificationController extends Controller
         abort_if($page > intdiv(PHP_INT_MAX, 20) + 1, 404);
         $checks = PayrollVerification::where('payroll_finalization_id', $finalization->id)->orderByDesc('id')->paginate(20, ['*'], 'page', $page);
         $latest = PayrollVerification::where('payroll_finalization_id', $finalization->id)->orderByDesc('id')->first();
-        $stale = $latest && ($latest->current_hash !== $local['current_hash'] || $latest->saved_hash !== $local['saved_hash']
-            || $latest->payroll_anchor_attempt_id !== $local['payroll_anchor_attempt_id'] || $latest->local_status !== $local['local_status']);
-        $readerConfigured = ! app(BlockchainReader::class) instanceof UnavailableBlockchainReader;
+        $stale = $service->isStale($latest, $local);
+        $displayStatus = $latest && ! $stale ? $latest->status : $local['status'];
+        $readerConfigured = $local['besu_anchor_id'] ? (bool) config('besu.enabled') : ! app(BlockchainReader::class) instanceof UnavailableBlockchainReader;
         $requestKey = (string) Str::uuid();
 
-        return response(view('payroll-verification.show', compact('batch', 'finalization', 'local', 'checks', 'latest', 'stale', 'readerConfigured', 'requestKey'))->render(), 200, [
+        return response(view('payroll-verification.show', compact('batch', 'finalization', 'local', 'checks', 'latest', 'stale', 'displayStatus', 'readerConfigured', 'requestKey'))->render(), 200, [
             'Cache-Control' => 'private, no-store, max-age=0', 'Pragma' => 'no-cache',
             'X-Content-Type-Options' => 'nosniff', 'Referrer-Policy' => 'no-referrer',
         ]);
