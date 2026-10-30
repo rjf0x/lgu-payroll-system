@@ -11,6 +11,7 @@ use App\Models\PayrollCalculationRun;
 use App\Models\PayrollFinalization;
 use App\Models\PayrollInputRevision;
 use App\Models\PayrollRuleVersion;
+use App\Models\PayrollSnapshotArchive;
 use App\Models\PayrollSubmission;
 use App\Models\SalarySchedule;
 use App\Models\StatutoryPreview;
@@ -235,6 +236,8 @@ class PayrollDocumentTest extends TestCase
             $amount = bcmul($amount, '21', 2);
         }
         unset($amount);
+        // Simulate a pre-archive legacy fixture to exercise pagination without rewriting retained bytes.
+        PayrollSnapshotArchive::where('payroll_finalization_id', $final->id)->toBase()->delete();
         // Own isolated fixture exercises retained identities without live model binding.
         DB::table('payroll_finalizations')->where('id', $final->id)->update(['snapshot' => json_encode($snapshot, JSON_THROW_ON_ERROR)]);
         $url = route('payroll-documents.index', $batch);

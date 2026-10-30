@@ -17,24 +17,15 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
-use InvalidArgumentException;
-use JsonException;
 use Throwable;
 
 class PayrollAnchoringService
 {
-    public function __construct(private CanonicalPayrollSnapshot $canonical, private BlockchainSubmitter $submitter) {}
+    public function __construct(private PayrollSnapshotService $snapshots, private BlockchainSubmitter $submitter) {}
 
     public function bytes(PayrollBatch $batch, PayrollFinalization $finalization): string
     {
-        // Reuse frozen-value schema/arithmetic checks; never consult current payroll sources.
-        app(PayrollDocumentService::class)->prepare($batch, $finalization);
-        abort_unless(($finalization->snapshot['submission_id'] ?? null) === $finalization->payroll_submission_id, 409, 'Finalization metadata is inconsistent.');
-        try {
-            return $this->canonical->encodeFinalization($batch->id, $finalization->id, $finalization->version, $finalization->snapshot);
-        } catch (InvalidArgumentException|JsonException) {
-            abort(409, 'The preserved snapshot cannot be serialized using the commitment format.');
-        }
+        return $this->snapshots->currentBytes($batch, $finalization);
     }
 
     public function digest(PayrollBatch $batch, PayrollFinalization $finalization): string
@@ -66,11 +57,13 @@ class PayrollAnchoringService
             if ($commitment) {
                 abort_unless($commitment->canonicalization === CanonicalPayrollSnapshot::VERSION
                     && $commitment->algorithm === 'sha256' && hash_equals($commitment->sha256, $digest), 409, 'The saved local commitment differs. Submission is blocked.');
+                $this->snapshots->archive($saved);
             } else {
                 abort_unless($action === 'prepare', 409, 'Prepare a local commitment before submitting.');
+                $archive = $this->snapshots->archive($saved);
                 $commitment = PayrollCommitment::forceCreate([
                     'payroll_finalization_id' => $saved->id, 'canonicalization' => CanonicalPayrollSnapshot::VERSION,
-                    'algorithm' => 'sha256', 'sha256' => $digest, 'submission_key' => (string) Str::uuid(), 'created_by' => $actor->id,
+                    'algorithm' => 'sha256', 'sha256' => $archive->sha256, 'submission_key' => (string) Str::uuid(), 'created_by' => $actor->id,
                 ]);
             }
             if ($action === 'prepare') {

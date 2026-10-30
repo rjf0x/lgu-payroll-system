@@ -28,8 +28,16 @@ class PayrollDocumentService
         abort_unless(bccomp($actual, $expected, 2) === 0, 409, self::INVALID);
     }
 
-    /** Project preserved values only. No live employee, input, rule or calculation lookup. */
+    /** Issue documents only after the independent preserved-byte comparison succeeds. */
     public function prepare(PayrollBatch $batch, PayrollFinalization $finalization): array
+    {
+        app(PayrollSnapshotService::class)->assertPreserved($batch, $finalization);
+
+        return $this->validatedProjection($batch, $finalization);
+    }
+
+    /** Frozen schema/arithmetic validation for recomputation; not a document issuance entry point. */
+    public function validatedProjection(PayrollBatch $batch, PayrollFinalization $finalization): array
     {
         abort_unless($finalization->payroll_batch_id === $batch->id && $batch->status === 'finalized', 404);
         $snapshot = $finalization->snapshot;

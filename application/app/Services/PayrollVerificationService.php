@@ -69,6 +69,7 @@ class PayrollVerificationService
         $valid = true;
         try {
             app(PayrollAnchoringService::class)->bytes($batch, $finalization);
+            app(PayrollSnapshotService::class)->assertPreserved($batch, $finalization);
         } catch (HttpException $error) {
             if ($error->getStatusCode() !== 409) {
                 throw $error;

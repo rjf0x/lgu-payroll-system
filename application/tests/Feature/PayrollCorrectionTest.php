@@ -9,6 +9,7 @@ use App\Models\PayrollCommitment;
 use App\Models\PayrollCorrectionDecision;
 use App\Models\PayrollCorrectionRequest;
 use App\Models\PayrollFinalization;
+use App\Models\PayrollSnapshotArchive;
 use App\Models\PayrollVerification;
 use App\Models\User;
 use App\Services\PayrollAnchoringService;
@@ -120,6 +121,7 @@ class PayrollCorrectionTest extends TestCase
         $employeeId = $original->entries()->sole()->employee_id;
         $anchoring = app(PayrollAnchoringService::class);
         $firstHash = $anchoring->digest($original, $first);
+        $originalArchive = PayrollSnapshotArchive::where('payroll_finalization_id', $first->id)->sole()->getAttributes();
         $this->post(route('payroll-anchoring.act', [$original, $first, 'prepare']), ['sha256' => $firstHash, 'demonstration_confirmed' => 1])->assertRedirect();
         $this->post(route('payroll-verification.store', [$original, $first]), ['request_key' => (string) Str::uuid()])->assertRedirect();
         $preserved = [$original->getAttributes(), $first->getAttributes(), PayrollCommitment::sole()->getAttributes(), PayrollVerification::sole()->getAttributes()];
@@ -144,6 +146,9 @@ class PayrollCorrectionTest extends TestCase
         $this->assertDatabaseCount('payroll_commitments', 2);
         $thirdBatch = $this->authorize($secondBatch->fresh(), $second);
         $third = $this->finish($thirdBatch, $employeeId, '200.02');
+        $this->assertDatabaseCount('payroll_snapshot_archives', 3);
+        $this->assertSame($originalArchive, PayrollSnapshotArchive::where('payroll_finalization_id', $first->id)->sole()->getAttributes());
+        $this->assertSame($secondHash, PayrollSnapshotArchive::where('payroll_finalization_id', $second->id)->sole()->sha256);
         $this->assertSame(3, $third->version);
         $this->assertSame($original->id, $thirdBatch->root_payroll_batch_id);
         $this->assertSame($secondHash, $third->snapshot['payroll']['correction']['source_sha256']);
@@ -309,10 +314,10 @@ class PayrollCorrectionTest extends TestCase
         $snapshot = $source->snapshot;
         $snapshot['workflow'][0]['reason'] = 'ISOLATED SOURCE CHANGE WITHOUT COMMITMENT';
         DB::table('payroll_finalizations')->where('id', $source->id)->update(['snapshot' => json_encode($snapshot)]);
-        $this->get($url)->assertOk()->assertSee('Integrity review required: The finalized source changed since this request.')
+        $this->get($url)->assertOk()->assertSee('Integrity review required: The finalized source differs from its preserved snapshot.')
             ->assertSee('Return correction request')->assertDontSee('Authorize correction draft');
         $this->actor(User::factory()->create(['role' => Role::Viewer]));
-        $this->get($url)->assertOk()->assertSee('Integrity review required: The finalized source changed since this request.')
+        $this->get($url)->assertOk()->assertSee('Integrity review required: The finalized source differs from its preserved snapshot.')
             ->assertDontSee('Authorize correction draft')->assertDontSee('Return correction request');
         $this->assertSame($capturedRequest, $proposal->fresh()->getAttributes());
         $this->assertDatabaseCount('payroll_correction_decisions', 0);
@@ -322,7 +327,8 @@ class PayrollCorrectionTest extends TestCase
         $this->assertDatabaseCount('payroll_batches', 1);
         $this->assertDatabaseCount('payroll_correction_decisions', 0);
         $this->decide($batch, $source, $proposal, 'return')->assertRedirect();
-        $this->get($url)->assertOk()->assertDontSee('The finalized source changed since this request.');
+        // Returning a request does not clear the new independent archived-byte mismatch.
+        $this->get($url)->assertOk()->assertSee('The finalized source differs from its preserved snapshot.');
         $this->assertSame('return', $proposal->fresh()->decision->action);
         $this->assertSame($snapshot, $source->fresh()->snapshot);
         $this->assertSame($capturedRequest, $proposal->fresh()->getAttributes());

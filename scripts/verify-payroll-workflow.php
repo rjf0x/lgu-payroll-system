@@ -11,6 +11,7 @@ use App\Models\PayrollCorrectionDecision;
 use App\Models\PayrollCorrectionRequest;
 use App\Models\PayrollFinalization;
 use App\Models\PayrollRuleVersion;
+use App\Models\PayrollSnapshotArchive;
 use App\Models\PayrollSubmission;
 use App\Models\PayrollVerification;
 use App\Models\PayrollWorkflowEvent;
@@ -25,6 +26,7 @@ use App\Services\PayrollDocumentService;
 use App\Services\PayrollInputService;
 use App\Services\PayrollPreparationService;
 use App\Services\PayrollRuleVersionService;
+use App\Services\PayrollSnapshotService;
 use App\Services\PayrollVerificationService;
 use App\Services\PayrollWorkflowService;
 use App\Services\StatutoryPreviewService;
@@ -188,6 +190,14 @@ try {
     $workflow->transition($reviewRequest, $batch, 'finalize', $finalize);
     $final = PayrollFinalization::where('payroll_batch_id', $batch->id)->sole();
     $finalBefore = $final->getAttributes();
+    $snapshotService = app(PayrollSnapshotService::class);
+    $archive = PayrollSnapshotArchive::where('payroll_finalization_id', $final->id)->sole();
+    $archivedBefore = $archive->getAttributes();
+    if ($archive->canonical_bytes !== $snapshotService->currentBytes($batch->fresh(), $final)
+        || $archive->sha256 !== hash('sha256', $archive->canonical_bytes)
+        || $snapshotService->archive($final)->id !== $archive->id) {
+        throw new RuntimeException('MySQL exact canonical bytes/hash or archive idempotency failed.');
+    }
     $documents = app(PayrollDocumentService::class);
     $document = $documents->prepare($batch->fresh(), $final);
     $csvBefore = $documents->csv($document, $final);
@@ -287,6 +297,12 @@ try {
     $workflow->transition($reviewRequest, $replacement, 'approve', workflowCheckData($replacement, 'approve'));
     $workflow->transition($reviewRequest, $replacement, 'finalize', workflowCheckData($replacement, 'finalize'));
     $replacementFinal = PayrollFinalization::where('payroll_batch_id', $replacement->id)->sole();
+    $replacementArchive = PayrollSnapshotArchive::where('payroll_finalization_id', $replacementFinal->id)->sole();
+    if ($replacementArchive->id === $archive->id || $replacementArchive->sha256 === $archive->sha256
+        || $replacementArchive->canonical_bytes !== $snapshotService->currentBytes($replacement->fresh(), $replacementFinal)
+        || $archive->fresh()->getAttributes() !== $archivedBefore) {
+        throw new RuntimeException('MySQL correction archives did not preserve independent version bytes.');
+    }
     $replacementHash = $anchoring->digest($replacement->fresh(), $replacementFinal);
     $replacementCommitment = $anchoring->act($reviewRequest, $replacement, $replacementFinal, 'prepare', ['sha256' => $replacementHash, 'demonstration_confirmed' => 1]);
     $replacementCheck = $verification->check($reviewRequest, $replacement, $replacementFinal, ['request_key' => (string) Str::uuid()]);
@@ -309,12 +325,53 @@ try {
             throw $exception;
         }
     }
+    // Storage-only probe on our rollback-only synthetic row; no model/API permits this rewrite.
+    $probeBytes = json_encode(['unicode' => "FICTIONAL Peña/測試\r\nline", 'padding' => str_repeat('x', 70000)], JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    DB::table('payroll_snapshot_archives')->where('id', $archive->id)->update(['canonical_bytes' => $probeBytes]);
+    if ($archive->fresh()->canonical_bytes !== $probeBytes) {
+        throw new RuntimeException('MySQL UTF-8/line-ending/large canonical text round-trip failed.');
+    }
+    try {
+        $snapshotService->assertPreserved($batch->fresh(), $final->fresh());
+        throw new RuntimeException('Changed archived bytes were accepted.');
+    } catch (HttpException $error) {
+        if ($error->getStatusCode() !== 409) {
+            throw $error;
+        }
+    }
+    try {
+        $documents->prepare($batch->fresh(), $final->fresh());
+        throw new RuntimeException('Documents accepted corrupt archived bytes.');
+    } catch (HttpException $error) {
+        if ($error->getStatusCode() !== 409) {
+            throw $error;
+        }
+    }
+    DB::table('payroll_snapshot_archives')->where('id', $archive->id)->update(['canonical_bytes' => $archive->canonical_bytes]);
+    $snapshotService->assertPreserved($batch->fresh(), $final->fresh());
+    $changedSnapshot = $final->snapshot;
+    $changedSnapshot['payroll']['employees'][0]['employee']['employee_name'] = 'FICTIONAL ISOLATED DOCUMENT MISMATCH';
+    DB::table('payroll_finalizations')->where('id', $final->id)->update(['snapshot' => json_encode($changedSnapshot, JSON_THROW_ON_ERROR)]);
+    try {
+        $documents->prepare($batch->fresh(), $final->fresh());
+        throw new RuntimeException('Documents accepted changed source JSON despite an intact archive.');
+    } catch (HttpException $error) {
+        if ($error->getStatusCode() !== 409) {
+            throw $error;
+        }
+    }
+    DB::table('payroll_finalizations')->where('id', $final->id)->update(['snapshot' => json_encode($final->snapshot, JSON_THROW_ON_ERROR)]);
+    if ($documents->csv($documents->prepare($batch->fresh(), $final->fresh()), $final) !== $csvBefore) {
+        throw new RuntimeException('Unchanged documents did not resume after restoring the isolated source.');
+    }
 } finally {
     $connection->rollBack();
 }
 if (User::where('username', 'like', 'workflow-%'.$nonce)->exists()
     || Employee::where('employee_number', 'like', 'WF-'.$nonce.'%')->exists()
     || PayrollFinalization::where('payroll_batch_id', $batch->id)->exists()
+    || PayrollSnapshotArchive::whereKey($archive->id)->exists()
+    || PayrollSnapshotArchive::whereKey($replacementArchive->id)->exists()
     || PayrollCommitment::whereKey($commitment->id)->exists()
     || PayrollAnchorAttempt::where('payroll_commitment_id', $commitment->id)->exists()
     || PayrollVerification::whereKey($check->id)->exists()
@@ -326,4 +383,4 @@ if (User::where('username', 'like', 'workflow-%'.$nonce)->exists()
     || PayrollVerification::whereKey($replacementCheck->id)->exists()) {
     throw new RuntimeException('Payroll workflow check retained fictional fixtures.');
 }
-echo "MySQL payroll workflow passed: three categories, exact employee/batch totals, JSON review tokens, independent approval, return/correction/resubmission, retained versions/events, locked finalization, register/CSV/payslip PDF generation, duplicate prevention, later configuration/document preservation, local commitment idempotency/JSON round-trip, outer-transaction submission rejection without attempt, verification history/idempotency/isolated mismatch, authorized empty correction version and retries, full replacement preparation/approval/finalization/JSON/hash/documents/check with original preservation, real block and fixture rollback.\n";
+echo "MySQL payroll workflow passed: three categories, exact employee/batch totals, JSON review tokens, independent approval, return/correction/resubmission, retained versions/events, locked finalization, register/CSV/payslip PDF generation, duplicate prevention, later configuration/document preservation, local commitment idempotency/JSON round-trip, outer-transaction submission rejection without attempt, verification history/idempotency/isolated mismatch, authorized empty correction version and retries, full replacement preparation/approval/finalization/JSON/hash/documents/check with original preservation, exact canonical snapshot archives, independent correction bytes, large UTF-8 text round-trip and tamper rejection, real block and fixture rollback.\n";

@@ -1,0 +1,1 @@
+{"canonicalization":"payroll-commitment-json-v1","payroll_batch_id":11,"payroll_finalization_id":21,"snapshot":{"payroll":{"employees":[{"amount":"12345.67","employee_id":1},{"amount":"0.00","employee_id":2}],"note":null,"period":"2026-10"},"schema":"finalized-payroll-v1","version":2},"version":2}

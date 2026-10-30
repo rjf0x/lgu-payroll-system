@@ -9,12 +9,14 @@ use App\Models\PayrollFinalization;
 use App\Models\PayrollSubmission;
 use App\Services\Blockchain\CanonicalPayrollSnapshot;
 use App\Services\PayrollAnchoringService;
+use App\Services\PayrollSnapshotService;
 use App\Services\PayrollWorkflowService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Gate;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 
 class PayrollAnchoringController extends Controller
 {
@@ -30,6 +32,14 @@ class PayrollAnchoringController extends Controller
         $latest = $commitment ? PayrollAnchorAttempt::where('payroll_commitment_id', $commitment->id)->orderByDesc('id')->first() : null;
         $matches = ! $commitment || ($commitment->canonicalization === CanonicalPayrollSnapshot::VERSION
             && $commitment->algorithm === 'sha256' && hash_equals($commitment->sha256, $digest));
+        try {
+            app(PayrollSnapshotService::class)->assertPreserved($batch, $finalization);
+        } catch (HttpException $error) {
+            if ($error->getStatusCode() !== 409) {
+                throw $error;
+            }
+            $matches = false;
+        }
         $canAct = $matches && auth()->user()->can('anchor', $batch)
             && app(PayrollWorkflowService::class)->isIndependent(auth()->user(), $batch, PayrollSubmission::findOrFail($finalization->payroll_submission_id));
 

@@ -38,6 +38,7 @@ class PayrollCorrectionService
     {
         abort_unless($source->payroll_batch_id === $batch->id && $source->version === $batch->payroll_version, 409, 'Finalized version metadata is inconsistent.');
         $hash = app(PayrollAnchoringService::class)->digest($batch, $source);
+        app(PayrollSnapshotService::class)->assertPreserved($batch, $source);
         $commitment = PayrollCommitment::where('payroll_finalization_id', $source->id)->first();
         abort_if($commitment && ($commitment->algorithm !== 'sha256'
             || $commitment->canonicalization !== CanonicalPayrollSnapshot::VERSION

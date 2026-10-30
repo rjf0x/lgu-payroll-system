@@ -10,7 +10,7 @@
         <dt class="mt-4 font-semibold">Saved local commitment</dt><dd class="mt-2 break-all font-mono">{{ $commitment?->sha256 ?? 'Not prepared' }}</dd>
         <dt class="mt-4 font-semibold">Blockchain submission</dt><dd class="mt-2">{{ $latest ? ucfirst($latest->status) : 'Not submitted' }}</dd>
     </dl>
-    @if (! $matches)<p class="mt-4 font-semibold text-amber-900">The local commitment differs from the current snapshot or format. Submission is blocked; preserve the records for investigation.</p>@endif
+    @if (! $matches)<p class="mt-4 font-semibold text-amber-900">The finalized snapshot, preserved bytes or local commitment differ. Submission is blocked; preserve the records for investigation.</p>@endif
     @if ($latest && in_array($latest->status, ['submitting', 'pending', 'unknown'], true))
         <p class="mt-4">Resubmission is blocked while a transaction is pending or acceptance is uncertain. Network reconciliation and confirmation are unavailable in this local-only phase.</p>
     @elseif ($canAct)

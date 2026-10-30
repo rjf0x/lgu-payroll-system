@@ -210,7 +210,7 @@ class PayrollWorkflowService
             ]);
             if ($action === 'finalize') {
                 $events = PayrollWorkflowEvent::where('payroll_submission_id', $submission->id)->orderBy('id')->get();
-                PayrollFinalization::forceCreate([
+                $finalization = PayrollFinalization::forceCreate([
                     'payroll_batch_id' => $current->id, 'payroll_submission_id' => $submission->id, 'version' => $current->payroll_version,
                     'snapshot' => [
                         'schema' => 'finalized-payroll-v1', 'version' => $current->payroll_version, 'payroll' => $submission->snapshot,
@@ -222,6 +222,7 @@ class PayrollWorkflowService
                         ])->all(),
                     ], 'created_by' => $actor->id,
                 ]);
+                app(PayrollSnapshotService::class)->archive($finalization);
             }
         }, 3);
     }
