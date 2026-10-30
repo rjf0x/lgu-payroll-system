@@ -1,0 +1,103 @@
+name: lgu-payroll-besu
+x-node: &node
+  image: hyperledger/besu:26.10.2
+  user: "0:0"
+  entrypoint: ["/opt/besu/bin/besu"]
+  command: ["--config-file=/config/node.toml"]
+  environment:
+    JAVA_OPTS: "-Xms128m -Xmx384m"
+  restart: unless-stopped
+  stop_grace_period: 30s
+  healthcheck:
+    disable: true
+services:
+  validator1:
+    <<: *node
+    hostname: validator1
+    command: ['--config-file=/config/node.toml', '--p2p-host=172.29.61.10']
+    volumes:
+      - ./node.toml:/config/node.toml:ro
+      - ./state/genesis.json:/network/genesis.json:ro
+      - ./state/static-nodes.json:/network/static-nodes.json:ro
+      - ./state/permissions_config.toml:/network/permissions_config.toml:ro
+      - ./state/validator1:/keys:ro
+      - validator1-data:/var/lib/besu
+    networks:
+      besu:
+        ipv4_address: 172.29.61.10
+
+  validator2:
+    <<: *node
+    hostname: validator2
+    command: ['--config-file=/config/node.toml', '--p2p-host=172.29.61.11']
+    volumes:
+      - ./node.toml:/config/node.toml:ro
+      - ./state/genesis.json:/network/genesis.json:ro
+      - ./state/static-nodes.json:/network/static-nodes.json:ro
+      - ./state/permissions_config.toml:/network/permissions_config.toml:ro
+      - ./state/validator2:/keys:ro
+      - validator2-data:/var/lib/besu
+    networks:
+      besu:
+        ipv4_address: 172.29.61.11
+
+  validator3:
+    <<: *node
+    hostname: validator3
+    command: ['--config-file=/config/node.toml', '--p2p-host=172.29.61.12']
+    volumes:
+      - ./node.toml:/config/node.toml:ro
+      - ./state/genesis.json:/network/genesis.json:ro
+      - ./state/static-nodes.json:/network/static-nodes.json:ro
+      - ./state/permissions_config.toml:/network/permissions_config.toml:ro
+      - ./state/validator3:/keys:ro
+      - validator3-data:/var/lib/besu
+    networks:
+      besu:
+        ipv4_address: 172.29.61.12
+
+  validator4:
+    <<: *node
+    hostname: validator4
+    command: ['--config-file=/config/node.toml', '--p2p-host=172.29.61.13']
+    volumes:
+      - ./node.toml:/config/node.toml:ro
+      - ./state/genesis.json:/network/genesis.json:ro
+      - ./state/static-nodes.json:/network/static-nodes.json:ro
+      - ./state/permissions_config.toml:/network/permissions_config.toml:ro
+      - ./state/validator4:/keys:ro
+      - validator4-data:/var/lib/besu
+    networks:
+      besu:
+        ipv4_address: 172.29.61.13
+
+  rpc:
+    <<: *node
+    hostname: rpc
+    command: ['--config-file=/config/node.toml', '--p2p-host=172.29.61.14']
+    volumes:
+      - ./node.toml:/config/node.toml:ro
+      - ./state/genesis.json:/network/genesis.json:ro
+      - ./state/static-nodes.json:/network/static-nodes.json:ro
+      - ./state/permissions_config.toml:/network/permissions_config.toml:ro
+      - ./state/rpc:/keys:ro
+      - rpc-data:/var/lib/besu
+    networks:
+      besu:
+        ipv4_address: 172.29.61.14
+      rpc-access: {}
+    ports:
+      - '127.0.0.1:18545:8545'
+networks:
+  rpc-access: {}
+  besu:
+    internal: true
+    ipam:
+      config:
+        - subnet: 172.29.61.0/24
+volumes:
+  validator1-data:
+  validator2-data:
+  validator3-data:
+  validator4-data:
+  rpc-data:
