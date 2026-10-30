@@ -1,5 +1,73 @@
 # Decisions
 
+## 2026-10-30 - BESU-03 canonical snapshot retention
+
+- Reuse the unchanged payroll-commitment-json-v1 encoder. Keep monetary strings,
+  map/list conventions, date/null handling and historical digests; do not migrate
+  existing hashes to centavo or newly versioned JSON representations.
+- Add a unique immutable archive row per finalization containing exact LONGTEXT
+  UTF-8 canonical envelope bytes, schema/canonicalization identifiers and SHA-256.
+  Finalization and archive creation share a transaction; failure rolls back both.
+- Keep local archive creation distinct from manual commitment preparation and
+  network submission. No job, attempt, transaction, RPC binding or signer is added.
+  Preparation copies the checked archived hash; verification/correction check the
+  archive without concealing tampering by substituting preserved content.
+- Preserve legacy records without rewriting their snapshots, digests, UUIDs or
+  versions. A dry-run-first command captures eligible records only with --apply;
+  an existing digest must agree. Capture without an older digest establishes a
+  current baseline, not proof of historical authenticity. Apply is per-record.
+- Retain model/foreign-key/rollback protections and demonstrate privileged raw SQL
+  tamper detection using isolated fixtures. Privileged rewrites/deletion of all
+  evidence still require independent blockchain comparison in later phases.
+- Apply only the new archive migration after checking existing migration status.
+  Local legacy validation/apply found zero records. MySQL fixture writes remain
+  rollback-only. Stop before BESU-04; existing BESU-01/02 findings remain open.
+
+## 2026-10-30 - BESU-02 registry contract
+
+- Implement only BESU-02 using a separate Solidity/ethers workspace. Keep Laravel,
+  payroll rules, snapshot formats, permissions and unavailable adapters unchanged.
+- Pin solc 0.8.38 and ethers 6.17.0, explicitly compile for Shanghai and record
+  lockfile/public ABI. Override transitive tmp to 0.2.7 after its 0.2.6 advisory;
+  clean installation and npm audit report zero vulnerabilities.
+- Use real Besu for all contract behavior tests. No simulated receipts count as
+  deployment evidence. Synthetic random version references/digests only.
+- Registry administration and writing are separate: immutable administrator,
+  revocable writers and public lookup. Identical authorized retries preserve
+  metadata and emit no duplicate commitment; conflicting digest writes revert.
+  Corrections append under new references. No commitment updates/deletes.
+- Generate contract signers independently of validator keys in an ignored,
+  encrypted, operator-protected directory. Colocated password files are local
+  development custody only; future production signing/governance remains pending.
+- Permit only loopback endpoints/expected private chain in deployment tooling.
+  Journal signed transaction hash/nonce before broadcast; reconcile or stop on
+  uncertain outcomes. Verify genesis, canonical receipt, creation source/arguments,
+  runtime hash and initial writer permission. Reuse verified deployments.
+- Track only public deployment metadata and required ABI; full artifacts, secrets,
+  pending journal and dependencies remain ignored. Stop before BESU-03.
+
+## 2026-10-30 - BESU-01 private network
+
+- Implement only BESU-01 after the completed assessment. Retain all application
+  calculations, access rules, snapshots and unavailable transport bindings.
+- Pin Besu 26.10.2, chain ID 20261030, four QBFT validators, a separate RPC
+  identity, two-second blocks and London/Shanghai with zero base fee. Future
+  contract compilation must target Shanghai unless a later fork is configured.
+- Generate secrets in ignored local state; mount each node's keys separately.
+  Use static peers and local node permissioning on an internal Docker subnet.
+  Only the RPC node joins a second bridge for loopback port forwarding.
+- Use host port 18545: the pre-existing `besu-integrity-lab` container uses 8545.
+  Do not modify that container, its chain or its volumes.
+- Invoke the Besu binary directly: the pinned image's root entrypoint executes
+  key generation during its permission probe and then executes it again.
+  Preserve failed initialization output in an ignored diagnostic directory.
+- Use enterprise profile, one-peer minimum full sync and explicit P2P addresses.
+  Image PID-file health checking is disabled when bypassing its entrypoint;
+  actual readiness and acceptance are checked by Test-Network.ps1.
+- Single-host development only; root containers and trusted-local RPC are
+  documented limitations. No registry, transaction signer or application RPC
+  integration is implemented. Stop before BESU-02.
+
 ## 2026-10-28 - BESU-00 assessment and reuse boundary
 
 - The separate Besu plan starts with BESU-00. Existing payroll Phases 11/12
@@ -1053,3 +1121,18 @@ References: [Laravel 13 upgrade guide](https://laravel.com/framework/docs/13.x/u
   activation requires explicit new reference reviews before workflow can proceed.
   All classifications remain unverified individually; broad coverage does not
   confer statutory eligibility, authorize real payroll or recalculate history.
+
+## BESU-04 — 2026-10-30
+
+Reuse pinned ethers through a server-only offline Node bridge instead of adding cryptographic PHP dependencies. Restrict RPC to loopback and read-only methods. Verify deployed identity before reads/signing. Leave existing unavailable reader/submitter bindings in place to prevent manual or automatic payroll broadcasting. Sign synthetic health probes offline only. Development keys remain encrypted in protected ignored files; production custody is not established by this phase.
+
+## BESU-05 - 2026-10-30
+
+Use a transactional database outbox with a scheduled bounded command rather than request-time RPC or a sync-queue job. Reserve nonces under a shared database row lock; commit encrypted signed bytes/hash before broadcasting. Reconcile or resend identical bytes after uncertainty. Require canonical receipt, exact signed calldata/event and independent registry value before confirmation. Normalize MySQL JSON key ordering for identity checks. Keep previous UI/adapters unchanged until BESU-06. New activation defaults off and requires the scheduler.
+
+## BESU-06 - Integrity Verification UI
+
+Extend the existing verification flow rather than activate the legacy manual writer/reader adapters. Use a read-only Besu reader with frozen identity/reference checks and the existing strict receipt verifier. Recompute current snapshot hashes before external reads; cached outbox confirmation alone never implies Verified. Retain original checks and link new ones to outbox IDs through a nullable restricted FK. GETs remain network-free; only authorized POSTs perform fresh checks. Preserve clock/chain state when the live test cannot mine; report the external blocker instead of simulating success or adding BESU-07 recovery.
+# BESU-07 recovery decision — 2026-10-30
+
+Ambiguous signed transactions retain their original nonce/hash/encrypted bytes. Only explicitly requested, independently rechecked canonical failures may receive a new nonce; old transactions remain retained. Restored pre-send journals recover matching public chain evidence before signing, with bounded log scans and full receipt/calldata/event verification. New writes require a recent head within the clock tolerance. Historical reads do not require signing files or current writer authorization. Administrator visibility is read-only and excludes payroll data and ciphertext. No chain reset or clock manipulation is part of this phase. See [BESU-07 handoff](BESU_07_HANDOFF.md).

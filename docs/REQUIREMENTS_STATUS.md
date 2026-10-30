@@ -1,6 +1,6 @@
 # Requirements status
 
-Updated: 2026-10-28. Requirements derive from `master-prompt.md` and the separate
+Updated: 2026-10-30. Requirements derive from `master-prompt.md` and the separate
 `HYPERLEGER_BESU_INTEGRATION.md` plan. BESU-00 assesses the existing local
 interfaces; it does not satisfy live anchoring/verification acceptance.
 Statuses reflect behavior and validation, not screen counts.
@@ -11,7 +11,9 @@ In progress; Not started; Blocked by client validation.
 | Requirement | Phase | Status | Evidence or remaining work |
 | --- | --- | --- | --- |
 | Besu repository assessment and minimal integration approach | BESU-00 | Implemented and tested | BESU_00_ASSESSMENT.md identifies existing finalization, snapshot/hash/version history, schema, interfaces and environment prerequisites; current validation is recorded in TESTING_STATUS.md. No blockchain implementation. |
-| Private QBFT network: four validators and one RPC node | BESU-01 | Not started | Docker/Compose CLI and WSL2 installed, but Docker Linux engine unavailable and C: has approximately 0.58 GB free. No node, chain ID, peer, block or validator acceptance evidence. Awaiting phase authorization. |
+| Private QBFT network: four validators and one RPC node | BESU-01 | Implemented and tested | BESU_01_AUDIT.md confirms all six phase criteria: real Besu 26.10.2 nodes, chain 20261030, four peers per node, four recent signers, shared fixed-block history, zero fees and advancing blocks. Negative Host/CORS/API/P2P probes pass; application regression: 133 tests / 2266 assertions. F1 configuration-test omission and H1 inherited host key ACL hardening remain. Loopback RPC on 18545; registry is covered by BESU-02 below and application transport remains future work. |
+| Append-only payroll integrity registry, writer control, ABI and confirmed deployment | BESU-02 | Implemented but needs validation | BESU_02_AUDIT.md confirms all seven explicit contract criteria, 12 contract/tooling tests and 133 application tests / 2266 assertions, clean dependency audit and verified real deployment at block 1062. Open tooling findings: medium F1 HTTP redirects bypass the endpoint restriction; low F2 recorded block number/hash are not compared with the actual verified receipt. No contract behavior defect confirmed; no application connection or payroll anchoring. |
+| Deterministic finalized snapshot bytes and historical SHA-256 compatibility | BESU-03 | Implemented and tested | BESU_03_AUDIT.md correction record: F1/F2 fixed. All document issuance rejects archive mismatches; anchoring GET warns and suppresses blocked actions while POST remains guarded. Full 634 tests / 7953 assertions and snapshot 19 / 382 pass, including five new regression cases and legacy handling. Actual MySQL archive/source corruption and document restoration checks pass with fixture rollback. v1 hashes, calculations and permissions unchanged; no transport or transaction submission. |
 | Application starts, database connects, initial tests pass | 0 | Implemented and tested | HTTP 200; MySQL readiness/persistence; 6 tests, 14 assertions |
 | Environment setup and directory conventions | 0 | Implemented and tested | Root README, application/, scripts/; build and DB restart checks passed |
 | Progress, decisions, requirements, and testing records | 0 | Implemented and tested | Four tracking documents created and reviewed |
@@ -70,3 +72,18 @@ stored on-chain. A local hash or simulated transaction cannot satisfy anchoring.
 Full HR management; financial disbursement; loan amortization, due-date or balance
 management; allowance/loan scheduling; supporting-document uploads. These remain
 excluded unless the user explicitly changes the master requirements.
+
+## BESU-04 — 2026-10-30
+
+Backend connectivity implemented: loopback read-only RPC, chain/genesis/runtime identity, authorized writer checks, protected offline signing and safe connection failure handling. Live development check and focused tests pass. No automatic anchoring. See [BESU_04_HANDOFF.md](BESU_04_HANDOFF.md).
+
+## BESU-05 - 2026-10-30
+
+Automatic approved-finalization outbox, encrypted transaction journal, serialized nonces, idempotent broadcast/reconciliation, receipt/contract confirmation and retained audit metadata are implemented. Live fictional payroll confirms exactly once on real Besu. Existing payroll rules and UI unchanged; BESU-06 not implemented. See BESU_05_HANDOFF.md.
+
+## BESU-06 - Integrity Verification UI
+
+Implemented automatic-outbox transaction/status display, fresh authorized receipt/registry checks, matching/mismatched/unavailable results and immutable linked audit history using existing UI/roles. Controlled-response and regression tests pass; new live confirmation remains blocked by the network clock regression. See BESU_06_HANDOFF.md. Stop before BESU-07.
+# BESU-07 phase update — 2026-10-30
+
+Outage resumption, duplicate-safe uncertain sends, retained failed-transaction retries, corrected-version commitments/journals, previous-version preservation, verification history and restricted administrator visibility are implemented with controlled regressions. Live historical recovery passes without signing files. Fresh live corrected-version confirmations remain unvalidated because the existing QBFT chain cannot advance after its clock regression. See [BESU-07 handoff](BESU_07_HANDOFF.md). BESU-08 has not started.

@@ -2015,3 +2015,414 @@ changes. The official Besu Quickstart and QBFT documentation were consulted for
 the assessment; no version-dependent network configuration was implemented.
 
 Final status: STOPPED - Awaiting authorization for BESU-01.
+
+## 2026-10-30 - BESU-01 private blockchain network
+
+Scope: BESU-01 only, following the completed assessment. No application source,
+configuration, database, payroll or dependency changes. Full evidence and initial
+failure corrections: [BESU_01_HANDOFF.md](BESU_01_HANDOFF.md).
+
+- `docker desktop start`: engine started; `docker pull hyperledger/besu:26.10.2`
+  completed successfully. CLI 29.9.2, Compose 5.6.1.
+- `docker compose -f blockchain/besu/compose.yaml config --quiet`: passed.
+- `powershell -NoProfile -File blockchain/besu/Test-Configuration.ps1`: passed
+  topology/version, loopback publication, identity isolation, internal network,
+  persistent volumes, genesis and PowerShell syntax assertions.
+- `powershell -NoProfile -File blockchain/besu/Initialize-Network.ps1`: passed
+  fresh initialization after direct-entrypoint fix. Reinitialization deliberately
+  rejected without changing existing identities; active and diagnostic key paths
+  confirmed ignored with `git check-ignore`.
+- `docker compose -f blockchain/besu/compose.yaml up -d`: five real nodes started.
+- `powershell -NoProfile -File blockchain/besu/Test-Network.ps1`: passed against
+  real Besu 26.10.2, chain ID 20261030, four peers on all five nodes, generated
+  four-validator membership, zero gas/base fee and advancing height 9 -> 17.
+- Per-validator `docker compose ... logs --no-color` checks: every validator
+  produced blocks.
+- `docker compose ... down`, `up -d`, then network test: passed; height 26 -> 36.
+  `eth_getBlockByNumber` at fixed block 5 retained its hash across recreation:
+  `0x02a796fd5b237820bab99689ddea3a025d34be1962f5a486ceee154a9d422e6d`.
+- `git diff --check`: passed. PHP suite not rerun: application unchanged.
+
+Initial entrypoint double-generation, empty CORS configuration, occupied port
+8545 and premature startup-readiness failures are corrected and documented.
+Use host RPC `127.0.0.1:18545`; existing `besu-integrity-lab` remains untouched.
+The tested network remains running. No registry, signer, payroll transaction,
+application connectivity or simulated blockchain success is claimed.
+
+Final status: STOPPED - Awaiting authorization for BESU-02.
+
+## 2026-10-30 - BESU-01 audit
+
+Audit scope and findings: [BESU_01_AUDIT.md](BESU_01_AUDIT.md). All six network
+acceptance criteria pass for the documented single-host development boundary.
+No implementation or permanent-test fixes, next phase, commit or push.
+
+- `powershell -NoProfile -File blockchain/besu/Test-Configuration.ps1`: passed.
+- `powershell -NoProfile -File blockchain/besu/Test-Network.ps1`: passed, height
+  542 -> 550, correct chain/client/validator membership and four peers per node.
+- `powershell -NoProfile -File .local/besu-01-audit.ps1`: independent read-only
+  probes passed. Every validator proposed 25 of the latest 100 blocks; all five
+  nodes agree at fixed block 0x261 and retain the earlier block-5 history.
+  ADMIN/DEBUG/PERM methods disabled (-32604), personal method absent (-32601),
+  invalid Host and untrusted Origin rejected (403); zero restarts/nonprivileged
+  containers confirmed. Early audit-harness assumptions were corrected locally.
+- Temporary fresh-identity Besu node on the same internal network remained at
+  zero peers/block 0; original five nodes retained four peers each. Probe container
+  removed after testing, without changing node identities or permission files.
+- From application/: `php vendor/phpunit/phpunit/phpunit --colors=never --filter 'Payroll(Anchoring|Verification|Correction|Workflow)Test'`:
+  133 tests / 2266 assertions passed, 02:09.866, 72 MB.
+- F1 confirmed in an ignored isolated configuration copy: delete the copied
+  genesis.config.qbft object, run the copied Test-Configuration.ps1, observe exit
+  0/PASS. Real genesis and implementation files unchanged.
+- H1: Get-Acl on state/rpc/key confirms inherited Authenticated Users Modify and
+  Users ReadAndExecute. Existing trusted-host prototype limitation; not fixed.
+- `git diff --name-only -- application`: empty. Active keys/scratch probes remain
+  Git-ignored. `git diff --check`: passed, with line-ending notices only.
+
+No fresh shutdown/restart, backup restore, validator-outage or production-load
+exercise was run. Historical restart evidence remains valid against saved block
+5. No payroll transaction or application-to-Besu integration was claimed.
+
+Final status: STOPPED - BESU-02 not implemented.
+
+## 2026-10-30 - BESU-02 smart contract development
+
+Scope: BESU-02 only after committed BESU-01 c52281f. Full acceptance evidence,
+addresses, exact operations and limitations: [BESU_02_HANDOFF.md](BESU_02_HANDOFF.md).
+No Laravel code/dependencies/database, payroll calculations or access rules changed.
+
+From blockchain/contracts/:
+
+- `npm install --ignore-scripts`: installed pinned solc 0.8.38 and ethers 6.17.0.
+  Initial audit found solc's transitive tmp 0.2.6 advisory. Explicit tmp 0.2.7
+  override and lockfile fix it; no compiler downgrade was needed.
+- `npm run compile`: warning-free compilation, optimizer 200 runs, explicit
+  Shanghai EVM; public ABI emitted, full bytecode artifact ignored.
+- `npm run init:signers`: separate encrypted administrator/writer/outsider keys
+  created. Windows ACL inspection confirms operator and SYSTEM only. Password
+  files, keystores, node_modules and full artifacts confirmed Git-ignored.
+- Initial compilation failed on reserved identifier reference and then warned on
+  shadowing the sha256 built-in; both corrected before successful compilation.
+  One npm command failed ENOENT from repository root; rerun from workspace passed.
+- Initial `npm test`: 9/10 passed. Identical retry values were correct; comparing
+  ethers Result proxies failed deep equality. Test now compares plain value arrays.
+- Next `npm test`: 10/10 passed, 47.958 seconds, all contract tests on real Besu.
+- `npm run deploy`: receipt status 1 at block 1062, registry
+  0xDE556481A1DbF7a9bB1C152Ed574f122706dfFB6. Deployment transaction
+  0x433615052af8b0cae4e2cd76f6c50f1677c21ae68c833367a27c8caf13ec19a3.
+- `npm run verify`: passed canonical receipt, matching compiled creation input/
+  constructor, runtime hash, chain/genesis, administrator and writer permission.
+- Second `npm run deploy`: verified existing deployment; no transaction sent.
+- Final `npm ci --ignore-scripts`: clean lockfile installation succeeded.
+- Final `npm audit --audit-level=low`: zero vulnerabilities.
+- Final `npm test`: **12 tests passed, 0 failed/skipped**, 49.426 seconds. Ten
+  real-Besu contract tests plus endpoint safety and published ABI/compiler checks.
+- `npm run verify` after the final suite: passed against the retained deployment.
+
+Contract cases cover exact SHA-256 bytes/event/metadata, absence, administrator/
+writer separation, actual status-0 unauthorized and conflicting transactions,
+identical idempotent retry by a second writer, grants/revocations with retained
+history, independent correction references and zero inputs/constructor addresses.
+Every test transaction uses random opaque identifiers and fictional hashes. Test
+registry fixtures are separate from the recorded deployment. No simulated success
+or application payroll anchoring is claimed.
+
+From repository root:
+
+- `powershell -NoProfile -File blockchain/besu/Test-Configuration.ps1`: passed.
+- `powershell -NoProfile -File blockchain/besu/Test-Network.ps1`: passed, chain
+  20261030, five real nodes, four peers each, zero fees, height 1072 -> 1079.
+- `git diff --name-only -- application`: empty. PHP suite not rerun because
+  application behavior/dependencies/configuration were unchanged in this phase.
+- `git check-ignore` verifies new signer credentials/artifacts/dependencies ignored.
+- `git diff --check`: passed, with pre-existing line-ending notices only.
+
+The immutable administrator and colocated operator-only password files are local
+prototype custody limitations. Existing BESU-01 F1/H1 findings remain; no unrelated
+network fixes or next-phase code was introduced. Contract/library security audit,
+production governance, restoration and application integration remain pending.
+
+Final status: STOPPED - Awaiting authorization for BESU-03. No commit or push.
+
+## 2026-10-30 - BESU-02 audit
+
+Audit only; no implementation fixes, permanent-test changes or BESU-03 work.
+[BESU_02_AUDIT.md](BESU_02_AUDIT.md) records all seven passing phase criteria,
+security review and two reproduced deployment-tooling findings.
+
+From blockchain/contracts/:
+
+- `npm test`: 12 passed, 0 failed/skipped, 49.647 seconds. Actual successful and
+  failed contract transactions on real Besu using separate synthetic fixtures.
+- `npm run verify`: successful canonical deployment at block 1062 verified,
+  source/constructor/chain/genesis/runtime/initial authorization checks passed.
+- `npm audit --audit-level=low`: zero reported vulnerabilities.
+- `npm run deploy`: verified/reused recorded address, no transaction sent.
+
+From root:
+
+- `node .local/besu-02-audit.mjs`: F1 reproduced using a local HTTP 307 redirect
+  from accepted 127.0.0.1 to directly rejected 127.0.0.2. Relay forwarded only
+  allowlisted read calls to real Besu; no public host or signed payload involved.
+  F2 reproduced with an in-memory manifest copy containing blockNumber=-1 and a
+  zero blockHash; verifyDeployment still passed. On-disk deployment record stayed
+  unchanged. Altered genesisHash/runtimeCodeHash were correctly rejected.
+  Temporary audit HTTP servers closed; scratch probe remains Git-ignored.
+- `powershell -NoProfile -File blockchain/besu/Test-Configuration.ps1`: passed.
+- `powershell -NoProfile -File blockchain/besu/Test-Network.ps1`: passed five-node
+  connectivity/chain/fees/consensus checks, height 1269 -> 1277.
+- Six new signer secret files confirmed operator/SYSTEM-only ACLs; active secrets,
+  generated artifacts and scratch probes confirmed ignored by Git.
+- `git diff --name-only -- application`: empty.
+- `git diff --check`: passed, with existing LF/CRLF notices only.
+
+From application/:
+
+`php vendor/phpunit/phpunit/phpunit --colors=never --filter 'Payroll(Anchoring|Verification|Correction|Workflow)Test'`
+
+133 tests / 2266 assertions passed, 01:04.780, 72 MB. Application adapters remain
+unavailable; this compatibility evidence is not application-to-Besu anchoring.
+
+Current phase status: Implemented but needs validation. Medium F1 and low F2 are
+reported without fixes. Existing documented custody/governance/network limitations
+remain. No restoration/interruption/stress/public-network experiment was run.
+No Git commit or push. STOPPED before BESU-03.
+
+## 2026-10-30 - BESU-03 payroll snapshot and hashing
+
+Only BESU-03 implemented after committed BESU-02 53222c0. Exact canonical v1
+bytes/digest are archived atomically at finalization; existing legacy hashes,
+amount strings, manual preparation and correction versions remain compatible.
+[BESU_03_HANDOFF.md](BESU_03_HANDOFF.md) records phase acceptance and limits.
+
+From application/:
+
+- `php vendor/phpunit/phpunit/phpunit --colors=never --filter 'Payroll(Snapshot|Anchoring|Verification|Correction|Workflow)Test'`:
+  147 tests / 2507 assertions passed, 01:14.869, 74 MB.
+- `php vendor/phpunit/phpunit/phpunit --colors=never`: **629 tests / 7809 assertions
+  passed**, 03:26.497, 102 MB. TestCase/phpunit.xml enforce in-memory SQLite before
+  any destructive test migrations; the configured MySQL data is not reset.
+- Fourteen new snapshot cases cover all three classifications, exact archived
+  bytes/hash, 32-byte digest decoding, atomic rollback on injected archive failure,
+  JSON map-order/live-profile independence, independent known encoder vector,
+  amount/list/version changes, three-employee deterministic creation, Unicode and
+  line-ending retention, tampered archive/snapshot rejection, legacy dry-run/apply/
+  idempotent capture, prior digest mismatch, no-digest capture and validation,
+  model immutability, uniqueness, restricted parent deletion and rollback guards.
+- Existing correction-version tests now explicitly retain original archive bytes
+  across versions 1/2/3 and assert the original archive warning survives request
+  return. New tests disallow submitter/reader calls and stray HTTP.
+- First regression run: 132/133 passed; the archive now supplies a stronger
+  correction-source warning, so those assertions were updated. First new-suite
+  run: 13/14 passed; fixture baseline was refreshed to include database-default
+  created_at/attribute ordering. Both issues resolved before final passing runs.
+- `php vendor/bin/pint --dirty`, then scoped `php vendor/bin/pint --test` on all
+  changed/new application PHP files: passed (initial test-fixture formatting fixed).
+- `composer validate --strict`, `composer check-platform-reqs`: passed.
+- `php artisan migrate:status --no-ansi`: exactly 18 existing migrations Ran; only
+  2026_10_30_000001_create_payroll_snapshot_archives pending before application.
+- `php artisan migrate --force --no-ansi`: new migration applied successfully.
+  Subsequent status reports all 19 Ran.
+- `php artisan payroll:archive-snapshots` and `php artisan payroll:archive-snapshots --apply`:
+  both completed, Validated: 0; blocked: 0. No legacy finalized application records
+  existed; no historical JSON/hash/key was rewritten or populated.
+- `php artisan payroll:archive-snapshots --help --no-ansi`: dry-run/apply and
+  finalization selection options registered. `php artisan app:check-foundation`:
+  configured local MySQL ready.
+
+From repository root:
+
+- `php -l scripts/verify-payroll-workflow.php`: passed.
+- `php scripts/verify-payroll-workflow.php`: passed existing three-classification
+  workflow/documents/correction checks plus exact archive byte/hash idempotency,
+  independent correction archives, original archive retention, >64 KB UTF-8/escaped
+  line-ending text round-trip, tamper detection/restoration and complete rollback
+  of fictional fixtures. Only the schema migration remains in MySQL.
+- Node crypto independently calculated the fictional encoder vector SHA-256:
+  b59b444791271872119426f8ffa81071b2d4c41cf047b765d779f2a1f9bde575.
+- `git diff --check`: passed, with existing LF/CRLF notices only. No contract,
+  network, signer, dependency-manifest or transport-binding change.
+
+No Besu transaction, new RPC/signing implementation, payroll formula change or
+permission weakening. Full preserved bytes remain confidential in the application
+DB; only a fictional vector is checked in. Legacy capture without an earlier
+hash is a current baseline, not historical authenticity proof. Application guards
+cannot stop privileged SQL rewrites/deletion of all local evidence. Concurrency,
+restoration, production capacity and existing BESU-01/02 findings remain pending.
+
+Final status: STOPPED - Awaiting authorization for BESU-04. No commit or push.
+
+## 2026-10-30 - BESU-03 audit
+
+Audit only. All five explicit hashing/retention criteria pass in exercised paths,
+but two current integration findings remain. Full report: BESU_03_AUDIT.md.
+No implementation or permanent-test fixes, BESU-04, commit or push.
+
+From application/:
+
+- `php vendor/phpunit/phpunit/phpunit --colors=never --filter 'Payroll(Snapshot|Anchoring|Verification|Correction|Workflow)Test'`:
+  147 tests / 2507 assertions passed, 01:13.036, 74 MB.
+- `php vendor/phpunit/phpunit/phpunit --colors=never --filter PayrollDocumentTest`:
+  37 tests / 818 assertions passed, 01:01.509, 102 MB.
+- `php vendor/phpunit/phpunit/phpunit --colors=never --filter test_audit ../.local/Besu03AuditTest.php`:
+  2 isolated probes / 37 assertions passed, 00:04.825, 66 MB. They confirm F1/F2
+  without changing implementation: a structurally valid changed employee name in
+  finalized JSON is exported in a 200 CSV despite intact original archive and
+  invalid_snapshot verification; corrupted archived bytes leave the Prepare form
+  visible on anchoring GET, while its POST correctly rejects with 409. No manual
+  commitments/attempts are created, and original archive remains intact in F1.
+- Scoped `php vendor/bin/pint --test` on changed/new phase PHP sources, tests and
+  migration: passed.
+- `composer validate --strict`, `composer check-platform-reqs`: passed.
+- `php artisan payroll:archive-snapshots`: dry-run Validated: 0; blocked: 0;
+  no retained records written.
+- `php artisan migrate:status --no-ansi`: all 19 Ran; no migration applied in audit.
+
+From root:
+
+- `php scripts/verify-payroll-workflow.php`: passed actual MySQL full workflow,
+  exact byte/hash idempotency, original/correction archive retention, >64 KB
+  UTF-8/escaped-line-ending round-trip, tamper rejection/restoration and complete
+  rollback of fictional fixtures.
+- `git check-ignore .local/Besu03AuditTest.php`: excluded. Audit fixture databases
+  are in-memory SQLite; reader/submitter calls and stray HTTP are prohibited.
+- `git diff --check`: passed, with existing LF/CRLF normalization notices only.
+- No contract/network/provider/serializer/dependency changes or chain submissions.
+
+Medium F1 is an integrity-boundary omission in document issuance after isolated
+saved-JSON tampering, not a normal-user edit/authorization bypass. Low F2 is action
+availability mismatch; server-side checks remain effective. Both need regression
+coverage and fixes in their own authorized work. Prior full 629 / 7809 run is
+retained evidence and was not rerun in this audit. Concurrency/crash/restore,
+production capacity and visual browser acceptance remain unvalidated.
+
+Status: Implemented but needs validation. STOPPED before BESU-04.
+
+## 2026-10-30 - BESU-03 F1/F2 bug fixes
+
+Authorized scope: existing current-phase bugs and failing tests only. No future
+phase, dependency, calculation, permission, schema or transport change.
+
+- F1 fixed: PayrollDocumentService::prepare now requires archived-byte consistency
+  before issuance. Frozen schema/arithmetic validation is separated into
+  validatedProjection; diagnostic currentBytes uses that path without recursion
+  or concealing a changed snapshot behind archived data.
+- F2 fixed: anchoring GET checks archive consistency, displays the blocked-source
+  warning and suppresses confirmation/action controls. POST remains guarded.
+- Five permanent cases added: source/archive corruption before/after preparation
+  across all six document endpoints and direct service, consistent GET/POST action
+  blocking, retained bytes/commitments with no attempts, and valid read-only legacy
+  handling. Existing 21-row pagination fixture explicitly simulates an unarchived
+  legacy finalization instead of rewriting retained archive bytes.
+
+Actual validation:
+
+- Before fixes, the new four-case regression returned HTTP 200 instead of 409 in
+  all four cases, confirming the defect. After fixes, the broader affected-suite
+  run passed 185/189; four new no-marker assertions saw Laravel's debug-rendered
+  test source, although all requests correctly returned 409. The new regression
+  now explicitly uses production-style error rendering; app configuration is not
+  changed. No implementation guard was weakened to satisfy the assertions.
+- From application/: `php vendor/phpunit/phpunit/phpunit --colors=never --filter PayrollSnapshotTest`:
+  **19 tests / 382 assertions passed**, 00:08.886, 68 MB.
+- From application/: `php vendor/phpunit/phpunit/phpunit --colors=never`:
+  **634 tests / 7953 assertions passed**, 03:16.533, 106 MB.
+- From root: `php scripts/verify-payroll-workflow.php`: passed actual MySQL
+  workflow/correction/archive checks plus document rejection for corrupt archive
+  and changed source JSON with intact archive. Restoring synthetic data restores
+  the exact original CSV. All fictional writes rolled back.
+- `php -l scripts/verify-payroll-workflow.php`: passed.
+- Scoped `php vendor/bin/pint --test` on bug-fix source/tests: passed.
+- `composer validate --strict`, `composer check-platform-reqs`: passed.
+- `php artisan payroll:archive-snapshots`: dry-run Validated: 0; blocked: 0;
+  no existing data changed. No migration was applied in this follow-up.
+- `git diff --check`: passed with existing line-ending notices only. Contract,
+  network, canonical serializer, dependency and provider binding diffs are empty.
+
+F1/F2 corrected; status Implemented and tested for the documented prototype.
+Historical ignored audit probes retain pre-fix assertions; permanent regressions
+now cover corrected behavior. Earlier-phase findings, privileged SQL limits,
+production policy/custody and restoration/capacity limitations remain unchanged.
+No blockchain submission, Git commit, push or BESU-04 feature. STOPPED.
+
+## BESU-04 — Backend Blockchain Connection (2026-10-30)
+
+Implemented only this phase; see BESU_04_HANDOFF.md. Live `php artisan besu:check --sign` passed against running Besu 26.10.2, chain 20261030 and the reviewed registry. Registry lookup succeeded and a synthetic transaction was signed offline. No transaction broadcast, payroll data modification or automatic anchoring.
+
+Validation results:
+- Full application PHPUnit run: **641 tests / 7983 assertions passed**, 3m26s. This run began with the first seven connection tests.
+- Final expanded connection feature file: **11 tests / 40 assertions passed** separately, including four additional safe-failure cases and the changed-block case added while the full run was running. Thus the existing 634-test regression suite and all final connection cases passed.
+- Offline Node bridge: **3 tests passed**, covering ABI compatibility, safe rejection, encrypted ephemeral signing, recovered fields and wrong writer.
+- Pint dirty-file check, composer validate --strict, composer check-platform-reqs and git diff --check passed.
+- npm audit --audit-level=low: **0 vulnerabilities**.
+- Five network services running. Development signer ACLs contain only operator and SYSTEM; environment and credential files remain Git-ignored. No raw secrets added to tracked files.
+
+During development, the first live check exposed PCRE bounded-repeat compilation limits; validation now uses byte-length guards plus simple hex patterns. Initial test failures were corrected in test fake reset/output assertions. All final checks above pass. Previous phase documentation remains present and uncommitted. No commit or push. Stop before BESU-05.
+
+## BESU-05 - Automatic Payroll Anchoring (2026-10-30)
+
+See BESU_05_HANDOFF.md. Only this integration phase was implemented after 0dd090f; no UI/future-phase work, commit or push.
+
+Actual results:
+- Full PHP regression run: 661 cases / 8122 assertions, zero failures/errors, one skipped opt-in live test, 05:04.243. Run started before the final two nonce/JSON-identity tests were added.
+- Final expanded focused run: 29 cases / 209 assertions, zero failures/errors, one skipped opt-in live test. It covers all final Besu connection, anchoring and receipt-verifier cases, including the two later additions. Existing 634 payroll regressions are included in the full run.
+- Explicit real-Besu integration: 1 test / 18 assertions passed, 00:22.952. Actual fictional authorized-finalization workflow, durable transaction, successful receipt, matching registry hash, repeated processing with one signed/confirmed event and writer nonce increase exactly one.
+- Public transaction proof: 0x8668ae90aa3afeb097a2ba3c17cae180feed73d7160cf571bf18ca3b5b9980ed; block 4881, hash 0x89a7dad2b82a3c87c0569c76b55b8619090426ae89a324500adf13d06b9ce4e0. No payroll content was transmitted.
+- Node offline bridge: 3 tests passed, including signed transaction/event compatibility and rejection of wrong chain/status/hash/event/digest.
+- Existing real MySQL workflow script passed with automatic anchoring disabled for that process; fictional writes rolled back.
+- Composer validate --strict and platform requirements passed; npm audit --audit-level=low reported zero vulnerabilities; Pint and git diff --check passed.
+- Existing Docker Desktop/Besu and Laragon MySQL were stopped initially and started with their existing configurations. First live test failed due to RPC unavailable; reruns passed. The first ambiguous-send test had a duplicate Mockery sign expectation; corrected test passes without weakening journal assertions.
+- Only migration 2026_10_30_000002_create_besu_anchor_outbox was pending and applied to configured MySQL. The new automatic flag was appended to ignored local .env; other environment settings preserved. Empty outbox command and scheduled minute registration passed. No persistent scheduler process installed.
+
+MySQL JSON object ordering is normalized for identity comparison and tested. Broadcasting inside an outer database transaction is rejected. Signed transaction data is encrypted before durable commit and never logged. Incomplete sends retain the original signed bytes/nonce and do not become successful confirmations. Operator must run Laravel's scheduler for ongoing automatic processing. Production custody, failover/load/crash stress and BESU-06 UI remain outside this phase.
+
+## BESU-05 F1/F2 bug fixes - 2026-10-30
+
+Scope: current phase bugs only. Permanent regressions first reproduced the pending-head starvation and writer-revocation read failures. The processor now rotates by attempt timestamp, including incomplete processing. Historical reads/receipts retain all chain/contract checks but do not require current signing authority; new signing and broadcasts remain authorization-gated.
+
+- Full PHPUnit run: 666 cases / 8209 assertions, zero failures/errors, one skipped opt-in live case, 03:37.163.
+- Final expanded focused Besu run: 33 cases / 276 assertions, zero failures/errors, one skipped opt-in live case, 00:06.279. Includes the late broadcast-authorization guard and its regression, added after the full run started.
+- Node bridge: 3 tests passed.
+- MySQL workflow script passed with automatic anchoring disabled only for that legacy check process; all fictional writes rolled back.
+- Pint and git diff --check passed.
+- No migrations, environment/dependency changes, payroll rules, UI, commit, push or next-phase code in this bug-fix turn.
+- Final explicit live Besu integration after the broadcast guard: 1 test / 18 assertions passed, 00:17.062. Exactly one transaction, 0x6eb81d20d217e5c4a6efa2a8e584e41e3db1c79dadde7091d3d17b9b837fed88, confirmed in block 6786; repeated processing preserved its signature/confirmation and the frozen snapshot.
+
+## BESU-06 - Integrity Verification UI
+
+Implementation only through BESU-06 after committed BESU-05 (2cf4fb8). See BESU_06_HANDOFF.md.
+
+Validation performed:
+- Full application PHPUnit run: 679 cases / 8433 assertions, zero failures/errors, two opt-in live cases skipped, 03:50.933.
+- Expanded UI/legacy verification/finalization tests: 47 cases / 782 assertions, zero failures/errors, one skipped opt-in live UI case, 00:28.727. This validates the final wording after clearing a stale compiled-view cache.
+- Final UI feature file after the failed-status staleness refinement: 12 cases / 205 assertions, zero failures/errors, one skipped opt-in live UI case, 00:04.711. The last message/staleness assertions were added after the full run began; they passed separately.
+- Controlled-response visual probe: 1 case / 14 assertions passed; actual Blade response rendered in headless Edge at 1440px and visually reviewed with the existing styles. HTML/screenshot/probe/browser profile remain ignored under .local. No live blockchain confirmation is implied by this visual fixture.
+- npm run build passed (Vite 7.3.7); generated build files remain ignored. Composer validate --strict and check-platform-reqs passed; Pint and whitespace checks passed.
+- Existing MySQL workflow verification passed with automatic anchoring disabled only in that process, across three classifications with all fictional writes rolled back.
+- Only migration 2026_10_30_000003_link_besu_verification_history was pending; applied successfully to configured MySQL. All 21 migrations now show Ran. No existing verification records were rewritten.
+
+Explicit live UI integration failed at its prerequisite: its synthetic anchoring transaction remained pending after polling (1 failed case / 10 assertions). RPC remained reachable, but QBFT could not mine: node logs rejected proposed block 8820 because its timestamp was about 53815 seconds earlier than its parent; latest head was 8819. No clock, genesis, data, signer or nonce reset was attempted. A successful new real-Besu UI confirmation is not claimed. The retained opt-in live test covers Verified, actual endpoint unavailability, isolated snapshot tampering, unchanged outbox and unchanged writer nonce once the network clock recovers.
+
+Initial development failures: an inline Blade PHP expression caused a compiled template parse error, fixed using block syntax; three old workflow assertions expected the obsolete unconditional no-anchor message, now updated to assert accurate status; a compiled-view cache retained old local-status wording until view:clear; viewer text was adjusted so restricted action guidance is not shown as an available operation. No authorization guard was weakened.
+
+No signing/broadcast from verification, payroll formula/role/environment/dependency changes, Git commit, push or BESU-07 implementation. Full live validation remains blocked by the external validator-clock condition; controlled-response acceptance cases pass.
+
+## BESU-06 F1 current-phase bug fix
+
+- Corrected stale Verified summaries after stored/configured identity or batch-reference changes by retaining and comparing the checked context fingerprint. New nullable column applied through migration 2026_10_30_000004_preserve_besu_verification_context; all 22 migrations show Ran. Existing history is not backfilled or rewritten.
+- Before the fix, three permanent changed-identity regression cases failed. After the fix, full PHPUnit run: 685 cases / 8550 assertions, zero failures/errors, two opt-in live cases skipped, 03:34.291.
+- Final focused UI/legacy verification run: 50 cases / 817 assertions, zero failures/errors, one opt-in live case skipped, 00:24.206. This includes the final queued-context refinement and assertions, added after the full run started: an absent signing identity is stable for a queued check, not perpetually stale. JSON key-order changes remain equivalent.
+- Tests also cover simultaneous config/journal changes, changed reference, older linked history without a context fingerprint, fresh check replacement, unchanged original records and migration rollback protection.
+- Existing real MySQL payroll workflow script passed with all fictional writes rolled back; automatic anchoring was disabled only for that legacy-check process. Pint and git diff --check passed.
+- Read-only network inspection still finds head 8819 and rejected proposals for 8820 due to backwards timestamps (approximately -51831 seconds). The explicit live integration was not rerun while this known condition persists, avoiding another pending synthetic transaction. No new successful live confirmation is claimed.
+- No clock, chain, genesis, credential, environment, calculation, authorization, UI redesign, dependency, Git commit/push or BESU-07 changes. The old ignored audit probe retains pre-fix expectations as historical evidence; permanent regressions cover corrected behavior.
+
+## BESU-07 - Outages, Corrections, and History (2026-10-30)
+
+- Final full application suite: 701 cases / 8764 assertions, zero failures/errors, three opt-in live tests skipped; 03:56.653, PHP 8.5.12 / PHPUnit 12.5.40, isolated in-memory SQLite.
+- Explicit live read-only recovery: 1 test / 4 assertions passed (10.950 seconds), existing fictional commitment, nonexistent signing paths and unchanged writer pending nonce; recovered the canonical transaction from block 6786 without signing/broadcasting.
+- Node offline bridge tests: 3 passed, including event topics, exact signed-transaction reconstruction and modified-input rejection. No deployed contract changes or new live transactions.
+- Existing MySQL rollback-only payroll workflow script passed with automatic anchoring disabled only for that process. Migration 000005 applied successfully; journal backfill/retention tested in isolated SQLite.
+- Vite production build, Composer manifest/platform requirements, Pint and whitespace checks passed. Generated assets remain ignored; no dependencies added.
+- Initial validation found SQLite index-drop ordering in the upgrade fixture/rollback, now fixed. A stale compiled Blade view caused an old-page assertion failure; clearing the view cache resolved it. Final full results include both fixes and separate corrected-version transaction journal assertions.
+- Fresh live mining/corrected-version confirmation remains unvalidated because of the existing QBFT clock regression/stalled head. Controlled transport tests do not establish a new real-chain confirmation. See BESU_07_HANDOFF.md for operator use and limits. Stop before BESU-08.

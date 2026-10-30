@@ -48,6 +48,9 @@
                 @can('manage-users')
                     <x-ui.nav-link :href="route('users.index')" :active="request()->routeIs('users.*')" icon="people">User accounts</x-ui.nav-link>
                 @endcan
+                @can('manage-blockchain')
+                    <x-ui.nav-link :href="route('besu-operations.index')" :active="request()->routeIs('besu-operations.*')" icon="shield">Blockchain operations</x-ui.nav-link>
+                @endcan
                 @can('viewAny', \App\Models\PayrollRuleVersion::class)
                     <x-ui.nav-link :href="route('payroll-rule-versions.index')" :active="request()->routeIs('payroll-rule-versions.*')" icon="layers">Payroll configuration</x-ui.nav-link>
                 @endcan

@@ -40,6 +40,7 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(PayrollRuleVersion::class, PayrollRuleVersionPolicy::class);
         Gate::policy(SalarySchedule::class, SalarySchedulePolicy::class);
         Gate::define('manage-users', fn (User $user) => $user->is_active && $user->role === Role::Administrator);
+        Gate::define('manage-blockchain', fn (User $user) => $user->is_active && $user->role === Role::Administrator);
 
         foreach (Role::cases() as $role) {
             Gate::define('access-'.$role->workspace(), fn (User $user) => $user->is_active && $user->role === $role);

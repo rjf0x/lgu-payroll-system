@@ -15,7 +15,7 @@ class BesuAnchor extends Model
 
     protected function casts(): array
     {
-        return ['identity' => 'array', 'nonce' => 'integer', 'block_number' => 'integer', 'confirmed_at' => 'datetime'];
+        return ['identity' => 'array', 'nonce' => 'integer', 'block_number' => 'integer', 'confirmed_at' => 'datetime', 'retry_count' => 'integer', 'next_attempt_at' => 'datetime'];
     }
 
     protected static function booted(): void

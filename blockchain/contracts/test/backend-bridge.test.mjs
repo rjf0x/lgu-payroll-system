@@ -50,6 +50,14 @@ test('encrypted synthetic signer produces the expected offline transaction', asy
     const transaction = { hash: tx.hash, from: tx.from, to: tx.to, chainId: '0x13528a6', nonce: '0x3', value: '0x0', input: tx.data, blockHash, blockNumber: '0x100' };
     const receipt = { transactionHash: tx.hash, from: tx.from, to: tx.to, blockHash, blockNumber: '0x100', status: '0x1', logs: [{ address: contract, ...event }] };
     const probe = { operation: 'verifyMined', raw: result.value.raw, transaction, receipt, contract, writer: wallet.address, reference, sha256: '2'.repeat(64) };
+    assert.deepEqual(invoke({ operation: 'recordedFilter', reference }).value.topics, event.topics.slice(0, 2));
+    const rpcTransaction = { ...transaction, type: '0x0', gas: `0x${tx.gasLimit.toString(16)}`, gasPrice: '0x0',
+      r: tx.signature.r, s: tx.signature.s, v: `0x${tx.signature.networkV.toString(16)}` };
+    const recovered = invoke({ operation: 'restoreTransaction', transaction: rpcTransaction });
+    assert.equal(recovered.status, 0);
+    assert.equal(recovered.value.raw, result.value.raw);
+    assert.equal(recovered.value.hash, tx.hash);
+    assert.equal(invoke({ operation: 'restoreTransaction', transaction: { ...rpcTransaction, input: '0x' } }).status, 1);
     assert.deepEqual(invoke(probe).value, { valid: true, anchoredAt: '42' });
     for (const changed of [{ ...receipt, status: '0x0' }, { ...receipt, logs: [] }, { ...receipt, transactionHash: `0x${'f'.repeat(64)}` }]) {
       assert.equal(invoke({ ...probe, receipt: changed }).status, 1);

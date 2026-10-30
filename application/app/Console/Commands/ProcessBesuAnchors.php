@@ -6,10 +6,11 @@ use App\Models\BesuAnchor;
 use App\Services\BesuAnchoringService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
+use Throwable;
 
 class ProcessBesuAnchors extends Command
 {
-    protected $signature = 'besu:anchor {--limit=20 : Maximum durable outbox entries to process}';
+    protected $signature = 'besu:anchor {--limit=20 : Maximum durable outbox entries to process} {--retry-failed= : Explicitly retry one canonically failed outbox entry}';
 
     protected $description = 'Submit/reconcile authorized finalized payroll commitments from the durable Besu outbox.';
 
@@ -27,7 +28,28 @@ class ProcessBesuAnchors extends Command
             return self::FAILURE;
         }
         $incomplete = false;
-        foreach (BesuAnchor::whereIn('status', ['queued', 'signed', 'pending'])->orderBy('updated_at')->orderBy('id')->limit($limit)->pluck('id') as $id) {
+        $retry = $this->option('retry-failed');
+        if ($retry !== null) {
+            $retry = filter_var($retry, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
+            if ($retry === false) {
+                $this->error('Invalid retry identifier.');
+
+                return self::FAILURE;
+            }
+            try {
+                $service->retryFailed($retry);
+            } catch (Throwable) {
+                $this->error('Retry refused; retained evidence was not discarded.');
+
+                return self::FAILURE;
+            }
+        }
+        $due = BesuAnchor::whereIn('status', ['queued', 'signed', 'pending'])
+            ->where(fn ($query) => $query->whereNull('next_attempt_at')->orWhere('next_attempt_at', '<=', now()));
+        if ($retry !== null) {
+            $due->whereKey($retry);
+        }
+        foreach ($due->orderBy('updated_at')->orderBy('id')->limit($limit)->pluck('id') as $id) {
             // Rotate even incomplete attempts so persistent head entries cannot monopolize every run.
             DB::table('besu_anchor_outbox')->where('id', $id)->whereIn('status', ['queued', 'signed', 'pending'])
                 ->update(['updated_at' => now()]);

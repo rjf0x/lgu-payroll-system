@@ -1,16 +1,56 @@
 # Development progress
 
-Updated: 2026-10-28 (Asia/Manila).
+## BESU-06 current status
+
+Integrity verification UI is implemented after committed BESU-05 (2cf4fb8). Existing authorized verification actions now read the automatic outbox, recheck receipt/contract evidence, retain linked check history and display accurate current/stale results on finalized details. Regression and controlled-response UI tests pass. Full live validation is blocked by a backwards validator clock; no chain/clock reset or BESU-07 work was applied. See [BESU_06_HANDOFF.md](BESU_06_HANDOFF.md). Earlier entries below are historical.
+
+## BESU-05 current status - 2026-10-30
+
+Automatic anchoring is implemented after committed BESU-04 (0dd090f). Authorized finalization atomically queues a durable outbox; the scheduler signs/journals, submits and independently confirms exact commitments. Real Besu fictional-payroll integration passed. Only the new outbox migration was applied to existing MySQL. See [BESU_05_HANDOFF.md](BESU_05_HANDOFF.md). Stop before BESU-06; earlier entries are historical.
+
+## BESU-04 current status — 2026-10-30
+
+Latest authorization supersedes the BESU-03-only scope below. Backend RPC, chain/contract identity checks, registry reads and protected offline signing are implemented. Live check and focused tests pass; no broadcast or automatic anchoring. See [BESU_04_HANDOFF.md](BESU_04_HANDOFF.md). Stop before BESU-05. Earlier entries below are historical.
+
+Updated: 2026-10-30 (America/Los_Angeles).
 
 ## Authorized work
 
-The latest instruction authorizes the next Hyperledger Besu integration phase
-only. Inspection found no completed BESU checkpoint, so **BESU-00 - Repository
-Assessment** is the current phase. The assessment is documented in
-[BESU_00_ASSESSMENT.md](BESU_00_ASSESSMENT.md); no blockchain functionality or
-payroll behavior was changed. Docker's Linux engine is unavailable and C: has
-approximately 0.58 GB free. BESU-01 and payroll Phase 13 have not begun. Earlier
-authorization and implementation history follows below.
+The latest instruction authorizes current-phase **BESU-03 bug fixes only**,
+following committed BESU-02 (`53222c0`). Exact canonical v1 bytes and SHA-256 are
+now archived atomically at finalization, with immutable per-version retention,
+legacy digest compatibility, an explicit dry-run/apply archival command and
+archive checks in local preparation/verification/corrections/documents. Full tests pass
+634 cases / 7953 assertions, snapshot tests pass 19 / 382, and rollback-only
+MySQL checks pass. See [BESU_03_HANDOFF.md](BESU_03_HANDOFF.md).
+The [BESU-03 audit](BESU_03_AUDIT.md) confirms all five explicit criteria but
+originally recorded two integration findings: medium F1 (document export ignored
+an intact archive mismatch) and low F2 (anchoring GET offered preparation rejected
+by POST). Both are now corrected and covered by four mismatch/preparation cases
+and an explicit legacy-read case. Status is Implemented and tested for the
+documented prototype boundary; no BESU-04 work was applied.
+The new MySQL migration is applied; no legacy finalizations existed to capture.
+No Besu transaction or new transport/signing integration is part of this phase.
+
+The existing append-only BESU-02 registry is deployed on
+real Besu chain 20261030 at `0xDE556481A1DbF7a9bB1C152Ed574f122706dfFB6`,
+confirmed in block 1062. Pinned Shanghai compilation, 12 contract/tooling tests,
+clean dependency audit and deployment verification/reuse pass. See
+[BESU_02_HANDOFF.md](BESU_02_HANDOFF.md) for evidence and operations.
+The [BESU-02 audit](BESU_02_AUDIT.md) confirms all seven explicit contract
+acceptance criteria and passing 12 contract/tooling plus 133 application tests,
+but records two open tooling findings: medium F1 (HTTP redirect bypass of the
+local endpoint restriction) and low F2 (unchecked recorded block number/hash).
+Its status remains Implemented but needs validation; no audit fixes were applied.
+The existing five-node network checks also pass. See
+[BESU_01_HANDOFF.md](BESU_01_HANDOFF.md) for its startup and limitations.
+The [BESU-01 audit](BESU_01_AUDIT.md) confirms all six phase acceptance criteria
+and 133 application regression tests / 2266 assertions. F1 records a low-severity
+configuration-test omission; H1 records broad inherited host key permissions
+within the documented trusted-host prototype boundary. Neither was fixed during
+the audit. Independent block agreement, signer, API and permissioning probes pass.
+Payroll calculation rules and access permissions are unchanged. Stop before BESU-04 and payroll Phase
+13; no new commit or push is requested. Earlier authorization history follows below.
 
 The preceding instruction resumed payroll configuration coverage: All departments
 or one existing department, independently combined with All classifications or
@@ -1188,3 +1228,6 @@ Status: Implemented and tested (assessment only), 2026-10-28.
 Next: BESU-01 - Private Blockchain Network (not started).
 
 Final status: STOPPED - Awaiting authorization to continue.
+# BESU-07 phase update — 2026-10-30
+
+Implemented bounded outage retries, exact-byte reconciliation, explicit canonical-failure retries with retained transaction history, read-only recovery of restored pre-send journals, administrator status visibility and separate corrected-version journal regressions. Migration 000005 was applied to local MySQL. See [BESU-07 handoff](BESU_07_HANDOFF.md) for behavior, operator commands and limits. Fresh live mining remains blocked by the pre-existing chain clock regression; live read-only recovery succeeded. Stop before BESU-08.

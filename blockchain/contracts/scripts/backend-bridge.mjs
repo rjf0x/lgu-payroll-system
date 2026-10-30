@@ -26,6 +26,17 @@ try {
         result = { sha256: row.sha256.slice(2), writer: row.writer, anchoredAt: row.anchoredAt.toString(), exists: row.exists };
       } else { result = { value: decoded[0] }; }
     }
+  } else if (p.operation === 'recordedFilter') {
+    if (!/^0x[0-9a-f]{64}$/.test(p.reference)) throw new Error();
+    result = { topics: [iface.getEvent('CommitmentRecorded').topicHash, p.reference] };
+  } else if (p.operation === 'restoreTransaction') {
+    const tx = p.transaction;
+    if (BigInt(tx.type) !== 0n || BigInt(tx.chainId) !== 20261030n) throw new Error();
+    const restored = Transaction.from({ type: 0, chainId: BigInt(tx.chainId), nonce: Number(BigInt(tx.nonce)),
+      to: tx.to, gasLimit: BigInt(tx.gas), gasPrice: BigInt(tx.gasPrice), value: BigInt(tx.value), data: tx.input,
+      signature: { r: tx.r, s: tx.s, v: Number(BigInt(tx.v)) } });
+    if (restored.hash.toLowerCase() !== tx.hash.toLowerCase() || restored.from.toLowerCase() !== tx.from.toLowerCase()) throw new Error();
+    result = { raw: restored.serialized, hash: restored.hash, nonce: restored.nonce };
   } else if (p.operation === 'verifyMined') {
     const signed = Transaction.from(p.raw);
     const tx = p.transaction;

@@ -2,6 +2,7 @@
 
 use App\Enums\Role;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\BesuOperationsController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\EmployeeSalaryController;
 use App\Http\Controllers\PayrollAnchoringController;
@@ -38,6 +39,7 @@ Route::middleware(['auth', 'active'])->group(function () {
     });
     Route::post('/logout', [AuthController::class, 'destroy'])->name('logout');
     Route::view('/dashboard', 'dashboard')->name('dashboard');
+    Route::get('admin/blockchain', [BesuOperationsController::class, 'index'])->middleware('can:manage-blockchain')->name('besu-operations.index');
     Route::resource('users', UserController::class)->except(['show', 'destroy'])->middleware('can:manage-users');
     Route::resource('employees', EmployeeController::class)->except('destroy');
     Route::get('payroll-batches/{batch}/corrections', [PayrollCorrectionController::class, 'index'])->name('payroll-corrections.index');

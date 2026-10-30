@@ -584,3 +584,42 @@ and ensure no conflicting DB_URL is configured when using the local MySQL helper
 See [development progress](docs/DEVELOPMENT_PROGRESS.md),
 [requirements](docs/REQUIREMENTS_STATUS.md), [decisions](docs/DECISIONS.md), and
 [testing status](docs/TESTING_STATUS.md).
+
+## Local Hyperledger Besu network (BESU-01)
+
+The isolated four-validator QBFT network and separate RPC node are implemented
+and tested on real Besu 26.10.2, chain ID 20261030. Host RPC is restricted to
+`127.0.0.1:18545`. See [startup and tests](blockchain/besu/README.md) and the
+[BESU-01 handoff](docs/BESU_01_HANDOFF.md). Contract deployment is covered by BESU-02 below; application
+anchoring remains pending and the existing payroll adapters are unchanged.
+
+## Payroll integrity registry (BESU-02)
+
+The append-only Solidity registry is deployed and tested on the local Besu network.
+It supports authorized writers, controlled writer revocation, public lookup and
+immutable batch-version commitments. See the [contract workspace](blockchain/contracts/README.md)
+for compilation, real-node tests and deployment verification, and the
+[BESU-02 handoff](docs/BESU_02_HANDOFF.md) for the confirmed address/receipt.
+The Laravel application is not connected to it yet. Local snapshot retention is
+implemented in BESU-03 below; backend connectivity remains a later phase.
+
+## Exact finalized snapshot bytes (BESU-03)
+
+Finalization now atomically stores immutable canonical v1 bytes and their SHA-256
+digest, independently of manual commitment preparation. Historical v1 hashes,
+two-decimal monetary strings and correction versions remain compatible. Existing
+document issuance, preparation, local verification and correction operations reject
+archive mismatches; the anchoring page suppresses blocked actions.
+
+Run `php artisan migrate` from `application/` before use. For legacy finalized
+records, `php artisan payroll:archive-snapshots` validates without writing;
+`--apply` captures eligible records without rewriting old snapshots or digests.
+See the [BESU-03 handoff](docs/BESU_03_HANDOFF.md) and
+[canonical format](docs/CANONICAL_PAYROLL_COMMITMENT_V1.md) for commands and limits.
+This phase sends no blockchain transactions and does not establish a chain match.
+
+BESU-04 backend connectivity and offline signing: see [handoff](docs/BESU_04_HANDOFF.md). From application, run php artisan besu:check (or --sign for an offline synthetic signature). Enabled only with explicit Besu configuration; no transaction submission.
+
+BESU-05 automatic anchoring is implemented: [setup, scheduler, confirmation and limits](docs/BESU_05_HANDOFF.md). Enable BESU_AUTOMATIC_ANCHORING after migration, then run Laravel's scheduler or php artisan besu:anchor. No BESU-06 UI is included.
+
+BESU-06 integrity verification UI is implemented: [handoff and validation limits](docs/BESU_06_HANDOFF.md). Authorized users can verify finalized payroll against fresh Besu evidence and inspect transaction/check history. Live end-to-end validation currently requires resolving the existing validator clock regression.

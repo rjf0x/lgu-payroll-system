@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\BesuAnchor;
+use App\Models\BesuAnchorTransaction;
 use App\Models\PayrollAnchorAttempt;
 use App\Models\PayrollBatch;
 use App\Models\PayrollCommitment;
@@ -15,6 +17,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Pagination\Paginator;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
@@ -28,8 +31,16 @@ class PayrollAnchoringController extends Controller
         $page = Paginator::resolveCurrentPage();
         // Reject unrepresentable offsets before the query builder multiplies them.
         abort_if($page > intdiv(PHP_INT_MAX, 20) + 1, 404);
+        foreach (['transactions', 'events'] as $parameter) {
+            abort_if(Paginator::resolveCurrentPage($parameter) > intdiv(PHP_INT_MAX, 20) + 1, 404);
+        }
         $attempts = PayrollAnchorAttempt::where('payroll_commitment_id', $commitment?->id ?? 0)->orderByDesc('id')->paginate(20, ['*'], 'page', $page);
         $latest = $commitment ? PayrollAnchorAttempt::where('payroll_commitment_id', $commitment->id)->orderByDesc('id')->first() : null;
+        $automatic = $commitment ? BesuAnchor::where('payroll_commitment_id', $commitment->id)->first() : null;
+        $transactions = BesuAnchorTransaction::where('outbox_id', $automatic?->id ?? 0)
+            ->select(['id', 'transaction_hash', 'status', 'nonce', 'block_number', 'block_hash', 'confirmed_at', 'created_at'])
+            ->orderByDesc('id')->paginate(20, ['*'], 'transactions');
+        $events = DB::table('besu_anchor_events')->where('outbox_id', $automatic?->id ?? 0)->orderByDesc('id')->paginate(20, ['id', 'event', 'created_at'], 'events');
         $matches = ! $commitment || ($commitment->canonicalization === CanonicalPayrollSnapshot::VERSION
             && $commitment->algorithm === 'sha256' && hash_equals($commitment->sha256, $digest));
         try {
@@ -43,7 +54,7 @@ class PayrollAnchoringController extends Controller
         $canAct = $matches && auth()->user()->can('anchor', $batch)
             && app(PayrollWorkflowService::class)->isIndependent(auth()->user(), $batch, PayrollSubmission::findOrFail($finalization->payroll_submission_id));
 
-        return response(view('payroll-anchoring.show', compact('batch', 'finalization', 'digest', 'commitment', 'attempts', 'latest', 'matches', 'canAct'))->render(), 200, [
+        return response(view('payroll-anchoring.show', compact('batch', 'finalization', 'digest', 'commitment', 'attempts', 'latest', 'matches', 'canAct', 'automatic', 'transactions', 'events'))->render(), 200, [
             'Cache-Control' => 'private, no-store, max-age=0', 'Pragma' => 'no-cache',
             'X-Content-Type-Options' => 'nosniff', 'Referrer-Policy' => 'no-referrer',
         ]);

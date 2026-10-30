@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Enums\Role;
+use App\Models\BesuAnchor;
 use App\Models\PayrollBatch;
 use App\Models\PayrollCalculationRun;
 use App\Models\PayrollCommitment;
@@ -12,6 +13,12 @@ use App\Models\PayrollFinalization;
 use App\Models\PayrollSnapshotArchive;
 use App\Models\PayrollVerification;
 use App\Models\User;
+use App\Services\BesuAnchoringService;
+use App\Services\Blockchain\BesuConnectionException;
+use App\Services\Blockchain\BesuJournalRecovery;
+use App\Services\Blockchain\BesuRegistry;
+use App\Services\Blockchain\BesuRpcClient;
+use App\Services\Blockchain\BesuTransactionVerifier;
 use App\Services\PayrollAnchoringService;
 use App\Services\PayrollCorrectionService;
 use App\Services\PayrollDocumentService;
@@ -167,6 +174,178 @@ class PayrollCorrectionTest extends TestCase
         $this->actor($this->officer);
         $this->post('/payroll-batches', ['period' => '2026-10', 'is_demonstration' => 1, 'payroll_version' => 4])->assertSessionHasErrors('period');
         $this->assertDatabaseCount('payroll_batches', 3);
+    }
+
+    public function test_automatic_correction_anchoring_preserves_original_hash_journal_and_checks(): void
+    {
+        config(['besu.enabled' => true, 'besu.automatic_anchoring' => true]);
+        [$original, $first] = $this->fixture();
+        $firstAnchor = BesuAnchor::sole();
+        $firstCommitment = PayrollCommitment::sole()->getAttributes();
+        $snapshot = $first->getAttributes();
+        $archive = PayrollSnapshotArchive::sole()->getAttributes();
+        $this->post(route('payroll-verification.store', [$original, $first]), ['request_key' => (string) Str::uuid()])->assertRedirect();
+        $check = PayrollVerification::sole()->getAttributes();
+        $correctedBatch = $this->authorize($original, $first);
+        $second = $this->finish($correctedBatch, $original->entries()->sole()->employee_id, '100.01');
+        $this->assertSame(2, $second->version);
+        $anchors = BesuAnchor::orderBy('id')->get();
+        $this->assertCount(2, $anchors);
+        $this->assertNotSame($anchors[0]->reference, $anchors[1]->reference);
+        $this->assertNotSame($firstCommitment['sha256'], PayrollCommitment::orderByDesc('id')->first()->sha256);
+        $this->assertSame($snapshot, $first->fresh()->getAttributes());
+        $this->assertSame($archive, PayrollSnapshotArchive::orderBy('id')->first()->getAttributes());
+        $this->assertSame($check, PayrollVerification::sole()->getAttributes());
+        $this->assertSame($firstCommitment, PayrollCommitment::orderBy('id')->first()->getAttributes());
+        $this->assertSame($firstAnchor->getAttributes(), $firstAnchor->fresh()->getAttributes());
+        $this->get(route('payroll-anchoring.show', [$original, $first]))->assertOk()->assertSee('Automatic anchoring: Queued');
+        $this->get(route('payroll-anchoring.show', [$correctedBatch, $second]))->assertOk()->assertSee('Automatic anchoring: Queued');
+        $this->mock(BesuJournalRecovery::class)->shouldReceive('find')->andReturn(null);
+        $registry = $this->mock(BesuRegistry::class);
+        $registry->shouldReceive('health')->andReturn(['writer' => config('besu.writer')]);
+        $signed = [];
+        $registry->shouldReceive('sign')->twice()->andReturnUsing(function ($reference, $digest, $nonce) use (&$signed) {
+            $signed[] = [$reference, $digest, $nonce];
+
+            return ['raw' => '0x1234', 'hash' => '0x'.str_pad(dechex($nonce + 1), 64, '0', STR_PAD_LEFT)];
+        });
+        $rpc = $this->mock(BesuRpcClient::class);
+        $rpc->shouldReceive('request')->with('eth_getBlockByNumber', ['latest', false])->andReturnUsing(fn () => ['timestamp' => '0x'.dechex(time())]);
+        $rpc->shouldReceive('request')->with('eth_getTransactionCount', \Mockery::any())->andReturn('0x0');
+        $this->mock(BesuTransactionVerifier::class)->shouldReceive('confirm')->twice()->andReturn([
+            'status' => 'confirmed', 'block_number' => 10, 'block_hash' => '0x'.str_repeat('a', 64), 'confirmed_at' => now(),
+        ]);
+        foreach ($anchors as $anchor) {
+            $this->assertSame('confirmed', app(BesuAnchoringService::class)->process($anchor->id));
+        }
+        $this->assertSame([$anchors[0]->reference, $firstCommitment['sha256'], 0], $signed[0]);
+        $this->assertSame([$anchors[1]->reference, PayrollCommitment::orderByDesc('id')->first()->sha256, 1], $signed[1]);
+        $this->assertDatabaseCount('besu_anchor_transactions', 2);
+        $this->assertSame($snapshot, $first->fresh()->getAttributes());
+        $this->assertSame($check, PayrollVerification::sole()->getAttributes());
+        Http::assertNothingSent();
+    }
+
+    public function test_live_besu08_outage_recovery_corrected_versions_and_tamper_detection(): void
+    {
+        if (getenv('BESU_LIVE_DEMO') !== '1') {
+            $this->markTestSkipped('Opt-in BESU-08 demonstration: fictional SQLite payroll, two real chain commitments.');
+        }
+        $this->runBesu08Scenarios(true);
+    }
+
+    public function test_besu08_scenarios_with_controlled_chain_responses(): void
+    {
+        $deployment = json_decode(file_get_contents(base_path('../blockchain/contracts/deployments/local.json')), true);
+        config(['besu.chain_id' => 20261030, 'besu.genesis_hash' => $deployment['genesisHash'],
+            'besu.contract_address' => $deployment['address'], 'besu.runtime_code_hash' => $deployment['runtimeCodeHash'],
+            'besu.administrator' => $deployment['administrator'], 'besu.writer' => $deployment['writer']]);
+        $records = [];
+        $this->mock(BesuJournalRecovery::class)->shouldReceive('find')->andReturnUsing(function () {
+            if (config('besu.rpc_url') === 'http://127.0.0.1:1') {
+                throw new BesuConnectionException('rpc_unavailable');
+            }
+
+            return null;
+        });
+        $registry = $this->mock(BesuRegistry::class);
+        $registry->shouldReceive('health')->andReturnUsing(fn () => ['writer' => config('besu.writer')]);
+        $registry->shouldReceive('sign')->twice()->andReturnUsing(function ($reference, $digest, $nonce) use (&$records) {
+            $records[$reference] = ['exists' => true, 'sha256' => $digest, 'writer' => config('besu.writer')];
+
+            return ['raw' => '0x1234', 'hash' => '0x'.str_pad(dechex($nonce + 1), 64, '0', STR_PAD_LEFT)];
+        });
+        $registry->shouldReceive('lookup')->andReturnUsing(function ($reference) use (&$records) {
+            return $records[$reference];
+        });
+        $rpc = $this->mock(BesuRpcClient::class);
+        $rpc->shouldReceive('request')->with('eth_getBlockByNumber', ['latest', false])->andReturnUsing(fn () => ['timestamp' => '0x'.dechex(time())]);
+        $rpc->shouldReceive('request')->with('eth_getTransactionCount', \Mockery::any())->andReturn('0x0');
+        $rpc->shouldNotReceive('broadcast');
+        $this->mock(BesuTransactionVerifier::class)->shouldReceive('confirm')->andReturn([
+            'status' => 'confirmed', 'block_number' => 10, 'block_hash' => '0x'.str_repeat('a', 64), 'confirmed_at' => now(),
+        ]);
+        $this->runBesu08Scenarios(false);
+        Http::assertNothingSent();
+    }
+
+    private function runBesu08Scenarios(bool $live): void
+    {
+        config(['besu.enabled' => true, 'besu.automatic_anchoring' => true]);
+        if ($live) {
+            Http::allowStrayRequests();
+        }
+        $rpc = app(BesuRpcClient::class);
+        app(BesuRegistry::class)->health();
+        $head = $rpc->request('eth_getBlockByNumber', ['latest', false]);
+        $age = time() - (int) hexdec(substr($head['timestamp'], 2));
+        $this->assertTrue($age >= -30 && $age <= 120, 'Live demonstration blocked: chain clock/head is not healthy; no transaction submitted.');
+        [$original, $first] = $this->fixture();
+        $firstAnchor = BesuAnchor::sole();
+        $snapshot = $first->getAttributes();
+        $archive = PayrollSnapshotArchive::sole()->getAttributes();
+        $commitment = PayrollCommitment::sole()->getAttributes();
+        $endpoint = config('besu.rpc_url');
+        config(['besu.rpc_url' => 'http://127.0.0.1:1']);
+        try {
+            $this->assertSame('incomplete', app(BesuAnchoringService::class)->process($firstAnchor->id));
+            $this->assertSame('rpc_unavailable', $firstAnchor->fresh()->last_error);
+            $this->assertNull($firstAnchor->fresh()->transaction_hash);
+            $this->assertSame($snapshot, $first->fresh()->getAttributes());
+        } finally {
+            config(['besu.rpc_url' => $endpoint]);
+        }
+        $confirm = function (BesuAnchor $anchor): void {
+            for ($poll = 0; $poll < 24; $poll++) {
+                $status = app(BesuAnchoringService::class)->process($anchor->id);
+                if (in_array($status, ['confirmed', 'failed'], true)) {
+                    break;
+                }
+                usleep(500000);
+            }
+            $this->assertSame('confirmed', $status, 'Live confirmation did not complete; preserve the chain/journal for investigation.');
+            $this->assertSame('confirmed', app(BesuAnchoringService::class)->process($anchor->id));
+        };
+        $confirm($firstAnchor);
+        $firstJournal = $firstAnchor->fresh()->getAttributes();
+        $this->post(route('payroll-verification.store', [$original, $first]), ['request_key' => (string) Str::uuid()])->assertRedirect();
+        $firstCheck = PayrollVerification::sole()->getAttributes();
+        $this->assertSame('verified', $firstCheck['status']);
+        $corrected = $this->authorize($original, $first);
+        $second = $this->finish($corrected, $original->entries()->sole()->employee_id, '100.01');
+        $secondCommitment = PayrollCommitment::where('payroll_finalization_id', $second->id)->sole();
+        $secondAnchor = BesuAnchor::where('payroll_commitment_id', $secondCommitment->id)->sole();
+        $this->assertSame(2, $second->version);
+        $this->assertNotSame($commitment['sha256'], $secondCommitment->sha256);
+        $this->assertNotSame($firstAnchor->reference, $secondAnchor->reference);
+        $confirm($secondAnchor);
+        $nonce = $rpc->request('eth_getTransactionCount', [config('besu.writer'), 'pending']);
+        foreach ([[$original, $first], [$corrected, $second]] as [$batch, $final]) {
+            $this->post(route('payroll-verification.store', [$batch, $final]), ['request_key' => (string) Str::uuid()])->assertRedirect();
+            $this->assertSame('verified', PayrollVerification::latest('id')->first()->status);
+        }
+        $tampered = $second->snapshot;
+        $tampered['payroll']['employees'][0]['core_breakdown']['totals']['basic_pay'] = '99999.99';
+        DB::table('payroll_finalizations')->where('id', $second->id)->update(['snapshot' => json_encode($tampered)]);
+        $this->post(route('payroll-verification.store', [$corrected, $second]), ['request_key' => (string) Str::uuid()])->assertRedirect();
+        $this->assertSame('mismatched', PayrollVerification::latest('id')->first()->status);
+        $tamperCheck = PayrollVerification::latest('id')->first();
+        $this->assertSame('snapshot_changed', $tamperCheck->reason_code);
+        $chainCommitment = app(BesuRegistry::class)->lookup($secondAnchor->reference);
+        $this->assertTrue($chainCommitment['exists']);
+        $this->assertSame($secondCommitment->sha256, $chainCommitment['sha256']);
+        $this->assertNotNull($tamperCheck->current_hash);
+        $this->assertNotSame($chainCommitment['sha256'], $tamperCheck->current_hash);
+        $this->assertSame($snapshot, $first->fresh()->getAttributes());
+        $this->assertSame($archive, PayrollSnapshotArchive::where('payroll_finalization_id', $first->id)->sole()->getAttributes());
+        $this->assertSame($commitment, PayrollCommitment::findOrFail($firstAnchor->payroll_commitment_id)->getAttributes());
+        $this->assertSame($firstJournal, $firstAnchor->fresh()->getAttributes());
+        $this->assertSame($firstCheck, PayrollVerification::orderBy('id')->first()->getAttributes());
+        $this->assertSame($nonce, $rpc->request('eth_getTransactionCount', [config('besu.writer'), 'pending']));
+        $this->assertDatabaseCount('besu_anchor_transactions', 2);
+        if ($live) {
+            fwrite(STDOUT, json_encode(['scenario' => 'BESU-08 A/B/C/D', 'transactions' => BesuAnchor::orderBy('id')->get(['reference', 'transaction_hash', 'block_number', 'block_hash'])->toArray()], JSON_THROW_ON_ERROR).PHP_EOL);
+        }
     }
 
     public function test_exact_retries_are_idempotent_and_pending_requests_and_ancestor_forks_are_blocked(): void

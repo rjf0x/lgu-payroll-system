@@ -9,7 +9,7 @@ use Throwable;
 class BesuRpcClient
 {
     /** General requests stay read-only; sending requires the separate journaled broadcast path. */
-    private const METHODS = ['eth_chainId', 'web3_clientVersion', 'eth_getBlockByNumber', 'eth_getCode', 'eth_call', 'eth_getTransactionCount', 'eth_getTransactionReceipt', 'eth_getTransactionByHash'];
+    private const METHODS = ['eth_chainId', 'web3_clientVersion', 'eth_getBlockByNumber', 'eth_getCode', 'eth_call', 'eth_getTransactionCount', 'eth_getTransactionReceipt', 'eth_getTransactionByHash', 'eth_getLogs'];
 
     public function request(string $method, array $params = []): mixed
     {
