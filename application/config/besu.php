@@ -2,6 +2,7 @@
 
 return [
     'enabled' => (bool) env('BESU_ENABLED', false),
+    'automatic_anchoring' => (bool) env('BESU_AUTOMATIC_ANCHORING', false),
     'rpc_url' => env('BESU_RPC_URL', 'http://127.0.0.1:18545'),
     'chain_id' => (int) env('BESU_CHAIN_ID', 20261030),
     'genesis_hash' => env('BESU_GENESIS_HASH'),

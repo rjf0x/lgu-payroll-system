@@ -223,6 +223,7 @@ class PayrollWorkflowService
                     ], 'created_by' => $actor->id,
                 ]);
                 app(PayrollSnapshotService::class)->archive($finalization);
+                app(BesuAnchoringService::class)->enqueue($finalization);
             }
         }, 3);
     }

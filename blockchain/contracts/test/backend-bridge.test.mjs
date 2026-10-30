@@ -45,6 +45,17 @@ test('encrypted synthetic signer produces the expected offline transaction', asy
     assert.equal(tx.value, 0n);
     assert.equal(tx.gasPrice, 0n);
     assert.equal(tx.data, iface.encodeFunctionData('record', [reference, `0x${'2'.repeat(64)}`]));
+    const blockHash = `0x${'a'.repeat(64)}`;
+    const event = iface.encodeEventLog(iface.getEvent('CommitmentRecorded'), [reference, `0x${'2'.repeat(64)}`, wallet.address, 42n]);
+    const transaction = { hash: tx.hash, from: tx.from, to: tx.to, chainId: '0x13528a6', nonce: '0x3', value: '0x0', input: tx.data, blockHash, blockNumber: '0x100' };
+    const receipt = { transactionHash: tx.hash, from: tx.from, to: tx.to, blockHash, blockNumber: '0x100', status: '0x1', logs: [{ address: contract, ...event }] };
+    const probe = { operation: 'verifyMined', raw: result.value.raw, transaction, receipt, contract, writer: wallet.address, reference, sha256: '2'.repeat(64) };
+    assert.deepEqual(invoke(probe).value, { valid: true, anchoredAt: '42' });
+    for (const changed of [{ ...receipt, status: '0x0' }, { ...receipt, logs: [] }, { ...receipt, transactionHash: `0x${'f'.repeat(64)}` }]) {
+      assert.equal(invoke({ ...probe, receipt: changed }).status, 1);
+    }
+    assert.equal(invoke({ ...probe, sha256: '3'.repeat(64) }).status, 1);
+    assert.equal(invoke({ ...probe, transaction: { ...transaction, chainId: '0x1' } }).status, 1);
     assert.equal(invoke({ operation: 'sign', chainId: 20261030, nonce: 3, contract, writer: contract, reference, sha256: '2'.repeat(64), keystorePath, passwordPath }).status, 1);
   } finally { rmSync(directory, { recursive: true, force: true }); }
 });

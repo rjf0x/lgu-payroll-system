@@ -26,6 +26,26 @@ try {
         result = { sha256: row.sha256.slice(2), writer: row.writer, anchoredAt: row.anchoredAt.toString(), exists: row.exists };
       } else { result = { value: decoded[0] }; }
     }
+  } else if (p.operation === 'verifyMined') {
+    const signed = Transaction.from(p.raw);
+    const tx = p.transaction;
+    const receipt = p.receipt;
+    const same = (a, b) => typeof a === 'string' && typeof b === 'string' && a.toLowerCase() === b.toLowerCase();
+    if (!same(signed.hash, tx.hash) || !same(signed.hash, receipt.transactionHash)
+      || !same(signed.from, tx.from) || !same(signed.from, receipt.from)
+      || !same(signed.to, tx.to) || !same(signed.to, receipt.to)
+      || !same(signed.to, p.contract) || !same(signed.from, p.writer)
+      || signed.chainId !== 20261030n || BigInt(tx.chainId) !== signed.chainId
+      || BigInt(tx.nonce) !== BigInt(signed.nonce) || BigInt(tx.value) !== 0n
+      || !same(tx.input, signed.data) || !same(tx.blockHash, receipt.blockHash)
+      || tx.blockNumber !== receipt.blockNumber || receipt.status !== '0x1') throw new Error();
+    const call = iface.parseTransaction({ data: signed.data });
+    if (call.name !== 'record' || !same(call.args[0], p.reference) || !same(call.args[1], `0x${p.sha256}`)) throw new Error();
+    const events = receipt.logs.filter(log => same(log.address, p.contract)).map(log => iface.parseLog(log))
+      .filter(event => event?.name === 'CommitmentRecorded');
+    if (events.length !== 1 || !same(events[0].args.batchVersionRef, p.reference)
+      || !same(events[0].args.sha256, `0x${p.sha256}`) || !same(events[0].args.writer, p.writer)) throw new Error();
+    result = { valid: true, anchoredAt: events[0].args.anchoredAt.toString() };
   } else if (p.operation === 'sign') {
     if (p.chainId !== 20261030 || !Number.isSafeInteger(p.nonce) || p.nonce < 0
       || !/^0x[0-9a-f]{64}$/.test(p.reference) || !/^[0-9a-f]{64}$/.test(p.sha256)

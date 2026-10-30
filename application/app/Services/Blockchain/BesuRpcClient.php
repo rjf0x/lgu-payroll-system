@@ -8,10 +8,29 @@ use Throwable;
 
 class BesuRpcClient
 {
-    /** Read-only methods only. No transport for broadcasts is exposed in BESU-04. */
-    private const METHODS = ['eth_chainId', 'web3_clientVersion', 'eth_getBlockByNumber', 'eth_getCode', 'eth_call', 'eth_getTransactionCount'];
+    /** General requests stay read-only; sending requires the separate journaled broadcast path. */
+    private const METHODS = ['eth_chainId', 'web3_clientVersion', 'eth_getBlockByNumber', 'eth_getCode', 'eth_call', 'eth_getTransactionCount', 'eth_getTransactionReceipt', 'eth_getTransactionByHash'];
 
     public function request(string $method, array $params = []): mixed
+    {
+        return $this->perform($method, $params, false);
+    }
+
+    /** Only the durable outbox processor may call this after journaling signed bytes. */
+    public function broadcast(string $raw): string
+    {
+        if (! preg_match('/\A0x[a-f0-9]+\z/i', $raw) || strlen($raw) > 8194) {
+            throw new BesuConnectionException('invalid_transaction');
+        }
+        $hash = $this->perform('eth_sendRawTransaction', [$raw], true);
+        if (! is_string($hash) || ! preg_match('/\A0x[a-f0-9]{64}\z/i', $hash)) {
+            throw new BesuConnectionException('invalid_rpc_response');
+        }
+
+        return $hash;
+    }
+
+    private function perform(string $method, array $params, bool $broadcast): mixed
     {
         $url = config('besu.rpc_url');
         $parts = is_string($url) ? parse_url($url) : false;
@@ -20,7 +39,8 @@ class BesuRpcClient
             || ! in_array($parts['host'] ?? '', ['127.0.0.1', 'localhost'], true)
             || isset($parts['user'], $parts['pass']) || isset($parts['user']) || isset($parts['pass'])
             || isset($parts['query']) || isset($parts['fragment']) || ($parts['path'] ?? '/') !== '/'
-            || ! is_int($timeout) || $timeout < 1 || $timeout > 10 || ! in_array($method, self::METHODS, true)) {
+            || ! is_int($timeout) || $timeout < 1 || $timeout > 10
+            || (! in_array($method, self::METHODS, true) && ! ($broadcast && $method === 'eth_sendRawTransaction'))) {
             throw new BesuConnectionException('invalid_configuration');
         }
         $id = (string) Str::uuid();

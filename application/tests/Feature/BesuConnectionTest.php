@@ -6,6 +6,7 @@ use App\Services\Blockchain\BesuBridge;
 use App\Services\Blockchain\BesuConnectionException;
 use App\Services\Blockchain\BesuRegistry;
 use App\Services\Blockchain\BesuRpcClient;
+use App\Services\Blockchain\BesuTransactionVerifier;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\Factory;
 use Illuminate\Support\Facades\Artisan;
@@ -87,6 +88,9 @@ class BesuConnectionTest extends TestCase
                 'eth_getCode' => $failure === 'invalid_contract' ? '0x' : '0x6000',
                 'eth_call' => '0x00',
                 'eth_getTransactionCount' => '0x2',
+                'eth_getTransactionReceipt' => ['transactionHash' => '0x'.str_repeat('b', 64),
+                    'blockNumber' => $block['number'], 'blockHash' => $block['hash'], 'status' => '0x1'],
+                'eth_getTransactionByHash' => ['hash' => '0x'.str_repeat('b', 64)],
             };
 
             return $this->response($result, $request);
@@ -99,9 +103,12 @@ class BesuConnectionTest extends TestCase
                 'decode' => match ($data['method']) {
                     'administrator' => ['value' => $this->deployment['administrator']],
                     'writers' => ['value' => $failure !== 'writer_unauthorized'],
-                    'lookup' => ['sha256' => str_repeat('0', 64), 'writer' => '0x'.str_repeat('0', 40), 'anchoredAt' => '0', 'exists' => false],
+                    'lookup' => $failure === 'writer_unauthorized'
+                        ? ['sha256' => str_repeat('1', 64), 'writer' => $this->deployment['writer'], 'anchoredAt' => '42', 'exists' => true]
+                        : ['sha256' => str_repeat('0', 64), 'writer' => '0x'.str_repeat('0', 40), 'anchoredAt' => '0', 'exists' => false],
                 },
                 'sign' => ['raw' => '0x1234', 'hash' => '0x'.str_repeat('b', 64), 'from' => $this->deployment['writer'], 'nonce' => 2],
+                'verifyMined' => ['valid' => true, 'anchoredAt' => '42'],
             };
         });
     }
@@ -129,6 +136,35 @@ class BesuConnectionTest extends TestCase
                 $this->assertSame($failure, $e->reason);
             }
         }
+    }
+
+    public function test_revoked_writer_history_is_readable_but_health_and_new_signatures_are_rejected(): void
+    {
+        $this->healthy('writer_unauthorized');
+        $registry = app(BesuRegistry::class);
+        $this->assertTrue($registry->lookup('0x'.str_repeat('1', 64))['exists']);
+        foreach (['health', 'sign'] as $operation) {
+            try {
+                $operation === 'health' ? $registry->health() : $registry->sign('0x'.str_repeat('1', 64), str_repeat('2', 64));
+                $this->fail('Revoked writer was allowed to sign or pass writer health.');
+            } catch (BesuConnectionException $e) {
+                $this->assertSame('writer_unauthorized', $e->reason);
+            }
+        }
+    }
+
+    public function test_revoked_writer_historical_receipt_confirms_through_real_verifier_and_registry_services(): void
+    {
+        $this->healthy('writer_unauthorized');
+        $result = app(BesuTransactionVerifier::class)->confirm('0x1234', '0x'.str_repeat('b', 64), '0x'.str_repeat('1', 64), str_repeat('1', 64));
+        $this->assertSame('confirmed', $result['status']);
+        $this->assertSame(256, $result['block_number']);
+        Http::assertSent(fn ($request) => $request['method'] === 'eth_getTransactionReceipt');
+
+        // Read mode still rejects an unexpected chain instead of trusting the receipt.
+        $this->healthy('wrong_chain');
+        $this->expectExceptionMessage('Besu connection check failed (wrong_chain).');
+        app(BesuTransactionVerifier::class)->confirm('0x1234', '0x'.str_repeat('b', 64), '0x'.str_repeat('1', 64), str_repeat('1', 64));
     }
 
     public function test_bridge_hides_subprocess_errors(): void

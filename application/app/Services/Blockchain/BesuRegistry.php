@@ -46,8 +46,8 @@ class BesuRegistry
         return $this->bridge->invoke('decode', ['method' => $method, 'value' => $value]);
     }
 
-    /** Independent reads only; checks identity and authorization at one captured block. */
-    public function health(): array
+    /** Identity checks always apply; write operations also require current writer authorization. */
+    public function health(bool $requireWriter = true): array
     {
         $settings = $this->settings();
         if ($this->quantity($this->rpc->request('eth_chainId')) !== $settings['chain_id']) {
@@ -76,7 +76,7 @@ class BesuRegistry
         }
         $admin = $this->call('administrator', [], $block['number'])['value'] ?? null;
         if (! is_string($admin) || strtolower($admin) !== strtolower($settings['administrator'])
-            || ($this->call('writers', [$settings['writer']], $block['number'])['value'] ?? null) !== true) {
+            || ($requireWriter && ($this->call('writers', [$settings['writer']], $block['number'])['value'] ?? null) !== true)) {
             throw new BesuConnectionException('writer_unauthorized');
         }
         $again = $this->rpc->request('eth_getBlockByNumber', [$block['number'], false]);
@@ -94,7 +94,7 @@ class BesuRegistry
         if (! preg_match('/\A0x[a-f0-9]{64}\z/', $reference)) {
             throw new BesuConnectionException('invalid_reference');
         }
-        $health = $this->health();
+        $health = $this->health(false);
         $row = $this->call('lookup', [$reference], $health['block_tag']);
         if (! is_bool($row['exists'] ?? null) || ! is_string($row['sha256'] ?? null)
             || ! preg_match('/\A[a-f0-9]{64}\z/', $row['sha256'])
@@ -107,14 +107,17 @@ class BesuRegistry
     }
 
     /** Offline signing preparation only. No broadcast method exists in this phase. */
-    public function sign(string $reference, string $sha256): array
+    public function sign(string $reference, string $sha256, ?int $reservedNonce = null): array
     {
         if (! preg_match('/\A0x[a-f0-9]{64}\z/', $reference) || $reference === '0x'.str_repeat('0', 64)
             || ! preg_match('/\A[a-f0-9]{64}\z/', $sha256) || $sha256 === str_repeat('0', 64)) {
             throw new BesuConnectionException('invalid_reference');
         }
         $health = $this->health();
-        $nonce = $this->quantity($this->rpc->request('eth_getTransactionCount', [$health['writer'], 'pending']));
+        $nonce = $reservedNonce ?? $this->quantity($this->rpc->request('eth_getTransactionCount', [$health['writer'], 'pending']));
+        if ($nonce < 0 || $nonce > 4503599627370495) {
+            throw new BesuConnectionException('invalid_nonce');
+        }
         $signed = $this->bridge->invoke('sign', [
             'chainId' => $health['chain_id'], 'contract' => $health['contract'], 'writer' => $health['writer'],
             'nonce' => $nonce, 'reference' => $reference, 'sha256' => $sha256,
