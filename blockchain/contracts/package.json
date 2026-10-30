@@ -1,0 +1,16 @@
+{
+  "name": "lgu-payroll-integrity-contracts",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=22.13.0" },
+  "scripts": {
+    "compile": "node scripts/compile.mjs",
+    "init:signers": "node scripts/init-signers.mjs",
+    "test": "node --test --test-concurrency=1 test/*.test.mjs",
+    "deploy": "node scripts/deploy.mjs",
+    "verify": "node scripts/verify.mjs"
+  },
+  "devDependencies": { "ethers": "6.17.0", "solc": "0.8.38" },
+  "overrides": { "tmp": "0.2.7" }
+}

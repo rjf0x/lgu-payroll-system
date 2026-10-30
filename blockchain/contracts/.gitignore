@@ -1,0 +1,4 @@
+/node_modules/
+/artifacts/
+/private/
+/deployments/*.pending.json

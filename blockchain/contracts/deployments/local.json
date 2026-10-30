@@ -1,0 +1,16 @@
+{
+  "chainId": 20261030,
+  "genesisHash": "0x9f286a7e67e2c9d4e7fbf0cf8276bbfbeefe328b04a7f3934cc3b80525570bf5",
+  "address": "0xDE556481A1DbF7a9bB1C152Ed574f122706dfFB6",
+  "administrator": "0xFDAecD74240ec4360e0489c81DbD610Fb36847A0",
+  "writer": "0xa577895fBcD474CCd24355cD3D443Be22CF9959e",
+  "nonce": 26,
+  "transactionHash": "0x433615052af8b0cae4e2cd76f6c50f1677c21ae68c833367a27c8caf13ec19a3",
+  "contract": "PayrollIntegrityRegistry",
+  "compiler": "0.8.38+commit.1835d247.Emscripten.clang",
+  "evmVersion": "shanghai",
+  "runtimeCodeHash": "0x4e819bf4e2c86496faca9f1822b003aa15724e608911b6e37daf3f1dfe80863e",
+  "blockNumber": 1062,
+  "blockHash": "0x96cccce7e9e4953b5c4720c3ba1d02f6e1bfb4beaa6b12ebc4e5668cce813241",
+  "abi": "../abi/PayrollIntegrityRegistry.json"
+}
