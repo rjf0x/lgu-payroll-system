@@ -158,6 +158,36 @@ button:disabled { cursor: not-allowed; opacity: .6; }
 .status-badge.is-inactive { color: #66553b; border-color: #e4d5bc; background: #fcf8f0; }
 .status-badge.is-demo { color: #87500e; border-color: #edd5a5; background: #fff9ed; }
 .status-dot { width: 7px; height: 7px; flex: 0 0 auto; border-radius: 50%; background: currentColor; }
+.status-badge.is-issue { color: #94241c; border-color: #edb8b0; background: #fff5f3; }
+.chain-status { position: relative; }
+.chain-status > summary { list-style: none; }
+.chain-status > summary::-webkit-details-marker { display: none; }
+.chain-status[open] > summary { border-color: var(--ui-primary); color: var(--ui-primary); }
+.chain-status-menu { position: absolute; top: calc(100% + 10px); right: 0; z-index: 40; width: min(340px, calc(100vw - 30px)); padding: 16px 18px; border: 1px solid var(--ui-border); border-radius: 10px; background: white; box-shadow: 0 14px 34px #0f172a1f; }
+.chain-status-menu dl { display: grid; gap: 9px; }
+.chain-status-menu dl > div { display: flex; align-items: baseline; justify-content: space-between; gap: 14px; font-size: 12px; }
+.chain-status-menu dt { color: var(--ui-muted); }
+.chain-status-menu dd { color: var(--ui-ink); font-weight: 600; text-align: right; }
+.chain-status-title { color: var(--ui-ink); font-size: 13px; font-weight: 700; }
+.chain-status-note { margin-top: 10px; color: var(--ui-muted); font-size: 11px; line-height: 1.6; }
+.chain-status-link { display: inline-flex; margin-top: 12px; color: var(--ui-primary); font-size: 12px; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
+.monitor-cards { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+.monitor-card-label { color: var(--ui-muted); font-size: 11px; font-weight: 700; letter-spacing: .6px; text-transform: uppercase; }
+.monitor-card-value { display: block; margin-top: 10px; color: var(--ui-ink); font-size: 22px; font-weight: 700; letter-spacing: -.4px; }
+.monitor-card dl { display: grid; gap: 6px; margin-top: 14px; }
+.monitor-card dt { color: var(--ui-muted); font-size: 11px; }
+.monitor-card dd { color: var(--ui-text); font-size: 12px; font-weight: 600; }
+.monitor-ledger { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1px; overflow: hidden; border: 1px solid var(--ui-border); border-radius: 10px; background: var(--ui-border); }
+.monitor-ledger > div { min-width: 0; padding: 16px; background: white; }
+.monitor-ledger dt { color: var(--ui-muted); font-size: 11px; }
+.monitor-ledger dd { margin-top: 6px; color: var(--ui-ink); font-size: 13px; font-weight: 600; overflow-wrap: anywhere; }
+.monitor-note { margin-top: 14px; color: var(--ui-muted); font-size: 12px; line-height: 1.7; }
+.monitor-action { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; margin-top: 18px; }
+.monitor-action-hint { color: var(--ui-muted); font-size: 12px; }
+.monitor-filters { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; align-items: end; margin-top: 6px; margin-bottom: 14px; }
+.monitor-filters label { display: block; margin-bottom: 6px; }
+.monitor-filters input, .monitor-filters select { width: 100%; }
+.mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; overflow-wrap: anywhere; }
 .empty-state { padding: 48px 24px; text-align: center; border: 1px dashed #c5cfdd; border-radius: var(--ui-radius); background: white; }
 .empty-state .card-icon { margin: 0 auto 18px; }
 .empty-state p { margin-top: 8px; color: var(--ui-muted); font-size: 14px; }
@@ -208,6 +238,7 @@ button:disabled { cursor: not-allowed; opacity: .6; }
     .welcome-mark { width: 110px; height: 110px; }
     .welcome-mark .ui-icon { width: 64px; height: 64px; }
     .workspace-card { padding: 20px; }
+    .monitor-cards, .monitor-ledger, .monitor-filters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (max-width: 900px) {
     .app-sidebar { position: static; width: 100%; padding: 20px; }
@@ -239,6 +270,7 @@ button:disabled { cursor: not-allowed; opacity: .6; }
     .workspace-content h1 { font-size: 26px; }
     .workspace-content :is(section, article, form).bg-white { padding: 20px; }
     .workspace-cards { grid-template-columns: 1fr; }
+    .monitor-cards, .monitor-ledger, .monitor-filters { grid-template-columns: 1fr; }
     .welcome-panel { padding: 24px; }
     .welcome-panel h2 { font-size: 24px; }
     .welcome-mark { display: none; }

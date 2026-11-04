@@ -623,3 +623,21 @@ BESU-04 backend connectivity and offline signing: see [handoff](docs/BESU_04_HAN
 BESU-05 automatic anchoring is implemented: [setup, scheduler, confirmation and limits](docs/BESU_05_HANDOFF.md). Enable BESU_AUTOMATIC_ANCHORING after migration, then run Laravel's scheduler or php artisan besu:anchor. No BESU-06 UI is included.
 
 BESU-06 integrity verification UI is implemented: [handoff and validation limits](docs/BESU_06_HANDOFF.md). Authorized users can verify finalized payroll against fresh Besu evidence and inspect transaction/check history. Live end-to-end validation currently requires resolving the existing validator clock regression.
+
+## Blockchain monitoring and verification center
+
+The administrator-only `/admin/blockchain` page is now a read-only monitoring and
+verification center: ledger integrity overview, the retained ledger's latest and
+previous record digests, a searchable/filterable payroll hash-anchor table,
+submission history, immutable verification history and the preserved anchoring
+journal. Active administrators can initiate a read-only ledger verification that
+recomputes every preserved record digest and correction lineage link; it never
+repairs, rewrites or deletes retained audit records and never contacts a network.
+The workspace navbar indicator replaces the former "Blockchain online" label with
+Ledger Operational, Integrity Verified, Integrity Issue, Verification Required or
+Service Unavailable, and its dropdown separates ledger availability, ledger
+integrity, latest verification, external connectivity and the latest successful
+anchor. The schema defines no previous-hash chain and no external confirmation is
+claimed. Apply `php artisan migrate` before use. See
+[the monitoring center report](docs/BLOCKCHAIN_MONITORING_CENTER.md) for files,
+database change, security notes, tests and remaining limits.

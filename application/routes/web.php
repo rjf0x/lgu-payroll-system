@@ -40,6 +40,9 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::post('/logout', [AuthController::class, 'destroy'])->name('logout');
     Route::view('/dashboard', 'dashboard')->name('dashboard');
     Route::get('admin/blockchain', [BesuOperationsController::class, 'index'])->middleware('can:manage-blockchain')->name('besu-operations.index');
+    Route::post('admin/blockchain/verify', [BesuOperationsController::class, 'verify'])->middleware(['can:manage-blockchain', 'throttle:10,1'])->name('besu-operations.verify');
+    Route::get('admin/blockchain/anchors/{commitment}', [BesuOperationsController::class, 'showAnchor'])->whereNumber('commitment')->middleware('can:manage-blockchain')->name('besu-operations.anchors.show');
+    Route::get('admin/blockchain/verifications/{verification}', [BesuOperationsController::class, 'showVerification'])->whereNumber('verification')->middleware('can:manage-blockchain')->name('besu-operations.verifications.show');
     Route::resource('users', UserController::class)->except(['show', 'destroy'])->middleware('can:manage-users');
     Route::resource('employees', EmployeeController::class)->except('destroy');
     Route::get('payroll-batches/{batch}/corrections', [PayrollCorrectionController::class, 'index'])->name('payroll-corrections.index');

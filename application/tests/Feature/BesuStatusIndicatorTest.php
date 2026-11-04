@@ -39,13 +39,24 @@ class BesuStatusIndicatorTest extends TestCase
         }]));
     }
 
-    public function test_indicator_is_hidden_when_blockchain_is_disabled(): void
+    public function test_indicator_shows_ledger_state_without_probing_when_blockchain_is_disabled(): void
     {
         config(['besu.enabled' => false]);
         Http::fake();
         $this->actingUser();
-        $this->get('/dashboard')->assertOk()->assertDontSee('Blockchain online')->assertDontSee('Blockchain offline');
+        // The ledger indicator is independent of external anchoring and does not claim online status.
+        $this->get('/dashboard')->assertOk()->assertSee('Ledger Operational')->assertSee('Not configured')->assertDontSee('Blockchain online');
         Http::assertNothingSent();
+    }
+
+    public function test_indicator_is_visible_for_all_roles_but_the_management_link_is_admin_only(): void
+    {
+        $user = User::factory()->create(['role' => Role::PayrollOfficer]);
+        $this->actingAs($user)->withSession(['auth_version' => $user->auth_version]);
+        $this->get('/dashboard')->assertOk()->assertSee('Ledger Operational')->assertDontSee(route('besu-operations.index'));
+
+        $this->actingUser();
+        $this->get('/dashboard')->assertOk()->assertSee(route('besu-operations.index'));
     }
 
     public function test_indicator_reports_a_reachable_node(): void
@@ -53,7 +64,7 @@ class BesuStatusIndicatorTest extends TestCase
         $this->healthy();
         $this->actingUser();
         $this->assertSame(['online' => true, 'block_number' => 42], app(BesuStatus::class)->check());
-        $this->get('/dashboard')->assertOk()->assertSee('Blockchain online');
+        $this->get('/dashboard')->assertOk()->assertSee('Ledger Operational')->assertSee('Reachable');
     }
 
     public function test_indicator_reports_an_unreachable_node_without_leaking_details(): void
@@ -61,7 +72,7 @@ class BesuStatusIndicatorTest extends TestCase
         Http::fake(fn () => throw new ConnectionException('secret provider details'));
         $this->actingUser();
         $this->assertSame(['online' => false, 'block_number' => null], app(BesuStatus::class)->check());
-        $this->get('/dashboard')->assertOk()->assertSee('Blockchain offline')->assertDontSee('secret');
+        $this->get('/dashboard')->assertOk()->assertSee('Ledger Operational')->assertSee('Unreachable')->assertDontSee('secret');
     }
 
     public function test_indicator_treats_a_different_chain_as_offline(): void
