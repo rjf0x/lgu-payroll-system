@@ -37,5 +37,7 @@
         <env name="TELESCOPE_ENABLED" value="false"/>
         <env name="NIGHTWATCH_ENABLED" value="false"/>
         <env name="BESU_AUTOMATIC_ANCHORING" value="false" force="true"/>
+        <!-- Keep the navbar status probe offline unless a test enables Besu explicitly. -->
+        <env name="BESU_ENABLED" value="false" force="true"/>
     </php>
 </phpunit>

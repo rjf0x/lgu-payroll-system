@@ -157,6 +157,7 @@ button:disabled { cursor: not-allowed; opacity: .6; }
 .status-badge.is-active { color: #17634e; border-color: #bbdcca; background: #f0f9f4; }
 .status-badge.is-inactive { color: #66553b; border-color: #e4d5bc; background: #fcf8f0; }
 .status-badge.is-demo { color: #87500e; border-color: #edd5a5; background: #fff9ed; }
+.status-dot { width: 7px; height: 7px; flex: 0 0 auto; border-radius: 50%; background: currentColor; }
 .empty-state { padding: 48px 24px; text-align: center; border: 1px dashed #c5cfdd; border-radius: var(--ui-radius); background: white; }
 .empty-state .card-icon { margin: 0 auto 18px; }
 .empty-state p { margin-top: 8px; color: var(--ui-muted); font-size: 14px; }
@@ -231,7 +232,7 @@ button:disabled { cursor: not-allowed; opacity: .6; }
     .topbar-title > span > strong { display: block; font-size: 13px; }
     .breadcrumb-separator { display: none; }
     .topbar-actions { gap: 6px; }
-    .topbar-actions > .role-badge { display: none; }
+    .topbar-actions > .role-badge, .topbar-actions > .chain-status { display: none; }
     .workspace-content { padding: 24px 16px; }
     .app-topbar { padding: 8px 12px; min-height: 72px; }
     .app-footer { padding: 18px 16px; flex-direction: column; gap: 4px; }

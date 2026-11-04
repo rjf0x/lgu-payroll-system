@@ -23,7 +23,7 @@
         @endphp
         <header class="app-topbar">
             <div class="topbar-title"><button type="button" class="navigation-toggle" data-navigation-toggle aria-controls="primary-navigation" aria-expanded="true" aria-label="Toggle navigation"><x-ui.icon name="menu" /></button><span>Workspace <span class="breadcrumb-separator">/</span> <strong>{{ $sectionTitle }}</strong></span></div>
-            <div class="topbar-actions"><span class="role-badge">{{ auth()->user()->role->label() }}</span><form method="POST" action="{{ route('logout') }}">@csrf<button class="sign-out"><x-ui.icon name="logout" /><span>Sign out</span></button></form></div>
+            <div class="topbar-actions"><x-ui.blockchain-status /><span class="role-badge">{{ auth()->user()->role->label() }}</span><form method="POST" action="{{ route('logout') }}">@csrf<button class="sign-out"><x-ui.icon name="logout" /><span>Sign out</span></button></form></div>
         </header>
         <aside class="app-sidebar" id="primary-navigation" aria-label="Workspace navigation">
             <a href="{{ route('dashboard') }}" class="brand"><span class="brand-mark"><x-ui.icon name="building" /></span><span>LGU Payroll<small>Accounting Office</small></span></a>
