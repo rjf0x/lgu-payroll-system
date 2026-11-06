@@ -52,6 +52,20 @@ class DatabaseSchemaTest extends TestCase
         }
     }
 
+    public function test_every_model_resolves_to_an_existing_table(): void
+    {
+        $models = collect(glob(app_path('Models/*.php')))
+            ->map(fn (string $file): string => 'App\\Models\\'.basename($file, '.php'));
+
+        $this->assertNotEmpty($models);
+
+        foreach ($models as $class) {
+            $table = (new $class)->getTable();
+
+            $this->assertTrue(Schema::hasTable($table), "{$class} resolves to missing table `{$table}`.");
+        }
+    }
+
     public function test_employee_compensation_relationship_chain_resolves(): void
     {
         $department = Department::factory()->create();
