@@ -22,6 +22,8 @@ class EmploymentHistory extends Model
 {
     use HasFactory;
 
+    protected $table = 'employment_history';
+
     public const UPDATED_AT = null;
 
     protected $primaryKey = 'history_id';

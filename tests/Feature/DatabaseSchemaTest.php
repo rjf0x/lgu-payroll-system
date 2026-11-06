@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\CompensationProfile;
 use App\Models\Department;
 use App\Models\Employee;
+use App\Models\EmploymentHistory;
 use App\Models\EmploymentRecord;
 use App\Models\EmploymentType;
 use App\Models\Position;
@@ -94,6 +95,14 @@ class DatabaseSchemaTest extends TestCase
         $this->assertTrue($record->employmentType->is($employmentType));
         $this->assertSame('45000.00', $profile->gradeStep->monthly_salary);
         $this->assertFalse((float) $profile->service_fraction !== 1.0);
+    }
+
+    public function test_employment_history_uses_documented_table(): void
+    {
+        $record = EmploymentRecord::factory()->create();
+
+        $this->assertSame('employment_history', (new EmploymentHistory)->getTable());
+        $this->assertCount(0, $record->history()->get());
     }
 
     public function test_user_authenticates_with_username_and_password_hash(): void
