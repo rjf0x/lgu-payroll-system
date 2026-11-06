@@ -65,6 +65,9 @@
                 <div class="px-3 pt-4 pb-1 text-[10px] font-bold uppercase tracking-wider text-emerald-300">Payroll</div>
                 <x-nav-link :href="route('payroll-periods.index')" :active="request()->routeIs('payroll-periods.*')">Payroll Periods</x-nav-link>
                 <x-nav-link :href="route('payroll-runs.index')" :active="request()->routeIs('payroll-runs.*') || request()->routeIs('payroll-details.*')">Monthly Payroll</x-nav-link>
+                @can('payroll.approve')
+                    <x-nav-link :href="route('payroll-runs.index', ['status' => 'PENDING_APPROVAL'])" :active="request()->query('status') === 'PENDING_APPROVAL'">Pending Approvals</x-nav-link>
+                @endcan
             @endcan
 
             @can('users.manage')

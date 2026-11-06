@@ -5,7 +5,7 @@
 
 @section('content')
     <div class="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-        <dl class="grid grid-cols-2 gap-x-8 gap-y-2 text-sm sm:grid-cols-4">
+        <dl class="grid grid-cols-2 gap-x-8 gap-y-2 text-sm sm:grid-cols-3">
             <div>
                 <dt class="text-xs font-semibold uppercase tracking-wide text-slate-500">Status</dt>
                 <dd class="mt-1 font-semibold">{{ $run->status }}</dd>
@@ -22,25 +22,62 @@
                 <dt class="text-xs font-semibold uppercase tracking-wide text-slate-500">Processed</dt>
                 <dd class="mt-1">{{ $run->processed_at?->format('M d, Y g:i A') ?? '—' }}</dd>
             </div>
+            <div>
+                <dt class="text-xs font-semibold uppercase tracking-wide text-slate-500">Submitted By</dt>
+                <dd class="mt-1">{{ $run->submittedBy?->username ?? '—' }}</dd>
+            </div>
+            <div>
+                <dt class="text-xs font-semibold uppercase tracking-wide text-slate-500">Finalized By</dt>
+                <dd class="mt-1">{{ $run->finalizedBy?->username ?? '—' }}</dd>
+            </div>
         </dl>
 
-        @can('payroll.prepare')
-            @if ($run->isEditable())
-                <div class="flex gap-2">
+        <div class="flex flex-wrap items-center gap-2">
+            @can('payroll.prepare')
+                @if ($run->isEditable())
                     <form method="POST" action="{{ route('payroll-runs.compute', $run) }}">
                         @csrf
                         <button class="rounded-md bg-emerald-700 px-4 py-2 text-xs font-semibold text-white hover:bg-emerald-800">
                             {{ $run->details->isEmpty() ? 'Compute payroll' : 'Recompute' }}
                         </button>
                     </form>
+                    @if ($canSubmit)
+                        <form method="POST" action="{{ route('payroll-runs.submit', $run) }}">
+                            @csrf
+                            <button class="rounded-md border border-emerald-300 px-4 py-2 text-xs font-semibold text-emerald-700 hover:bg-emerald-50">Submit for approval</button>
+                        </form>
+                    @endif
                     <form method="POST" action="{{ route('payroll-runs.destroy', $run) }}" onsubmit="return confirm('Delete this draft run?')">
                         @csrf
                         @method('DELETE')
                         <button class="rounded-md border border-rose-200 px-4 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50">Delete</button>
                     </form>
-                </div>
+                @endif
+            @endcan
+
+            @if ($canReview)
+                <form method="POST" action="{{ route('payroll-runs.approve', $run) }}" class="flex items-center gap-2">
+                    @csrf
+                    <input type="text" name="remarks" placeholder="Remarks (optional)" class="rounded-md border border-slate-300 px-2 py-1 text-xs">
+                    <button class="rounded-md bg-emerald-700 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-800">Approve</button>
+                </form>
+                <form method="POST" action="{{ route('payroll-runs.return', $run) }}">
+                    @csrf
+                    <button class="rounded-md border border-amber-300 px-3 py-2 text-xs font-semibold text-amber-700 hover:bg-amber-50">Return</button>
+                </form>
+                <form method="POST" action="{{ route('payroll-runs.reject', $run) }}">
+                    @csrf
+                    <button class="rounded-md border border-rose-200 px-3 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50">Reject</button>
+                </form>
             @endif
-        @endcan
+
+            @if ($canFinalize)
+                <form method="POST" action="{{ route('payroll-runs.finalize', $run) }}">
+                    @csrf
+                    <button class="rounded-md bg-slate-800 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-900">Finalize</button>
+                </form>
+            @endif
+        </div>
     </div>
 
     @if (! $run->details->isEmpty())
@@ -109,4 +146,30 @@
             No payroll details yet. Click <strong>Compute payroll</strong> to generate them.
         </div>
     @endif
+
+    <div class="mt-5 rounded-xl border border-slate-200 bg-white shadow-sm">
+        <div class="border-b border-slate-100 px-5 py-3 text-sm font-semibold text-slate-700">Approval History</div>
+        <table class="min-w-full divide-y divide-slate-200 text-sm">
+            <thead class="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+                <tr>
+                    <th class="px-5 py-2 text-left">Action</th>
+                    <th class="px-5 py-2 text-left">Acted By</th>
+                    <th class="px-5 py-2 text-left">When</th>
+                    <th class="px-5 py-2 text-left">Remarks</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+                @forelse ($run->approvals as $approval)
+                    <tr>
+                        <td class="px-5 py-2 font-semibold text-slate-700">{{ $approval->action }}</td>
+                        <td class="px-5 py-2 text-slate-600">{{ $approval->actedBy?->username }}</td>
+                        <td class="px-5 py-2 text-slate-500">{{ $approval->acted_at?->format('M d, Y g:i A') }}</td>
+                        <td class="px-5 py-2 text-slate-500">{{ $approval->remarks ?: '—' }}</td>
+                    </tr>
+                @empty
+                    <tr><td colspan="4" class="px-5 py-6 text-center text-slate-500">No approval actions yet.</td></tr>
+                @endforelse
+            </tbody>
+        </table>
+    </div>
 @endsection

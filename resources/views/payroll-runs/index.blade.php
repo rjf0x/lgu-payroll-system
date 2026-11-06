@@ -4,8 +4,15 @@
 @section('heading', 'Monthly Payroll Runs')
 
 @section('content')
-    <div class="mb-4 flex items-center justify-between">
-        <p class="text-sm text-slate-500">Payroll runs per period, with computation and approval status.</p>
+    <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <form method="GET" class="flex items-center gap-2">
+            <select name="status" onchange="this.form.submit()" class="rounded-md border border-slate-300 px-3 py-2 text-sm">
+                <option value="">All statuses</option>
+                @foreach (['DRAFT', 'PENDING_APPROVAL', 'RETURNED', 'REJECTED', 'APPROVED', 'FINALIZED'] as $option)
+                    <option value="{{ $option }}" @selected($status === $option)>{{ str_replace('_', ' ', $option) }}</option>
+                @endforeach
+            </select>
+        </form>
         @can('payroll.prepare')
             <a href="{{ route('payroll-runs.create') }}" class="rounded-md bg-emerald-700 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-800">+ New Payroll Run</a>
         @endcan

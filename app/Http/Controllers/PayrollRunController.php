@@ -6,21 +6,27 @@ use App\Http\Requests\PayrollRunRequest;
 use App\Models\PayrollEmployerContribution;
 use App\Models\PayrollPeriod;
 use App\Models\PayrollRun;
+use App\Services\PayrollApprovalService;
 use App\Services\PayrollComputationService;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class PayrollRunController extends Controller
 {
-    public function index(): View
+    public function index(Request $request): View
     {
+        $status = $request->string('status')->toString() ?: null;
+
         $runs = PayrollRun::query()
             ->with(['payrollPeriod', 'createdBy'])
             ->withCount('details')
+            ->when($status !== null, fn ($query) => $query->where('status', $status))
             ->orderByDesc('payroll_run_id')
-            ->paginate(15);
+            ->paginate(15)
+            ->withQueryString();
 
-        return view('payroll-runs.index', compact('runs'));
+        return view('payroll-runs.index', compact('runs', 'status'));
     }
 
     public function create(): View
@@ -48,15 +54,19 @@ class PayrollRunController extends Controller
             ->with('status', 'Payroll run created. Compute it to generate payroll details.');
     }
 
-    public function show(PayrollRun $payrollRun): View
+    public function show(PayrollRun $payrollRun, PayrollApprovalService $approval): View
     {
         $payrollRun->load([
             'payrollPeriod',
             'createdBy',
+            'submittedBy',
+            'finalizedBy',
             'details.employmentRecord.position',
+            'approvals.actedBy',
         ]);
 
         $detailIds = $payrollRun->details->pluck('payroll_detail_id');
+        $user = auth()->user();
 
         return view('payroll-runs.show', [
             'run' => $payrollRun,
@@ -64,6 +74,11 @@ class PayrollRunController extends Controller
             'totalDeductions' => (float) $payrollRun->details->sum('total_deductions'),
             'totalNet' => (float) $payrollRun->details->sum('net_pay'),
             'employerContributions' => (float) PayrollEmployerContribution::whereIn('payroll_detail_id', $detailIds)->sum('amount'),
+            'canSubmit' => $user->can('payroll.submit') && $payrollRun->isEditable() && $payrollRun->details->isNotEmpty(),
+            'canReview' => $user->can('payroll.approve')
+                && $payrollRun->status === PayrollRun::STATUS_PENDING_APPROVAL
+                && $approval->isIndependentReviewer($payrollRun, $user),
+            'canFinalize' => $user->can('payroll.finalize') && $payrollRun->status === PayrollRun::STATUS_APPROVED,
         ]);
     }
 

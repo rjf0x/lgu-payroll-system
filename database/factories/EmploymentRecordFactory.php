@@ -25,7 +25,7 @@ class EmploymentRecordFactory extends Factory
             'position_id' => Position::factory(),
             'employment_type_id' => EmploymentType::factory(),
             'appointment_number' => fake()->optional()->bothify('APPT-####'),
-            'start_date' => fake()->dateTimeBetween('-10 years', '-1 month')->format('Y-m-d'),
+            'start_date' => '2024-01-01',
             'end_date' => null,
             'employment_status' => EmploymentRecord::STATUS_ACTIVE,
         ];

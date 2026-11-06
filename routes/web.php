@@ -16,6 +16,7 @@ use App\Http\Controllers\LeaveApplicationController;
 use App\Http\Controllers\LeaveBalanceController;
 use App\Http\Controllers\LeaveTransactionController;
 use App\Http\Controllers\LeaveTypeController;
+use App\Http\Controllers\PayrollApprovalController;
 use App\Http\Controllers\PayrollDetailController;
 use App\Http\Controllers\PayrollPeriodController;
 use App\Http\Controllers\PayrollRunController;
@@ -148,5 +149,17 @@ Route::middleware('auth')->group(function () {
         Route::put('payroll-runs/{payroll_run}/details/{payroll_detail}', [PayrollDetailController::class, 'update'])
             ->scopeBindings()->name('payroll-details.update');
     });
+
+    // Payroll approval workflow (permission + separation of duties enforced in the service).
+    Route::post('payroll-runs/{payroll_run}/submit', [PayrollApprovalController::class, 'submit'])
+        ->whereNumber('payroll_run')->middleware('can:payroll.submit')->name('payroll-runs.submit');
+    Route::post('payroll-runs/{payroll_run}/approve', [PayrollApprovalController::class, 'approve'])
+        ->whereNumber('payroll_run')->middleware('can:payroll.approve')->name('payroll-runs.approve');
+    Route::post('payroll-runs/{payroll_run}/reject', [PayrollApprovalController::class, 'reject'])
+        ->whereNumber('payroll_run')->middleware('can:payroll.reject')->name('payroll-runs.reject');
+    Route::post('payroll-runs/{payroll_run}/return', [PayrollApprovalController::class, 'returnForCorrection'])
+        ->whereNumber('payroll_run')->middleware('can:payroll.review')->name('payroll-runs.return');
+    Route::post('payroll-runs/{payroll_run}/finalize', [PayrollApprovalController::class, 'finalize'])
+        ->whereNumber('payroll_run')->middleware('can:payroll.finalize')->name('payroll-runs.finalize');
 
 });
