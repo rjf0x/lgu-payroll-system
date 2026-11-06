@@ -1,34 +1,28 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Dashboard | LGU Payroll</title>
-</head>
+@extends('layouts.app')
 
-<body>
+@section('title', 'Dashboard')
+@section('heading', 'Dashboard')
 
-    <h1>Welcome to LGU Payroll System!</h1>
+@section('content')
+    <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+        <h2 class="text-base font-semibold text-slate-800">Welcome, {{ auth()->user()->username }}</h2>
+        <p class="mt-1 text-sm text-slate-500">
+            You are signed in to the LGU Payroll Management System.
+        </p>
 
-    <p>Signed in as <strong>{{ auth()->user()->username }}</strong>.</p>
-
-    <p>
-        Role(s):
-        @forelse (auth()->user()->roles as $role)
-            <span>{{ $role->role_name }}</span>@if (! $loop->last), @endif
-        @empty
-            <em>none assigned</em>
-        @endforelse
-    </p>
-
-    <p>
-        Permissions: {{ auth()->user()->permissionNames()->implode(', ') ?: 'none' }}
-    </p>
-
-    <form method="POST" action="{{ route('logout') }}">
-        @csrf
-
-        <button type="submit">Logout</button>
-    </form>
-
-</body>
-</html>
+        <dl class="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-2">
+            <div>
+                <dt class="text-xs font-semibold uppercase tracking-wide text-slate-500">Role(s)</dt>
+                <dd class="mt-1 text-sm text-slate-800">
+                    {{ auth()->user()->roles->pluck('role_name')->implode(', ') ?: 'None assigned' }}
+                </dd>
+            </div>
+            <div>
+                <dt class="text-xs font-semibold uppercase tracking-wide text-slate-500">Permissions</dt>
+                <dd class="mt-1 text-sm text-slate-800">
+                    {{ auth()->user()->permissionNames()->implode(', ') ?: 'None' }}
+                </dd>
+            </div>
+        </dl>
+    </div>
+@endsection
