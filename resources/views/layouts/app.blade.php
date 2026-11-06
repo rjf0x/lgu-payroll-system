@@ -35,6 +35,16 @@
                 <x-nav-link :href="route('salary-schedules.index')" :active="request()->routeIs('salary-schedules.*')">Salary Schedules</x-nav-link>
                 <x-nav-link :href="route('salary-grade-steps.index')" :active="request()->routeIs('salary-grade-steps.*')">Salary Grade Steps</x-nav-link>
                 <x-nav-link :href="route('compensation-profiles.index')" :active="request()->routeIs('compensation-profiles.*')">Compensation Profiles</x-nav-link>
+
+                <div class="px-3 pt-4 pb-1 text-[10px] font-bold uppercase tracking-wider text-emerald-300">Earnings &amp; Deductions</div>
+                <x-nav-link :href="route('earning-types.index')" :active="request()->routeIs('earning-types.*')">Earning Types</x-nav-link>
+                <x-nav-link :href="route('employee-earning-assignments.index')" :active="request()->routeIs('employee-earning-assignments.*')">Employee Earnings</x-nav-link>
+                <x-nav-link :href="route('deduction-types.index')" :active="request()->routeIs('deduction-types.*')">Deduction Types</x-nav-link>
+                <x-nav-link :href="route('employee-deduction-assignments.index')" :active="request()->routeIs('employee-deduction-assignments.*')">Employee Deductions</x-nav-link>
+
+                <div class="px-3 pt-4 pb-1 text-[10px] font-bold uppercase tracking-wider text-emerald-300">Statutory</div>
+                <x-nav-link :href="route('tax-brackets.index')" :active="request()->routeIs('tax-brackets.*')">Tax Brackets</x-nav-link>
+                <x-nav-link :href="route('contribution-rates.index')" :active="request()->routeIs('contribution-rates.*')">Contribution Rates</x-nav-link>
             @endcan
 
             @can('attendance.manage')

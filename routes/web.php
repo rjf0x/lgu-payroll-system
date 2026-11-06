@@ -4,8 +4,13 @@ use App\Http\Controllers\AttendanceAdjustmentController;
 use App\Http\Controllers\AttendanceRecordController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\CompensationProfileController;
+use App\Http\Controllers\ContributionRateController;
+use App\Http\Controllers\DeductionTypeController;
 use App\Http\Controllers\DepartmentController;
+use App\Http\Controllers\EarningTypeController;
 use App\Http\Controllers\EmployeeController;
+use App\Http\Controllers\EmployeeDeductionAssignmentController;
+use App\Http\Controllers\EmployeeEarningAssignmentController;
 use App\Http\Controllers\EmploymentRecordController;
 use App\Http\Controllers\LeaveApplicationController;
 use App\Http\Controllers\LeaveBalanceController;
@@ -14,6 +19,7 @@ use App\Http\Controllers\LeaveTypeController;
 use App\Http\Controllers\PositionController;
 use App\Http\Controllers\SalaryGradeStepController;
 use App\Http\Controllers\SalaryScheduleController;
+use App\Http\Controllers\TaxBracketController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -61,6 +67,23 @@ Route::middleware('auth')->group(function () {
         Route::resource($uri, $controller)
             ->middlewareFor(['index', 'show'], 'can:employees.view')
             ->middlewareFor(['create', 'store', 'edit', 'update', 'destroy'], "can:{$writePermission}");
+    }
+
+    // Earnings, deductions, and statutory configuration (no show screens).
+    $configResources = [
+        ['earning-types', EarningTypeController::class],
+        ['employee-earning-assignments', EmployeeEarningAssignmentController::class],
+        ['deduction-types', DeductionTypeController::class],
+        ['employee-deduction-assignments', EmployeeDeductionAssignmentController::class],
+        ['tax-brackets', TaxBracketController::class],
+        ['contribution-rates', ContributionRateController::class],
+    ];
+
+    foreach ($configResources as [$uri, $controller]) {
+        Route::resource($uri, $controller)
+            ->except('show')
+            ->middlewareFor('index', 'can:employees.view')
+            ->middlewareFor(['create', 'store', 'edit', 'update', 'destroy'], 'can:compensation.manage');
     }
 
     Route::resource('users', UserController::class)->middleware('can:users.manage');
