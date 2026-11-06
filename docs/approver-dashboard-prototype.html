@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LGU Payroll System | Approver Dashboard</title>
+<style>
+
+:root{--green:#174c3a;--green2:#22684f;--mint:#e8f2ed;--bg:#f4f7f5;--ink:#1b2a23;--muted:#718078;--line:#e3eae6;--white:#fff;--amber:#9a6412;--amberbg:#fff5df;--red:#a83d3d;--redbg:#fff0ef;--blue:#315f94;--bluebg:#edf4fc;--shadow:0 8px 28px rgba(24,55,41,.07)}
+*{box-sizing:border-box}body{margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink)}button,input,select{font:inherit}button{cursor:pointer}.app{display:flex;min-height:100vh}.sidebar{width:252px;background:#143f31;color:#eaf3ee;display:flex;flex-direction:column;flex-shrink:0}.brand{height:76px;padding:17px 20px;display:flex;gap:11px;align-items:center;border-bottom:1px solid rgba(255,255,255,.12)}.brandmark{width:39px;height:39px;background:#f5fbf7;color:var(--green);border-radius:11px;display:grid;place-items:center;font-size:21px;font-weight:800}.brandname{font-weight:750;font-size:15px;letter-spacing:.1px}.brandtag{font-size:10px;color:#b7d0c2;margin-top:3px}.navlabel{padding:21px 20px 8px;font-size:10px;text-transform:uppercase;letter-spacing:1.15px;color:#91b5a2;font-weight:700}.nav{padding:0 11px;display:grid;gap:3px}.nav button{border:0;background:transparent;color:#d6e5dc;text-align:left;padding:11px 12px;border-radius:9px;display:flex;gap:12px;align-items:center;font-size:13px}.nav button:hover,.nav button.active{background:#286047;color:white}.nav .ico{width:19px;text-align:center;font-size:16px}.side-bottom{margin-top:auto;padding:15px;border-top:1px solid rgba(255,255,255,.12)}.profile{display:flex;gap:10px;align-items:center}.avatar{width:35px;height:35px;border-radius:50%;background:#d9ebe1;color:#174c3a;font-weight:800;display:grid;place-items:center;font-size:12px}.profile strong{display:block;font-size:12px}.profile small{font-size:10px;color:#a9c6b7}.main{min-width:0;flex:1}.topbar{height:76px;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 30px;position:sticky;top:0;z-index:10}.crumb{font-size:12px;color:var(--muted)}.crumb b{color:var(--ink)}.topright{display:flex;align-items:center;gap:13px}.role-pill{background:var(--mint);color:var(--green);font-size:11px;font-weight:750;padding:7px 11px;border-radius:30px}.iconbtn{border:1px solid var(--line);background:#fff;border-radius:9px;width:36px;height:36px;color:#516359}.content{padding:28px 30px 42px;max-width:1600px;margin:auto}.pagehead{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;margin-bottom:22px}.eyebrow{font-size:10px;color:var(--green2);font-weight:800;letter-spacing:1.2px;text-transform:uppercase}.pagehead h1{font-size:25px;margin:5px 0 5px;letter-spacing:-.6px}.subtitle{margin:0;color:var(--muted);font-size:13px}.head-actions{display:flex;gap:9px;flex-wrap:wrap}.btn{border:1px solid var(--line);background:#fff;color:#30453a;border-radius:9px;padding:10px 14px;font-size:12px;font-weight:700;display:inline-flex;gap:7px;align-items:center}.btn:hover{border-color:#b8cbbf;background:#fbfdfc}.btn.primary{background:var(--green);border-color:var(--green);color:#fff}.btn.primary:hover{background:var(--green2)}.btn.soft{background:var(--mint);color:var(--green);border-color:#d4e6dc}.btn.danger{color:var(--red);background:var(--redbg);border-color:#f4d9d6}.btn:disabled{opacity:.45;cursor:not-allowed}.notice{background:#f0f6f2;border:1px solid #dceae1;border-radius:11px;padding:12px 15px;color:#436252;font-size:12px;display:flex;gap:10px;align-items:flex-start;margin-bottom:19px}.notice strong{color:#214d38}.grid{display:grid;gap:15px}.stats{grid-template-columns:repeat(4,minmax(0,1fr));margin-bottom:19px}.card{background:#fff;border:1px solid var(--line);border-radius:13px;box-shadow:0 2px 8px rgba(20,50,36,.025)}.stat{padding:17px 18px}.stat-top{display:flex;justify-content:space-between;align-items:center;color:var(--muted);font-size:11px}.stat-icon{width:32px;height:32px;border-radius:9px;display:grid;place-items:center;background:var(--mint);color:var(--green);font-size:16px}.stat-value{font-size:25px;font-weight:800;letter-spacing:-.7px;margin-top:11px}.stat-note{font-size:10px;color:var(--muted);margin-top:4px}.two-col{grid-template-columns:1.35fr .85fr}.panel{padding:18px}.panelhead{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:15px}.panelhead h3{font-size:14px;margin:0}.panelhead p{font-size:11px;color:var(--muted);margin:4px 0 0}.status{font-size:10px;font-weight:750;border-radius:20px;padding:5px 9px;display:inline-block;background:#edf1ee;color:#617168;white-space:nowrap}.status.draft{background:#edf4fc;color:#315f94}.status.pending{background:var(--amberbg);color:var(--amber)}.status.approved{background:#e7f5eb;color:#277347}.status.returned{background:var(--redbg);color:var(--red)}.activity{display:grid;gap:14px}.activity-item{display:flex;gap:10px;align-items:flex-start}.dot{width:8px;height:8px;border-radius:50%;background:#6ca486;margin-top:5px;flex-shrink:0}.activity-item strong{font-size:11px;display:block}.activity-item small{font-size:10px;color:var(--muted)}.quickgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}.quick{padding:13px;border:1px solid var(--line);border-radius:10px;background:#fbfdfc;text-align:left;color:var(--ink)}.quick:hover{border-color:#a9c9b7;background:#f2f8f4}.quick .qico{font-size:17px;color:var(--green)}.quick strong{display:block;font-size:11px;margin-top:8px}.quick small{font-size:10px;color:var(--muted)}.section{display:none}.section.active{display:block}.toolbar{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:14px}.field{border:1px solid var(--line);border-radius:8px;padding:9px 11px;background:#fff;color:var(--ink);font-size:12px;outline:none}.field:focus{border-color:#83aa92;box-shadow:0 0 0 3px #e9f3ed}.search{min-width:230px}.tablewrap{overflow:auto;border:1px solid var(--line);border-radius:11px;background:#fff}.data{border-collapse:collapse;width:100%;font-size:11px;white-space:nowrap}.data th{background:#f5f8f6;color:#637369;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.45px;padding:12px 13px;border-bottom:1px solid var(--line);position:sticky;top:0}.data td{padding:12px 13px;border-bottom:1px solid #edf1ee}.data tr:last-child td{border-bottom:0}.data tr:hover td{background:#fcfefd}.namecell strong{display:block;font-size:11px}.namecell small{color:var(--muted);font-size:10px}.money{font-variant-numeric:tabular-nums;text-align:right}.muted{color:var(--muted)}.actions{display:flex;gap:6px}.mini{border:1px solid var(--line);background:#fff;border-radius:7px;padding:6px 9px;font-size:10px;font-weight:700;color:#365343}.mini:hover{background:var(--mint)}.progressline{height:7px;border-radius:20px;background:#edf2ee;overflow:hidden}.progressline span{height:100%;display:block;background:#4c9870;border-radius:20px}.empty{padding:42px;text-align:center;color:var(--muted);font-size:12px}.payroll-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:15px}.summarybox{padding:13px 15px}.summarybox small{display:block;color:var(--muted);font-size:10px}.summarybox strong{display:block;margin-top:5px;font-size:18px}.register-note{font-size:11px;color:var(--muted);margin:0 0 12px}.modalback{position:fixed;inset:0;background:rgba(12,31,23,.48);display:none;align-items:center;justify-content:center;padding:20px;z-index:30}.modalback.show{display:flex}.modal{background:#fff;border-radius:15px;width:min(780px,100%);max-height:90vh;overflow:auto;box-shadow:0 20px 70px rgba(0,0,0,.2)}.modalhead{padding:19px 22px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:white;z-index:1}.modalhead h2{margin:0;font-size:16px}.modalbody{padding:20px 22px}.modalfoot{padding:15px 22px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;gap:8px;position:sticky;bottom:0;background:white}.formgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.formgroup label{display:block;font-size:10px;color:#68796f;font-weight:700;margin-bottom:5px}.formgroup input{width:100%;border:1px solid var(--line);border-radius:8px;padding:9px 10px;font-size:12px}.formgroup input:focus{outline:none;border-color:#83aa92}.formsection{grid-column:1/-1;font-size:11px;text-transform:uppercase;letter-spacing:.7px;color:var(--green);font-weight:800;padding-top:7px;border-top:1px solid var(--line)}.toast{position:fixed;bottom:22px;right:22px;background:#173f30;color:white;padding:13px 17px;border-radius:10px;font-size:12px;box-shadow:var(--shadow);display:none;z-index:40;max-width:360px}.toast.show{display:block;animation:fade .25s}@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}.footnote{font-size:10px;color:var(--muted);line-height:1.5;margin-top:12px}.tag{display:inline-flex;padding:4px 7px;border-radius:5px;background:#f1f5f2;color:#50655a;font-size:9px;font-weight:700}.register-head{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap}.right{text-align:right}.period{font-weight:750;color:#264c39}.mobile-menu{display:none}
+@media(max-width:1000px){.sidebar{width:220px}.content{padding:22px 18px}.topbar{padding:0 18px}.stats{grid-template-columns:repeat(2,1fr)}.two-col{grid-template-columns:1fr}}
+@media(max-width:700px){.sidebar{width:66px}.brand{padding:14px;justify-content:center}.brandcopy,.navlabel,.nav button .navtext,.profileinfo{display:none}.nav{padding:0 8px}.nav button{justify-content:center;padding:12px 5px}.nav button .ico{font-size:18px}.side-bottom{padding:12px 15px}.profile{justify-content:center}.topbar{height:64px;padding:0 13px}.content{padding:19px 12px}.pagehead{flex-direction:column}.stats{gap:9px}.stat{padding:13px}.stat-value{font-size:21px}.formgrid{grid-template-columns:repeat(2,minmax(0,1fr))}.payroll-summary{grid-template-columns:1fr}.role-pill{display:none}}
+
+
+/* Approver-specific components styled to match the Payroll Officer prototype */
+.heading{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;margin-bottom:22px}
+.heading h1{font-size:25px;margin:5px 0 5px;letter-spacing:-.6px;color:var(--ink)}
+.heading .subtitle{margin:0;color:var(--muted);font-size:13px}
+.gridstats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:15px;margin-bottom:19px}
+.stat{background:#fff;border:1px solid var(--line);border-radius:13px;padding:17px 18px;box-shadow:0 2px 8px rgba(20,50,36,.025)}
+.stathead{display:flex;justify-content:space-between;align-items:center;color:var(--muted);font-size:11px}
+.staticon{width:32px;height:32px;border-radius:9px;display:grid;place-items:center;background:var(--mint);color:var(--green);font-size:16px}
+.statnum{font-size:25px;font-weight:800;letter-spacing:-.7px;margin-top:11px;color:var(--ink)}
+.statnote{font-size:10px;color:var(--muted);margin-top:4px}
+.panel{padding:0;margin-bottom:15px;overflow:hidden}
+.panelhead{padding:18px;display:flex;justify-content:space-between;align-items:center;gap:12px;margin:0 0 0;border-bottom:1px solid var(--line)}
+.panelhead h2{font-size:14px;margin:0;color:var(--ink)}
+.panelhead p{font-size:11px;color:var(--muted);margin:4px 0 0}
+.panelbody{padding:18px}
+.tablewrap{overflow:auto;border:1px solid var(--line);border-radius:11px;background:#fff}
+.panel>.tablewrap{border:0;border-radius:0}
+table{border-collapse:collapse;width:100%;font-size:11px;white-space:nowrap}
+th{background:#f5f8f6;color:#637369;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.45px;padding:12px 13px;border-bottom:1px solid var(--line)}
+td{padding:12px 13px;border-bottom:1px solid #edf1ee;color:var(--ink);font-size:11px}
+tr:last-child td{border-bottom:0}
+tr:hover td{background:#fcfefd}
+.money{font-variant-numeric:tabular-nums;text-align:right}
+.filters{display:flex;gap:9px;flex-wrap:wrap}
+.search{border:1px solid var(--line);border-radius:8px;padding:9px 11px;min-width:220px;font-size:12px;outline:none;color:var(--ink);background:#fff}
+.search:focus,select:focus,textarea:focus,input:focus{border-color:#83aa92;box-shadow:0 0 0 3px #e9f3ed;outline:none}
+select{border:1px solid var(--line);background:#fff;border-radius:8px;padding:9px 11px;font-size:12px;color:var(--ink)}
+.linkbtn{border:1px solid var(--line);background:#fff;color:#365343;border-radius:7px;padding:6px 9px;font-size:10px;font-weight:700}
+.linkbtn:hover{background:var(--mint)}
+.status{font-size:10px;font-weight:750;border-radius:20px;padding:5px 9px;display:inline-block;white-space:nowrap}
+.status.pending{background:var(--amberbg);color:var(--amber)}
+.status.returned,.status.rejected{background:var(--redbg);color:var(--red)}
+.status.approved{background:#e7f5eb;color:#277347}
+.status.draft{background:#edf4fc;color:#315f94}
+.empty{padding:42px;text-align:center;color:var(--muted);font-size:12px}
+.detailgrid{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(280px,.8fr);gap:15px}
+.infogrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.info{padding:12px;background:#f8faf9;border:1px solid var(--line);border-radius:10px}
+.info label{display:block;font-size:10px;color:var(--muted);margin-bottom:5px}
+.info strong{font-size:12px;color:var(--green)}
+.sectiontitle{font-size:11px;font-weight:800;color:var(--green);margin:18px 0 9px;text-transform:uppercase;letter-spacing:.5px}
+.totals{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.totalbox{background:#f8faf9;border:1px solid var(--line);padding:12px;border-radius:10px}
+.totalbox span{display:block;color:var(--muted);font-size:10px;margin-bottom:6px}
+.totalbox strong{font-size:15px;color:var(--green);font-variant-numeric:tabular-nums}
+.reviewbox{background:#fbfdfc;border:1px solid var(--line);border-radius:12px;padding:15px}
+.reviewbox h3{margin:0 0 8px;font-size:13px;color:var(--green)}
+.reviewbox p{font-size:11px;color:var(--muted);line-height:1.55;margin:0 0 12px}
+.callout{padding:12px 14px;border-radius:11px;background:var(--amberbg);color:#79520f;font-size:11px;line-height:1.5;border:1px solid #f2dfbd;margin-bottom:12px}
+.callout.success{background:#edf7f0;border-color:#cce6d3;color:#246340}
+.callout.error{background:var(--redbg);border-color:#f0cece;color:#913333}
+textarea{width:100%;min-height:95px;resize:vertical;border:1px solid var(--line);border-radius:9px;padding:10px;font-size:12px;color:var(--ink)}
+.reviewactions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.reviewactions .btn:first-child{grid-column:1/-1}
+.btn.approve{background:#24764e;border-color:#24764e;color:#fff}
+.btn.reject{color:var(--red);background:var(--redbg);border-color:#f4d9d6}
+.btn.warn{background:var(--amberbg);color:#80540f;border-color:#f0d6a7}
+.rowbetween{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.historyitem{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--line)}
+.historyitem:last-child{border-bottom:0}
+.historyitem strong{font-size:11px;display:block}
+.historyitem p{font-size:10px;color:var(--muted);margin:3px 0 0;line-height:1.5}
+.dot{width:8px;height:8px;border-radius:50%;background:#6ca486;margin-top:5px;flex-shrink:0}
+.notice{font-size:10px;color:var(--muted);line-height:1.5}
+.callout+.panel{margin-top:14px}
+.hidden{display:none!important}
+.side-action{width:100%;border:0;background:transparent;color:#d6e5dc;text-align:left;padding:9px 10px;border-radius:8px;font-size:11px;display:flex;gap:10px;align-items:center;margin-top:4px}
+.side-action:hover{background:#286047;color:white}
+.side-action .ico{width:18px;text-align:center}
+.modalback{position:fixed;inset:0;background:rgba(12,31,23,.48);display:none;align-items:center;justify-content:center;padding:20px;z-index:30}
+.modalback.show{display:flex}
+.modal{background:#fff;border-radius:15px;width:min(520px,100%);max-height:90vh;overflow:auto;box-shadow:0 20px 70px rgba(0,0,0,.2)}
+.modalhead{padding:17px 20px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}
+.modalhead h3{margin:0;color:var(--green);font-size:15px}
+.modalbody{padding:20px}
+.modalfoot{padding:15px 20px;background:#fafcfb;display:flex;justify-content:flex-end;gap:9px;border-top:1px solid var(--line)}
+.x{border:0;background:none;font-size:20px;color:#66756d}
+label.fieldlabel{display:block;font-size:11px;font-weight:700;margin:12px 0 6px;color:#41554a}
+.toast{position:fixed;right:22px;bottom:22px;background:#173f30;color:white;padding:13px 17px;border-radius:10px;font-size:12px;box-shadow:var(--shadow);display:none;z-index:50;max-width:360px}
+.toast.show{display:block}
+@media(max-width:1000px){.gridstats{grid-template-columns:repeat(2,minmax(0,1fr))}.detailgrid{grid-template-columns:1fr}}
+@media(max-width:700px){.heading{flex-direction:column}.gridstats{gap:9px}.stat{padding:13px}.statnum{font-size:21px}.infogrid{grid-template-columns:repeat(2,minmax(0,1fr))}.topbar{height:64px;padding:0 13px}.content{padding:19px 12px}.detailgrid{grid-template-columns:1fr}.totals{grid-template-columns:1fr}}
+
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand"><div class="brandmark">✦</div><div class="brandcopy"><div class="brandname">LGU PAYROLL</div><div class="brandtag">Payroll Management System</div></div></div>
+    <div class="navlabel">Workspace</div>
+    <nav class="nav" id="nav">
+      <button class="active" data-view="dashboard"><span class="ico">▦</span><span class="navtext">Dashboard</span></button>
+      <button data-view="queue"><span class="ico">☷</span><span class="navtext">Pending Approvals</span></button>
+      <button data-view="history"><span class="ico">◷</span><span class="navtext">Approval History</span></button>
+      <div class="navlabel">Payroll Information</div>
+      <button data-view="records"><span class="ico">▤</span><span class="navtext">Payroll Records</span></button>
+      <button data-view="reports"><span class="ico">▥</span><span class="navtext">Reports</span></button>
+      <button data-view="verification"><span class="ico">⬡</span><span class="navtext">Blockchain Verification</span></button>
+    </nav>
+    <div class="side-bottom">
+      <div class="profile"><div class="avatar">AP</div><div class="profileinfo"><strong>Maria Santos</strong><small>Approver</small></div></div>
+      <button class="side-action" id="profileBtn"><span class="ico">◉</span><span>My Profile</span></button>
+      <button class="side-action" id="logoutBtn"><span class="ico">⇥</span><span>Logout</span></button>
+    </div>
+  </aside>
+  <div class="main">
+    <header class="topbar">
+      <div class="crumb">Workspace / <b id="crumbLabel">Dashboard</b></div>
+      <div class="topright"><span class="role-pill">Approver</span><button class="iconbtn" aria-label="Notifications">♧</button><div class="avatar">AP</div></div>
+    </header>
+
+<main class="content">
+    <section id="dashboardView">
+      <div class="pagehead">
+        <div><h1>Approver Dashboard</h1><div class="subtitle">Review submitted payroll and monitor approval activity.</div></div>
+        <div class="head-actions"><button class="btn" onclick="showView('history')">View approval history</button><button class="btn primary" onclick="showView('queue')">Open pending approvals</button></div>
+      </div>
+      <div class="gridstats">
+        <div class="stat"><div class="stathead">Pending Review <span class="staticon">◷</span></div><div class="statnum" id="pendingCount">2</div><div class="statnote">Awaiting your decision</div></div>
+        <div class="stat"><div class="stathead">Approved This Month <span class="staticon">✓</span></div><div class="statnum" id="approvedCount">1</div><div class="statnote">Approved payroll runs</div></div>
+        <div class="stat"><div class="stathead">Returned for Correction <span class="staticon">↶</span></div><div class="statnum" id="returnedCount">1</div><div class="statnote">Sent back to Payroll Officer</div></div>
+        <div class="stat"><div class="stathead">Payroll Runs Reviewed <span class="staticon">▤</span></div><div class="statnum" id="reviewedCount">4</div><div class="statnote">Illustrative activity count</div></div>
+      </div>
+      <div class="panel">
+        <div class="panelhead"><div><h2>Pending payroll approvals</h2><p>Payroll runs submitted by the Payroll Officer for independent review.</p></div><button class="linkbtn" onclick="showView('queue')">View all →</button></div>
+        <div class="tablewrap"><table><thead><tr><th>Payroll period</th><th>Payroll run</th><th>Submitted by</th><th>Employees</th><th>Total net pay</th><th>Submitted</th><th>Status</th><th></th></tr></thead><tbody id="dashboardQueue"></tbody></table></div>
+      </div>
+      <div class="panel">
+        <div class="panelhead"><div><h2>Recent approval activity</h2><p>Latest decisions recorded in the approval history.</p></div><button class="linkbtn" onclick="showView('history')">See history →</button></div>
+        <div class="panelbody" id="recentActivity"></div>
+      </div>
+      <div class="callout">Separation of duties: the user who prepared or submitted a payroll run cannot approve that same run. This prototype demonstrates the rule with sample user accounts.</div>
+    </section>
+
+    <section id="queueView" class="hidden">
+      <div class="pagehead"><div><h1>Pending Approvals</h1><div class="subtitle">Review payroll totals and employee-level details before making a decision.</div></div><div class="head-actions"><button class="btn" onclick="showView('dashboard')">← Dashboard</button></div></div>
+      <div class="panel">
+        <div class="panelhead"><div><h2>Submitted payroll runs</h2><p>Select a payroll run to inspect its register and supporting totals.</p></div><div class="filters"><input class="search" id="queueSearch" placeholder="Search period or run number…"><select id="queueStatus"><option value="all">All statuses</option><option value="PENDING_APPROVAL">Pending approval</option><option value="RETURNED">Returned</option></select></div></div>
+        <div class="tablewrap"><table><thead><tr><th>Payroll period</th><th>Run no.</th><th>Submitted by</th><th>Employees</th><th>Gross compensation</th><th>Net pay</th><th>Submitted date</th><th>Status</th><th>Action</th></tr></thead><tbody id="queueRows"></tbody></table></div>
+      </div>
+    </section>
+
+    <section id="detailView" class="hidden">
+      <div class="pagehead"><div><h1>Payroll Review</h1><div class="subtitle">Inspect the monthly payroll summary and employee-level computations.</div></div><div class="head-actions"><button class="btn" onclick="showView('queue')">← Back to approvals</button></div></div>
+      <div class="detailgrid">
+        <div>
+          <div class="panel">
+            <div class="panelhead"><div><h2 id="detailTitle">Payroll Period</h2><p id="detailSubtitle">Monthly payroll submission</p></div><span id="detailStatus" class="status pending">Pending approval</span></div>
+            <div class="panelbody">
+              <div class="infogrid" id="detailInfo"></div>
+              <div class="sectiontitle">Payroll register summary</div>
+              <div class="totals" id="detailTotals"></div>
+              <div class="sectiontitle">Employee-level payroll details</div>
+              <div class="tablewrap"><table><thead><tr><th>Employee</th><th>Position</th><th>Gross salary</th><th>Total compensation</th><th>Total deductions</th><th>Net take-home</th></tr></thead><tbody id="detailEmployees"></tbody></table></div>
+              <p class="notice" style="margin-top:12px">Review the supporting register and verify that the employee count, gross compensation, deductions, LBP deductions, and net pay totals are consistent. Amounts shown are sample data.</p>
+            </div>
+          </div>
+        </div>
+        <aside>
+          <div class="panel">
+            <div class="panelhead"><div><h2>Review decision</h2><p>Record your independent approval decision.</p></div></div>
+            <div class="panelbody">
+              <div id="separationNotice" class="callout"></div>
+              <div class="reviewbox">
+                <h3>Review notes</h3>
+                <p>Enter comments or correction instructions. A reason is required when returning or rejecting payroll.</p>
+                <textarea id="decisionNotes" placeholder="Enter review notes or correction instructions…"></textarea>
+                <div class="reviewactions">
+                  <button class="btn approve" id="approveBtn" onclick="openDecision('APPROVED')">✓ Approve payroll</button>
+                  <button class="btn warn" id="returnBtn" onclick="openDecision('RETURNED')">Return for correction</button>
+                  <button class="btn reject" id="rejectBtn" onclick="openDecision('REJECTED')">Reject payroll</button>
+                </div>
+                <div id="decisionBlocked" class="notice hidden" style="margin-top:10px;color:var(--red)">You cannot approve a payroll run that you prepared or submitted.</div>
+              </div>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="panelhead"><h2>Approval history</h2></div>
+            <div class="panelbody" id="detailHistory"></div>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <section id="historyView" class="hidden">
+      <div class="pagehead"><div><h1>Approval History</h1><div class="subtitle">A traceable record of payroll reviews and decisions.</div></div><button class="btn" onclick="showView('dashboard')">← Dashboard</button></div>
+      <div class="panel"><div class="panelhead"><div><h2>Recorded decisions</h2><p>Sample approval history for prototype demonstration.</p></div><input class="search" id="historySearch" placeholder="Search payroll or action…"></div><div class="tablewrap"><table><thead><tr><th>Payroll period</th><th>Run</th><th>Action</th><th>Acted by</th><th>Date and time</th><th>Remarks</th></tr></thead><tbody id="historyRows"></tbody></table></div></div>
+    </section>
+
+    <section id="recordsView" class="hidden">
+      <div class="pagehead"><div><h1>Payroll Records</h1><div class="subtitle">Read-only access to payroll submissions and finalized runs.</div></div></div>
+      <div class="panel"><div class="panelhead"><h2>Payroll register records</h2><span class="status approved">Read only</span></div><div class="tablewrap"><table><thead><tr><th>Period</th><th>Run</th><th>Prepared by</th><th>Employees</th><th>Net pay</th><th>Status</th></tr></thead><tbody id="recordsRows"></tbody></table></div></div>
+    </section>
+
+    <section id="reportsView" class="hidden">
+      <div class="pagehead"><div><h1>Reports</h1><div class="subtitle">View summary reports available to the Approver role.</div></div></div>
+      <div class="gridstats">
+        <div class="stat"><div class="stathead">Payroll runs this month</div><div class="statnum">4</div><div class="statnote">Illustrative data</div></div>
+        <div class="stat"><div class="stathead">Total employees paid</div><div class="statnum">128</div><div class="statnote">Across sample payroll runs</div></div>
+        <div class="stat"><div class="stathead">Approved net pay</div><div class="statnum" style="font-size:20px">₱4.82M</div><div class="statnote">Illustrative total</div></div>
+        <div class="stat"><div class="stathead">Returned runs</div><div class="statnum">1</div><div class="statnote">Requires correction</div></div>
+      </div>
+      <div class="panel"><div class="panelhead"><h2>Available reports</h2></div><div class="panelbody"><div class="rowbetween" style="padding:10px 0;border-bottom:1px solid var(--line)"><div><strong style="font-size:12px">Monthly payroll summary</strong><div class="notice">Payroll totals by period and status</div></div><button class="btn" onclick="toast('Report preview is available in the connected application.')">Preview</button></div><div class="rowbetween" style="padding:10px 0"><div><strong style="font-size:12px">Payroll approval history</strong><div class="notice">Review and decision records</div></div><button class="btn" onclick="showView('history')">View history</button></div></div></div>
+    </section>
+
+    <section id="verificationView" class="hidden">
+      <div class="pagehead"><div><h1>Blockchain Verification</h1><div class="subtitle">Inspect integrity verification information for finalized payroll runs.</div></div></div>
+      <div class="panel"><div class="panelhead"><h2>Finalized payroll anchors</h2><span class="status approved">Demonstration data</span></div><div class="tablewrap"><table><thead><tr><th>Payroll period</th><th>Run</th><th>Network</th><th>Transaction reference</th><th>Verification status</th></tr></thead><tbody><tr><td>October 2026</td><td>PR-2026-10-01</td><td>Demo network</td><td>0x7a31…9c20</td><td><span class="status approved">Hash matched</span></td></tr><tr><td>September 2026</td><td>PR-2026-09-01</td><td>Demo network</td><td>0x2b18…44fd</td><td><span class="status approved">Hash matched</span></td></tr></tbody></table></div><div class="panelbody"><p class="notice">These are placeholder references for the prototype. No live blockchain connection or on-chain transaction is performed.</p></div></div>
+    </section>
+  </main>
+
+  </div>
+</div>
+
+<div class="modalback" id="decisionModal">
+  <div class="modal">
+    <div class="modalhead"><h3 id="modalTitle">Confirm decision</h3><button class="x" onclick="closeModal()">×</button></div>
+    <div class="modalbody">
+      <div id="modalMessage" class="callout"></div>
+      <label class="fieldlabel" for="modalReason">Decision note</label>
+      <textarea id="modalReason" placeholder="Enter remarks…"></textarea>
+      <p class="notice" id="modalFootnote"></p>
+    </div>
+    <div class="modalfoot"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn primary" id="confirmDecisionBtn" onclick="confirmDecision()">Confirm</button></div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+const currentUser = {id: 203, name: "Maria Santos", role: "Approver"};
+const payrolls = [
+ {id:1,period:"November 2026",run:"PR-2026-11-01",preparedBy:"Juan Dela Cruz",preparedById:102,submittedBy:"Juan Dela Cruz",submittedById:102,submitted:"Nov 06, 2026 • 9:20 AM",employees:42,gross:1865000,deductions:342500,net:1522500,status:"PENDING_APPROVAL",lbp:42500,notes:[],items:[
+  {name:"Ana Reyes",position:"Administrative Officer",salary:45000,comp:47000,ded:8500,lbp:1500,net:37000},
+  {name:"Pedro Garcia",position:"Accountant II",salary:38000,comp:40000,ded:7200,lbp:1000,net:31800},
+  {name:"Liza Mendoza",position:"Local Revenue Collection Officer",salary:32000,comp:34000,ded:6100,lbp:800,net:27100}
+ ]},
+ {id:2,period:"November 2026 – Part-time",run:"PR-2026-11-02",preparedBy:"Carlo Ramos",preparedById:104,submittedBy:"Carlo Ramos",submittedById:104,submitted:"Nov 06, 2026 • 10:45 AM",employees:8,gross:168000,deductions:22500,net:145500,status:"PENDING_APPROVAL",lbp:3500,notes:[],items:[
+  {name:"Jose Lim",position:"Part-time Personnel",salary:18000,comp:18500,ded:2500,lbp:500,net:15500},
+  {name:"Mia Torres",position:"Part-time Personnel",salary:16000,comp:16500,ded:2200,lbp:400,net:13900}
+ ]},
+ {id:3,period:"October 2026",run:"PR-2026-10-01",preparedBy:"Juan Dela Cruz",preparedById:102,submittedBy:"Juan Dela Cruz",submittedById:102,submitted:"Oct 30, 2026 • 2:10 PM",employees:40,gross:1780000,deductions:320000,net:1460000,status:"APPROVED",lbp:38000,notes:[{action:"APPROVED",by:"Maria Santos",date:"Oct 31, 2026 • 10:10 AM",remarks:"Reviewed and approved."}],items:[]},
+ {id:4,period:"October 2026 – Supplemental",run:"PR-2026-10-02",preparedBy:"Carlo Ramos",preparedById:104,submittedBy:"Carlo Ramos",submittedById:104,submitted:"Oct 29, 2026 • 1:20 PM",employees:5,gross:95000,deductions:16000,net:79000,status:"RETURNED",lbp:0,notes:[{action:"RETURNED",by:"Maria Santos",date:"Oct 29, 2026 • 3:15 PM",remarks:"Please reconcile the deduction summary before resubmission."}],items:[]}
+];
+let history = [
+ {period:"October 2026",run:"PR-2026-10-01",action:"APPROVED",by:"Maria Santos",date:"Oct 31, 2026 • 10:10 AM",remarks:"Reviewed and approved."},
+ {period:"October 2026 – Supplemental",run:"PR-2026-10-02",action:"RETURNED",by:"Maria Santos",date:"Oct 29, 2026 • 3:15 PM",remarks:"Please reconcile the deduction summary before resubmission."}
+];
+let selectedId=null, pendingAction=null;
+const peso=n=>"₱"+Number(n||0).toLocaleString("en-PH",{minimumFractionDigits:2,maximumFractionDigits:2});
+const fmt=n=>Number(n||0).toLocaleString("en-PH");
+function badge(status){const map={PENDING_APPROVAL:["Pending approval","pending"],APPROVED:["Approved","approved"],RETURNED:["Returned","returned"],REJECTED:["Rejected","rejected"],DRAFT:["Draft","draft"]};let x=map[status]||[status,"draft"];return `<span class="status ${x[1]}">${x[0]}</span>`}
+function render(){
+ const pending=payrolls.filter(p=>p.status==="PENDING_APPROVAL");
+ document.getElementById("pendingCount").textContent=pending.length;
+ document.getElementById("approvedCount").textContent=payrolls.filter(p=>p.status==="APPROVED").length;
+ document.getElementById("returnedCount").textContent=payrolls.filter(p=>p.status==="RETURNED").length;
+ document.getElementById("reviewedCount").textContent=history.length;
+ const row=p=>`<tr><td>${p.period}</td><td><strong>${p.run}</strong></td><td>${p.submittedBy}</td><td>${p.employees}</td><td class="money">${peso(p.gross)}</td><td class="money">${peso(p.net)}</td><td>${p.submitted}</td><td>${badge(p.status)}</td><td><button class="linkbtn" onclick="openDetail(${p.id})">Review →</button></td></tr>`;
+ document.getElementById("dashboardQueue").innerHTML=pending.length?pending.slice(0,5).map(row).join(""):`<tr><td colspan="8" class="empty">No payroll is currently pending approval.</td></tr>`;
+ renderQueue();renderHistory();renderRecords();renderRecent();
+}
+function renderQueue(){
+ const q=(document.getElementById("queueSearch")?.value||"").toLowerCase(),s=document.getElementById("queueStatus")?.value||"all";
+ const list=payrolls.filter(p=>(p.status==="PENDING_APPROVAL"||p.status==="RETURNED")&&(s==="all"||p.status===s)&&(`${p.period} ${p.run} ${p.submittedBy}`.toLowerCase().includes(q)));
+ document.getElementById("queueRows").innerHTML=list.length?list.map(p=>`<tr><td>${p.period}</td><td><strong>${p.run}</strong></td><td>${p.submittedBy}</td><td>${p.employees}</td><td class="money">${peso(p.gross)}</td><td class="money">${peso(p.net)}</td><td>${p.submitted}</td><td>${badge(p.status)}</td><td><button class="linkbtn" onclick="openDetail(${p.id})">Review</button></td></tr>`).join(""):`<tr><td colspan="9" class="empty">No matching payroll submissions.</td></tr>`;
+}
+function renderHistory(){
+ const q=(document.getElementById("historySearch")?.value||"").toLowerCase();
+ const list=history.filter(h=>`${h.period} ${h.run} ${h.action} ${h.remarks}`.toLowerCase().includes(q));
+ document.getElementById("historyRows").innerHTML=list.map(h=>`<tr><td>${h.period}</td><td>${h.run}</td><td>${badge(h.action)}</td><td>${h.by}</td><td>${h.date}</td><td>${h.remarks||"—"}</td></tr>`).join("")||`<tr><td colspan="6" class="empty">No approval history found.</td></tr>`;
+}
+function renderRecords(){
+ document.getElementById("recordsRows").innerHTML=payrolls.map(p=>`<tr><td>${p.period}</td><td>${p.run}</td><td>${p.preparedBy}</td><td>${p.employees}</td><td class="money">${peso(p.net)}</td><td>${badge(p.status)}</td></tr>`).join("");
+}
+function renderRecent(){
+ document.getElementById("recentActivity").innerHTML=history.slice(0,4).map(h=>`<div class="historyitem"><span class="dot"></span><div><strong>${h.action} • ${h.run}</strong><p>${h.by} · ${h.date}<br>${h.remarks||""}</p></div></div>`).join("")||`<div class="empty">No recent activity.</div>`;
+}
+function showView(view){
+ document.querySelectorAll("main section").forEach(s=>s.classList.add("hidden"));
+ const el=document.getElementById(view+"View");if(el)el.classList.remove("hidden");
+ document.querySelectorAll(".nav button[data-view]").forEach(n=>n.classList.toggle("active",n.dataset.view===view));
+ const crumb=document.getElementById("crumbLabel");if(crumb){const active=document.querySelector(`.nav button[data-view="${view}"] .navtext`);crumb.textContent=active?active.textContent.trim():"Payroll Review";}
+ if(view==="queue")renderQueue();if(view==="history")renderHistory();
+ window.scrollTo({top:0,behavior:"smooth"});
+}
+document.querySelectorAll(".nav button[data-view]").forEach(n=>n.addEventListener("click",()=>showView(n.dataset.view)));
+function openDetail(id){
+ selectedId=id;const p=payrolls.find(x=>x.id===id);if(!p)return;
+ showView("detail");
+ document.getElementById("detailTitle").textContent=p.period;
+ document.getElementById("detailSubtitle").textContent=p.run+" • Submitted "+p.submitted;
+ document.getElementById("detailStatus").outerHTML=badge(p.status).replace('<span','<span id="detailStatus"');
+ document.getElementById("detailInfo").innerHTML=[
+  ["Payroll run",p.run],["Prepared by",p.preparedBy],["Submitted by",p.submittedBy],
+  ["Employee count",p.employees],["Submitted date",p.submitted],["Payroll frequency","Monthly"]
+ ].map(a=>`<div class="info"><label>${a[0]}</label><strong>${a[1]}</strong></div>`).join("");
+ document.getElementById("detailTotals").innerHTML=[
+  ["Total gross compensation",peso(p.gross)],["Total deductions before LBP",peso(p.deductions)],["NTHP before LBP",peso(p.gross-p.deductions)],["LBP loan deduction",peso(p.lbp)],["Net take-home pay",peso(p.net)]
+ ].map(a=>`<div class="totalbox"><span>${a[0]}</span><strong>${a[1]}</strong></div>`).join("");
+ document.getElementById("detailEmployees").innerHTML=p.items.length?p.items.map(e=>`<tr><td>${e.name}</td><td>${e.position}</td><td class="money">${peso(e.salary)}</td><td class="money">${peso(e.comp)}</td><td class="money">${peso(e.ded)}</td><td class="money">${peso(e.net)}</td></tr>`).join(""):`<tr><td colspan="6" class="empty">Employee-level sample details are not loaded for this run. Review the submitted register in the connected system.</td></tr>`;
+ const blocked=p.preparedById===currentUser.id||p.submittedById===currentUser.id;
+ document.getElementById("approveBtn").disabled=blocked||p.status!=="PENDING_APPROVAL";
+ document.getElementById("returnBtn").disabled=blocked||p.status!=="PENDING_APPROVAL";
+ document.getElementById("rejectBtn").disabled=blocked||p.status!=="PENDING_APPROVAL";
+ document.getElementById("decisionBlocked").classList.toggle("hidden",!blocked);
+ document.getElementById("separationNotice").className="callout "+(blocked?"error":"success");
+ document.getElementById("separationNotice").textContent=blocked?"Separation-of-duties rule: you prepared or submitted this payroll. You cannot decide on this run.":"Independent review allowed: this payroll was prepared and submitted by another user.";
+ document.getElementById("decisionNotes").value="";
+ const hist=p.notes||[];document.getElementById("detailHistory").innerHTML=hist.length?hist.map(h=>`<div class="historyitem"><span class="dot"></span><div><strong>${h.action}</strong><p>${h.by} · ${h.date}<br>${h.remarks||""}</p></div></div>`).join(""):`<p class="notice">No decisions recorded for this payroll run yet.</p>`;
+}
+function openDecision(action){
+ const p=payrolls.find(x=>x.id===selectedId);if(!p)return;
+ if(p.preparedById===currentUser.id||p.submittedById===currentUser.id){toast("You cannot approve or decide on a payroll you prepared or submitted.");return}
+ pendingAction=action;
+ const labels={APPROVED:"Approve payroll",RETURNED:"Return payroll for correction",REJECTED:"Reject payroll"};
+ document.getElementById("modalTitle").textContent=labels[action];
+ document.getElementById("modalMessage").textContent=action==="APPROVED"?"Confirm that you have reviewed the payroll register and supporting totals.":action==="RETURNED"?"The payroll will be sent back to the Payroll Officer. Provide clear correction instructions.":"This will record a rejection decision. Provide the reason for rejection.";
+ document.getElementById("modalMessage").className="callout "+(action==="APPROVED"?"success":"error");
+ document.getElementById("modalReason").value=document.getElementById("decisionNotes").value;
+ document.getElementById("modalFootnote").textContent="Prototype action only. In the actual system, this decision will be saved to payroll_approvals and audit_logs.";
+ document.getElementById("confirmDecisionBtn").textContent=action==="APPROVED"?"Confirm approval":action==="RETURNED"?"Confirm return":"Confirm rejection";
+ document.getElementById("decisionModal").classList.add("show");
+}
+function closeModal(){document.getElementById("decisionModal").classList.remove("show");pendingAction=null}
+function confirmDecision(){
+ const p=payrolls.find(x=>x.id===selectedId);if(!p||!pendingAction)return;
+ const reason=document.getElementById("modalReason").value.trim();
+ if(pendingAction!=="APPROVED"&&!reason){toast("Please provide a reason for returning or rejecting payroll.");return}
+ if(p.preparedById===currentUser.id||p.submittedById===currentUser.id){closeModal();toast("Separation-of-duties check failed.");return}
+ p.status=pendingAction;p.notes.push({action:pendingAction,by:currentUser.name,date:"Just now (prototype)",remarks:reason||"Reviewed and approved."});
+ history.unshift({period:p.period,run:p.run,action:pendingAction,by:currentUser.name,date:"Just now (prototype)",remarks:reason||"Reviewed and approved."});
+ closeModal();render();openDetail(p.id);toast(pendingAction==="APPROVED"?"Payroll approved in prototype.":pendingAction==="RETURNED"?"Payroll returned for correction.":"Payroll rejected in prototype.");
+}
+function toast(message){const t=document.getElementById("toast");t.textContent=message;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),2800)}
+document.getElementById("queueSearch").addEventListener("input",renderQueue);
+document.getElementById("queueStatus").addEventListener("change",renderQueue);
+document.getElementById("historySearch").addEventListener("input",renderHistory);
+document.getElementById("profileBtn").addEventListener("click",()=>toast("Signed in as Maria Santos • Approver (sample account)."));
+document.getElementById("logoutBtn").addEventListener("click",()=>toast("Logout is a visual prototype action."));
+render();
+</script>
+</body>
+</html>
+</body>
+</html>

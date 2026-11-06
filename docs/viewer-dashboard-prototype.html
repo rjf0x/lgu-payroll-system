@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LGU Payroll System | Viewer Dashboard</title>
+<style>
+
+:root{--green:#174c3a;--green2:#22684f;--mint:#e8f2ed;--bg:#f4f7f5;--ink:#1b2a23;--muted:#718078;--line:#e3eae6;--white:#fff;--amber:#9a6412;--amberbg:#fff5df;--red:#a83d3d;--redbg:#fff0ef;--blue:#315f94;--bluebg:#edf4fc;--shadow:0 8px 28px rgba(24,55,41,.07)}
+*{box-sizing:border-box}body{margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink)}button,input,select{font:inherit}button{cursor:pointer}.app{display:flex;min-height:100vh}.sidebar{width:252px;background:#143f31;color:#eaf3ee;display:flex;flex-direction:column;flex-shrink:0}.brand{height:76px;padding:17px 20px;display:flex;gap:11px;align-items:center;border-bottom:1px solid rgba(255,255,255,.12)}.brandmark{width:39px;height:39px;background:#f5fbf7;color:var(--green);border-radius:11px;display:grid;place-items:center;font-size:21px;font-weight:800}.brandname{font-weight:750;font-size:15px;letter-spacing:.1px}.brandtag{font-size:10px;color:#b7d0c2;margin-top:3px}.navlabel{padding:21px 20px 8px;font-size:10px;text-transform:uppercase;letter-spacing:1.15px;color:#91b5a2;font-weight:700}.nav{padding:0 11px;display:grid;gap:3px}.nav button{border:0;background:transparent;color:#d6e5dc;text-align:left;padding:11px 12px;border-radius:9px;display:flex;gap:12px;align-items:center;font-size:13px}.nav button:hover,.nav button.active{background:#286047;color:white}.nav .ico{width:19px;text-align:center;font-size:16px}.side-bottom{margin-top:auto;padding:15px;border-top:1px solid rgba(255,255,255,.12)}.profile{display:flex;gap:10px;align-items:center}.avatar{width:35px;height:35px;border-radius:50%;background:#d9ebe1;color:#174c3a;font-weight:800;display:grid;place-items:center;font-size:12px}.profile strong{display:block;font-size:12px}.profile small{font-size:10px;color:#a9c6b7}.main{min-width:0;flex:1}.topbar{height:76px;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 30px;position:sticky;top:0;z-index:10}.crumb{font-size:12px;color:var(--muted)}.crumb b{color:var(--ink)}.topright{display:flex;align-items:center;gap:13px}.role-pill{background:var(--mint);color:var(--green);font-size:11px;font-weight:750;padding:7px 11px;border-radius:30px}.iconbtn{border:1px solid var(--line);background:#fff;border-radius:9px;width:36px;height:36px;color:#516359}.content{padding:28px 30px 42px;max-width:1600px;margin:auto}.pagehead{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;margin-bottom:22px}.eyebrow{font-size:10px;color:var(--green2);font-weight:800;letter-spacing:1.2px;text-transform:uppercase}.pagehead h1{font-size:25px;margin:5px 0 5px;letter-spacing:-.6px}.subtitle{margin:0;color:var(--muted);font-size:13px}.head-actions{display:flex;gap:9px;flex-wrap:wrap}.btn{border:1px solid var(--line);background:#fff;color:#30453a;border-radius:9px;padding:10px 14px;font-size:12px;font-weight:700;display:inline-flex;gap:7px;align-items:center}.btn:hover{border-color:#b8cbbf;background:#fbfdfc}.btn.primary{background:var(--green);border-color:var(--green);color:#fff}.btn.primary:hover{background:var(--green2)}.btn.soft{background:var(--mint);color:var(--green);border-color:#d4e6dc}.btn.danger{color:var(--red);background:var(--redbg);border-color:#f4d9d6}.btn:disabled{opacity:.45;cursor:not-allowed}.notice{background:#f0f6f2;border:1px solid #dceae1;border-radius:11px;padding:12px 15px;color:#436252;font-size:12px;display:flex;gap:10px;align-items:flex-start;margin-bottom:19px}.notice strong{color:#214d38}.grid{display:grid;gap:15px}.stats{grid-template-columns:repeat(4,minmax(0,1fr));margin-bottom:19px}.card{background:#fff;border:1px solid var(--line);border-radius:13px;box-shadow:0 2px 8px rgba(20,50,36,.025)}.stat{padding:17px 18px}.stat-top{display:flex;justify-content:space-between;align-items:center;color:var(--muted);font-size:11px}.stat-icon{width:32px;height:32px;border-radius:9px;display:grid;place-items:center;background:var(--mint);color:var(--green);font-size:16px}.stat-value{font-size:25px;font-weight:800;letter-spacing:-.7px;margin-top:11px}.stat-note{font-size:10px;color:var(--muted);margin-top:4px}.two-col{grid-template-columns:1.35fr .85fr}.panel{padding:18px}.panelhead{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:15px}.panelhead h3{font-size:14px;margin:0}.panelhead p{font-size:11px;color:var(--muted);margin:4px 0 0}.status{font-size:10px;font-weight:750;border-radius:20px;padding:5px 9px;display:inline-block;background:#edf1ee;color:#617168;white-space:nowrap}.status.draft{background:#edf4fc;color:#315f94}.status.pending{background:var(--amberbg);color:var(--amber)}.status.approved{background:#e7f5eb;color:#277347}.status.returned{background:var(--redbg);color:var(--red)}.activity{display:grid;gap:14px}.activity-item{display:flex;gap:10px;align-items:flex-start}.dot{width:8px;height:8px;border-radius:50%;background:#6ca486;margin-top:5px;flex-shrink:0}.activity-item strong{font-size:11px;display:block}.activity-item small{font-size:10px;color:var(--muted)}.quickgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}.quick{padding:13px;border:1px solid var(--line);border-radius:10px;background:#fbfdfc;text-align:left;color:var(--ink)}.quick:hover{border-color:#a9c9b7;background:#f2f8f4}.quick .qico{font-size:17px;color:var(--green)}.quick strong{display:block;font-size:11px;margin-top:8px}.quick small{font-size:10px;color:var(--muted)}.section{display:none}.section.active{display:block}.toolbar{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:14px}.field{border:1px solid var(--line);border-radius:8px;padding:9px 11px;background:#fff;color:var(--ink);font-size:12px;outline:none}.field:focus{border-color:#83aa92;box-shadow:0 0 0 3px #e9f3ed}.search{min-width:230px}.tablewrap{overflow:auto;border:1px solid var(--line);border-radius:11px;background:#fff}.data{border-collapse:collapse;width:100%;font-size:11px;white-space:nowrap}.data th{background:#f5f8f6;color:#637369;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.45px;padding:12px 13px;border-bottom:1px solid var(--line);position:sticky;top:0}.data td{padding:12px 13px;border-bottom:1px solid #edf1ee}.data tr:last-child td{border-bottom:0}.data tr:hover td{background:#fcfefd}.namecell strong{display:block;font-size:11px}.namecell small{color:var(--muted);font-size:10px}.money{font-variant-numeric:tabular-nums;text-align:right}.muted{color:var(--muted)}.actions{display:flex;gap:6px}.mini{border:1px solid var(--line);background:#fff;border-radius:7px;padding:6px 9px;font-size:10px;font-weight:700;color:#365343}.mini:hover{background:var(--mint)}.progressline{height:7px;border-radius:20px;background:#edf2ee;overflow:hidden}.progressline span{height:100%;display:block;background:#4c9870;border-radius:20px}.empty{padding:42px;text-align:center;color:var(--muted);font-size:12px}.payroll-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:15px}.summarybox{padding:13px 15px}.summarybox small{display:block;color:var(--muted);font-size:10px}.summarybox strong{display:block;margin-top:5px;font-size:18px}.register-note{font-size:11px;color:var(--muted);margin:0 0 12px}.modalback{position:fixed;inset:0;background:rgba(12,31,23,.48);display:none;align-items:center;justify-content:center;padding:20px;z-index:30}.modalback.show{display:flex}.modal{background:#fff;border-radius:15px;width:min(780px,100%);max-height:90vh;overflow:auto;box-shadow:0 20px 70px rgba(0,0,0,.2)}.modalhead{padding:19px 22px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:white;z-index:1}.modalhead h2{margin:0;font-size:16px}.modalbody{padding:20px 22px}.modalfoot{padding:15px 22px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;gap:8px;position:sticky;bottom:0;background:white}.formgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.formgroup label{display:block;font-size:10px;color:#68796f;font-weight:700;margin-bottom:5px}.formgroup input{width:100%;border:1px solid var(--line);border-radius:8px;padding:9px 10px;font-size:12px}.formgroup input:focus{outline:none;border-color:#83aa92}.formsection{grid-column:1/-1;font-size:11px;text-transform:uppercase;letter-spacing:.7px;color:var(--green);font-weight:800;padding-top:7px;border-top:1px solid var(--line)}.toast{position:fixed;bottom:22px;right:22px;background:#173f30;color:white;padding:13px 17px;border-radius:10px;font-size:12px;box-shadow:var(--shadow);display:none;z-index:40;max-width:360px}.toast.show{display:block;animation:fade .25s}@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}.footnote{font-size:10px;color:var(--muted);line-height:1.5;margin-top:12px}.tag{display:inline-flex;padding:4px 7px;border-radius:5px;background:#f1f5f2;color:#50655a;font-size:9px;font-weight:700}.register-head{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap}.right{text-align:right}.period{font-weight:750;color:#264c39}.mobile-menu{display:none}
+@media(max-width:1000px){.sidebar{width:220px}.content{padding:22px 18px}.topbar{padding:0 18px}.stats{grid-template-columns:repeat(2,1fr)}.two-col{grid-template-columns:1fr}}
+@media(max-width:700px){.sidebar{width:66px}.brand{padding:14px;justify-content:center}.brandcopy,.navlabel,.nav button .navtext,.profileinfo{display:none}.nav{padding:0 8px}.nav button{justify-content:center;padding:12px 5px}.nav button .ico{font-size:18px}.side-bottom{padding:12px 15px}.profile{justify-content:center}.topbar{height:64px;padding:0 13px}.content{padding:19px 12px}.pagehead{flex-direction:column}.stats{gap:9px}.stat{padding:13px}.stat-value{font-size:21px}.formgrid{grid-template-columns:repeat(2,minmax(0,1fr))}.payroll-summary{grid-template-columns:1fr}.role-pill{display:none}}
+
+/* Viewer-specific additions, keeping the Payroll Officer visual system. */
+.summary-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:18px}
+.summary-card{background:#fff;border:1px solid var(--line);border-radius:13px;padding:16px 17px}
+.summary-card .label{font-size:11px;color:var(--muted)}
+.summary-card .value{font-size:24px;font-weight:800;color:var(--green);margin-top:9px}
+.summary-card .hint{font-size:10px;color:var(--muted);margin-top:4px}
+.readonly-note{display:flex;gap:10px;align-items:flex-start;padding:12px 14px;background:#edf5f0;border:1px solid #dceae1;border-radius:10px;color:#436252;font-size:11px;line-height:1.5;margin-bottom:16px}
+.filters{display:flex;gap:9px;flex-wrap:wrap;align-items:center}
+.filters .field{border:1px solid var(--line);border-radius:8px;padding:9px 11px;font-size:12px;background:#fff;color:var(--ink)}
+.filters .search{min-width:220px}
+.badge{display:inline-block;padding:5px 9px;border-radius:20px;font-size:10px;font-weight:750}
+.badge.approved{background:#e7f5eb;color:#277347}
+.badge.pending{background:#fff5e5;color:#96610f}
+.badge.returned{background:#fff0ef;color:#a83d3d}
+.badge.anchored{background:#edf4fc;color:#315f94}
+.detail-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:11px}
+.detail-tile{background:#f8faf9;border:1px solid var(--line);border-radius:10px;padding:13px}
+.detail-tile span{display:block;font-size:10px;color:var(--muted);margin-bottom:6px}
+.detail-tile strong{font-size:13px;color:var(--green)}
+.chartbars{display:flex;flex-direction:column;gap:13px}
+.chart-row{display:grid;grid-template-columns:115px 1fr 85px;gap:10px;align-items:center;font-size:11px}
+.track{height:9px;background:#edf2ef;border-radius:20px;overflow:hidden}
+.track span{display:block;height:100%;background:#4f8769;border-radius:20px}
+.chart-row strong{text-align:right;font-variant-numeric:tabular-nums}
+.report-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.report-card{border:1px solid var(--line);border-radius:11px;padding:15px;background:#fff}
+.report-card h3{margin:0 0 5px;color:var(--green);font-size:12px}
+.report-card p{margin:0 0 12px;color:var(--muted);font-size:10px;line-height:1.5}
+.report-card .btn{font-size:10px}
+.hash{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:10px;color:#455c50;overflow-wrap:anywhere}
+.modalback{position:fixed;inset:0;background:rgba(12,31,23,.48);display:none;align-items:center;justify-content:center;padding:20px;z-index:30}
+.modalback.show{display:flex}
+.modal{background:#fff;border-radius:15px;width:min(620px,100%);max-height:90vh;overflow:auto;box-shadow:0 20px 70px rgba(0,0,0,.2)}
+.modalhead{padding:18px 21px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}
+.modalhead h2{margin:0;font-size:15px;color:var(--green)}
+.modalbody{padding:20px}
+.modalfoot{padding:14px 20px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;gap:8px;background:#fafcfb}
+.modalx{border:0;background:none;font-size:20px;color:#66756d}
+.notice-text{font-size:10px;color:var(--muted);line-height:1.5}
+.kv{display:grid;grid-template-columns:150px 1fr;gap:8px;padding:8px 0;border-bottom:1px solid var(--line);font-size:11px}
+.kv:last-child{border-bottom:0}
+.kv span{color:var(--muted)}
+.kv strong{color:var(--ink);font-weight:650}
+@media(max-width:900px){.summary-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:650px){.summary-grid{gap:8px}.summary-card{padding:12px}.summary-card .value{font-size:20px}.detail-grid,.report-grid{grid-template-columns:1fr}.chart-row{grid-template-columns:90px 1fr 70px}.kv{grid-template-columns:120px 1fr}}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brandmark">✦</div>
+      <div class="brandcopy">
+        <div class="brandname">LGU PAYROLL</div>
+        <div class="brandtag">Payroll Management System</div>
+      </div>
+    </div>
+    <div class="navlabel">Workspace</div>
+    <nav class="nav" id="nav">
+      <button class="active" data-page="dashboard"><span class="ico">▦</span><span class="navtext">Dashboard</span></button>
+      <div class="navlabel">Records</div>
+      <button data-page="employees"><span class="ico">♙</span><span class="navtext">Employee Directory</span></button>
+      <button data-page="payroll"><span class="ico">▤</span><span class="navtext">Payroll Records</span></button>
+      <button data-page="payslips"><span class="ico">▧</span><span class="navtext">Payslip Records</span></button>
+      <button data-page="reports"><span class="ico">▥</span><span class="navtext">Reports</span></button>
+      <button data-page="verification"><span class="ico">⬡</span><span class="navtext">Blockchain Verification</span></button>
+    </nav>
+    <div class="side-bottom">
+      <div class="profile">
+        <div class="avatar">VW</div>
+        <div class="profileinfo"><strong>Viewer Account</strong><small>Read-only access</small></div>
+      </div>
+      <button class="side-action" id="profileBtn"><span class="ico">◉</span><span>My Profile</span></button>
+      <button class="side-action" id="logoutBtn"><span class="ico">⇥</span><span>Logout</span></button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <div class="crumb">LGU Payroll System&nbsp; / &nbsp;<b id="crumb">Dashboard</b></div>
+      <div class="topright"><span class="role-pill">VIEWER</span><button class="iconbtn" title="Notifications">♧</button><div class="avatar">VW</div></div>
+    </header>
+
+    <div class="content">
+      <section class="section active" id="page-dashboard">
+        <div class="pagehead">
+          <div><div class="eyebrow">Read-only workspace</div><h1>Viewer Dashboard</h1><p class="subtitle">View authorized employee, payroll, report, and verification information.</p></div>
+        </div>
+        <div class="readonly-note"><span>ⓘ</span><div><strong>Read-only access.</strong> You can view information permitted by your assigned role. You cannot create or edit employee records, prepare payroll, or approve payroll.</div></div>
+
+        <div class="summary-grid">
+          <div class="summary-card"><div class="label">Employee Records</div><div class="value">128</div><div class="hint">Illustrative record count</div></div>
+          <div class="summary-card"><div class="label">Finalized Payroll Runs</div><div class="value">4</div><div class="hint">Sample current-year records</div></div>
+          <div class="summary-card"><div class="label">Latest Payroll Period</div><div class="value" style="font-size:18px">October 2026</div><div class="hint">Latest finalized sample run</div></div>
+          <div class="summary-card"><div class="label">Verified Payroll Anchors</div><div class="value">2</div><div class="hint">Demonstration records</div></div>
+        </div>
+
+        <div class="grid two-col">
+          <div class="card panel">
+            <div class="panelhead"><div><h3>Recent finalized payroll</h3><p>Read-only summary of completed payroll runs</p></div><button class="mini" data-goto="payroll">View all →</button></div>
+            <div class="tablewrap"><table class="data"><thead><tr><th>Payroll Period</th><th>Employees</th><th>Net Pay</th><th>Status</th></tr></thead><tbody id="recentPayrollRows"></tbody></table></div>
+          </div>
+          <div class="card panel">
+            <div class="panelhead"><div><h3>Payroll overview</h3><p>Illustrative net pay totals by period</p></div></div>
+            <div class="panelbody"><div class="chartbars" id="payrollChart"></div><p class="footnote">Values are sample data and are not actual LGU financial records.</p></div>
+          </div>
+        </div>
+
+        <div class="grid two-col" style="margin-top:15px">
+          <div class="card panel">
+            <div class="panelhead"><div><h3>Quick access</h3><p>Open authorized information</p></div></div>
+            <div class="quickgrid">
+              <button class="quick" data-goto="employees"><span class="qico">♙</span><strong>Employee Directory</strong><small>View permitted employee details</small></button>
+              <button class="quick" data-goto="payroll"><span class="qico">▤</span><strong>Payroll Records</strong><small>View finalized payroll summaries</small></button>
+              <button class="quick" data-goto="reports"><span class="qico">▥</span><strong>Reports</strong><small>Open authorized reports</small></button>
+              <button class="quick" data-goto="verification"><span class="qico">⬡</span><strong>Verify Payroll</strong><small>Inspect blockchain proof status</small></button>
+            </div>
+          </div>
+          <div class="card panel">
+            <div class="panelhead"><div><h3>Access information</h3><p>Your Viewer role permissions</p></div></div>
+            <div class="panelbody">
+              <div class="kv"><span>Assigned role</span><strong>Viewer</strong></div>
+              <div class="kv"><span>Access level</span><strong>Read-only</strong></div>
+              <div class="kv"><span>Payroll preparation</span><strong>Not permitted</strong></div>
+              <div class="kv"><span>Payroll approval</span><strong>Not permitted</strong></div>
+              <div class="kv"><span>Record modification</span><strong>Not permitted</strong></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="page-employees">
+        <div class="pagehead"><div><div class="eyebrow">Authorized records</div><h1>Employee Directory</h1><p class="subtitle">View employee details permitted by your assigned access.</p></div></div>
+        <div class="readonly-note"><span>ⓘ</span><div>Employee information is confidential. The fields displayed here are limited sample data. Production access should follow the LGU's approved privacy and access policies.</div></div>
+        <div class="card panel">
+          <div class="toolbar"><input class="field search" id="employeeSearch" placeholder="Search employee number, name, or office…"><select class="field" id="employmentFilter"><option value="all">All employment types</option><option>Permanent</option><option>Coterminous</option><option>Part-time</option></select></div>
+          <div class="tablewrap"><table class="data"><thead><tr><th>Employee No.</th><th>Employee Name</th><th>Office</th><th>Position</th><th>Employment Type</th><th>Status</th><th></th></tr></thead><tbody id="employeeRows"></tbody></table></div>
+        </div>
+      </section>
+
+      <section class="section" id="page-payroll">
+        <div class="pagehead"><div><div class="eyebrow">Payroll information</div><h1>Payroll Records</h1><p class="subtitle">View finalized monthly payroll summaries and authorized register details.</p></div></div>
+        <div class="readonly-note"><span>ⓘ</span><div>Only finalized payroll records are included in this Viewer sample. Pending or unapproved payroll is not available in this view.</div></div>
+        <div class="card panel">
+          <div class="toolbar"><input class="field search" id="payrollSearch" placeholder="Search payroll period or run number…"><select class="field" id="payrollYear"><option value="all">All years</option><option>2026</option></select></div>
+          <div class="tablewrap"><table class="data"><thead><tr><th>Payroll Period</th><th>Run Number</th><th>Employee Count</th><th>Gross Compensation</th><th>Total Deductions</th><th>Net Take-Home Pay</th><th>Status</th><th></th></tr></thead><tbody id="payrollRows"></tbody></table></div>
+        </div>
+      </section>
+
+      <section class="section" id="page-payslips">
+        <div class="pagehead"><div><div class="eyebrow">Payroll documents</div><h1>Payslip Records</h1><p class="subtitle">View the status of payslips available to your account.</p></div></div>
+        <div class="readonly-note"><span>ⓘ</span><div>Individual payslips contain confidential salary and deduction information. The production system should only show a payslip when the Viewer has a specific authorized purpose and permission. This demo uses redacted sample records.</div></div>
+        <div class="card panel"><div class="toolbar"><input class="field search" id="payslipSearch" placeholder="Search payslip number or employee…"></div><div class="tablewrap"><table class="data"><thead><tr><th>Payslip Number</th><th>Employee</th><th>Payroll Period</th><th>Publication Status</th><th>Document</th></tr></thead><tbody id="payslipRows"></tbody></table></div></div>
+      </section>
+
+      <section class="section" id="page-reports">
+        <div class="pagehead"><div><div class="eyebrow">Authorized summaries</div><h1>Reports</h1><p class="subtitle">View available employee and finalized payroll reports.</p></div></div>
+        <div class="report-grid">
+          <div class="report-card"><h3>Monthly Payroll Summary</h3><p>Summary of finalized payroll totals by period, including gross compensation, deductions, and net pay.</p><button class="btn" onclick="openReport('Monthly Payroll Summary')">View report</button></div>
+          <div class="report-card"><h3>Employee Summary</h3><p>Authorized summary of employee counts by office and employment classification.</p><button class="btn" onclick="openReport('Employee Summary')">View report</button></div>
+          <div class="report-card"><h3>Payroll Register Summary</h3><p>Read-only overview of the client's monthly payroll register totals.</p><button class="btn" onclick="openReport('Payroll Register Summary')">View report</button></div>
+          <div class="report-card"><h3>Blockchain Verification Report</h3><p>Verification status and transaction references for finalized payroll anchors.</p><button class="btn" onclick="showPage('verification')">View report</button></div>
+        </div>
+        <div class="card panel" id="reportPreview" style="margin-top:15px;display:none"><div class="panelhead"><div><h3 id="reportTitle">Report Preview</h3><p>Illustrative, read-only report data</p></div><button class="mini" onclick="document.getElementById('reportPreview').style.display='none'">Close</button></div><div class="panelbody" id="reportBody"></div></div>
+      </section>
+
+      <section class="section" id="page-verification">
+        <div class="pagehead"><div><div class="eyebrow">Integrity verification</div><h1>Blockchain Verification</h1><p class="subtitle">Inspect hash and transaction status for finalized payroll records.</p></div></div>
+        <div class="readonly-note"><span>ⓘ</span><div>Blockchain verification is read-only. The Viewer can inspect proof status but cannot submit, alter, or anchor payroll records.</div></div>
+        <div class="card panel"><div class="tablewrap"><table class="data"><thead><tr><th>Payroll Period</th><th>Payroll Run</th><th>Network</th><th>Transaction Reference</th><th>Verification</th><th></th></tr></thead><tbody id="verificationRows"></tbody></table></div></div>
+        <div class="card panel" id="verificationDetail" style="display:none"><div class="panelhead"><div><h3>Verification details</h3><p>Sample cryptographic proof metadata</p></div><button class="mini" onclick="document.getElementById('verificationDetail').style.display='none'">Close</button></div><div class="panelbody" id="verificationBody"></div></div>
+      </section>
+    </div>
+  </main>
+</div>
+
+<div class="modalback" id="employeeModal">
+  <div class="modal"><div class="modalhead"><h2>Employee Record</h2><button class="modalx" onclick="closeModal('employeeModal')">×</button></div><div class="modalbody" id="employeeModalBody"></div><div class="modalfoot"><button class="btn primary" onclick="closeModal('employeeModal')">Close</button></div></div>
+</div>
+<div class="modalback" id="payrollModal">
+  <div class="modal"><div class="modalhead"><h2>Payroll Record Summary</h2><button class="modalx" onclick="closeModal('payrollModal')">×</button></div><div class="modalbody" id="payrollModalBody"></div><div class="modalfoot"><button class="btn primary" onclick="closeModal('payrollModal')">Close</button></div></div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const employees=[
+ {no:"EMP-001",name:"Sample Employee One",office:"Municipal Accounting Office",position:"Administrative Officer",type:"Permanent",status:"Active",grade:"SG 15",step:"Step 1"},
+ {no:"EMP-002",name:"Sample Employee Two",office:"Municipal Treasurer's Office",position:"Accountant II",type:"Coterminous",status:"Active",grade:"SG 16",step:"Step 2"},
+ {no:"EMP-003",name:"Sample Employee Three",office:"Municipal HRMO",position:"Administrative Aide",type:"Part-time",status:"Active",grade:"Not assigned",step:"Not assigned"},
+ {no:"EMP-004",name:"Sample Employee Four",office:"Municipal Engineering Office",position:"Engineer I",type:"Permanent",status:"Active",grade:"SG 12",step:"Step 3"},
+ {no:"EMP-005",name:"Sample Employee Five",office:"Municipal Treasurer's Office",position:"Revenue Collection Clerk",type:"Permanent",status:"Active",grade:"SG 8",step:"Step 1"}
+];
+const payrolls=[
+ {period:"October 2026",run:"PR-2026-10-01",count:40,gross:1780000,deductions:320000,net:1460000,status:"Finalized",date:"Oct 31, 2026"},
+ {period:"September 2026",run:"PR-2026-09-01",count:40,gross:1750000,deductions:315000,net:1435000,status:"Finalized",date:"Sep 30, 2026"},
+ {period:"August 2026",run:"PR-2026-08-01",count:39,gross:1690000,deductions:301000,net:1389000,status:"Finalized",date:"Aug 31, 2026"},
+ {period:"July 2026",run:"PR-2026-07-01",count:39,gross:1680000,deductions:298000,net:1382000,status:"Finalized",date:"Jul 31, 2026"}
+];
+const payslips=[
+ {number:"PS-2026-10-001",employee:"Sample Employee One",period:"October 2026",status:"Published"},
+ {number:"PS-2026-10-002",employee:"Sample Employee Two",period:"October 2026",status:"Published"},
+ {number:"PS-2026-09-001",employee:"Sample Employee Three",period:"September 2026",status:"Published"}
+];
+const anchors=[
+ {period:"October 2026",run:"PR-2026-10-01",network:"Demo network",tx:"0x7a31b8f4...9c20",hash:"8f3d2c9a6b17e4f08a5c2d1e9b7f6042c3a1d8e6f9b5c7a2d4e1f8036b9a5c21",block:"1845021",status:"Hash matched"},
+ {period:"September 2026",run:"PR-2026-09-01",network:"Demo network",tx:"0x2b18a6d0...44fd",hash:"4c2e8a7d1b9f3056a2c4e8f1d7b9035a6c2e4f8b1d7a9035c6e2f4b8a1d7c903",block:"1839204",status:"Hash matched"}
+];
+const fmt=n=>Number(n||0).toLocaleString("en-PH",{minimumFractionDigits:2,maximumFractionDigits:2});
+const peso=n=>"₱"+fmt(n);
+function toast(msg){const t=document.getElementById("toast");t.textContent=msg;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),2600)}
+function showPage(page){
+ document.querySelectorAll(".section").forEach(s=>s.classList.remove("active"));
+ document.getElementById("page-"+page)?.classList.add("active");
+ document.querySelectorAll("#nav button[data-page]").forEach(b=>b.classList.toggle("active",b.dataset.page===page));
+ const active=document.querySelector(`#nav button[data-page="${page}"] .navtext`);
+ document.getElementById("crumb").textContent=active?active.textContent.trim():"Dashboard";
+ window.scrollTo({top:0,behavior:"smooth"});
+}
+document.querySelectorAll("#nav button[data-page]").forEach(b=>b.addEventListener("click",()=>showPage(b.dataset.page)));
+document.querySelectorAll("[data-goto]").forEach(b=>b.addEventListener("click",()=>showPage(b.dataset.goto)));
+function renderDashboard(){
+ document.getElementById("recentPayrollRows").innerHTML=payrolls.slice(0,3).map(p=>`<tr><td>${p.period}</td><td>${p.count}</td><td class="money">${peso(p.net)}</td><td><span class="badge approved">Finalized</span></td></tr>`).join("");
+ const max=Math.max(...payrolls.map(p=>p.net));
+ document.getElementById("payrollChart").innerHTML=payrolls.slice().reverse().map(p=>`<div class="chart-row"><span>${p.period.split(" ")[0]}</span><div class="track"><span style="width:${p.net/max*100}%"></span></div><strong>${(p.net/1000000).toFixed(2)}M</strong></div>`).join("");
+}
+function renderEmployees(){
+ const q=(document.getElementById("employeeSearch").value||"").toLowerCase(),type=document.getElementById("employmentFilter").value;
+ const list=employees.filter(e=>(`${e.no} ${e.name} ${e.office} ${e.position}`.toLowerCase().includes(q))&&(type==="all"||e.type===type));
+ document.getElementById("employeeRows").innerHTML=list.map((e,i)=>`<tr><td>${e.no}</td><td><strong>${e.name}</strong></td><td>${e.office}</td><td>${e.position}</td><td>${e.type}</td><td><span class="badge approved">${e.status}</span></td><td><button class="mini" onclick="viewEmployee(${i})">View</button></td></tr>`).join("")||`<tr><td colspan="7" class="empty">No matching employee records.</td></tr>`;
+}
+function viewEmployee(index){
+ const q=(document.getElementById("employeeSearch").value||"").toLowerCase(),type=document.getElementById("employmentFilter").value;
+ const list=employees.filter(e=>(`${e.no} ${e.name} ${e.office} ${e.position}`.toLowerCase().includes(q))&&(type==="all"||e.type===type));
+ const e=list[index];if(!e)return;
+ document.getElementById("employeeModalBody").innerHTML=`<div class="kv"><span>Employee number</span><strong>${e.no}</strong></div><div class="kv"><span>Name</span><strong>${e.name}</strong></div><div class="kv"><span>Office</span><strong>${e.office}</strong></div><div class="kv"><span>Position</span><strong>${e.position}</strong></div><div class="kv"><span>Employment type</span><strong>${e.type}</strong></div><div class="kv"><span>Salary grade</span><strong>${e.grade}</strong></div><div class="kv"><span>Salary step</span><strong>${e.step}</strong></div><div class="kv"><span>Status</span><strong>${e.status}</strong></div><p class="notice-text" style="margin-top:14px">Fictional sample record. Sensitive personal and government identification data are not displayed.</p>`;
+ document.getElementById("employeeModal").classList.add("show");
+}
+function renderPayrolls(){
+ const q=(document.getElementById("payrollSearch").value||"").toLowerCase(),year=document.getElementById("payrollYear").value;
+ const list=payrolls.filter(p=>(`${p.period} ${p.run}`.toLowerCase().includes(q))&&(year==="all"||p.period.includes(year)));
+ document.getElementById("payrollRows").innerHTML=list.map((p,i)=>`<tr><td>${p.period}</td><td>${p.run}</td><td>${p.count}</td><td class="money">${peso(p.gross)}</td><td class="money">${peso(p.deductions)}</td><td class="money"><strong>${peso(p.net)}</strong></td><td><span class="badge approved">Finalized</span></td><td><button class="mini" onclick="viewPayroll(${i})">View</button></td></tr>`).join("")||`<tr><td colspan="8" class="empty">No finalized payroll records found.</td></tr>`;
+}
+function viewPayroll(index){
+ const q=(document.getElementById("payrollSearch").value||"").toLowerCase(),year=document.getElementById("payrollYear").value;
+ const list=payrolls.filter(p=>(`${p.period} ${p.run}`.toLowerCase().includes(q))&&(year==="all"||p.period.includes(year)));
+ const p=list[index];if(!p)return;
+ document.getElementById("payrollModalBody").innerHTML=`<div class="kv"><span>Payroll period</span><strong>${p.period}</strong></div><div class="kv"><span>Payroll run</span><strong>${p.run}</strong></div><div class="kv"><span>Pay date / finalized</span><strong>${p.date}</strong></div><div class="kv"><span>Employees</span><strong>${p.count}</strong></div><div class="kv"><span>Gross compensation</span><strong>${peso(p.gross)}</strong></div><div class="kv"><span>Total deductions</span><strong>${peso(p.deductions)}</strong></div><div class="kv"><span>Net take-home pay</span><strong>${peso(p.net)}</strong></div><div class="kv"><span>Status</span><strong>Finalized</strong></div><p class="notice-text" style="margin-top:14px">This is a read-only summary. Individual payroll details may be restricted by your organization's access policy.</p>`;
+ document.getElementById("payrollModal").classList.add("show");
+}
+function renderPayslips(){
+ const q=(document.getElementById("payslipSearch").value||"").toLowerCase();
+ const list=payslips.filter(p=>`${p.number} ${p.employee} ${p.period}`.toLowerCase().includes(q));
+ document.getElementById("payslipRows").innerHTML=list.map(p=>`<tr><td>${p.number}</td><td>${p.employee}</td><td>${p.period}</td><td><span class="badge approved">${p.status}</span></td><td><button class="mini" onclick="toast('Document preview is not connected in this prototype.')">View status</button></td></tr>`).join("")||`<tr><td colspan="5" class="empty">No authorized payslip records found.</td></tr>`;
+}
+function openReport(name){
+ const box=document.getElementById("reportPreview");document.getElementById("reportTitle").textContent=name;
+ let body="";
+ if(name==="Monthly Payroll Summary")body=`<div class="tablewrap"><table class="data"><thead><tr><th>Period</th><th>Employees</th><th>Gross</th><th>Deductions</th><th>Net Pay</th></tr></thead><tbody>${payrolls.map(p=>`<tr><td>${p.period}</td><td>${p.count}</td><td class="money">${peso(p.gross)}</td><td class="money">${peso(p.deductions)}</td><td class="money">${peso(p.net)}</td></tr>`).join("")}</tbody></table></div>`;
+ else if(name==="Employee Summary")body=`<div class="detail-grid"><div class="detail-tile"><span>Permanent</span><strong>— sample count pending</strong></div><div class="detail-tile"><span>Coterminous</span><strong>— sample count pending</strong></div><div class="detail-tile"><span>Part-time</span><strong>— sample count pending</strong></div></div>`;
+ else body=`<p class="notice-text">Monthly payroll register summaries follow the client's approved register format. Individual employee compensation and deduction details are only available where explicitly authorized.</p>`;
+ document.getElementById("reportBody").innerHTML=body;box.style.display="block";box.scrollIntoView({behavior:"smooth",block:"start"});
+}
+function renderVerification(){
+ document.getElementById("verificationRows").innerHTML=anchors.map((a,i)=>`<tr><td>${a.period}</td><td>${a.run}</td><td>${a.network}</td><td class="hash">${a.tx}</td><td><span class="badge anchored">${a.status}</span></td><td><button class="mini" onclick="viewAnchor(${i})">Details</button></td></tr>`).join("");
+}
+function viewAnchor(i){
+ const a=anchors[i];document.getElementById("verificationBody").innerHTML=`<div class="kv"><span>Payroll period</span><strong>${a.period}</strong></div><div class="kv"><span>Payroll run</span><strong>${a.run}</strong></div><div class="kv"><span>Network</span><strong>${a.network}</strong></div><div class="kv"><span>Block number</span><strong>${a.block}</strong></div><div class="kv"><span>Transaction reference</span><strong class="hash">${a.tx}</strong></div><div class="kv"><span>Payload hash</span><strong class="hash">${a.hash}</strong></div><div class="kv"><span>Verification result</span><strong>${a.status}</strong></div><p class="notice-text" style="margin-top:13px">Placeholder verification metadata for interface demonstration. No actual network query was performed.</p>`;
+ const d=document.getElementById("verificationDetail");d.style.display="block";d.scrollIntoView({behavior:"smooth",block:"start"});
+}
+function closeModal(id){document.getElementById(id).classList.remove("show")}
+document.getElementById("employeeSearch").addEventListener("input",renderEmployees);
+document.getElementById("employmentFilter").addEventListener("change",renderEmployees);
+document.getElementById("payrollSearch").addEventListener("input",renderPayrolls);
+document.getElementById("payrollYear").addEventListener("change",renderPayrolls);
+document.getElementById("payslipSearch").addEventListener("input",renderPayslips);
+document.getElementById("profileBtn").addEventListener("click",()=>toast("Viewer account • Read-only access (sample account)."));
+document.getElementById("logoutBtn").addEventListener("click",()=>toast("Logout is a visual prototype action."));
+document.querySelectorAll(".modalback").forEach(m=>m.addEventListener("click",e=>{if(e.target===m)m.classList.remove("show")}));
+renderDashboard();renderEmployees();renderPayrolls();renderPayslips();renderVerification();
+</script>
+</body>
+</html>

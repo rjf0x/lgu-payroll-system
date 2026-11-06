@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LGU Payroll System | Admin Dashboard</title>
+<style>
+
+:root{--green:#174c3a;--green2:#22684f;--mint:#e8f2ed;--bg:#f4f7f5;--ink:#1b2a23;--muted:#718078;--line:#e3eae6;--white:#fff;--amber:#9a6412;--amberbg:#fff5df;--red:#a83d3d;--redbg:#fff0ef;--blue:#315f94;--bluebg:#edf4fc;--shadow:0 8px 28px rgba(24,55,41,.07)}
+*{box-sizing:border-box}body{margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink)}button,input,select{font:inherit}button{cursor:pointer}.app{display:flex;min-height:100vh}.sidebar{width:252px;background:#143f31;color:#eaf3ee;display:flex;flex-direction:column;flex-shrink:0}.brand{height:76px;padding:17px 20px;display:flex;gap:11px;align-items:center;border-bottom:1px solid rgba(255,255,255,.12)}.brandmark{width:39px;height:39px;background:#f5fbf7;color:var(--green);border-radius:11px;display:grid;place-items:center;font-size:21px;font-weight:800}.brandname{font-weight:750;font-size:15px;letter-spacing:.1px}.brandtag{font-size:10px;color:#b7d0c2;margin-top:3px}.navlabel{padding:21px 20px 8px;font-size:10px;text-transform:uppercase;letter-spacing:1.15px;color:#91b5a2;font-weight:700}.nav{padding:0 11px;display:grid;gap:3px}.nav button{border:0;background:transparent;color:#d6e5dc;text-align:left;padding:11px 12px;border-radius:9px;display:flex;gap:12px;align-items:center;font-size:13px}.nav button:hover,.nav button.active{background:#286047;color:white}.nav .ico{width:19px;text-align:center;font-size:16px}.side-bottom{margin-top:auto;padding:15px;border-top:1px solid rgba(255,255,255,.12)}.profile{display:flex;gap:10px;align-items:center}.avatar{width:35px;height:35px;border-radius:50%;background:#d9ebe1;color:#174c3a;font-weight:800;display:grid;place-items:center;font-size:12px}.profile strong{display:block;font-size:12px}.profile small{font-size:10px;color:#a9c6b7}.main{min-width:0;flex:1}.topbar{height:76px;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 30px;position:sticky;top:0;z-index:10}.crumb{font-size:12px;color:var(--muted)}.crumb b{color:var(--ink)}.topright{display:flex;align-items:center;gap:13px}.role-pill{background:var(--mint);color:var(--green);font-size:11px;font-weight:750;padding:7px 11px;border-radius:30px}.iconbtn{border:1px solid var(--line);background:#fff;border-radius:9px;width:36px;height:36px;color:#516359}.content{padding:28px 30px 42px;max-width:1600px;margin:auto}.pagehead{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;margin-bottom:22px}.eyebrow{font-size:10px;color:var(--green2);font-weight:800;letter-spacing:1.2px;text-transform:uppercase}.pagehead h1{font-size:25px;margin:5px 0 5px;letter-spacing:-.6px}.subtitle{margin:0;color:var(--muted);font-size:13px}.head-actions{display:flex;gap:9px;flex-wrap:wrap}.btn{border:1px solid var(--line);background:#fff;color:#30453a;border-radius:9px;padding:10px 14px;font-size:12px;font-weight:700;display:inline-flex;gap:7px;align-items:center}.btn:hover{border-color:#b8cbbf;background:#fbfdfc}.btn.primary{background:var(--green);border-color:var(--green);color:#fff}.btn.primary:hover{background:var(--green2)}.btn.soft{background:var(--mint);color:var(--green);border-color:#d4e6dc}.btn.danger{color:var(--red);background:var(--redbg);border-color:#f4d9d6}.btn:disabled{opacity:.45;cursor:not-allowed}.notice{background:#f0f6f2;border:1px solid #dceae1;border-radius:11px;padding:12px 15px;color:#436252;font-size:12px;display:flex;gap:10px;align-items:flex-start;margin-bottom:19px}.notice strong{color:#214d38}.grid{display:grid;gap:15px}.stats{grid-template-columns:repeat(4,minmax(0,1fr));margin-bottom:19px}.card{background:#fff;border:1px solid var(--line);border-radius:13px;box-shadow:0 2px 8px rgba(20,50,36,.025)}.stat{padding:17px 18px}.stat-top{display:flex;justify-content:space-between;align-items:center;color:var(--muted);font-size:11px}.stat-icon{width:32px;height:32px;border-radius:9px;display:grid;place-items:center;background:var(--mint);color:var(--green);font-size:16px}.stat-value{font-size:25px;font-weight:800;letter-spacing:-.7px;margin-top:11px}.stat-note{font-size:10px;color:var(--muted);margin-top:4px}.two-col{grid-template-columns:1.35fr .85fr}.panel{padding:18px}.panelhead{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:15px}.panelhead h3{font-size:14px;margin:0}.panelhead p{font-size:11px;color:var(--muted);margin:4px 0 0}.status{font-size:10px;font-weight:750;border-radius:20px;padding:5px 9px;display:inline-block;background:#edf1ee;color:#617168;white-space:nowrap}.status.draft{background:#edf4fc;color:#315f94}.status.pending{background:var(--amberbg);color:var(--amber)}.status.approved{background:#e7f5eb;color:#277347}.status.returned{background:var(--redbg);color:var(--red)}.activity{display:grid;gap:14px}.activity-item{display:flex;gap:10px;align-items:flex-start}.dot{width:8px;height:8px;border-radius:50%;background:#6ca486;margin-top:5px;flex-shrink:0}.activity-item strong{font-size:11px;display:block}.activity-item small{font-size:10px;color:var(--muted)}.quickgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}.quick{padding:13px;border:1px solid var(--line);border-radius:10px;background:#fbfdfc;text-align:left;color:var(--ink)}.quick:hover{border-color:#a9c9b7;background:#f2f8f4}.quick .qico{font-size:17px;color:var(--green)}.quick strong{display:block;font-size:11px;margin-top:8px}.quick small{font-size:10px;color:var(--muted)}.section{display:none}.section.active{display:block}.toolbar{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:14px}.field{border:1px solid var(--line);border-radius:8px;padding:9px 11px;background:#fff;color:var(--ink);font-size:12px;outline:none}.field:focus{border-color:#83aa92;box-shadow:0 0 0 3px #e9f3ed}.search{min-width:230px}.tablewrap{overflow:auto;border:1px solid var(--line);border-radius:11px;background:#fff}.data{border-collapse:collapse;width:100%;font-size:11px;white-space:nowrap}.data th{background:#f5f8f6;color:#637369;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.45px;padding:12px 13px;border-bottom:1px solid var(--line);position:sticky;top:0}.data td{padding:12px 13px;border-bottom:1px solid #edf1ee}.data tr:last-child td{border-bottom:0}.data tr:hover td{background:#fcfefd}.namecell strong{display:block;font-size:11px}.namecell small{color:var(--muted);font-size:10px}.money{font-variant-numeric:tabular-nums;text-align:right}.muted{color:var(--muted)}.actions{display:flex;gap:6px}.mini{border:1px solid var(--line);background:#fff;border-radius:7px;padding:6px 9px;font-size:10px;font-weight:700;color:#365343}.mini:hover{background:var(--mint)}.progressline{height:7px;border-radius:20px;background:#edf2ee;overflow:hidden}.progressline span{height:100%;display:block;background:#4c9870;border-radius:20px}.empty{padding:42px;text-align:center;color:var(--muted);font-size:12px}.payroll-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:15px}.summarybox{padding:13px 15px}.summarybox small{display:block;color:var(--muted);font-size:10px}.summarybox strong{display:block;margin-top:5px;font-size:18px}.register-note{font-size:11px;color:var(--muted);margin:0 0 12px}.modalback{position:fixed;inset:0;background:rgba(12,31,23,.48);display:none;align-items:center;justify-content:center;padding:20px;z-index:30}.modalback.show{display:flex}.modal{background:#fff;border-radius:15px;width:min(780px,100%);max-height:90vh;overflow:auto;box-shadow:0 20px 70px rgba(0,0,0,.2)}.modalhead{padding:19px 22px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:white;z-index:1}.modalhead h2{margin:0;font-size:16px}.modalbody{padding:20px 22px}.modalfoot{padding:15px 22px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;gap:8px;position:sticky;bottom:0;background:white}.formgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.formgroup label{display:block;font-size:10px;color:#68796f;font-weight:700;margin-bottom:5px}.formgroup input{width:100%;border:1px solid var(--line);border-radius:8px;padding:9px 10px;font-size:12px}.formgroup input:focus{outline:none;border-color:#83aa92}.formsection{grid-column:1/-1;font-size:11px;text-transform:uppercase;letter-spacing:.7px;color:var(--green);font-weight:800;padding-top:7px;border-top:1px solid var(--line)}.toast{position:fixed;bottom:22px;right:22px;background:#173f30;color:white;padding:13px 17px;border-radius:10px;font-size:12px;box-shadow:var(--shadow);display:none;z-index:40;max-width:360px}.toast.show{display:block;animation:fade .25s}@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}.footnote{font-size:10px;color:var(--muted);line-height:1.5;margin-top:12px}.tag{display:inline-flex;padding:4px 7px;border-radius:5px;background:#f1f5f2;color:#50655a;font-size:9px;font-weight:700}.register-head{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap}.right{text-align:right}.period{font-weight:750;color:#264c39}.mobile-menu{display:none}
+@media(max-width:1000px){.sidebar{width:220px}.content{padding:22px 18px}.topbar{padding:0 18px}.stats{grid-template-columns:repeat(2,1fr)}.two-col{grid-template-columns:1fr}}
+@media(max-width:700px){.sidebar{width:66px}.brand{padding:14px;justify-content:center}.brandcopy,.navlabel,.nav button .navtext,.profileinfo{display:none}.nav{padding:0 8px}.nav button{justify-content:center;padding:12px 5px}.nav button .ico{font-size:18px}.side-bottom{padding:12px 15px}.profile{justify-content:center}.topbar{height:64px;padding:0 13px}.content{padding:19px 12px}.pagehead{flex-direction:column}.stats{gap:9px}.stat{padding:13px}.stat-value{font-size:21px}.formgrid{grid-template-columns:repeat(2,minmax(0,1fr))}.payroll-summary{grid-template-columns:1fr}.role-pill{display:none}}
+
+/* Admin-specific components; visual language follows the Payroll Officer dashboard. */
+.panel-note{font-size:11px;color:var(--muted);line-height:1.5}
+.kpi-inline{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.role-card{padding:15px;border:1px solid var(--line);border-radius:11px;background:#fbfdfc}
+.role-card h4{font-size:12px;margin:0 0 5px;color:var(--green)}
+.role-card p{font-size:10px;margin:0;color:var(--muted);line-height:1.45}
+.role-count{font-size:20px;font-weight:800;color:var(--green);margin-top:10px}
+.two-col-admin{grid-template-columns:1.2fr .8fr}
+.three-col{grid-template-columns:repeat(3,minmax(0,1fr))}
+.formgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.formgroup label{display:block;font-size:10px;color:#68796f;font-weight:700;margin-bottom:5px}
+.formgroup input,.formgroup select{width:100%;border:1px solid var(--line);border-radius:8px;padding:9px 10px;font-size:12px;background:white;color:var(--ink)}
+.formgroup input:focus,.formgroup select:focus{outline:none;border-color:#83aa92;box-shadow:0 0 0 3px #e9f3ed}
+.modalback{position:fixed;inset:0;background:rgba(12,31,23,.48);display:none;align-items:center;justify-content:center;padding:20px;z-index:30}
+.modalback.show{display:flex}
+.modal{background:#fff;border-radius:15px;width:min(620px,100%);max-height:90vh;overflow:auto;box-shadow:0 20px 70px rgba(0,0,0,.2)}
+.modalhead{padding:19px 22px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:white;z-index:1}
+.modalhead h2{margin:0;font-size:16px;color:var(--ink)}
+.modalbody{padding:20px 22px}
+.modalfoot{padding:15px 22px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;gap:8px;position:sticky;bottom:0;background:white}
+.modalx{border:0;background:none;font-size:20px;color:#66756d}
+.mini{border:1px solid var(--line);background:#fff;border-radius:7px;padding:6px 9px;font-size:10px;font-weight:700;color:#365343}
+.mini:hover{background:var(--mint)}
+.perm{width:15px;height:15px;accent-color:var(--green)}
+.tag.active{background:#e7f5eb;color:#277347}
+.tag.inactive{background:#fff0ef;color:#a83d3d}
+.notice-line{display:flex;gap:10px;align-items:flex-start;padding:12px 14px;background:#f0f6f2;border:1px solid #dceae1;border-radius:11px;color:#436252;font-size:11px;line-height:1.5;margin-bottom:16px}
+.setting-row{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:14px 0;border-bottom:1px solid var(--line)}
+.setting-row:last-child{border-bottom:0}
+.setting-row strong{font-size:12px;display:block}
+.setting-row small{font-size:10px;color:var(--muted)}
+.switch{position:relative;width:38px;height:21px;display:inline-block;flex:none}
+.switch input{opacity:0;width:0;height:0}
+.slider{position:absolute;inset:0;border-radius:20px;background:#ccd6d0;transition:.2s;cursor:pointer}
+.slider:before{content:"";position:absolute;width:15px;height:15px;left:3px;top:3px;border-radius:50%;background:#fff;transition:.2s}
+.switch input:checked+.slider{background:#347a57}
+.switch input:checked+.slider:before{transform:translateX(17px)}
+@media(max-width:1000px){.two-col-admin{grid-template-columns:1fr}.three-col{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:700px){.three-col{grid-template-columns:1fr}.formgrid{grid-template-columns:1fr}.setting-row{align-items:flex-start}}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand"><div class="brandmark">✦</div><div class="brandcopy"><div class="brandname">LGU PAYROLL</div><div class="brandtag">Payroll Management System</div></div></div>
+    <div class="navlabel">Workspace</div>
+    <nav class="nav" id="nav">
+      <button class="active" data-page="dashboard"><span class="ico">▦</span><span class="navtext">Dashboard</span></button>
+      <button data-page="users"><span class="ico">♙</span><span class="navtext">User Management</span></button>
+      <button data-page="roles"><span class="ico">♧</span><span class="navtext">Roles & Permissions</span></button>
+      <div class="navlabel">System Configuration</div>
+      <button data-page="employees"><span class="ico">▤</span><span class="navtext">Employee Directory</span></button>
+      <button data-page="organization"><span class="ico">▦</span><span class="navtext">Departments & Positions</span></button>
+      <button data-page="salary"><span class="ico">₱</span><span class="navtext">Salary Schedules</span></button>
+      <button data-page="settings"><span class="ico">⚙</span><span class="navtext">System Settings</span></button>
+      <div class="navlabel">Monitoring</div>
+      <button data-page="audit"><span class="ico">◷</span><span class="navtext">Audit Logs</span></button>
+      <button data-page="reports"><span class="ico">▥</span><span class="navtext">System Reports</span></button>
+    </nav>
+    <div class="side-bottom">
+      <div class="profile"><div class="avatar">AD</div><div class="profileinfo"><strong>System Administrator</strong><small>Administrator · Demo Account</small></div></div>
+      <button class="side-action" id="profileBtn"><span class="ico">◉</span><span>My Profile</span></button>
+      <button class="side-action" id="logoutBtn"><span class="ico">⇥</span><span>Logout</span></button>
+    </div>
+  </aside>
+  <main class="main">
+    <header class="topbar"><div class="crumb">LGU Payroll System&nbsp; / &nbsp;<b id="crumb">Dashboard</b></div><div class="topright"><span class="role-pill">ADMIN</span><button class="iconbtn" title="Notifications">♧</button><div class="avatar">AD</div></div></header>
+    <div class="content">
+      <section class="section active" id="page-dashboard">
+        <div class="pagehead"><div><div class="eyebrow">System administration</div><h1>Admin Dashboard</h1><p class="subtitle">Manage system access, configuration, and records oversight.</p></div><div class="head-actions"><button class="btn primary" data-goto="users">＋ Add User</button></div></div>
+        <div class="notice"><span>ⓘ</span><div><strong>Demo environment.</strong> Sample user accounts, offices, and activity entries are displayed. This prototype is not connected to the LGU's live database.</div></div>
+        <div class="grid stats">
+          <div class="card stat"><div class="stat-top"><span>System Users</span><span class="stat-icon">♙</span></div><div class="stat-value" id="userCount">12</div><div class="stat-note">Sample registered accounts</div></div>
+          <div class="card stat"><div class="stat-top"><span>Active Accounts</span><span class="stat-icon">✓</span></div><div class="stat-value" id="activeCount">10</div><div class="stat-note">Accounts currently enabled</div></div>
+          <div class="card stat"><div class="stat-top"><span>System Roles</span><span class="stat-icon">♧</span></div><div class="stat-value">4</div><div class="stat-note">Admin, Payroll Officer, Approver, Viewer</div></div>
+          <div class="card stat"><div class="stat-top"><span>Audit Events</span><span class="stat-icon">◷</span></div><div class="stat-value" id="auditCount">28</div><div class="stat-note">Illustrative recent activity count</div></div>
+        </div>
+        <div class="grid two-col two-col-admin">
+          <div class="card panel">
+            <div class="panelhead"><div><h3>System user overview</h3><p>Accounts grouped by assigned role</p></div><button class="mini" data-goto="users">Manage users →</button></div>
+            <div class="grid three-col" id="roleCards">
+              <div class="role-card"><h4>Admin</h4><p>System administration and configuration</p><div class="role-count">2 users</div></div>
+              <div class="role-card"><h4>Payroll Officer</h4><p>Employee records and payroll preparation</p><div class="role-count">3 users</div></div>
+              <div class="role-card"><h4>Approver</h4><p>Independent payroll review and approval</p><div class="role-count">2 users</div></div>
+              <div class="role-card"><h4>Viewer</h4><p>Read-only access to authorized information</p><div class="role-count">5 users</div></div>
+            </div>
+          </div>
+          <div class="card panel">
+            <div class="panelhead"><div><h3>Quick actions</h3><p>Common administration tasks</p></div></div>
+            <div class="quickgrid">
+              <button class="quick" data-goto="users"><span class="qico">♙</span><strong>Create user account</strong><small>Add an authorized system user</small></button>
+              <button class="quick" data-goto="roles"><span class="qico">♧</span><strong>Review role access</strong><small>Check permissions per role</small></button>
+              <button class="quick" data-goto="organization"><span class="qico">▦</span><strong>Manage organization</strong><small>Offices and positions</small></button>
+              <button class="quick" data-goto="audit"><span class="qico">◷</span><strong>View audit logs</strong><small>Monitor system activities</small></button>
+            </div>
+          </div>
+        </div>
+        <div class="grid two-col two-col-admin" style="margin-top:15px">
+          <div class="card panel"><div class="panelhead"><div><h3>Recent system activity</h3><p>Latest administrative and security events</p></div><button class="mini" data-goto="audit">View all →</button></div><div class="activity" id="dashboardActivity"></div></div>
+          <div class="card panel"><div class="panelhead"><div><h3>System safeguards</h3><p>Important configuration reminders</p></div></div>
+            <div class="activity">
+              <div class="activity-item"><span class="dot"></span><div><strong>Role-based access control</strong><small>Four configured roles</small></div></div>
+              <div class="activity-item"><span class="dot"></span><div><strong>Payroll separation of duties</strong><small>Preparer cannot approve own payroll</small></div></div>
+              <div class="activity-item"><span class="dot"></span><div><strong>Audit trail</strong><small>Administrative changes should be logged</small></div></div>
+              <div class="activity-item"><span class="dot"></span><div><strong>Payroll data protection</strong><small>Restrict access to confidential records</small></div></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="page-users">
+        <div class="pagehead"><div><div class="eyebrow">Access administration</div><h1>User Management</h1><p class="subtitle">Create accounts, assign one of the four system roles, and manage account status.</p></div><div class="head-actions"><button class="btn primary" id="addUserBtn">＋ Add User</button></div></div>
+        <div class="notice"><span>ⓘ</span><div><strong>Access control reminder.</strong> Assign only the access required for each user's responsibilities. Payroll Officer and Approver must remain separate accounts for the payroll run they process.</div></div>
+        <div class="card panel">
+          <div class="toolbar"><input class="field search" id="userSearch" placeholder="Search name, username, or email…"><select class="field" id="roleFilter"><option value="all">All roles</option><option>Admin</option><option>Payroll Officer</option><option>Approver</option><option>Viewer</option></select><select class="field" id="statusFilter"><option value="all">All statuses</option><option>Active</option><option>Inactive</option></select></div>
+          <div class="tablewrap"><table class="data"><thead><tr><th>Name</th><th>Username</th><th>Email</th><th>Assigned Role</th><th>Status</th><th>Last Login</th><th>Actions</th></tr></thead><tbody id="userRows"></tbody></table></div>
+          <p class="footnote">Demo accounts only. In the actual Laravel application, passwords must be securely hashed and never displayed in this table.</p>
+        </div>
+      </section>
+
+      <section class="section" id="page-roles">
+        <div class="pagehead"><div><div class="eyebrow">Access administration</div><h1>Roles & Permissions</h1><p class="subtitle">Review the permissions assigned to each of the four system roles.</p></div></div>
+        <div class="notice"><span>ⓘ</span><div><strong>Separation of duties.</strong> Admin access does not automatically permit bypassing the payroll approval workflow. The user who prepared or submitted a payroll run cannot approve that same run.</div></div>
+        <div class="card panel">
+          <div class="panelhead"><div><h3>Role permission matrix</h3><p>Illustrative proposed access model; confirm final permissions with the client.</p></div><span class="tag">4 roles</span></div>
+          <div class="tablewrap"><table class="data"><thead><tr><th>Module / Permission</th><th>Admin</th><th>Payroll Officer</th><th>Approver</th><th>Viewer</th></tr></thead><tbody id="permissionRows"></tbody></table></div>
+          <p class="footnote">This matrix is a prototype reference, not an authorization engine. Laravel middleware and policies must enforce permissions on the server.</p>
+        </div>
+      </section>
+
+      <section class="section" id="page-employees">
+        <div class="pagehead"><div><div class="eyebrow">Records oversight</div><h1>Employee Directory</h1><p class="subtitle">Search employee profiles and inspect their basic employment status.</p></div></div>
+        <div class="card panel"><div class="toolbar"><input class="field search" id="employeeSearch" placeholder="Search employee number, name, or office…"></div><div class="tablewrap"><table class="data"><thead><tr><th>Employee No.</th><th>Employee Name</th><th>Office</th><th>Position</th><th>Employment Type</th><th>Status</th></tr></thead><tbody id="employeeRows"></tbody></table></div><p class="footnote">Personal information shown is fictional sample data for prototype demonstration.</p></div>
+      </section>
+
+      <section class="section" id="page-organization">
+        <div class="pagehead"><div><div class="eyebrow">System configuration</div><h1>Departments & Positions</h1><p class="subtitle">Maintain the organizational reference data used by employee and employment records.</p></div><div class="head-actions"><button class="btn primary" id="addDepartmentBtn">＋ Add Department</button></div></div>
+        <div class="grid two-col">
+          <div class="card panel"><div class="panelhead"><div><h3>Departments / Offices</h3><p>Sample organizational records</p></div></div><div class="tablewrap"><table class="data"><thead><tr><th>Code</th><th>Department / Office</th><th>Status</th></tr></thead><tbody id="departmentRows"></tbody></table></div></div>
+          <div class="card panel"><div class="panelhead"><div><h3>Positions</h3><p>Sample position reference list</p></div></div><div class="tablewrap"><table class="data"><thead><tr><th>Position Code</th><th>Position Title</th><th>Salary Grade</th></tr></thead><tbody id="positionRows"></tbody></table></div></div>
+        </div>
+      </section>
+
+      <section class="section" id="page-salary">
+        <div class="pagehead"><div><div class="eyebrow">Compensation configuration</div><h1>Salary Schedules</h1><p class="subtitle">Maintain the LGU-adopted salary schedule and its effective dates.</p></div><div class="head-actions"><button class="btn primary" id="addScheduleBtn">＋ Add Schedule</button></div></div>
+        <div class="notice"><span>ⓘ</span><div><strong>Do not invent salary rates.</strong> Enter only the schedule formally adopted by the LGU and authorized for implementation. The examples below are placeholders and contain no official salary amounts.</div></div>
+        <div class="card panel"><div class="tablewrap"><table class="data"><thead><tr><th>Schedule</th><th>Reference Document</th><th>Effective From</th><th>Effective To</th><th>Status</th></tr></thead><tbody id="scheduleRows"></tbody></table></div><div class="panelhead" style="margin-top:18px"><div><h3>Salary grade and step reference</h3><p>Actual peso rates are maintained in the schedule's grade-step records.</p></div><span class="tag">No sample rates populated</span></div><div class="notice-line">A position's salary grade and an employee's designated step determine the applicable basic salary by looking up the correct grade-step amount in the adopted schedule.</div></div>
+      </section>
+
+      <section class="section" id="page-settings">
+        <div class="pagehead"><div><div class="eyebrow">System configuration</div><h1>System Settings</h1><p class="subtitle">Review basic system preferences and security controls.</p></div><div class="head-actions"><button class="btn primary" id="saveSettings">Save settings</button></div></div>
+        <div class="grid two-col">
+          <div class="card panel"><div class="panelhead"><div><h3>General settings</h3><p>Prototype configuration values</p></div></div>
+            <div class="formgrid">
+              <div class="formgroup"><label>System name</label><input id="systemName" value="LGU Payroll Management System"></div>
+              <div class="formgroup"><label>Payroll frequency</label><select id="frequency"><option selected>Monthly</option></select></div>
+              <div class="formgroup"><label>Default currency</label><select id="currency"><option selected>PHP (₱)</option></select></div>
+              <div class="formgroup"><label>Timezone</label><select id="timezone"><option selected>Asia/Manila</option></select></div>
+            </div>
+          </div>
+          <div class="card panel"><div class="panelhead"><div><h3>Security controls</h3><p>Proposed settings for the production application</p></div></div>
+            <div class="setting-row"><div><strong>Role-based access control</strong><small>Restrict features by assigned role</small></div><label class="switch"><input type="checkbox" checked><span class="slider"></span></label></div>
+            <div class="setting-row"><div><strong>Audit logging</strong><small>Record administrative and payroll actions</small></div><label class="switch"><input type="checkbox" checked><span class="slider"></span></label></div>
+            <div class="setting-row"><div><strong>Separate payroll approval</strong><small>Block preparer from approving own payroll</small></div><label class="switch"><input type="checkbox" checked><span class="slider"></span></label></div>
+            <div class="setting-row"><div><strong>Require remarks for rejection</strong><small>Require a reason when payroll is returned or rejected</small></div><label class="switch"><input type="checkbox" checked><span class="slider"></span></label></div>
+          </div>
+        </div>
+        <p class="footnote">Settings shown here are illustrative. In production, sensitive security controls must be validated and enforced server-side, not only through interface switches.</p>
+      </section>
+
+      <section class="section" id="page-audit">
+        <div class="pagehead"><div><div class="eyebrow">System monitoring</div><h1>Audit Logs</h1><p class="subtitle">Monitor important user activities and administrative changes.</p></div><div class="head-actions"><button class="btn" id="exportAudit">⇩ Export CSV</button></div></div>
+        <div class="card panel"><div class="toolbar"><input class="field search" id="auditSearch" placeholder="Search user, action, or module…"><select class="field" id="auditModule"><option value="all">All modules</option><option>User Management</option><option>Roles & Permissions</option><option>System Settings</option><option>Payroll</option></select></div><div class="tablewrap"><table class="data"><thead><tr><th>Date & Time</th><th>User</th><th>Action</th><th>Module</th><th>Record ID</th><th>IP Address</th></tr></thead><tbody id="auditRows"></tbody></table></div><p class="footnote">Audit logs should be append-only in the production system and protected from unauthorized modification.</p></div>
+      </section>
+
+      <section class="section" id="page-reports">
+        <div class="pagehead"><div><div class="eyebrow">System monitoring</div><h1>System Reports</h1><p class="subtitle">Administrative summaries for user accounts and system activity.</p></div></div>
+        <div class="grid stats">
+          <div class="card stat"><div class="stat-top"><span>Total Accounts</span><span class="stat-icon">♙</span></div><div class="stat-value" id="reportUsers">12</div><div class="stat-note">All registered sample accounts</div></div>
+          <div class="card stat"><div class="stat-top"><span>Active Accounts</span><span class="stat-icon">✓</span></div><div class="stat-value" id="reportActive">10</div><div class="stat-note">Enabled accounts</div></div>
+          <div class="card stat"><div class="stat-top"><span>Inactive Accounts</span><span class="stat-icon">⏸</span></div><div class="stat-value" id="reportInactive">2</div><div class="stat-note">Disabled accounts</div></div>
+          <div class="card stat"><div class="stat-top"><span>System Roles</span><span class="stat-icon">♧</span></div><div class="stat-value">4</div><div class="stat-note">Configured role categories</div></div>
+        </div>
+        <div class="card panel"><div class="panelhead"><div><h3>User account distribution</h3><p>Sample account count by assigned role</p></div></div><div id="roleDistribution" class="activity"></div></div>
+      </section>
+    </div>
+  </main>
+</div>
+
+<div class="modalback" id="userModal">
+  <div class="modal">
+    <div class="modalhead"><h2 id="userModalTitle">Add User Account</h2><button class="modalx" onclick="closeUserModal()">×</button></div>
+    <div class="modalbody">
+      <div class="formgrid">
+        <div class="formgroup"><label>Full name *</label><input id="uName" placeholder="Enter full name"></div>
+        <div class="formgroup"><label>Username *</label><input id="uUsername" placeholder="Enter username"></div>
+        <div class="formgroup"><label>Email address</label><input id="uEmail" type="email" placeholder="name@example.gov.ph"></div>
+        <div class="formgroup"><label>Assigned role *</label><select id="uRole"><option>Admin</option><option>Payroll Officer</option><option>Approver</option><option selected>Viewer</option></select></div>
+      </div>
+      <p class="footnote">Prototype only: no actual account or password is created. The production application should send an invitation or require secure password setup.</p>
+    </div>
+    <div class="modalfoot"><button class="btn" onclick="closeUserModal()">Cancel</button><button class="btn primary" id="saveUser">Save user</button></div>
+  </div>
+</div>
+<div class="modalback" id="departmentModal">
+  <div class="modal">
+    <div class="modalhead"><h2>Add Department</h2><button class="modalx" onclick="closeDepartmentModal()">×</button></div>
+    <div class="modalbody"><div class="formgrid"><div class="formgroup"><label>Department code *</label><input id="dCode" placeholder="e.g. MTO"></div><div class="formgroup"><label>Department name *</label><input id="dName" placeholder="Office name"></div></div><p class="footnote">Sample-only addition. Confirm the LGU's official office names and codes before production.</p></div>
+    <div class="modalfoot"><button class="btn" onclick="closeDepartmentModal()">Cancel</button><button class="btn primary" id="saveDepartment">Save department</button></div>
+  </div>
+</div>
+<div class="modalback" id="scheduleModal">
+  <div class="modal">
+    <div class="modalhead"><h2>Add Salary Schedule</h2><button class="modalx" onclick="closeScheduleModal()">×</button></div>
+    <div class="modalbody"><div class="formgrid"><div class="formgroup"><label>Schedule name *</label><input id="sName" placeholder="LGU-adopted schedule"></div><div class="formgroup"><label>Reference document</label><input id="sReference" placeholder="DBM / Sanggunian reference"></div><div class="formgroup"><label>Effective from *</label><input id="sFrom" type="date"></div><div class="formgroup"><label>Effective to</label><input id="sTo" type="date"></div></div><p class="footnote">Do not enter or publish salary amounts until the correct LGU-adopted schedule has been confirmed.</p></div>
+    <div class="modalfoot"><button class="btn" onclick="closeScheduleModal()">Cancel</button><button class="btn primary" id="saveSchedule">Save schedule</button></div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+let users=[
+{id:1,name:"Alex Administrator",username:"admin01",email:"admin@example.gov.ph",role:"Admin",status:"Active",last:"Nov 06, 2026 08:15"},
+{id:2,name:"Bea Administrator",username:"admin02",email:"admin2@example.gov.ph",role:"Admin",status:"Active",last:"Nov 05, 2026 16:30"},
+{id:3,name:"Juan Dela Cruz",username:"payroll01",email:"payroll01@example.gov.ph",role:"Payroll Officer",status:"Active",last:"Nov 06, 2026 09:20"},
+{id:4,name:"Carlo Ramos",username:"payroll02",email:"payroll02@example.gov.ph",role:"Payroll Officer",status:"Active",last:"Nov 06, 2026 10:45"},
+{id:5,name:"Ana Villanueva",username:"payroll03",email:"payroll03@example.gov.ph",role:"Payroll Officer",status:"Active",last:"Nov 04, 2026 15:10"},
+{id:6,name:"Maria Santos",username:"approver01",email:"approver01@example.gov.ph",role:"Approver",status:"Active",last:"Nov 06, 2026 11:05"},
+{id:7,name:"Ramon Bautista",username:"approver02",email:"approver02@example.gov.ph",role:"Approver",status:"Active",last:"Nov 05, 2026 14:22"},
+{id:8,name:"Lea Garcia",username:"viewer01",email:"viewer01@example.gov.ph",role:"Viewer",status:"Active",last:"Nov 06, 2026 08:40"},
+{id:9,name:"Paolo Reyes",username:"viewer02",email:"viewer02@example.gov.ph",role:"Viewer",status:"Active",last:"Nov 05, 2026 13:12"},
+{id:10,name:"Mika Flores",username:"viewer03",email:"viewer03@example.gov.ph",role:"Viewer",status:"Active",last:"Nov 03, 2026 10:05"},
+{id:11,name:"Nico Lim",username:"viewer04",email:"viewer04@example.gov.ph",role:"Viewer",status:"Inactive",last:"Oct 21, 2026 09:00"},
+{id:12,name:"Tina Cruz",username:"viewer05",email:"viewer05@example.gov.ph",role:"Viewer",status:"Inactive",last:"Oct 18, 2026 13:20"}
+];
+let departments=[
+{code:"MO",name:"Office of the Municipal Mayor",status:"Active"},
+{code:"MAO",name:"Municipal Accounting Office",status:"Active"},
+{code:"MHRMO",name:"Municipal Human Resource Management Office",status:"Active"},
+{code:"MTO",name:"Municipal Treasurer's Office",status:"Active"}
+];
+let positions=[
+{code:"POS-001",title:"Administrative Officer",grade:15},
+{code:"POS-002",title:"Accountant II",grade:16},
+{code:"POS-003",title:"Administrative Aide",grade:4},
+{code:"POS-004",title:"Revenue Collection Clerk",grade:8}
+];
+let schedules=[
+{name:"LGU-Adopted Salary Schedule (Sample)",reference:"To be confirmed by LGU",from:"To be configured",to:"—",status:"For validation"}
+];
+let audit=[
+{date:"Nov 06, 2026 11:05",user:"Alex Administrator",action:"Viewed user account list",module:"User Management",record:"USERS",ip:"192.0.2.10"},
+{date:"Nov 06, 2026 10:45",user:"Alex Administrator",action:"Viewed role permissions",module:"Roles & Permissions",record:"ROLES",ip:"192.0.2.10"},
+{date:"Nov 06, 2026 09:30",user:"Alex Administrator",action:"Updated system settings",module:"System Settings",record:"SET-001",ip:"192.0.2.10"},
+{date:"Nov 05, 2026 16:20",user:"Alex Administrator",action:"Viewed audit log",module:"Audit Logs",record:"AUDIT",ip:"192.0.2.10"},
+{date:"Nov 05, 2026 14:10",user:"Bea Administrator",action:"Added user account",module:"User Management",record:"USR-012",ip:"192.0.2.11"},
+{date:"Nov 04, 2026 11:20",user:"Alex Administrator",action:"Reviewed salary schedule",module:"System Settings",record:"SAL-SCH",ip:"192.0.2.10"}
+];
+const permissions=[
+["User accounts","Manage","—","—","—"],
+["Roles and permissions","Manage","—","—","—"],
+["Employee records","Manage","Manage","View","View"],
+["Departments and positions","Manage","Manage","View","View"],
+["Salary schedules","Manage","View","View","—"],
+["Compensation profiles","Manage","Manage","View","—"],
+["Attendance and leave","Manage","Manage","View","—"],
+["Earnings and deductions","Manage","Manage","View","—"],
+["Prepare monthly payroll","Oversight","Prepare","—","—"],
+["Review and approve payroll","No bypass","Submit","Approve","—"],
+["Payslips and payroll reports","View","Generate","View","View"],
+["Audit logs","View","—","View","—"],
+["Blockchain verification","View","Verify","Verify","View"]
+];
+let editingUserId=null;
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+function showToast(msg){const t=document.getElementById("toast");t.textContent=msg;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),2600)}
+function gotoPage(page){
+ document.querySelectorAll(".section").forEach(x=>x.classList.remove("active"));
+ document.getElementById("page-"+page)?.classList.add("active");
+ document.querySelectorAll("#nav button[data-page]").forEach(b=>b.classList.toggle("active",b.dataset.page===page));
+ const active=document.querySelector(`#nav button[data-page="${page}"] .navtext`);
+ document.getElementById("crumb").textContent=active?active.textContent.trim():"Dashboard";
+ window.scrollTo({top:0,behavior:"smooth"});
+ if(page==="users")renderUsers();if(page==="employees")renderEmployees();if(page==="organization")renderOrganization();
+ if(page==="salary")renderSchedules();if(page==="audit")renderAudit();if(page==="reports")renderReports();
+}
+document.querySelectorAll("#nav button[data-page]").forEach(b=>b.addEventListener("click",()=>gotoPage(b.dataset.page)));
+document.querySelectorAll("[data-goto]").forEach(b=>b.addEventListener("click",()=>gotoPage(b.dataset.goto)));
+function statusBadge(status){return `<span class="status ${status==="Active"?"approved":"returned"}">${esc(status)}</span>`}
+function roleCounts(){
+ const counts={"Admin":0,"Payroll Officer":0,"Approver":0,"Viewer":0};users.forEach(u=>counts[u.role]=(counts[u.role]||0)+1);
+ document.getElementById("roleCards").innerHTML=[
+ ["Admin","System administration and configuration"],
+ ["Payroll Officer","Employee records and payroll preparation"],
+ ["Approver","Independent payroll review and approval"],
+ ["Viewer","Read-only access to authorized information"]
+ ].map(([r,d])=>`<div class="role-card"><h4>${r}</h4><p>${d}</p><div class="role-count">${counts[r]||0} users</div></div>`).join("");
+}
+function renderStats(){
+ const active=users.filter(u=>u.status==="Active").length;
+ document.getElementById("userCount").textContent=users.length;
+ document.getElementById("activeCount").textContent=active;
+ document.getElementById("auditCount").textContent=audit.length;
+ roleCounts();
+}
+function renderActivity(){
+ document.getElementById("dashboardActivity").innerHTML=audit.slice(0,5).map(a=>`<div class="activity-item"><span class="dot"></span><div><strong>${esc(a.action)}</strong><small>${esc(a.user)} · ${esc(a.date)} · ${esc(a.module)}</small></div></div>`).join("");
+}
+function renderUsers(){
+ const q=(document.getElementById("userSearch").value||"").toLowerCase(),role=document.getElementById("roleFilter").value,status=document.getElementById("statusFilter").value;
+ const list=users.filter(u=>(`${u.name} ${u.username} ${u.email}`.toLowerCase().includes(q))&&(role==="all"||u.role===role)&&(status==="all"||u.status===status));
+ document.getElementById("userRows").innerHTML=list.length?list.map(u=>`<tr><td class="namecell"><strong>${esc(u.name)}</strong><small>ID: ${u.id}</small></td><td>${esc(u.username)}</td><td>${esc(u.email)}</td><td>${esc(u.role)}</td><td>${statusBadge(u.status)}</td><td>${esc(u.last)}</td><td><div class="actions"><button class="mini" onclick="editUser(${u.id})">Edit</button><button class="mini" onclick="toggleUser(${u.id})">${u.status==="Active"?"Deactivate":"Activate"}</button></div></td></tr>`).join(""):`<tr><td colspan="7" class="empty">No user accounts found.</td></tr>`;
+}
+function addAudit(action,module,record){
+ audit.unshift({date:"Just now (prototype)",user:"Alex Administrator",action,module,record,ip:"Demo session"});
+ renderActivity();renderStats();renderAudit();
+}
+function editUser(id){
+ const u=users.find(x=>x.id===id);if(!u)return;editingUserId=id;
+ document.getElementById("userModalTitle").textContent="Edit User Account";
+ document.getElementById("uName").value=u.name;document.getElementById("uUsername").value=u.username;
+ document.getElementById("uEmail").value=u.email;document.getElementById("uRole").value=u.role;
+ document.getElementById("userModal").classList.add("show");
+}
+function openUserModal(){editingUserId=null;["uName","uUsername","uEmail"].forEach(id=>document.getElementById(id).value="");document.getElementById("uRole").value="Viewer";document.getElementById("userModalTitle").textContent="Add User Account";document.getElementById("userModal").classList.add("show")}
+function closeUserModal(){document.getElementById("userModal").classList.remove("show")}
+function saveUser(){
+ const name=document.getElementById("uName").value.trim(),username=document.getElementById("uUsername").value.trim(),email=document.getElementById("uEmail").value.trim(),role=document.getElementById("uRole").value;
+ if(!name||!username){showToast("Enter the user's full name and username.");return}
+ if(users.some(u=>u.username.toLowerCase()===username.toLowerCase()&&u.id!==editingUserId)){showToast("That username is already in use.");return}
+ if(editingUserId){
+  const u=users.find(x=>x.id===editingUserId);Object.assign(u,{name,username,email,role});addAudit("Updated user account","User Management","USR-"+u.id);
+ }else{
+  const id=Math.max(...users.map(u=>u.id))+1;users.push({id,name,username,email,role,status:"Active",last:"Never"});addAudit("Created user account","User Management","USR-"+id);
+ }
+ closeUserModal();renderUsers();renderStats();showToast("User account saved in this prototype.");
+}
+function toggleUser(id){
+ const u=users.find(x=>x.id===id);if(!u)return;
+ u.status=u.status==="Active"?"Inactive":"Active";
+ addAudit((u.status==="Active"?"Activated":"Deactivated")+" user account","User Management","USR-"+id);
+ renderUsers();renderStats();showToast("Account status updated in this prototype.");
+}
+function renderPermissions(){
+ document.getElementById("permissionRows").innerHTML=permissions.map(row=>`<tr><td><strong>${esc(row[0])}</strong></td>${row.slice(1).map(v=>`<td>${v==="—"?'<span class="muted">—</span>':`<span class="tag ${v==="Manage"||v==="Approve"?"active":""}">${esc(v)}</span>`}</td>`).join("")}</tr>`).join("");
+}
+function renderEmployees(){
+ const q=(document.getElementById("employeeSearch").value||"").toLowerCase();
+ const list=[
+ ["EMP-001","Sample Employee One","Municipal Accounting Office","Administrative Officer","Permanent","Active"],
+ ["EMP-002","Sample Employee Two","Municipal Treasurer's Office","Accountant II","Coterminous","Active"],
+ ["EMP-003","Sample Employee Three","Municipal HRMO","Administrative Aide","Part-time","Active"]
+ ].filter(r=>r.join(" ").toLowerCase().includes(q));
+ document.getElementById("employeeRows").innerHTML=list.map(r=>`<tr>${r.map((v,i)=>`<td>${i===5?statusBadge(v):esc(v)}</td>`).join("")}</tr>`).join("")||`<tr><td colspan="6" class="empty">No matching employees.</td></tr>`;
+}
+function renderOrganization(){
+ document.getElementById("departmentRows").innerHTML=departments.map(d=>`<tr><td>${esc(d.code)}</td><td>${esc(d.name)}</td><td>${statusBadge(d.status)}</td></tr>`).join("");
+ document.getElementById("positionRows").innerHTML=positions.map(p=>`<tr><td>${esc(p.code)}</td><td>${esc(p.title)}</td><td>SG ${p.grade}</td></tr>`).join("");
+}
+function openDepartmentModal(){document.getElementById("dCode").value="";document.getElementById("dName").value="";document.getElementById("departmentModal").classList.add("show")}
+function closeDepartmentModal(){document.getElementById("departmentModal").classList.remove("show")}
+function saveDepartment(){
+ const code=document.getElementById("dCode").value.trim(),name=document.getElementById("dName").value.trim();
+ if(!code||!name){showToast("Enter a department code and name.");return}
+ if(departments.some(d=>d.code.toLowerCase()===code.toLowerCase())){showToast("Department code already exists.");return}
+ departments.push({code,name,status:"Active"});addAudit("Added department","Departments & Positions",code);renderOrganization();closeDepartmentModal();showToast("Department added to prototype.");
+}
+function renderSchedules(){
+ document.getElementById("scheduleRows").innerHTML=schedules.map(s=>`<tr><td><strong>${esc(s.name)}</strong></td><td>${esc(s.reference)}</td><td>${esc(s.from)}</td><td>${esc(s.to)}</td><td><span class="status pending">${esc(s.status)}</span></td></tr>`).join("");
+}
+function openScheduleModal(){["sName","sReference","sFrom","sTo"].forEach(id=>document.getElementById(id).value="");document.getElementById("scheduleModal").classList.add("show")}
+function closeScheduleModal(){document.getElementById("scheduleModal").classList.remove("show")}
+function saveSchedule(){
+ const name=document.getElementById("sName").value.trim(),ref=document.getElementById("sReference").value.trim(),from=document.getElementById("sFrom").value,to=document.getElementById("sTo").value;
+ if(!name||!from){showToast("Enter a schedule name and effective-from date.");return}
+ schedules.push({name,reference:ref||"Pending reference",from,to:to||"—",status:"For validation"});
+ addAudit("Added salary schedule reference","Salary Schedules",name);renderSchedules();closeScheduleModal();showToast("Schedule reference added. Salary rates remain unconfigured.");
+}
+function renderAudit(){
+ const q=(document.getElementById("auditSearch").value||"").toLowerCase(),module=document.getElementById("auditModule").value;
+ const list=audit.filter(a=>(`${a.user} ${a.action} ${a.module} ${a.record}`.toLowerCase().includes(q))&&(module==="all"||a.module===module));
+ document.getElementById("auditRows").innerHTML=list.map(a=>`<tr><td>${esc(a.date)}</td><td>${esc(a.user)}</td><td>${esc(a.action)}</td><td>${esc(a.module)}</td><td>${esc(a.record)}</td><td>${esc(a.ip)}</td></tr>`).join("")||`<tr><td colspan="6" class="empty">No matching audit entries.</td></tr>`;
+}
+function renderReports(){
+ const counts={"Admin":0,"Payroll Officer":0,"Approver":0,"Viewer":0};users.forEach(u=>counts[u.role]++);
+ document.getElementById("reportUsers").textContent=users.length;document.getElementById("reportActive").textContent=users.filter(u=>u.status==="Active").length;document.getElementById("reportInactive").textContent=users.filter(u=>u.status==="Inactive").length;
+ document.getElementById("roleDistribution").innerHTML=Object.entries(counts).map(([r,c])=>`<div><div class="kpi-inline"><strong style="font-size:11px">${r}</strong><span class="muted" style="font-size:11px">${c} users</span></div><div class="progressline" style="margin-top:7px"><span style="width:${users.length?c/users.length*100:0}%"></span></div></div>`).join("");
+}
+function exportAudit(){
+ const rows=[["Date & Time","User","Action","Module","Record ID","IP Address"],...audit.map(a=>[a.date,a.user,a.action,a.module,a.record,a.ip])];
+ const csv=rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(",")).join("\r\n");
+ const blob=new Blob([csv],{type:"text/csv;charset=utf-8;"}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="lgu_audit_logs_demo.csv";a.click();URL.revokeObjectURL(url);showToast("Demo audit log CSV exported.");
+}
+document.getElementById("addUserBtn").addEventListener("click",openUserModal);
+document.getElementById("saveUser").addEventListener("click",saveUser);
+document.getElementById("addDepartmentBtn").addEventListener("click",openDepartmentModal);
+document.getElementById("saveDepartment").addEventListener("click",saveDepartment);
+document.getElementById("addScheduleBtn").addEventListener("click",openScheduleModal);
+document.getElementById("saveSchedule").addEventListener("click",saveSchedule);
+["userSearch","roleFilter","statusFilter"].forEach(id=>document.getElementById(id).addEventListener("input",renderUsers));
+document.getElementById("employeeSearch").addEventListener("input",renderEmployees);
+["auditSearch","auditModule"].forEach(id=>document.getElementById(id).addEventListener("input",renderAudit));
+document.getElementById("exportAudit").addEventListener("click",exportAudit);
+document.getElementById("saveSettings").addEventListener("click",()=>{addAudit("Saved system settings","System Settings","SET-001");showToast("Settings saved in this prototype.")});
+document.getElementById("profileBtn").addEventListener("click",()=>showToast("Signed in as System Administrator (sample account)."));
+document.getElementById("logoutBtn").addEventListener("click",()=>showToast("Logout is a visual prototype action."));
+document.querySelectorAll(".modalback").forEach(m=>m.addEventListener("click",e=>{if(e.target===m)m.classList.remove("show")}));
+renderStats();renderActivity();renderPermissions();renderUsers();renderEmployees();renderOrganization();renderSchedules();renderAudit();renderReports();
+</script>
+</body>
+</html>
