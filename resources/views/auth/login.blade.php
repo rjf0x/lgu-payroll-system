@@ -83,13 +83,13 @@
 
         @csrf
 
-        <label for="email">Email Address</label>
+        <label for="username">Username</label>
 
         <input
-            type="email"
-            id="email"
-            name="email"
-            value="{{ old('email') }}"
+            type="text"
+            id="username"
+            name="username"
+            value="{{ old('username') }}"
             required
             autofocus
         >

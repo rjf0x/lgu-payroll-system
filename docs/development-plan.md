@@ -13,7 +13,8 @@
 |---|---|---|
 | 0. Foundations | ✅ Done | Prerequisites verified; `intl`/`gd` enabled; Laravel Boost installed; baseline commit `1f22762`. |
 | 1. Schema & models | ✅ Done | 39 tables, 39 models, factories, seeders, schema tests. See `database-implementation.md`. |
-| 2–13 | ⬜ Not started | — |
+| 2. Auth & RBAC | ✅ Done | Username login, account status, gates, role middleware, auth audit. See `authentication-authorization.md`. |
+| 3–13 | ⬜ Not started | — |
 
 ---
 

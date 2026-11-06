@@ -1,7 +1,7 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
+use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     return view('welcome');
@@ -11,13 +11,13 @@ Route::middleware('guest')->group(function () {
 
     Route::get('/login', [
         AuthenticatedSessionController::class,
-        'create'
+        'create',
     ])->name('login');
 
     Route::post('/login', [
         AuthenticatedSessionController::class,
-        'store'
-    ])->name('login.store');
+        'store',
+    ])->middleware('throttle:login')->name('login.store');
 
 });
 
@@ -29,7 +29,7 @@ Route::middleware('auth')->group(function () {
 
     Route::post('/logout', [
         AuthenticatedSessionController::class,
-        'destroy'
+        'destroy',
     ])->name('logout');
 
 });

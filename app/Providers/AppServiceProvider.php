@@ -2,7 +2,16 @@
 
 namespace App\Providers;
 
+use App\Listeners\AuthenticationEventSubscriber;
+use App\Models\Permission;
+use App\Models\User;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Str;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -19,6 +28,35 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        $this->registerPermissionGates();
+        $this->registerAuthenticationAuditing();
+        $this->registerRateLimiters();
+    }
+
+    /**
+     * Expose every known permission name as a Gate ability so it can be used
+     * with `Gate::allows()`, `@can`, and the `can:` route middleware.
+     */
+    private function registerPermissionGates(): void
+    {
+        foreach (Permission::names() as $permission) {
+            Gate::define($permission, fn (User $user): bool => $user->hasPermissionTo($permission));
+        }
+    }
+
+    private function registerAuthenticationAuditing(): void
+    {
+        Event::subscribe(AuthenticationEventSubscriber::class);
+    }
+
+    private function registerRateLimiters(): void
+    {
+        RateLimiter::for('login', function (Request $request): Limit {
+            $key = Str::transliterate(
+                Str::lower((string) $request->input('username')).'|'.$request->ip(),
+            );
+
+            return Limit::perMinute(5)->by($key);
+        });
     }
 }

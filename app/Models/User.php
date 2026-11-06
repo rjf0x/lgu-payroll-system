@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Collection;
 
 #[Fillable(['employee_id', 'username', 'email', 'password_hash', 'account_status', 'last_login_at'])]
 #[Hidden(['password_hash', 'remember_token'])]
@@ -24,6 +25,13 @@ class User extends Authenticatable
     public const STATUS_ACTIVE = 'ACTIVE';
 
     public const STATUS_INACTIVE = 'INACTIVE';
+
+    /**
+     * Memoized permission names resolved for the current request.
+     *
+     * @var Collection<int, string>|null
+     */
+    protected ?Collection $resolvedPermissionNames = null;
 
     /**
      * @return array<string, string>
@@ -71,6 +79,30 @@ class User extends Authenticatable
     public function hasRole(string $roleName): bool
     {
         return $this->roles()->where('role_name', $roleName)->exists();
+    }
+
+    /**
+     * Permission names granted to the user through all assigned roles.
+     *
+     * @return Collection<int, string>
+     */
+    public function permissionNames(): Collection
+    {
+        if ($this->resolvedPermissionNames === null) {
+            $this->resolvedPermissionNames = Permission::query()
+                ->join('role_permissions', 'role_permissions.permission_id', '=', 'permissions.permission_id')
+                ->join('user_roles', 'user_roles.role_id', '=', 'role_permissions.role_id')
+                ->where('user_roles.user_id', $this->user_id)
+                ->distinct()
+                ->pluck('permissions.permission_name');
+        }
+
+        return $this->resolvedPermissionNames;
+    }
+
+    public function hasPermissionTo(string $permission): bool
+    {
+        return $this->permissionNames()->contains($permission);
     }
 
     public function isActive(): bool
