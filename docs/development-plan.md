@@ -15,7 +15,8 @@
 | 1. Schema & models | ✅ Done | 39 tables, 39 models, factories, seeders, schema tests. See `database-implementation.md`. |
 | 2. Auth & RBAC | ✅ Done | Username login, account status, gates, role middleware, auth audit. See `authentication-authorization.md`. |
 | 3. Master data | ✅ Done | Departments, positions, employees, employment records, salary schedules/grade steps, compensation profiles, user accounts. See `master-data-modules.md`. |
-| 4–13 | ⬜ Not started | — |
+| 4. Attendance & leave | ✅ Done | Day-based attendance, adjustment approvals, leave types/balances/applications/transactions. See `attendance-leave-modules.md`. |
+| 5–13 | ⬜ Not started | — |
 
 ---
 

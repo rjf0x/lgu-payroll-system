@@ -37,6 +37,20 @@
                 <x-nav-link :href="route('compensation-profiles.index')" :active="request()->routeIs('compensation-profiles.*')">Compensation Profiles</x-nav-link>
             @endcan
 
+            @can('attendance.manage')
+                <div class="px-3 pt-4 pb-1 text-[10px] font-bold uppercase tracking-wider text-emerald-300">Attendance</div>
+                <x-nav-link :href="route('attendance-records.index')" :active="request()->routeIs('attendance-records.*')">Attendance Records</x-nav-link>
+                <x-nav-link :href="route('attendance-adjustments.index')" :active="request()->routeIs('attendance-adjustments.*')">Adjustments</x-nav-link>
+            @endcan
+
+            @can('leave.manage')
+                <div class="px-3 pt-4 pb-1 text-[10px] font-bold uppercase tracking-wider text-emerald-300">Leave</div>
+                <x-nav-link :href="route('leave-applications.index')" :active="request()->routeIs('leave-applications.*')">Leave Applications</x-nav-link>
+                <x-nav-link :href="route('leave-balances.index')" :active="request()->routeIs('leave-balances.*')">Leave Balances</x-nav-link>
+                <x-nav-link :href="route('leave-transactions.index')" :active="request()->routeIs('leave-transactions.*')">Leave Transactions</x-nav-link>
+                <x-nav-link :href="route('leave-types.index')" :active="request()->routeIs('leave-types.*')">Leave Types</x-nav-link>
+            @endcan
+
             @can('users.manage')
                 <div class="px-3 pt-4 pb-1 text-[10px] font-bold uppercase tracking-wider text-emerald-300">Administration</div>
                 <x-nav-link :href="route('users.index')" :active="request()->routeIs('users.*')">User Accounts</x-nav-link>
