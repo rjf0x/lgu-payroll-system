@@ -97,6 +97,14 @@ class PayrollRun extends Model
         return $this->hasMany(PayrollDetail::class, 'payroll_run_id', 'payroll_run_id');
     }
 
+    /**
+     * Alias used by scoped route-model binding for `{payroll_detail}`.
+     */
+    public function payrollDetails(): HasMany
+    {
+        return $this->details();
+    }
+
     public function anchor(): HasOne
     {
         return $this->hasOne(BlockchainAnchor::class, 'payroll_run_id', 'payroll_run_id');

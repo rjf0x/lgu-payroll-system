@@ -16,6 +16,9 @@ use App\Http\Controllers\LeaveApplicationController;
 use App\Http\Controllers\LeaveBalanceController;
 use App\Http\Controllers\LeaveTransactionController;
 use App\Http\Controllers\LeaveTypeController;
+use App\Http\Controllers\PayrollDetailController;
+use App\Http\Controllers\PayrollPeriodController;
+use App\Http\Controllers\PayrollRunController;
 use App\Http\Controllers\PositionController;
 use App\Http\Controllers\SalaryGradeStepController;
 use App\Http\Controllers\SalaryScheduleController;
@@ -116,6 +119,34 @@ Route::middleware('auth')->group(function () {
         ])->name('leave-applications.reject');
 
         Route::resource('leave-transactions', LeaveTransactionController::class)->only('index');
+    });
+
+    // Payroll processing.
+    Route::middleware('can:payroll.view')->group(function () {
+        Route::get('payroll-periods', [PayrollPeriodController::class, 'index'])->name('payroll-periods.index');
+        Route::get('payroll-runs', [PayrollRunController::class, 'index'])->name('payroll-runs.index');
+        Route::get('payroll-runs/{payroll_run}', [PayrollRunController::class, 'show'])
+            ->whereNumber('payroll_run')->name('payroll-runs.show');
+    });
+
+    Route::middleware('can:payroll.prepare')->group(function () {
+        Route::get('payroll-periods/create', [PayrollPeriodController::class, 'create'])->name('payroll-periods.create');
+        Route::post('payroll-periods', [PayrollPeriodController::class, 'store'])->name('payroll-periods.store');
+        Route::get('payroll-periods/{payroll_period}/edit', [PayrollPeriodController::class, 'edit'])->name('payroll-periods.edit');
+        Route::put('payroll-periods/{payroll_period}', [PayrollPeriodController::class, 'update'])->name('payroll-periods.update');
+        Route::delete('payroll-periods/{payroll_period}', [PayrollPeriodController::class, 'destroy'])->name('payroll-periods.destroy');
+
+        Route::get('payroll-runs/create', [PayrollRunController::class, 'create'])->name('payroll-runs.create');
+        Route::post('payroll-runs', [PayrollRunController::class, 'store'])->name('payroll-runs.store');
+        Route::delete('payroll-runs/{payroll_run}', [PayrollRunController::class, 'destroy'])
+            ->whereNumber('payroll_run')->name('payroll-runs.destroy');
+        Route::post('payroll-runs/{payroll_run}/compute', [PayrollRunController::class, 'compute'])
+            ->whereNumber('payroll_run')->name('payroll-runs.compute');
+
+        Route::get('payroll-runs/{payroll_run}/details/{payroll_detail}/edit', [PayrollDetailController::class, 'edit'])
+            ->scopeBindings()->name('payroll-details.edit');
+        Route::put('payroll-runs/{payroll_run}/details/{payroll_detail}', [PayrollDetailController::class, 'update'])
+            ->scopeBindings()->name('payroll-details.update');
     });
 
 });

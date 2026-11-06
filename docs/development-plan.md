@@ -17,7 +17,8 @@
 | 3. Master data | ✅ Done | Departments, positions, employees, employment records, salary schedules/grade steps, compensation profiles, user accounts. See `master-data-modules.md`. |
 | 4. Attendance & leave | ✅ Done | Day-based attendance, adjustment approvals, leave types/balances/applications/transactions. See `attendance-leave-modules.md`. |
 | 5. Earnings & deductions | ✅ Done | Earning/deduction types + assignments; effective-dated tax brackets and contribution rates. See `earnings-deductions-modules.md`. |
-| 6–13 | ⬜ Not started | — |
+| 6. Payroll engine | ✅ Done | Periods, runs, details; computation service with snapshots; documented example verified. See `payroll-computation-engine.md`. |
+| 7–13 | ⬜ Not started | — |
 
 ---
 

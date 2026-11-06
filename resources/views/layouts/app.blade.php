@@ -61,6 +61,12 @@
                 <x-nav-link :href="route('leave-types.index')" :active="request()->routeIs('leave-types.*')">Leave Types</x-nav-link>
             @endcan
 
+            @can('payroll.view')
+                <div class="px-3 pt-4 pb-1 text-[10px] font-bold uppercase tracking-wider text-emerald-300">Payroll</div>
+                <x-nav-link :href="route('payroll-periods.index')" :active="request()->routeIs('payroll-periods.*')">Payroll Periods</x-nav-link>
+                <x-nav-link :href="route('payroll-runs.index')" :active="request()->routeIs('payroll-runs.*') || request()->routeIs('payroll-details.*')">Monthly Payroll</x-nav-link>
+            @endcan
+
             @can('users.manage')
                 <div class="px-3 pt-4 pb-1 text-[10px] font-bold uppercase tracking-wider text-emerald-300">Administration</div>
                 <x-nav-link :href="route('users.index')" :active="request()->routeIs('users.*')">User Accounts</x-nav-link>
