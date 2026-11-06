@@ -7,6 +7,16 @@
 
 ---
 
+## 0. Progress
+
+| Stage | Status | Notes |
+|---|---|---|
+| 0. Foundations | ✅ Done | Prerequisites verified; `intl`/`gd` enabled; Laravel Boost installed; baseline commit `1f22762`. |
+| 1. Schema & models | ✅ Done | 39 tables, 39 models, factories, seeders, schema tests. See `database-implementation.md`. |
+| 2–13 | ⬜ Not started | — |
+
+---
+
 ## 1. Current state of the codebase
 
 The repository is currently a bare Laravel scaffold, not yet the LGU system:
