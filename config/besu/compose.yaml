@@ -1,0 +1,85 @@
+name: lgu-payroll-system-dev-besu
+
+x-validator: &validator
+  image: hyperledger/besu:26.10.2
+  restart: unless-stopped
+  environment:
+    JAVA_OPTS: -Xmx512m
+  command:
+    - --data-path=/data
+    - --genesis-file=/network/genesis.json
+    - --sync-mode=FULL
+    - --data-storage-format=BONSAI
+    - --discovery-enabled=false
+    - --nat-method=NONE
+    - --min-gas-price=0
+    - --rpc-http-enabled
+    - --rpc-http-host=0.0.0.0
+    - --rpc-http-api=ETH,NET,WEB3,QBFT
+    - --host-allowlist=localhost,127.0.0.1,validator1
+    - --permissions-nodes-config-file-enabled
+    - --permissions-nodes-config-file=/network/permissions.toml
+
+services:
+  validator1:
+    <<: *validator
+    ports:
+      - 127.0.0.1:28545:8545
+    volumes:
+      - ../../storage/app/private/besu/network:/network:ro
+      - ../../storage/app/private/besu/validator1:/data
+    networks:
+      besu:
+        ipv4_address: 172.29.74.11
+  validator2:
+    <<: *validator
+    volumes:
+      - ../../storage/app/private/besu/network:/network:ro
+      - ../../storage/app/private/besu/validator2:/data
+    networks:
+      besu:
+        ipv4_address: 172.29.74.12
+  validator3:
+    <<: *validator
+    volumes:
+      - ../../storage/app/private/besu/network:/network:ro
+      - ../../storage/app/private/besu/validator3:/data
+    networks:
+      besu:
+        ipv4_address: 172.29.74.13
+  validator4:
+    <<: *validator
+    volumes:
+      - ../../storage/app/private/besu/network:/network:ro
+      - ../../storage/app/private/besu/validator4:/data
+    networks:
+      besu:
+        ipv4_address: 172.29.74.14
+  signer:
+    image: consensys/web3signer:26.10.2
+    restart: unless-stopped
+    environment:
+      JAVA_OPTS: -Xmx256m
+    command:
+      - --key-config-path=/keys
+      - --http-listen-host=0.0.0.0
+      - --http-listen-port=9000
+      - --http-host-allowlist=localhost,127.0.0.1
+      - eth1
+      - --chain-id=1337
+      - --downstream-http-host=validator1
+      - --downstream-http-port=8545
+    ports:
+      - 127.0.0.1:29000:9000
+    volumes:
+      - ../../storage/app/private/besu/signer:/keys:ro
+    depends_on:
+      - validator1
+    networks:
+      - besu
+
+networks:
+  besu:
+    ipam:
+      config:
+        - subnet: 172.29.74.0/24

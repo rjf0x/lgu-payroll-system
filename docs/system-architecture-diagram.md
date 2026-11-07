@@ -81,7 +81,7 @@ flowchart TB
 
     subgraph BLOCKCHAIN["BLOCKCHAIN VERIFICATION COMPONENT"]
         GATEWAY["Blockchain Integration Interface"]
-        NETWORK["Selected Blockchain Network"]
+        NETWORK["Hyperledger Besu Private Network (QBFT)"]
         HASH["Finalized Payroll Cryptographic Hash"]
         TX["Transaction Reference and Verification"]
         GATEWAY <--> NETWORK
@@ -188,7 +188,7 @@ Only the cryptographic proof and necessary transaction metadata should be placed
 | Database | MySQL |
 | Communication | HTTP/HTTPS; use HTTPS in deployment |
 | Access control | Authentication and Role-Based Access Control (RBAC) |
-| Blockchain | A selected blockchain network accessed through an integration interface |
+| Blockchain | Hyperledger Besu 26.10.2 local private network with four QBFT validators and node allowlisting; Solidity anchoring contract; Web3Signer 26.10.2 signs and submits transactions |
 
 ---
 
@@ -201,7 +201,7 @@ The proposed LGU Payroll Management System adopts a **Three-Tier Client-Server A
 ## 6. Implementation Notes
 
 - This is the **proposed architecture** for the capstone and should be updated if the selected hosting environment, blockchain network, or deployment design changes.
-- The specific blockchain network and integration method have not been assumed or finalized in this diagram.
+- Hyperledger Besu is the selected blockchain platform. Local Docker integration uses four QBFT validators, a Solidity anchoring contract, and Web3Signer through JSON-RPC. The local application is configured for Besu; fresh checkouts and normal QA retain simulated anchoring until configured. Production operations remain pending.
 - Use HTTPS in the deployed system.
 - Enforce permissions and separation of duties on the Laravel backend, not only in the frontend.
 - Generate blockchain hashes only from finalized payroll data using a consistent, deterministic serialization process.

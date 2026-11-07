@@ -20,7 +20,7 @@
 | 6. Payroll engine | ✅ Done | Periods, runs, details; computation service with snapshots; documented example verified. See `payroll-computation-engine.md`. |
 | 7. Approval & SoD | ✅ Done | Submit/review/approve/reject/return/finalize with `payroll_approvals` history and backend-enforced separation of duties. See `payroll-approval-workflow.md`. |
 | 8. Register, payslips, reports | ✅ Done | Client-column register + CSV export, printable payslips with publication status, reports hub and department summary. See `payroll-register-payslips-reports.md`. |
-| 9. Blockchain | ✅ Done | Deterministic SHA-256 anchoring behind a driver interface; verify with MATCH/MISMATCH. See `blockchain-anchoring.md`. |
+| 9. Blockchain | ✅ Done (local development) | SHA-256 anchoring with a real Hyperledger Besu QBFT Docker network, Web3Signer, and Solidity contract; simulated QA driver retained. Production operations remain in Stage 13. See `blockchain-anchoring.md`. |
 | 10. UI | ✅ Done | Four role dashboards with live summaries, permission-aware actions, shared responsive navigation, and dashboard feature tests. |
 | 11. Audit & hardening | Done | Audit viewer/export, permission-protected system settings, audited account/role changes, last-administrator protection, fresh-state checks under transaction locks, payroll input validation, and period-history constraints implemented. See Stage 11 notes below. |
 | 12. Testing & QA | Done (mock-defense scope) | Payroll boundary regression tests, complete HTTP workflow, repeatable demo scenarios, and isolated MySQL concurrency checks. See Stage 12 notes below. |
@@ -46,9 +46,9 @@ At the start of development, the repository was a bare Laravel scaffold. The fol
 | Decision | Choice |
 |---|---|
 | **Frontend** | Blade + Tailwind 4; port the four prototypes into one shared layout with role-based navigation. |
-| **Blockchain** | Real SHA-256 hashing behind a `BlockchainAnchor` driver interface; default **simulated/mock** driver plus a testnet stub. |
+| **Blockchain** | **Hyperledger Besu**, using a local private network with four QBFT validators and node permissioning. Laravel submits SHA-256 hashes to a Solidity contract through Web3Signer; pending receipts and on-chain verification are implemented. The simulated driver remains available for isolated QA. |
 | **Authentication** | **Username-based** login per the documented schema; `email` becomes an optional contact field; `account_status` gates access. |
-| **Scope target** | Working **end-to-end system for mock defense**: all modules functional, simulated chain, demo seed data, core payroll workflow tested. |
+| **Scope target** | Working **end-to-end system for mock defense**: all modules functional, local Besu integration with simulated QA fallback, demo seed data, core payroll workflow tested. |
 
 ---
 
@@ -65,7 +65,7 @@ At the start of development, the repository was a bare Laravel scaffold. The fol
 | **6. Payroll engine** | Payroll periods, runs, detailed result tables | DRAFT→PROCESSING→PENDING_APPROVAL→…→FINALIZED status lifecycle; `PayrollComputationService` with decimal math: gross salary (CSC leave-without-pay formula; daily-rate part-timers) → Total Compensation → GSIS/PhilHealth/Pag-IBIG employee + employer shares → withholding tax → manual deductions → Total Deductions → NTHP-before-LBP → LBP → Net Take-Home Pay; persist `payroll_details` (with snapshots), `payroll_earnings`, `payroll_deductions`, `payroll_employer_contributions`, `payroll_adjustments`. |
 | **7. Approval & separation of duties** | Submit/review/approve/reject/return/finalize | Approver must differ from `payroll_runs.created_by` and `submitted_by`; Admin cannot bypass; full history in `payroll_approvals`; optional DB trigger reinforcing the rule. |
 | **8. Register, payslips, reports** | Client-column register, CSV/Excel export, payslip PDFs | Register matches the documented column layout (Office → … → Net Take-Home Pay); `payslips` with `publication_status`; `generated_reports`. |
-| **9. Blockchain** | Anchor + verify | Deterministic serialization of finalized payroll → SHA-256; `blockchain_anchors` and `blockchain_verification_logs`; simulated driver (testnet stub); hash + metadata only on-chain. |
+| **9. Blockchain** | Anchor + verify | Deterministic serialization of finalized payroll → SHA-256; `blockchain_anchors` and `blockchain_verification_logs`; Hyperledger Besu JSON-RPC driver and owner-authorized Solidity contract implemented with local Docker setup. Submitted hashes are PENDING until verified on-chain; only hash and transaction metadata leave the application. Simulated driver retained for QA. |
 | **10. UI** | Four role dashboards in Blade + Tailwind | Port `admin-`, `payroll-officer-`, `approver-`, `viewer-` prototypes into shared layout/components; role-based nav and dashboards. |
 | **11. Audit & hardening** | Audit viewer/export, settings, authorization review | Audit log viewer/export; system settings; validation and authorization pass; DB constraints. |
 | **12. Testing & QA** | Unit + feature tests, demo seeders | Verify the documented ₱45,000 example and contribution/tax edge cases; feature tests for auth, RBAC, payroll lifecycle, and the separation-of-duties rule; demo seeders + mock-defense walkthrough. |

@@ -7,6 +7,8 @@ use App\Models\BlockchainVerificationLog;
 use App\Models\PayrollRun;
 use App\Models\User;
 use App\Services\Blockchain\BlockchainDriver;
+use App\Services\Blockchain\OnChainBlockchainDriver;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Anchors a deterministic hash of a finalized payroll run and verifies that the
@@ -61,13 +63,22 @@ class BlockchainAnchorService
 
     public function anchor(PayrollRun $run, User $user): BlockchainAnchor
     {
+        return DB::transaction(function () use ($run, $user): BlockchainAnchor {
+            $lockedRun = PayrollRun::query()->lockForUpdate()->findOrFail($run->getKey());
+
+            return $this->submitAnchor($lockedRun, $user);
+        });
+    }
+
+    private function submitAnchor(PayrollRun $run, User $user): BlockchainAnchor
+    {
         if ($run->status !== PayrollRun::STATUS_FINALIZED) {
             abort(422, 'Only a finalized payroll run can be anchored.');
         }
 
         $anchor = $run->anchor ?? new BlockchainAnchor(['payroll_run_id' => $run->payroll_run_id]);
 
-        if ($anchor->exists && $anchor->anchor_status === BlockchainAnchor::STATUS_ANCHORED) {
+        if ($anchor->exists) {
             return $anchor;
         }
 
@@ -81,13 +92,13 @@ class BlockchainAnchorService
             'block_number' => $result['block_number'],
             'network_name' => $result['network_name'],
             'contract_address' => $result['contract_address'],
-            'anchor_status' => BlockchainAnchor::STATUS_ANCHORED,
+            'anchor_status' => $result['block_number'] === null ? BlockchainAnchor::STATUS_PENDING : BlockchainAnchor::STATUS_ANCHORED,
             'anchored_by' => $user->user_id,
-            'anchored_at' => now(),
+            'anchored_at' => $result['block_number'] === null ? null : now(),
         ])->save();
 
         $this->auditLogger->log(
-            'PAYROLL_ANCHORED',
+            $result['block_number'] === null ? 'PAYROLL_ANCHOR_SUBMITTED' : 'PAYROLL_ANCHORED',
             'Blockchain',
             $user->user_id,
             'blockchain_anchors',
@@ -100,15 +111,49 @@ class BlockchainAnchorService
 
     public function verify(BlockchainAnchor $anchor, User $user): BlockchainVerificationLog
     {
+        $stored = (string) $anchor->payload_hash;
+
+        if ($anchor->contract_address !== null || str_starts_with($anchor->network_name, 'besu:')) {
+            abort_unless($this->driver instanceof OnChainBlockchainDriver, 503, 'Select the Besu driver to verify an on-chain anchor.');
+            abort_unless(is_string($anchor->contract_address), 503, 'The stored Besu contract address is missing.');
+            abort_unless($anchor->network_name === 'besu:'.config('blockchain.besu.chain_id'), 503, 'Configure the original Besu chain before verifying this anchor.');
+            $receipt = $this->driver->receipt((string) $anchor->transaction_id, $anchor->contract_address);
+            abort_if($receipt === null, 409, 'The transaction is still pending or is not available on this Besu node. Check again later.');
+
+            if (! $receipt['successful']) {
+                $anchor->update(['anchor_status' => BlockchainAnchor::STATUS_FAILED]);
+                abort(422, 'The Besu transaction failed. No successful integrity verification was recorded.');
+            }
+
+            $stored = $receipt['payload_hash'];
+
+            DB::transaction(function () use ($anchor, $receipt, $user): void {
+                $locked = BlockchainAnchor::query()->lockForUpdate()->findOrFail($anchor->getKey());
+
+                if ($locked->anchor_status !== BlockchainAnchor::STATUS_ANCHORED) {
+                    $locked->update([
+                        'anchor_status' => BlockchainAnchor::STATUS_ANCHORED,
+                        'block_number' => $receipt['block_number'],
+                        'anchored_at' => now(),
+                    ]);
+                    $this->auditLogger->log('PAYROLL_ANCHORED', 'Blockchain', $user->user_id,
+                        'blockchain_anchors', (string) $anchor->anchor_id,
+                        newValues: ['transaction_id' => $locked->transaction_id]);
+                }
+            });
+        } else {
+            abort_unless($anchor->anchor_status === BlockchainAnchor::STATUS_ANCHORED, 422, 'Only confirmed anchors can be verified.');
+        }
+
         $calculated = $this->hashPayrollRun($anchor->payrollRun);
-        $result = hash_equals((string) $anchor->payload_hash, $calculated)
+        $result = hash_equals($stored, $calculated) && hash_equals($stored, (string) $anchor->payload_hash)
             ? BlockchainVerificationLog::RESULT_MATCH
             : BlockchainVerificationLog::RESULT_MISMATCH;
 
         $log = BlockchainVerificationLog::create([
             'anchor_id' => $anchor->anchor_id,
             'verified_by' => $user->user_id,
-            'stored_hash' => $anchor->payload_hash,
+            'stored_hash' => $stored,
             'calculated_hash' => $calculated,
             'verification_result' => $result,
             'remarks' => $result === BlockchainVerificationLog::RESULT_MATCH

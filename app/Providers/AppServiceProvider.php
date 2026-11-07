@@ -6,6 +6,7 @@ use App\Listeners\AuthenticationEventSubscriber;
 use App\Models\Permission;
 use App\Models\SystemSetting;
 use App\Models\User;
+use App\Services\Blockchain\BesuBlockchainDriver;
 use App\Services\Blockchain\BlockchainDriver;
 use App\Services\Blockchain\SimulatedBlockchainDriver;
 use App\Services\Blockchain\TestnetBlockchainDriver;
@@ -27,8 +28,10 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->app->bind(BlockchainDriver::class, function (): BlockchainDriver {
             return match (config('blockchain.driver')) {
+                'besu' => new BesuBlockchainDriver,
                 'testnet' => new TestnetBlockchainDriver,
-                default => new SimulatedBlockchainDriver,
+                'simulated' => new SimulatedBlockchainDriver,
+                default => throw new \InvalidArgumentException('Unknown blockchain driver.'),
             };
         });
     }

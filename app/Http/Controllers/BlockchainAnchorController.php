@@ -26,7 +26,11 @@ class BlockchainAnchorController extends Controller
 
         return redirect()
             ->route('blockchain-anchors.show', $anchor)
-            ->with('status', 'Finalized payroll anchored. Only a hash and transaction metadata were submitted.');
+            ->with('status', match ($anchor->anchor_status) {
+                BlockchainAnchor::STATUS_PENDING => 'Transaction submitted. Use Check confirmation and verify to confirm it on Besu.',
+                BlockchainAnchor::STATUS_FAILED => 'The existing transaction failed. Contact the administrator to reconcile it before resubmitting.',
+                default => 'Finalized payroll anchored. Only a hash and transaction metadata were submitted.',
+            });
     }
 
     public function show(BlockchainAnchor $blockchainAnchor): View

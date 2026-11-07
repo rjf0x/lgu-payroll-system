@@ -22,4 +22,14 @@ return [
 
     'hash_algorithm' => 'sha256',
 
+    'besu' => [
+        'rpc_url' => env('BESU_RPC_URL', 'http://127.0.0.1:28545'),
+        'signer_url' => env('BESU_SIGNER_URL', 'http://127.0.0.1:29000'),
+        'chain_id' => (int) env('BESU_CHAIN_ID', 1337),
+        'from_address' => env('BESU_FROM_ADDRESS'),
+        'gas' => env('BESU_GAS', '0x30d40'),
+        'gas_price' => env('BESU_GAS_PRICE', '0x0'),
+        'live_tests' => (bool) env('BESU_LIVE_TESTS', false),
+    ],
+
 ];

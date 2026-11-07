@@ -45,7 +45,7 @@
 
         <form method="POST" action="{{ route('blockchain-anchors.verify', $anchor) }}" class="mt-6">
             @csrf
-            <button class="rounded-md bg-emerald-700 px-4 py-2 text-xs font-semibold text-white hover:bg-emerald-800">Verify integrity</button>
+            <button class="rounded-md bg-emerald-700 px-4 py-2 text-xs font-semibold text-white hover:bg-emerald-800">{{ $anchor->anchor_status === 'PENDING' ? 'Check confirmation and verify' : 'Verify integrity' }}</button>
         </form>
     </div>
 
