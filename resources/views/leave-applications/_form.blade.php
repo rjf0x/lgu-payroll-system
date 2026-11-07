@@ -3,9 +3,10 @@
 <form
     method="POST"
     action="{{ $isEdit ? route('leave-applications.update', $application) : route('leave-applications.store') }}"
-    class="space-y-5 rounded-xl border border-slate-200 bg-white p-6 shadow-sm"
+    class="ui-card space-y-5" data-submit-feedback
 >
     @csrf
+    <x-employee-context :employee="$workspaceEmployee ?? null" section="leave" />
     @if ($isEdit)
         @method('PUT')
     @endif
@@ -34,10 +35,10 @@
 
     <x-form.textarea name="reason" label="Reason" :value="$application->reason" />
 
-    <div class="flex gap-3">
-        <button class="rounded-md bg-emerald-700 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-800">
+    <div class="flex flex-wrap gap-3">
+        <button type="submit" class="ui-button ui-button-primary">
             {{ $isEdit ? 'Save changes' : 'File leave' }}
         </button>
-        <a href="{{ route('leave-applications.index') }}" class="rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50">Cancel</a>
+        <a href="{{ $workspaceEmployee ? route('employees.show', $workspaceEmployee).'#leave' : route('leave-applications.index') }}" class="ui-button ui-button-secondary">Cancel</a>
     </div>
 </form>

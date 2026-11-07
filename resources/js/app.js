@@ -1,4 +1,19 @@
 const navigation = document.getElementById('app-navigation');
+const confirmation = document.getElementById('confirmation-dialog');
+let pendingConfirmation = null;
+
+if (confirmation && typeof confirmation.showModal === 'function') {
+    window.payrollConfirmationReady = true;
+    document.getElementById('confirmation-cancel').addEventListener('click', () => confirmation.close());
+    document.getElementById('confirmation-accept').addEventListener('click', () => {
+        const pending = pendingConfirmation;
+        confirmation.close();
+        if (!pending) { return; }
+        pending.form.dataset.confirmed = 'true';
+        pending.form.requestSubmit(pending.submitter);
+    });
+    confirmation.addEventListener('close', () => { pendingConfirmation = null; });
+}
 
 if (navigation) {
     const desktop = window.matchMedia('(min-width: 1024px)');
@@ -48,6 +63,14 @@ const resetSubmission = () => {
     if (status) { status.textContent = ''; }
 };
 
+document.addEventListener('input', (event) => {
+    if (event.target.matches('textarea[name="remarks"]')) { event.target.setCustomValidity(''); }
+});
+document.addEventListener('click', (event) => {
+    const button = event.target.closest('form[data-confirm] button[type="submit"]');
+    button?.form.querySelector('textarea[name="remarks"]')?.setCustomValidity('');
+});
+
 document.addEventListener('submit', (event) => {
     const form = event.target;
     if (!form.matches('form[data-submit-feedback]') || event.defaultPrevented) { return; }
@@ -55,6 +78,26 @@ document.addEventListener('submit', (event) => {
         event.preventDefault();
         return;
     }
+
+    const remarks = form.querySelector('textarea[name="remarks"]');
+    if (event.submitter?.hasAttribute('data-requires-remarks') && remarks && !remarks.value.trim()) {
+        event.preventDefault();
+        remarks.setCustomValidity('Enter a reason for returning or rejecting this payroll.');
+        remarks.reportValidity();
+        return;
+    }
+
+    if (form.hasAttribute('data-confirm') && window.payrollConfirmationReady && !form.dataset.confirmed) {
+        event.preventDefault();
+        const submitter = event.submitter;
+        document.getElementById('confirmation-title').textContent = submitter?.dataset.confirmTitle || form.dataset.confirmTitle || 'Confirm payroll action';
+        document.getElementById('confirmation-description').textContent = submitter?.dataset.confirmDescription || form.dataset.confirmDescription;
+        document.getElementById('confirmation-context').textContent = form.dataset.confirmContext;
+        pendingConfirmation = { form, submitter };
+        confirmation.showModal();
+        return;
+    }
+    delete form.dataset.confirmed;
 
     form.dataset.submitting = 'true';
     form.setAttribute('aria-busy', 'true');

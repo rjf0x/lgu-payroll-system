@@ -5,12 +5,15 @@ namespace App\Http\Controllers;
 use App\Http\Requests\AttendanceRecordRequest;
 use App\Models\AttendanceRecord;
 use App\Models\Employee;
+use App\Services\EmployeeWorkspaceContext;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class AttendanceRecordController extends Controller
 {
+    public function __construct(private readonly EmployeeWorkspaceContext $workspace) {}
+
     public function index(Request $request): View
     {
         $employeeId = $request->integer('employee_id') ?: null;
@@ -39,21 +42,21 @@ class AttendanceRecordController extends Controller
     {
         return view('attendance-records.create', [
             'record' => new AttendanceRecord([
-                'employee_id' => $request->integer('employee_id') ?: null,
+                'employee_id' => $this->workspace->employeeId(),
                 'attendance_date' => now()->toDateString(),
                 'attendance_status' => AttendanceRecord::STATUS_PRESENT,
                 'credited_days' => 1,
                 'source' => 'MANUAL',
             ]),
             'employees' => Employee::orderBy('last_name')->get(),
-        ]);
+        ] + $this->workspace->viewData($this->workspace->employeeId()));
     }
 
     public function store(AttendanceRecordRequest $request): RedirectResponse
     {
-        AttendanceRecord::create($request->validated());
+        $record = AttendanceRecord::create($request->validated());
 
-        return redirect()
+        return $this->workspace->redirect((int) $record->employee_id, 'attendance', 'Attendance record saved.') ?? redirect()
             ->route('attendance-records.index')
             ->with('status', 'Attendance record saved.');
     }
@@ -63,14 +66,14 @@ class AttendanceRecordController extends Controller
         return view('attendance-records.edit', [
             'record' => $attendanceRecord,
             'employees' => Employee::orderBy('last_name')->get(),
-        ]);
+        ] + $this->workspace->viewData($attendanceRecord->employee_id));
     }
 
     public function update(AttendanceRecordRequest $request, AttendanceRecord $attendanceRecord): RedirectResponse
     {
         $attendanceRecord->update($request->validated());
 
-        return redirect()
+        return $this->workspace->redirect((int) $attendanceRecord->employee_id, 'attendance', 'Attendance record updated.') ?? redirect()
             ->route('attendance-records.index')
             ->with('status', 'Attendance record updated.');
     }

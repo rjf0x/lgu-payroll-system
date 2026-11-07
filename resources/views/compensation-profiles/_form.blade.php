@@ -3,9 +3,10 @@
 <form
     method="POST"
     action="{{ $isEdit ? route('compensation-profiles.update', $profile) : route('compensation-profiles.store') }}"
-    class="space-y-5 rounded-xl border border-slate-200 bg-white p-6 shadow-sm"
+    class="ui-card space-y-5" data-submit-feedback
 >
     @csrf
+    <x-employee-context :employee="$workspaceEmployee ?? null" section="compensation" />
     @if ($isEdit)
         @method('PUT')
     @endif
@@ -57,11 +58,11 @@
         </div>
     </div>
 
-    <div class="flex gap-3">
-        <button class="rounded-md bg-emerald-700 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-800">
+    <div class="flex flex-wrap gap-3">
+        <button type="submit" class="ui-button ui-button-primary">
             {{ $isEdit ? 'Save changes' : 'Create compensation profile' }}
         </button>
-        <a href="{{ route('compensation-profiles.index') }}" class="rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50">
+        <a href="{{ $workspaceEmployee ? route('employees.show', $workspaceEmployee).'#compensation' : route('compensation-profiles.index') }}" class="ui-button ui-button-secondary">
             Cancel
         </a>
     </div>

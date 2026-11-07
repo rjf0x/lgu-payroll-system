@@ -3,10 +3,9 @@
 @section('heading', ($dashboardRole ?? 'Account').' Dashboard')
 @section('content')
 <div class="flex flex-col gap-7">
-    <section class="rounded-2xl bg-emerald-900 p-6 text-white sm:p-8">
-        <p class="text-xs font-semibold uppercase tracking-widest text-emerald-200">LGU Payroll Management</p>
-        <h2 class="mt-3 text-2xl font-semibold">Welcome, {{ auth()->user()->username }}</h2>
-        <p class="mt-2 max-w-2xl text-sm leading-6 text-emerald-100">
+    <section>
+        <h2 class="font-semibold">Welcome, {{ auth()->user()->username }}</h2>
+        <p class="mt-1 max-w-2xl text-sm text-muted">
             @switch($dashboardRole)
                 @case('Admin') Manage system access, configuration, and records oversight. @break
                 @case('Payroll Officer') Maintain payroll inputs, prepare computations, and submit payroll for independent approval. @break
@@ -16,6 +15,39 @@
             @endswitch
         </p>
     </section>
+    @can('users.manage')
+        <x-card heading="Access and configuration">
+            <p class="mb-4 text-sm text-muted">Maintain accounts and access before changing payroll configuration.</p>
+            <div class="flex flex-wrap gap-3">
+                <x-button :href="route('users.index')" variant="primary">Manage user access</x-button>
+                @can('audit.view')<x-button :href="route('audit-logs.index')">Review audit trail</x-button>@endcan
+                @can('compensation.manage')<x-button :href="route('salary-schedules.index')">Review salary schedules</x-button>@endcan
+            </div>
+        </x-card>
+    @endcan
+    @if ($nextActions)
+        <section aria-labelledby="next-actions-heading">
+            <h2 id="next-actions-heading" class="mb-3 text-lg font-semibold">Next actions</h2>
+            <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                @foreach ($nextActions as $action)
+                    <x-card :heading="$action['title']">
+                        <p class="text-3xl font-semibold tabular-nums text-brand">{{ number_format($action['count']) }}</p>
+                        <p class="mt-2 text-sm text-muted">{{ $action['description'] }}</p>
+                        <x-button :href="$action['href']" class="mt-4">{{ $action['label'] }}</x-button>
+                    </x-card>
+                @endforeach
+            </div>
+        </section>
+    @endif
+    @if ($dashboardRole === 'Viewer')
+        <x-card heading="Find finalized records">
+            <p class="mb-4 text-sm text-muted">Open finalized payroll records and authorized reports.</p>
+            <div class="flex flex-wrap gap-3">
+                @can('payroll.view')<x-button :href="route('payroll-runs.index', ['status' => 'FINALIZED'])" variant="primary">Browse finalized payroll</x-button>@endcan
+                @can('employees.view')<x-button :href="route('employees.index')">Employee directory</x-button>@endcan
+            </div>
+        </x-card>
+    @endif
     @if ($metrics)
         <dl class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
             @foreach ($metrics as $label => $value)
@@ -53,8 +85,7 @@
                 <h2 class="font-semibold">{{ $dashboardRole === 'Approver' ? 'Payroll awaiting your review' : ($dashboardRole === 'Viewer' ? 'Finalized payroll records' : 'Recent payroll runs') }}</h2>
                 <a href="{{ route('payroll-runs.index') }}" class="text-sm font-semibold text-emerald-700 hover:underline">View all payroll</a>
             </div>
-            <div class="overflow-x-auto">
-                <table class="w-full text-left text-sm">
+            <x-table label="Dashboard payroll runs" class="rounded-none border-x-0 border-b-0 shadow-none">
                     <thead class="border-y border-slate-200 bg-slate-50 text-xs uppercase text-slate-500"><tr><th class="px-6 py-3">Payroll period</th><th class="px-6 py-3">Run</th><th class="px-6 py-3">Employees</th><th class="px-6 py-3">Status</th><th class="px-6 py-3">Details</th></tr></thead>
                     <tbody class="divide-y divide-slate-100">
                         @forelse ($runs as $run)
@@ -63,8 +94,7 @@
                             <tr><td colspan="5" class="px-6 py-10 text-center text-slate-500">No payroll runs to display.</td></tr>
                         @endforelse
                     </tbody>
-                </table>
-            </div>
+            </x-table>
         </section>
     @endcan
 </div>

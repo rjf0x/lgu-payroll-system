@@ -41,12 +41,12 @@
                     <tr class="hover:bg-slate-50">
                         <td class="font-mono">{{ $employee->employee_number }}</td>
                         <td class="px-4 py-3">
-                            <a href="{{ route('employees.show', $employee) }}" class="font-medium text-emerald-700 hover:underline">{{ $employee->full_name }}</a>
+                            <a href="{{ route('employees.show', ['employee' => $employee] + request()->only(['q', 'page'])) }}" class="font-medium text-emerald-700 hover:underline">{{ $employee->full_name }}</a>
                         </td>
                         <td class="px-4 py-3 text-slate-600">{{ $employee->sex }}</td>
                         <td class="px-4 py-3 text-right">{{ $employee->employment_records_count }}</td>
                         <td class="px-4 py-3 text-right">
-                            <a href="{{ route('employees.show', $employee) }}">View<span class="sr-only"> {{ $employee->full_name }}</span></a>
+                            <a href="{{ route('employees.show', ['employee' => $employee] + request()->only(['q', 'page'])) }}">View<span class="sr-only"> {{ $employee->full_name }}</span></a>
                             @can('employees.manage')
                                 <a href="{{ route('employees.edit', $employee) }}" class="ml-4">Edit<span class="sr-only"> {{ $employee->full_name }}</span></a>
                             @endcan

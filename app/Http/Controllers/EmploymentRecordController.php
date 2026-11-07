@@ -8,12 +8,15 @@ use App\Models\Employee;
 use App\Models\EmploymentRecord;
 use App\Models\EmploymentType;
 use App\Models\Position;
+use App\Services\EmployeeWorkspaceContext;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class EmploymentRecordController extends Controller
 {
+    public function __construct(private readonly EmployeeWorkspaceContext $workspace) {}
+
     public function index(Request $request): View
     {
         $employeeId = $request->integer('employee_id') ?: null;
@@ -32,7 +35,7 @@ class EmploymentRecordController extends Controller
     {
         return view('employment-records.create', $this->formData(
             new EmploymentRecord([
-                'employee_id' => $request->integer('employee_id') ?: null,
+                'employee_id' => $this->workspace->employeeId(),
                 'employment_status' => EmploymentRecord::STATUS_ACTIVE,
                 'start_date' => now()->toDateString(),
             ]),
@@ -43,7 +46,7 @@ class EmploymentRecordController extends Controller
     {
         $record = EmploymentRecord::create($request->validated());
 
-        return redirect()
+        return $this->workspace->redirect((int) $record->employee_id, 'employment', 'Employment record created.') ?? redirect()
             ->route('employment-records.show', $record)
             ->with('status', 'Employment record created.');
     }
@@ -71,7 +74,7 @@ class EmploymentRecordController extends Controller
     {
         $employmentRecord->update($request->validated());
 
-        return redirect()
+        return $this->workspace->redirect((int) $employmentRecord->employee_id, 'employment', 'Employment record updated.') ?? redirect()
             ->route('employment-records.show', $employmentRecord)
             ->with('status', 'Employment record updated.');
     }
@@ -96,6 +99,6 @@ class EmploymentRecordController extends Controller
             'departments' => Department::orderBy('department_name')->get(),
             'positions' => Position::orderBy('position_title')->get(),
             'employmentTypes' => EmploymentType::orderBy('employment_type_name')->get(),
-        ];
+        ] + $this->workspace->viewData($employmentRecord->employee_id);
     }
 }

@@ -69,6 +69,8 @@ class PayrollRunController extends Controller
 
         $detailIds = $payrollRun->details->pluck('payroll_detail_id');
         $user = auth()->user();
+        $independent = $approval->isIndependentReviewer($payrollRun, $user);
+        $pendingReview = $payrollRun->status === PayrollRun::STATUS_PENDING_APPROVAL && $independent;
 
         return view('payroll-runs.show', [
             'run' => $payrollRun,
@@ -77,9 +79,11 @@ class PayrollRunController extends Controller
             'totalNet' => (float) $payrollRun->details->sum('net_pay'),
             'employerContributions' => (float) PayrollEmployerContribution::whereIn('payroll_detail_id', $detailIds)->sum('amount'),
             'canSubmit' => $user->can('payroll.submit') && $payrollRun->isEditable() && $payrollRun->details->isNotEmpty(),
-            'canReview' => $user->can('payroll.approve')
-                && $payrollRun->status === PayrollRun::STATUS_PENDING_APPROVAL
-                && $approval->isIndependentReviewer($payrollRun, $user),
+            'isIndependentReviewer' => $independent,
+            'canApprove' => $pendingReview && $user->can('payroll.approve'),
+            'canReject' => $pendingReview && $user->can('payroll.reject'),
+            'canReturn' => $pendingReview && $user->can('payroll.review'),
+            'canReview' => $pendingReview && ($user->can('payroll.approve') || $user->can('payroll.reject') || $user->can('payroll.review')),
             'canFinalize' => $user->can('payroll.finalize') && $payrollRun->status === PayrollRun::STATUS_APPROVED,
         ]);
     }

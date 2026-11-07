@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\PayrollDecisionRequest;
 use App\Models\PayrollRun;
 use App\Services\PayrollApprovalService;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 
 class PayrollApprovalController extends Controller
 {
@@ -16,23 +16,23 @@ class PayrollApprovalController extends Controller
         return back()->with('status', 'Payroll submitted for independent approval.');
     }
 
-    public function approve(Request $request, PayrollRun $payrollRun, PayrollApprovalService $service): RedirectResponse
+    public function approve(PayrollDecisionRequest $request, PayrollRun $payrollRun, PayrollApprovalService $service): RedirectResponse
     {
-        $service->approve($payrollRun, auth()->user(), $request->input('remarks'));
+        $service->approve($payrollRun, auth()->user(), $request->validated('remarks'));
 
         return back()->with('status', 'Payroll approved.');
     }
 
-    public function reject(Request $request, PayrollRun $payrollRun, PayrollApprovalService $service): RedirectResponse
+    public function reject(PayrollDecisionRequest $request, PayrollRun $payrollRun, PayrollApprovalService $service): RedirectResponse
     {
-        $service->reject($payrollRun, auth()->user(), $request->input('remarks'));
+        $service->reject($payrollRun, auth()->user(), $request->validated('remarks'));
 
         return back()->with('status', 'Payroll rejected.');
     }
 
-    public function returnForCorrection(Request $request, PayrollRun $payrollRun, PayrollApprovalService $service): RedirectResponse
+    public function returnForCorrection(PayrollDecisionRequest $request, PayrollRun $payrollRun, PayrollApprovalService $service): RedirectResponse
     {
-        $service->returnForCorrection($payrollRun, auth()->user(), $request->input('remarks'));
+        $service->returnForCorrection($payrollRun, auth()->user(), $request->validated('remarks'));
 
         return back()->with('status', 'Payroll returned for correction.');
     }

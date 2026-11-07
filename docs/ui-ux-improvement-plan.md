@@ -1,6 +1,6 @@
 # UI/UX Improvement Plan
 
-**Status:** Stage 2 foundations implemented; Stage 1 participant baselines remain pending
+**Status:** Stage 3 daily workflows implemented; Stage 1 participant baselines remain pending
 **Date:** November 7, 2026
 **Roles:** Admin, Payroll Officer, Approver, Viewer
 **Design guidance:** ui-ux-pro-max
@@ -77,9 +77,30 @@ The shared components affect existing consumers, while full visual migration of 
 
 ### Stage 3: Improve daily workflows
 
+**Progress:** Implemented on November 7, 2026 using the shared Stage 2 components. Payroll guidance, confirmation dialogs, work-focused dashboards, and employee workspaces are available.
+
 - Refine payroll preparation and review, including stage guidance and action confirmations.
 - Reorganize role dashboards around pending work and next actions.
 - Extend employee profiles and preserve context across related record creation.
+
+#### Delivered workflows
+
+- Payroll runs show the current preparation/review/approval/finalization stage, next-step guidance, and explanations for unavailable actions, including separation of duties. Returned/rejected runs surface the latest correction remarks.
+- Recompute, submit, review decisions, delete, and finalize actions have contextual confirmations identifying the period, run, employee count, and net pay. The native dialog focuses Cancel, supports keyboard dismissal, and resubmits through the existing protected endpoint. A native browser-confirm fallback remains available when JavaScript is unavailable.
+- Approval remarks are optional; return/reject reasons are now required. The server validates remarks as text up to 2,000 characters. Approve, reject, and return controls follow their individual permissions; backend permission checks and independent-review enforcement remain authoritative.
+- Dashboards prioritize editable/correction runs, independent reviews, approved runs awaiting finalization, and pending attendance/leave work. Corrections take precedence over drafts, and review work excludes runs prepared or submitted by the reviewer. Admins see access/configuration actions first; viewers get a finalized-record entry point. Multiple roles retain their combined actions.
+- Employee profiles now include employment, recent compensation, earnings, deductions, and permission-protected attendance and leave sections. Related data is scoped to that employee, recent lists are bounded, and historical/future effective dates remain visible.
+- Employment, compensation, earning, deduction, attendance, and leave creation can start with the employee or employment selected. Save and Cancel return to the workspace; validation keeps the selected context. Updates on the supported related forms also preserve workspace navigation. Redirect destinations are built from named application routes and the saved record, rather than a supplied return URL.
+- Employee-specific compensation/assignment lists show the active employee context and a reset option. Directory search/page parameters survive the list-to-profile-to-directory path.
+
+#### Verification and limits
+
+- The full suite passed with 149 PHPUnit tests, including 32 daily-workflow cases covering state guidance, independent review, permission-specific decisions, invalid remarks, dashboard priorities, employee data scoping, six prefilled creation forms, contextual saves, validation recovery, and safe return navigation.
+- Microsoft Edge checks covered all four demo-role dashboards, employee section visibility, and employee/employment preselection. The dashboard, employee workspace, and populated finalized payroll screen fit at 375, 768, 1024, and 1440 pixels without page overflow. Screenshots were inspected locally.
+- Browser-only confirmation checks used a temporary fictional form and intercepted the confirmed submit before navigation. Blank return/reject reasons were blocked, Cancel dismissed without submission, the dialog focused Cancel, and confirmation retained the selected submit action. No development payroll was changed by these checks.
+- Frontend build and PHP formatting passed. No dependencies, payroll calculation rules, or database schema were changed.
+
+The development database had finalized runs available for browser inspection; pending-run state changes and mixed-role behavior were exercised through isolated feature tests. Staff task-time measurements, a live pending-run/mixed-role walkthrough in an isolated demo environment, and screen-reader testing remain open from Stage 1. Stage 4 will migrate the remaining screens and improve reports and print layouts.
 
 ### Stage 4: Complete and verify
 

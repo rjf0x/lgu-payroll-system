@@ -3,7 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\EmployeeRequest;
+use App\Models\CompensationProfile;
 use App\Models\Employee;
+use App\Models\EmployeeDeductionAssignment;
+use App\Models\EmployeeEarningAssignment;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -45,7 +48,7 @@ class EmployeeController extends Controller
             ->with('status', 'Employee created.');
     }
 
-    public function show(Employee $employee): View
+    public function show(Request $request, Employee $employee): View
     {
         $employee->load([
             'employmentRecords.department',
@@ -53,7 +56,16 @@ class EmployeeController extends Controller
             'employmentRecords.employmentType',
         ]);
 
-        return view('employees.show', compact('employee'));
+        $employmentIds = $employee->employmentRecords->modelKeys();
+        $compensation = CompensationProfile::with(['employmentRecord.position', 'gradeStep'])->whereIn('employment_id', $employmentIds)->orderByDesc('effective_from')->limit(5)->get();
+        $earnings = EmployeeEarningAssignment::with(['earningType', 'employmentRecord.position'])->whereIn('employment_id', $employmentIds)->orderByDesc('effective_from')->limit(5)->get();
+        $deductions = EmployeeDeductionAssignment::with(['deductionType', 'employmentRecord.position'])->whereIn('employment_id', $employmentIds)->orderByDesc('effective_from')->limit(5)->get();
+        $attendance = $request->user()->can('attendance.manage') ? $employee->attendances()->orderByDesc('attendance_date')->limit(5)->get() : collect();
+        $leave = $request->user()->can('leave.manage') ? $employee->leaveApplications()->with('leaveType')->orderByDesc('start_date')->limit(5)->get() : collect();
+        $leaveBalances = $request->user()->can('leave.manage') ? $employee->leaveBalances()->with('leaveType')->where('leave_year', now()->year)->get() : collect();
+        $directoryContext = $request->only(['q', 'page']);
+
+        return view('employees.show', compact('employee', 'compensation', 'earnings', 'deductions', 'attendance', 'leave', 'leaveBalances', 'directoryContext'));
     }
 
     public function edit(Employee $employee): View

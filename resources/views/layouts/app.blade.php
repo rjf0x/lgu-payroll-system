@@ -46,5 +46,6 @@
         </main>
     </div>
 </div>
+<x-confirmation-dialog />
 </body>
 </html>

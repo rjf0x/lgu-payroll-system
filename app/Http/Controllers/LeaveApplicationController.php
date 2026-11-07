@@ -8,6 +8,7 @@ use App\Models\LeaveApplication;
 use App\Models\LeaveBalance;
 use App\Models\LeaveTransaction;
 use App\Models\LeaveType;
+use App\Services\EmployeeWorkspaceContext;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -15,6 +16,8 @@ use Illuminate\View\View;
 
 class LeaveApplicationController extends Controller
 {
+    public function __construct(private readonly EmployeeWorkspaceContext $workspace) {}
+
     public function index(Request $request): View
     {
         $status = $request->string('status')->toString() ?: null;
@@ -40,13 +43,14 @@ class LeaveApplicationController extends Controller
     {
         return view('leave-applications.create', [
             'application' => new LeaveApplication([
+                'employee_id' => $this->workspace->employeeId(),
                 'start_date' => now()->toDateString(),
                 'end_date' => now()->toDateString(),
                 'total_days' => 1,
             ]),
             'employees' => Employee::orderBy('last_name')->get(),
             'leaveTypes' => LeaveType::orderBy('leave_name')->get(),
-        ]);
+        ] + $this->workspace->viewData($this->workspace->employeeId()));
     }
 
     public function store(LeaveApplicationRequest $request): RedirectResponse
@@ -55,7 +59,7 @@ class LeaveApplicationController extends Controller
             $request->validated() + ['approval_status' => LeaveApplication::STATUS_PENDING],
         );
 
-        return redirect()
+        return $this->workspace->redirect((int) $application->employee_id, 'leave', 'Leave application filed.') ?? redirect()
             ->route('leave-applications.show', $application)
             ->with('status', 'Leave application filed.');
     }

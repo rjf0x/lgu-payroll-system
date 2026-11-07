@@ -4,6 +4,15 @@
 @section('heading', 'Compensation Profiles')
 
 @section('content')
+    @if ($filterEmployee)
+        <x-card class="mb-5">
+            <p class="mb-3 text-sm text-muted">Showing records for <strong>{{ $filterEmployee->full_name }}</strong> · {{ $filterEmployee->employee_number }}</p>
+            <div class="flex flex-wrap gap-3">
+                <x-button :href="route('employees.show', $filterEmployee)">Back to employee workspace</x-button>
+                <x-button :href="route('compensation-profiles.index')">Show all employees</x-button>
+            </div>
+        </x-card>
+    @endif
     <div class="mb-4 flex items-center justify-between">
         <p class="text-sm text-slate-500">Grade-and-step or direct-rate compensation attached to an employment record.</p>
         @can('compensation.manage')

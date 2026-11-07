@@ -4,26 +4,35 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\EmployeeDeductionAssignmentRequest;
 use App\Models\DeductionType;
+use App\Models\Employee;
 use App\Models\EmployeeDeductionAssignment;
 use App\Models\EmploymentRecord;
+use App\Services\EmployeeWorkspaceContext;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 
 class EmployeeDeductionAssignmentController extends Controller
 {
+    public function __construct(private readonly EmployeeWorkspaceContext $workspace) {}
+
     public function index(): View
     {
+        $employeeId = $this->workspace->employeeId();
+        $filterEmployee = $employeeId !== null ? Employee::findOrFail($employeeId) : null;
+
         $assignments = EmployeeDeductionAssignment::query()
             ->with(['employmentRecord.employee', 'employmentRecord.position', 'deductionType'])
+            ->when($employeeId !== null, fn ($query) => $query->whereHas('employmentRecord', fn ($employment) => $employment->where('employee_id', $employeeId)))
             ->orderByDesc('effective_from')
-            ->paginate(15);
+            ->paginate(15)->withQueryString();
 
-        return view('employee-deduction-assignments.index', compact('assignments'));
+        return view('employee-deduction-assignments.index', compact('assignments', 'filterEmployee'));
     }
 
     public function create(): View
     {
         return view('employee-deduction-assignments.create', $this->formData(new EmployeeDeductionAssignment([
+            'employment_id' => $this->workspace->employmentId(),
             'status' => 'ACTIVE',
             'effective_from' => now()->toDateString(),
         ])));
@@ -31,9 +40,9 @@ class EmployeeDeductionAssignmentController extends Controller
 
     public function store(EmployeeDeductionAssignmentRequest $request): RedirectResponse
     {
-        EmployeeDeductionAssignment::create($request->validated());
+        $assignment = EmployeeDeductionAssignment::create($request->validated());
 
-        return redirect()->route('employee-deduction-assignments.index')->with('status', 'Deduction assignment created.');
+        return $this->workspace->redirect((int) $assignment->employmentRecord->employee_id, 'deductions', 'Deduction assignment created.') ?? redirect()->route('employee-deduction-assignments.index')->with('status', 'Deduction assignment created.');
     }
 
     public function edit(EmployeeDeductionAssignment $employeeDeductionAssignment): View
@@ -45,7 +54,7 @@ class EmployeeDeductionAssignmentController extends Controller
     {
         $employeeDeductionAssignment->update($request->validated());
 
-        return redirect()->route('employee-deduction-assignments.index')->with('status', 'Deduction assignment updated.');
+        return $this->workspace->redirect((int) $employeeDeductionAssignment->employmentRecord->employee_id, 'deductions', 'Deduction assignment updated.') ?? redirect()->route('employee-deduction-assignments.index')->with('status', 'Deduction assignment updated.');
     }
 
     public function destroy(EmployeeDeductionAssignment $employeeDeductionAssignment): RedirectResponse
@@ -64,6 +73,6 @@ class EmployeeDeductionAssignmentController extends Controller
             'assignment' => $assignment,
             'employments' => EmploymentRecord::with(['employee', 'position'])->get(),
             'deductionTypes' => DeductionType::orderBy('deduction_name')->get(),
-        ];
+        ] + $this->workspace->viewData(employmentId: $assignment->employment_id);
     }
 }
