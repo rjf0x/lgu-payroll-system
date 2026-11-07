@@ -35,7 +35,7 @@
                         <td class="px-4 py-3 text-center">{{ $position->salary_grade ?? '—' }}</td>
                         <td class="px-4 py-3"><x-status :value="$position->status" /></td>
                         <td class="px-4 py-3 text-right">
-                            <a href="{{ route('positions.show', $position) }}" class="text-emerald-700 hover:underline">View</a>
+                            <a href="{{ route('positions.show', $position) }}" class="text-brand hover:underline">View</a>
                             @can('employees.manage')
                                 <a href="{{ route('positions.edit', $position) }}" class="ml-3 text-slate-600 hover:underline">Edit</a>
                             @endcan

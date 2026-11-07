@@ -13,7 +13,7 @@
             <div>
                 <dt class="text-xs font-semibold uppercase tracking-wide text-slate-500">Department</dt>
                 <dd class="mt-1">
-                    <a href="{{ route('departments.show', $position->department) }}" class="text-emerald-700 hover:underline">
+                    <a href="{{ route('departments.show', $position->department) }}" class="text-brand hover:underline">
                         {{ $position->department->department_name }}
                     </a>
                 </dd>

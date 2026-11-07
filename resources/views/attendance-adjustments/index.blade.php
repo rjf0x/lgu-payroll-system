@@ -48,7 +48,7 @@
                             <x-status :value="$adjustment->approval_status" />
                         </td>
                         <td class="px-4 py-3 text-right">
-                            <a href="{{ route('attendance-adjustments.show', $adjustment) }}" class="text-emerald-700 hover:underline">View</a>
+                            <a href="{{ route('attendance-adjustments.show', $adjustment) }}" class="text-brand hover:underline">View</a>
                         </td>
                     </tr>
                 @empty

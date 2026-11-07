@@ -41,7 +41,7 @@
                     <tr class="hover:bg-slate-50">
                         <td class="font-mono">{{ $employee->employee_number }}</td>
                         <td class="px-4 py-3">
-                            <a href="{{ route('employees.show', ['employee' => $employee] + request()->only(['q', 'page'])) }}" class="font-medium text-emerald-700 hover:underline">{{ $employee->full_name }}</a>
+                            <a href="{{ route('employees.show', ['employee' => $employee] + request()->only(['q', 'page'])) }}" class="font-medium text-brand hover:underline">{{ $employee->full_name }}</a>
                         </td>
                         <td class="px-4 py-3 text-slate-600">{{ $employee->sex }}</td>
                         <td class="px-4 py-3 text-right">{{ $employee->employment_records_count }}</td>

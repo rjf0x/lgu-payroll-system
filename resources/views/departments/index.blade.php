@@ -33,7 +33,7 @@
                         <td class="px-4 py-3"><x-status :value="$department->status" /></td>
                         <td class="px-4 py-3 text-right">{{ $department->positions_count }}</td>
                         <td class="px-4 py-3 text-right">
-                            <a href="{{ route('departments.show', $department) }}" class="text-emerald-700 hover:underline">View</a>
+                            <a href="{{ route('departments.show', $department) }}" class="text-brand hover:underline">View</a>
                             @can('employees.manage')
                                 <a href="{{ route('departments.edit', $department) }}" class="ml-3 text-slate-600 hover:underline">Edit</a>
                             @endcan

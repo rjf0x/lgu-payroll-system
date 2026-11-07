@@ -9,7 +9,9 @@
 
 This plan is based on source inspection of the Blade layouts, dashboard, navigation, employee screens, attendance, payroll run, reports, and shared components. Browser validation is the first implementation step; visual and interaction findings still require confirmation in the running application.
 
-The recommended direction is a clear, accessible administrative workspace: retain the emerald identity, improve readability, and make each user's next task obvious. Build on the existing role-specific dashboards, permission-aware navigation, reusable form components, inline errors, and preserved form input.
+The recommended direction is a clear, accessible administrative workspace: use a blue identity, improve readability, and make each user's next task obvious. Build on the existing role-specific dashboards, permission-aware navigation, reusable form components, inline errors, and preserved form input.
+
+The system-wide palette was updated to blue on November 8, 2026: primary #1E40AF, dark navigation #172554, and focus #2563EB, with pale blue accents and neutral surfaces. Green success states, amber warnings, and red errors retain their semantic meaning. Earlier stage notes below describe their original implementation palette.
 
 The skill's accessible style guidance and targeted data-dense dashboard results support this direction. Its generated marketing-style single-column layout does not fit this application and should not be applied.
 

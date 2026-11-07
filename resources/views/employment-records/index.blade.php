@@ -31,7 +31,7 @@
                 @forelse ($employmentRecords as $record)
                     <tr class="hover:bg-slate-50">
                         <td class="px-4 py-3">
-                            <a href="{{ route('employment-records.show', $record) }}" class="font-medium text-emerald-700 hover:underline">
+                            <a href="{{ route('employment-records.show', $record) }}" class="font-medium text-brand hover:underline">
                                 {{ $record->employee->full_name }}
                             </a>
                             <div class="font-mono text-[10px] text-slate-400">{{ $record->employee->employee_number }}</div>
@@ -42,7 +42,7 @@
                         <td class="px-4 py-3 text-slate-600">{{ $record->start_date?->format('M d, Y') }}</td>
                         <td class="px-4 py-3"><x-status :value="$record->employment_status" /></td>
                         <td class="px-4 py-3 text-right">
-                            <a href="{{ route('employment-records.show', $record) }}" class="text-emerald-700 hover:underline">View</a>
+                            <a href="{{ route('employment-records.show', $record) }}" class="text-brand hover:underline">View</a>
                         </td>
                     </tr>
                 @empty

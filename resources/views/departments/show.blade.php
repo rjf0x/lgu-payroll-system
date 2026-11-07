@@ -38,7 +38,7 @@
             <ul class="divide-y divide-slate-100 text-sm">
                 @forelse ($department->positions as $position)
                     <li class="flex items-center justify-between px-6 py-3">
-                        <a href="{{ route('positions.show', $position) }}" class="text-emerald-700 hover:underline">{{ $position->position_title }}</a>
+                        <a href="{{ route('positions.show', $position) }}" class="text-brand hover:underline">{{ $position->position_title }}</a>
                         <span class="text-xs text-slate-500">SG {{ $position->salary_grade ?? '—' }}</span>
                     </li>
                 @empty

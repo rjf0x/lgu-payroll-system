@@ -33,7 +33,7 @@
         </form>
 
     <p class="mb-3 text-sm text-slate-600">{{ number_format($logs->total()) }} matching events. Newest first. Dates use {{ config('app.timezone') }}.</p>
-    <div role="region" aria-label="Audit events" tabindex="0" class="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm focus-visible:outline-2 focus-visible:outline-emerald-700">
+    <div role="region" aria-label="Audit events" tabindex="0" class="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm focus-visible:outline-2 focus-visible:outline-focus">
         <x-results :items="$logs" />
         <x-table label="Audit trail records">
             <caption class="sr-only">Recorded audit activity, newest first</caption>

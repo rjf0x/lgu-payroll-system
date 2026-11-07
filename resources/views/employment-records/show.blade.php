@@ -10,7 +10,7 @@
                 <div>
                     <dt class="text-xs font-semibold uppercase tracking-wide text-slate-500">Employee</dt>
                     <dd class="mt-1">
-                        <a href="{{ route('employees.show', $employmentRecord->employee) }}" class="text-emerald-700 hover:underline">
+                        <a href="{{ route('employees.show', $employmentRecord->employee) }}" class="text-brand hover:underline">
                             {{ $employmentRecord->employee->full_name }}
                         </a>
                     </dd>
@@ -60,13 +60,13 @@
             <div class="flex items-center justify-between border-b border-slate-100 px-6 py-4">
                 <span class="text-sm font-semibold text-slate-700">Compensation Profiles</span>
                 @can('compensation.manage')
-                    <a href="{{ route('compensation-profiles.create', ['employment_id' => $employmentRecord->employment_id]) }}" class="text-xs font-semibold text-emerald-700 hover:underline">+ Add</a>
+                    <a href="{{ route('compensation-profiles.create', ['employment_id' => $employmentRecord->employment_id]) }}" class="text-xs font-semibold text-brand hover:underline">+ Add</a>
                 @endcan
             </div>
             <ul class="divide-y divide-slate-100 text-sm">
                 @forelse ($employmentRecord->compensationProfiles as $profile)
                     <li class="flex items-center justify-between px-6 py-3">
-                        <a href="{{ route('compensation-profiles.show', $profile) }}" class="text-emerald-700 hover:underline">
+                        <a href="{{ route('compensation-profiles.show', $profile) }}" class="text-brand hover:underline">
                             {{ $profile->gradeStep
                                 ? 'SG '.$profile->gradeStep->grade_number.' Step '.$profile->gradeStep->step_number.' — ₱'.number_format((float) $profile->gradeStep->monthly_salary, 2)
                                 : ucfirst(strtolower($profile->pay_basis)).' — ₱'.number_format((float) $profile->basic_rate, 2) }}

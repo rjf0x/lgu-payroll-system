@@ -5,13 +5,17 @@
 @source '../views/**/*.blade.php';
 
 @theme {
-    --color-brand: #065f46;
-    --color-brand-strong: #064e3b;
+    --color-brand: #1e40af;
+    --color-brand-strong: #172554;
+    --color-brand-soft: #eff6ff;
+    --color-brand-border: #bfdbfe;
+    --color-brand-ink: #1e3a8a;
+    --color-brand-on-dark: #dbeafe;
     --color-surface: #ffffff;
     --color-canvas: #f1f5f9;
     --color-ink: #1e293b;
     --color-muted: #475569;
-    --color-focus: #0369a1;
+    --color-focus: #2563eb;
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
 }
@@ -41,6 +45,7 @@
     }
     #app-navigation :focus-visible { outline-color: white; }
     :where(button, summary, select) { touch-action: manipulation; }
+    :where(input[type='checkbox'], input[type='radio']) { accent-color: var(--color-brand); }
     :where(button, summary) { cursor: pointer; }
 }
 
@@ -71,7 +76,7 @@
     .ui-table .ui-wrap { @apply min-w-48 whitespace-normal break-words; }
     .ui-table a { @apply relative inline-flex min-h-11 items-center font-semibold text-brand underline-offset-4 hover:underline; }
     .ui-nav-group { @apply mt-3 border-t border-white/15 pt-2; }
-    .ui-nav-group > summary { @apply min-h-11 rounded-lg px-3 py-2.5 text-sm font-semibold text-emerald-100 hover:bg-white/10; }
+    .ui-nav-group > summary { @apply min-h-11 rounded-lg px-3 py-2.5 text-sm font-semibold text-brand-on-dark hover:bg-white/10; }
 }
 
 @media (prefers-reduced-motion: no-preference) {

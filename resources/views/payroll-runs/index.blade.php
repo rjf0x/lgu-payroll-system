@@ -46,7 +46,7 @@
                         <td class="px-4 py-3 text-right">{{ $run->details_count }}</td>
                         <td class="px-4 py-3 text-slate-600">{{ $run->createdBy?->username }}</td>
                         <td class="px-4 py-3 text-right">
-                            <a href="{{ route('payroll-runs.show', $run) }}" class="text-emerald-700 hover:underline">Open</a>
+                            <a href="{{ route('payroll-runs.show', $run) }}" class="text-brand hover:underline">Open</a>
                         </td>
                     </tr>
                 @empty

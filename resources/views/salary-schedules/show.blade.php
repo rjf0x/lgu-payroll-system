@@ -40,7 +40,7 @@
         <div class="flex items-center justify-between border-b border-slate-100 px-6 py-4">
             <span class="text-sm font-semibold text-slate-700">Grade Steps</span>
             @can('compensation.manage')
-                <a href="{{ route('salary-grade-steps.create', ['salary_schedule_id' => $schedule->salary_schedule_id]) }}" class="text-xs font-semibold text-emerald-700 hover:underline">+ Add Grade Step</a>
+                <a href="{{ route('salary-grade-steps.create', ['salary_schedule_id' => $schedule->salary_schedule_id]) }}" class="text-xs font-semibold text-brand hover:underline">+ Add Grade Step</a>
             @endcan
         </div>
         <x-table label="Salary Schedule records">

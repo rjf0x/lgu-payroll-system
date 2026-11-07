@@ -31,7 +31,7 @@
                         <td class="px-4 py-3 text-slate-600">{{ $user->employee?->full_name ?? '—' }}</td>
                         <td class="px-4 py-3"><x-status :value="$user->account_status" /></td>
                         <td class="px-4 py-3 text-right">
-                            <a href="{{ route('users.show', $user) }}" class="text-emerald-700 hover:underline">View</a>
+                            <a href="{{ route('users.show', $user) }}" class="text-brand hover:underline">View</a>
                             <a href="{{ route('users.edit', $user) }}" class="ml-3 text-slate-600 hover:underline">Edit</a>
                         </td>
                     </tr>

@@ -57,7 +57,7 @@
                             <x-status :value="$application->approval_status" />
                         </td>
                         <td class="px-4 py-3 text-right">
-                            <a href="{{ route('leave-applications.show', $application) }}" class="text-emerald-700 hover:underline">View</a>
+                            <a href="{{ route('leave-applications.show', $application) }}" class="text-brand hover:underline">View</a>
                         </td>
                     </tr>
                 @empty

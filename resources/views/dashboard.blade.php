@@ -83,13 +83,13 @@
         <section class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
             <div class="flex flex-wrap items-center justify-between gap-3 p-6">
                 <h2 class="font-semibold">{{ $dashboardRole === 'Approver' ? 'Payroll awaiting your review' : ($dashboardRole === 'Viewer' ? 'Finalized payroll records' : 'Recent payroll runs') }}</h2>
-                <a href="{{ route('payroll-runs.index') }}" class="text-sm font-semibold text-emerald-700 hover:underline">View all payroll</a>
+                <a href="{{ route('payroll-runs.index') }}" class="text-sm font-semibold text-brand hover:underline">View all payroll</a>
             </div>
             <x-table label="Dashboard payroll runs" class="rounded-none border-x-0 border-b-0 shadow-none">
                     <thead class="border-y border-slate-200 bg-slate-50 text-xs uppercase text-slate-500"><tr><th class="px-6 py-3">Payroll period</th><th class="px-6 py-3">Run</th><th class="px-6 py-3">Employees</th><th class="px-6 py-3">Status</th><th class="px-6 py-3">Details</th></tr></thead>
                     <tbody class="divide-y divide-slate-100">
                         @forelse ($runs as $run)
-                            <tr><td class="px-6 py-4 font-medium">{{ $run->payrollPeriod->period_name }}</td><td class="px-6 py-4">#{{ $run->run_number }}</td><td class="px-6 py-4">{{ $run->details_count }}</td><td class="px-6 py-4"><x-status :value="$run->status" /></td><td class="px-6 py-4"><a class="font-semibold text-emerald-700 hover:underline" href="{{ route('payroll-runs.show', $run) }}">View run <span class="sr-only">{{ $run->payroll_run_id }}</span></a></td></tr>
+                            <tr><td class="px-6 py-4 font-medium">{{ $run->payrollPeriod->period_name }}</td><td class="px-6 py-4">#{{ $run->run_number }}</td><td class="px-6 py-4">{{ $run->details_count }}</td><td class="px-6 py-4"><x-status :value="$run->status" /></td><td class="px-6 py-4"><a class="font-semibold text-brand hover:underline" href="{{ route('payroll-runs.show', $run) }}">View run <span class="sr-only">{{ $run->payroll_run_id }}</span></a></td></tr>
                         @empty
                             <tr><td colspan="5" class="px-6 py-10 text-center text-slate-500">No payroll runs to display.</td></tr>
                         @endforelse

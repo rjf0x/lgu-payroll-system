@@ -9,7 +9,7 @@
             <div>
                 <dt class="text-xs font-semibold uppercase tracking-wide text-slate-500">Schedule</dt>
                 <dd class="mt-1">
-                    <a href="{{ route('salary-schedules.show', $gradeStep->salarySchedule) }}" class="text-emerald-700 hover:underline">
+                    <a href="{{ route('salary-schedules.show', $gradeStep->salarySchedule) }}" class="text-brand hover:underline">
                         {{ $gradeStep->salarySchedule->schedule_name }}
                     </a>
                 </dd>

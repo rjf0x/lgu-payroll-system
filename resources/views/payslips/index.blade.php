@@ -47,7 +47,7 @@
                         </td>
                         <td class="px-4 py-3 text-right">
                             @if ($detail->payslip)
-                                <a href="{{ route('payslips.show', $detail->payslip) }}" class="text-emerald-700 hover:underline">View</a>
+                                <a href="{{ route('payslips.show', $detail->payslip) }}" class="text-brand hover:underline">View</a>
                                 @can('reports.generate')
                                     @if ($detail->payslip->publication_status !== 'PUBLISHED')
                                         <form method="POST" action="{{ route('payslips.publish', $detail->payslip) }}" class="ml-3 inline" data-submit-feedback>

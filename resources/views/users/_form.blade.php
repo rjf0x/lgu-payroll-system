@@ -51,7 +51,7 @@
                         name="roles[]"
                         value="{{ $role->role_id }}"
                         @checked(in_array($role->role_id, $selectedRoles, true))
-                        class="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                        class="rounded border-slate-300 text-brand focus:ring-blue-500"
                     >
                     {{ $role->role_name }}
                 </label>

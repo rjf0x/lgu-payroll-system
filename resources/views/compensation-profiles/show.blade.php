@@ -9,7 +9,7 @@
             <div>
                 <dt class="text-xs font-semibold uppercase tracking-wide text-slate-500">Employee</dt>
                 <dd class="mt-1">
-                    <a href="{{ route('employees.show', $profile->employmentRecord->employee) }}" class="text-emerald-700 hover:underline">
+                    <a href="{{ route('employees.show', $profile->employmentRecord->employee) }}" class="text-brand hover:underline">
                         {{ $profile->employmentRecord->employee->full_name }}
                     </a>
                 </dd>

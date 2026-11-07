@@ -30,7 +30,7 @@
                 @forelse ($schedules as $schedule)
                     <tr class="hover:bg-slate-50">
                         <td class="px-4 py-3">
-                            <a href="{{ route('salary-schedules.show', $schedule) }}" class="font-medium text-emerald-700 hover:underline">
+                            <a href="{{ route('salary-schedules.show', $schedule) }}" class="font-medium text-brand hover:underline">
                                 {{ $schedule->schedule_name }}
                             </a>
                             <div class="text-xs text-slate-400">{{ $schedule->reference_document }}</div>
@@ -40,7 +40,7 @@
                         <td class="px-4 py-3 text-right">{{ $schedule->grade_steps_count }}</td>
                         <td class="px-4 py-3"><x-status :value="$schedule->status" /></td>
                         <td class="px-4 py-3 text-right">
-                            <a href="{{ route('salary-schedules.show', $schedule) }}" class="text-emerald-700 hover:underline">View</a>
+                            <a href="{{ route('salary-schedules.show', $schedule) }}" class="text-brand hover:underline">View</a>
                             @can('compensation.manage')
                                 <a href="{{ route('salary-schedules.edit', $schedule) }}" class="ml-3 text-slate-600 hover:underline">Edit</a>
                             @endcan

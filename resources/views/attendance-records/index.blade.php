@@ -52,7 +52,7 @@
                         <td class="px-4 py-3 text-right">{{ number_format((float) $record->credited_days, 2) }}</td>
                         <td class="px-4 py-3 text-slate-500">{{ $record->source ?: '—' }}</td>
                         <td class="px-4 py-3 text-right">
-                            <a href="{{ route('attendance-adjustments.create', ['attendance_id' => $record->attendance_id]) }}" class="text-emerald-700 hover:underline">Adjust</a>
+                            <a href="{{ route('attendance-adjustments.create', ['attendance_id' => $record->attendance_id]) }}" class="text-brand hover:underline">Adjust</a>
                             <a href="{{ route('attendance-records.edit', $record) }}" class="ml-3 text-slate-600 hover:underline">Edit</a>
                         </td>
                     </tr>

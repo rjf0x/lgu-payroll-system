@@ -7,7 +7,7 @@
     @php($period = $detail->payrollRun->payrollPeriod)
 
     <div class="border-b border-slate-200 pb-4 text-center">
-        <div class="text-sm font-semibold text-emerald-800">Payroll statement · Amounts in PHP</div>
+        <div class="text-sm font-semibold text-brand">Payroll statement · Amounts in PHP</div>
         <h1 class="mt-1 text-xl font-bold">Employee Payslip</h1>
         <p class="text-sm text-slate-500">{{ $period->period_name }} · Pay date {{ $period->pay_date?->format('M d, Y') }}</p>
     </div>
@@ -56,9 +56,9 @@
         </div>
     </div>
 
-    <div class="mt-6 flex items-center justify-between rounded-lg bg-emerald-50 px-4 py-3">
-        <span class="text-sm font-semibold text-emerald-800">Net Take-Home Pay</span>
-        <span class="font-mono text-lg font-bold text-emerald-800">₱{{ number_format((float) $detail->net_pay, 2) }}</span>
+    <div class="mt-6 flex items-center justify-between rounded-lg bg-brand-soft px-4 py-3">
+        <span class="text-sm font-semibold text-brand">Net Take-Home Pay</span>
+        <span class="font-mono text-lg font-bold text-brand">₱{{ number_format((float) $detail->net_pay, 2) }}</span>
     </div>
 
     @if ($detail->employerContributions->isNotEmpty())

@@ -38,7 +38,7 @@
                 @forelse ($profiles as $profile)
                     <tr class="hover:bg-slate-50">
                         <td class="px-4 py-3">
-                            <a href="{{ route('compensation-profiles.show', $profile) }}" class="font-medium text-emerald-700 hover:underline">
+                            <a href="{{ route('compensation-profiles.show', $profile) }}" class="font-medium text-brand hover:underline">
                                 {{ $profile->employmentRecord->employee->full_name }}
                             </a>
                             <div class="text-xs text-slate-400">{{ $profile->employmentRecord->position->position_title }}</div>
@@ -53,7 +53,7 @@
                             {{ $profile->effective_from?->format('M d, Y') }} – {{ $profile->effective_to?->format('M d, Y') ?? 'present' }}
                         </td>
                         <td class="px-4 py-3 text-right">
-                            <a href="{{ route('compensation-profiles.show', $profile) }}" class="text-emerald-700 hover:underline">View</a>
+                            <a href="{{ route('compensation-profiles.show', $profile) }}" class="text-brand hover:underline">View</a>
                             @can('compensation.manage')
                                 <a href="{{ route('compensation-profiles.edit', $profile) }}" class="ml-3 text-slate-600 hover:underline">Edit</a>
                             @endcan

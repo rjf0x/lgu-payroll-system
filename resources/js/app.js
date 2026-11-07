@@ -117,3 +117,19 @@ document.addEventListener('submit', (event) => {
 });
 
 window.addEventListener('pageshow', resetSubmission);
+
+const passwordToggle = document.getElementById('toggle-password');
+const passwordField = document.getElementById('password');
+
+if (passwordToggle && passwordField) {
+    const setPasswordVisibility = (visible) => {
+        passwordField.type = visible ? 'text' : 'password';
+        passwordToggle.textContent = visible ? 'Hide' : 'Show';
+        passwordToggle.setAttribute('aria-label', visible ? 'Hide password' : 'Show password');
+        passwordToggle.setAttribute('aria-pressed', String(visible));
+    };
+
+    passwordToggle.hidden = false;
+    passwordToggle.addEventListener('click', () => setPasswordVisibility(passwordField.type === 'password'));
+    window.addEventListener('pageshow', () => setPasswordVisibility(false));
+}

@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\SystemSetting;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -105,5 +106,30 @@ class AuthenticationTest extends TestCase
 
         $this->post('/login', ['username' => 'officer', 'password' => 'wrong-password'])
             ->assertStatus(429);
+    }
+
+    public function test_login_uses_saved_organization_identity_and_support_contact(): void
+    {
+        SystemSetting::query()->where('setting_key', 'system_name')->update(['value' => 'Municipal Payroll']);
+        SystemSetting::query()->where('setting_key', 'organization_name')->update(['value' => 'Municipality of Sample']);
+        SystemSetting::query()->where('setting_key', 'support_email')->update(['value' => 'payroll-help@example.test']);
+
+        $this->get(route('login'))->assertOk()
+            ->assertSee('Municipal Payroll')->assertSee('Municipality of Sample')
+            ->assertSee('mailto:payroll-help@example.test')
+            ->assertDontSee('Contact your system administrator for account access or a password reset.');
+    }
+
+    public function test_failed_sign_in_keeps_username_without_rendering_the_password(): void
+    {
+        User::factory()->create(['username' => 'officer']);
+
+        $this->from(route('login'))->post(route('login.store'), [
+            'username' => 'officer', 'password' => 'never-render-this-password',
+        ])->assertRedirect(route('login'));
+
+        $this->get(route('login'))->assertOk()->assertSee('Unable to sign in')
+            ->assertSee('value="officer"', false)->assertSee('aria-invalid="true"', false)
+            ->assertSee('data-error-summary', false)->assertDontSee('never-render-this-password');
     }
 }
