@@ -5,6 +5,58 @@
 @source '../views/**/*.blade.php';
 
 @theme {
+    --color-brand: #065f46;
+    --color-brand-strong: #064e3b;
+    --color-surface: #ffffff;
+    --color-canvas: #f1f5f9;
+    --color-ink: #1e293b;
+    --color-muted: #475569;
+    --color-focus: #0369a1;
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
+}
+
+@layer base {
+    body { @apply bg-canvas text-base leading-relaxed text-ink; }
+    :where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+        outline: 3px solid var(--color-focus);
+        outline-offset: 3px;
+    }
+    #app-navigation :focus-visible { outline-color: white; }
+    :where(button, summary, select) { touch-action: manipulation; }
+    :where(button, summary) { cursor: pointer; }
+}
+
+@layer components {
+    .ui-button {
+        @apply inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-lg border px-4 py-2 text-sm font-semibold leading-6;
+    }
+    .ui-button-primary { @apply border-brand bg-brand text-white hover:border-brand-strong hover:bg-brand-strong; }
+    .ui-button-secondary { @apply border-slate-500 bg-white text-slate-700 hover:bg-slate-50; }
+    .ui-button-danger { @apply border-rose-700 bg-white text-rose-800 hover:bg-rose-50; }
+    .ui-button-warning { @apply border-amber-700 bg-amber-50 text-amber-900 hover:bg-amber-100; }
+    .ui-button:disabled, .ui-button[aria-disabled='true'] { @apply cursor-wait opacity-70; }
+    .ui-card { @apply min-w-0 rounded-xl border border-slate-200 bg-surface p-5 shadow-sm sm:p-6; }
+    .ui-field {
+        @apply block min-h-11 w-full min-w-0 rounded-lg border border-slate-500 bg-white px-3 py-2 text-base text-ink placeholder:text-slate-500;
+    }
+    .ui-field:focus { @apply border-brand; }
+    .ui-field[aria-invalid='true'] { @apply border-rose-700; }
+    .ui-table-scroll { @apply relative max-h-[36rem] min-w-0 overflow-auto rounded-xl border border-slate-200 bg-surface shadow-sm; }
+    .ui-table { @apply w-full border-collapse whitespace-nowrap text-left text-sm; }
+    .ui-table th { @apply sticky top-0 z-10 border-b border-slate-200 bg-slate-50 px-4 py-3 font-semibold text-slate-700; }
+    .ui-table td { @apply border-b border-slate-100 px-4 py-3; }
+    .ui-table tbody tr:last-child td { @apply border-b-0; }
+    .ui-table tbody tr:hover td { @apply bg-slate-50; }
+    .ui-table-sticky-first th:first-child { @apply left-0 z-20; }
+    .ui-table-sticky-first td:first-child { @apply sticky left-0 z-10 bg-white; }
+    .ui-table .ui-money { @apply text-right tabular-nums; }
+    .ui-table .ui-wrap { @apply min-w-48 whitespace-normal break-words; }
+    .ui-table a { @apply relative inline-flex min-h-11 items-center font-semibold text-brand underline-offset-4 hover:underline; }
+    .ui-nav-group { @apply mt-3 border-t border-white/15 pt-2; }
+    .ui-nav-group > summary { @apply min-h-11 rounded-lg px-3 py-2.5 text-sm font-semibold text-emerald-100 hover:bg-white/10; }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    .ui-button { transition: background-color 150ms ease, border-color 150ms ease; }
 }

@@ -3,7 +3,8 @@
 <form
     method="POST"
     action="{{ $isEdit ? route('employees.update', $employee) : route('employees.store') }}"
-    class="space-y-5 rounded-xl border border-slate-200 bg-white p-6 shadow-sm"
+    class="ui-card space-y-6"
+    data-submit-feedback
 >
     @csrf
     @if ($isEdit)
@@ -38,12 +39,13 @@
 
     <x-form.textarea name="address" label="Address" :value="$employee->address" required />
 
-    <div class="flex gap-3">
-        <button class="rounded-md bg-emerald-700 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-800">
+    <p class="text-sm text-muted">Fields marked with an asterisk (*) are required.</p>
+    <div class="flex flex-wrap gap-3">
+        <x-button type="submit" variant="primary" data-submitting-label="Saving employee…">
             {{ $isEdit ? 'Save changes' : 'Create employee' }}
-        </button>
-        <a href="{{ $isEdit ? route('employees.show', $employee) : route('employees.index') }}" class="rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50">
+        </x-button>
+        <x-button :href="$isEdit ? route('employees.show', $employee) : route('employees.index')">
             Cancel
-        </a>
+        </x-button>
     </div>
 </form>

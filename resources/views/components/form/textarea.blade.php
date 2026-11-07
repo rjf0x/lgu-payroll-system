@@ -4,26 +4,31 @@
     'value' => null,
     'rows' => 3,
     'required' => false,
+    'id' => null,
+    'hint' => null,
 ])
 
-<div>
+@php
+    $fieldId = $id ?? str_replace(['[', ']', '.'], ['-', '', '-'], $name);
+    $description = trim(implode(' ', array_filter([$attributes->get('aria-describedby'), $hint ? $fieldId.'-hint' : null, $errors->has($name) ? $fieldId.'-error' : null])));
+@endphp
+
+<div class="min-w-0">
     @if ($label)
-        <label for="{{ $name }}" class="block text-sm font-medium text-slate-700">
-            {{ $label }}@if ($required)<span class="text-rose-600"> *</span>@endif
+        <label for="{{ $fieldId }}" class="mb-1.5 block text-sm font-semibold text-slate-700">
+            {{ $label }}@if ($required)<span class="text-rose-700" aria-hidden="true"> *</span><span class="sr-only"> (required)</span>@endif
         </label>
     @endif
 
     <textarea
-        id="{{ $name }}"
+        id="{{ $fieldId }}"
         name="{{ $name }}"
         rows="{{ $rows }}"
         @if ($required) required @endif
-        {{ $attributes->merge([
-            'class' => 'mt-1 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 focus:outline-none',
-        ]) }}
+        aria-invalid="{{ $errors->has($name) ? 'true' : 'false' }}"
+        @if ($description !== '') aria-describedby="{{ $description }}" @endif
+        {{ $attributes->except(['aria-describedby', 'aria-invalid'])->class(['ui-field']) }}
     >{{ old($name, $value) }}</textarea>
 
-    @error($name)
-        <p class="mt-1 text-xs text-rose-600">{{ $message }}</p>
-    @enderror
+    <x-form.feedback :name="$name" :id="$fieldId" :hint="$hint" />
 </div>

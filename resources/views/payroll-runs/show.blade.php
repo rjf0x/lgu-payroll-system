@@ -4,205 +4,183 @@
 @section('heading', 'Payroll Run · '.$run->payrollPeriod->period_name.' #'.$run->run_number)
 
 @section('content')
-    <div class="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-        <dl class="grid grid-cols-2 gap-x-8 gap-y-2 text-sm sm:grid-cols-3">
-            <div>
-                <dt class="text-xs font-semibold uppercase tracking-wide text-slate-500">Status</dt>
-                <dd class="mt-1 font-semibold">{{ $run->status }}</dd>
-            </div>
-            <div>
-                <dt class="text-xs font-semibold uppercase tracking-wide text-slate-500">Type</dt>
-                <dd class="mt-1">{{ $run->run_type }}</dd>
-            </div>
-            <div>
-                <dt class="text-xs font-semibold uppercase tracking-wide text-slate-500">Employees</dt>
-                <dd class="mt-1">{{ $run->details->count() }}</dd>
-            </div>
-            <div>
-                <dt class="text-xs font-semibold uppercase tracking-wide text-slate-500">Processed</dt>
-                <dd class="mt-1">{{ $run->processed_at?->format('M d, Y g:i A') ?? '—' }}</dd>
-            </div>
-            <div>
-                <dt class="text-xs font-semibold uppercase tracking-wide text-slate-500">Submitted By</dt>
-                <dd class="mt-1">{{ $run->submittedBy?->username ?? '—' }}</dd>
-            </div>
-            <div>
-                <dt class="text-xs font-semibold uppercase tracking-wide text-slate-500">Finalized By</dt>
-                <dd class="mt-1">{{ $run->finalizedBy?->username ?? '—' }}</dd>
-            </div>
-        </dl>
+    <x-page-header :description="$run->payrollPeriod->period_name.' · Run #'.$run->run_number.' · '.str_replace('_', ' ', ucfirst(strtolower($run->run_type))).' payroll'">
+        <x-status :value="$run->status" />
+    </x-page-header>
 
-        <div class="flex flex-wrap items-center gap-2">
-            @can('payroll.prepare')
-                @if ($run->isEditable())
-                    <form method="POST" action="{{ route('payroll-runs.compute', $run) }}">
-                        @csrf
-                        <button class="rounded-md bg-emerald-700 px-4 py-2 text-xs font-semibold text-white hover:bg-emerald-800">
-                            {{ $run->details->isEmpty() ? 'Compute payroll' : 'Recompute' }}
-                        </button>
-                    </form>
-                    @if ($canSubmit)
-                        <form method="POST" action="{{ route('payroll-runs.submit', $run) }}">
+    <div class="space-y-6">
+        <x-card heading="Run overview">
+            <dl class="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
+                <div><dt class="text-sm text-muted">Employees</dt><dd class="mt-1 font-semibold tabular-nums">{{ $run->details->count() }}</dd></div>
+                <div><dt class="text-sm text-muted">Processed</dt><dd class="mt-1 text-sm">{{ $run->processed_at?->format('M d, Y g:i A') ?? 'Not yet processed' }}</dd></div>
+                <div><dt class="text-sm text-muted">Submitted by</dt><dd class="mt-1 break-words text-sm">{{ $run->submittedBy?->username ?? ($run->submitted_at ? 'Unavailable user' : 'Not yet submitted') }}</dd></div>
+                <div><dt class="text-sm text-muted">Finalized by</dt><dd class="mt-1 break-words text-sm">{{ $run->finalizedBy?->username ?? ($run->finalized_at ? 'Unavailable user' : 'Not yet finalized') }}</dd></div>
+            </dl>
+        </x-card>
+
+        @if ($run->details->isNotEmpty())
+            <dl class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                @foreach (['Total Gross' => $totalGross, 'Total Deductions' => $totalDeductions, 'Total Net Pay' => $totalNet, 'Employer Contributions' => $employerContributions] as $label => $amount)
+                    <div class="ui-card">
+                        <dt class="text-sm text-muted">{{ $label }}</dt>
+                        <dd class="mt-2 break-words text-xl font-semibold tabular-nums text-brand-strong">₱{{ number_format($amount, 2) }}</dd>
+                    </div>
+                @endforeach
+            </dl>
+
+            <section aria-labelledby="breakdown-heading" class="min-w-0">
+                <div class="mb-3 flex flex-wrap items-baseline justify-between gap-2">
+                    <h2 id="breakdown-heading" class="text-lg font-semibold">Employee breakdown</h2>
+                    <p class="text-sm text-muted">Amounts in Philippine pesos. Scroll within the table for all columns.</p>
+                </div>
+                <x-table label="Employee payroll breakdown" :sticky-first="true">
+                    <thead>
+                        <tr>
+                            <th scope="col">Employee</th>
+                            <th scope="col" class="ui-money">Basic Pay</th>
+                            <th scope="col" class="ui-money">Earnings</th>
+                            <th scope="col" class="ui-money">Gross</th>
+                            <th scope="col" class="ui-money">Deductions</th>
+                            <th scope="col" class="ui-money">Net pay before LBP</th>
+                            <th scope="col" class="ui-money">LBP deduction</th>
+                            <th scope="col" class="ui-money">Net Pay</th>
+                            <th scope="col">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach ($run->details as $detail)
+                            <tr>
+                                <td class="ui-wrap max-w-64">
+                                    <div class="font-semibold">{{ $detail->employee_name_snapshot }}</div>
+                                    <div class="mt-1 text-sm text-muted">{{ $detail->position_snapshot }}</div>
+                                </td>
+                                <td class="ui-money">{{ number_format((float) $detail->basic_pay, 2) }}</td>
+                                <td class="ui-money">{{ number_format((float) $detail->total_earnings, 2) }}</td>
+                                <td class="ui-money">{{ number_format((float) $detail->gross_pay, 2) }}</td>
+                                <td class="ui-money">{{ number_format((float) $detail->total_deductions, 2) }}</td>
+                                <td class="ui-money">{{ number_format((float) $detail->nthp_before_lbp, 2) }}</td>
+                                <td class="ui-money">{{ number_format((float) $detail->lbp_loan_deduction, 2) }}</td>
+                                <td class="ui-money font-semibold">{{ number_format((float) $detail->net_pay, 2) }}</td>
+                                <td>
+                                    @can('payroll.prepare')
+                                        @if ($run->isEditable())
+                                            <a href="{{ route('payroll-details.edit', [$run, $detail]) }}">Edit<span class="sr-only"> {{ $detail->employee_name_snapshot }}</span></a>
+                                        @else
+                                            <span class="text-muted">Read only</span>
+                                        @endif
+                                    @else
+                                        <span class="text-muted">Read only</span>
+                                    @endcan
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </x-table>
+            </section>
+        @else
+            <x-card heading="Employee breakdown">
+                <p class="text-muted">No payroll details yet. A payroll preparer can compute this run to generate them.</p>
+            </x-card>
+        @endif
+
+        <x-card heading="Payroll actions">
+            <div class="flex flex-wrap items-start gap-3">
+                @can('payroll.prepare')
+                    @if ($run->isEditable())
+                        <form method="POST" action="{{ route('payroll-runs.compute', $run) }}" data-submit-feedback>
                             @csrf
-                            <button class="rounded-md border border-emerald-300 px-4 py-2 text-xs font-semibold text-emerald-700 hover:bg-emerald-50">Submit for approval</button>
+                            <x-button type="submit" :variant="$canSubmit ? 'secondary' : 'primary'" data-submitting-label="Computing payroll…">{{ $run->details->isEmpty() ? 'Compute payroll' : 'Recompute' }}</x-button>
+                        </form>
+                        @if ($canSubmit)
+                            <form method="POST" action="{{ route('payroll-runs.submit', $run) }}" data-submit-feedback>
+                                @csrf
+                                <x-button type="submit" variant="primary">Submit for approval</x-button>
+                            </form>
+                        @endif
+                        <form method="POST" action="{{ route('payroll-runs.destroy', $run) }}" onsubmit="return confirm('Delete this editable payroll run?')" data-submit-feedback>
+                            @csrf
+                            @method('DELETE')
+                            <x-button type="submit" variant="danger">Delete</x-button>
                         </form>
                     @endif
-                    <form method="POST" action="{{ route('payroll-runs.destroy', $run) }}" onsubmit="return confirm('Delete this draft run?')">
+                @endcan
+                @if ($canReview)
+                    <form method="POST" action="{{ route('payroll-runs.approve', $run) }}" data-submit-feedback class="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:items-end">
                         @csrf
-                        @method('DELETE')
-                        <button class="rounded-md border border-rose-200 px-4 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50">Delete</button>
+                        <x-form.input name="remarks" label="Approval remarks (optional)" id="approval-remarks" maxlength="2000" />
+                        <x-button type="submit" variant="primary">Approve</x-button>
+                    </form>
+                    <form method="POST" action="{{ route('payroll-runs.return', $run) }}" data-submit-feedback>
+                        @csrf
+                        <x-button type="submit" variant="warning">Return</x-button>
+                    </form>
+                    <form method="POST" action="{{ route('payroll-runs.reject', $run) }}" data-submit-feedback>
+                        @csrf
+                        <x-button type="submit" variant="danger">Reject</x-button>
                     </form>
                 @endif
-            @endcan
-
-            @if ($run->details->isNotEmpty())
-                <a href="{{ route('payroll-runs.register', $run) }}" class="rounded-md border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50">Register</a>
-                <a href="{{ route('payroll-runs.payslips', $run) }}" class="rounded-md border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50">Payslips</a>
-                <a href="{{ route('reports.payroll-summary', $run) }}" class="rounded-md border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50">Summary</a>
-            @endif
-
-            @if ($canReview)
-                <form method="POST" action="{{ route('payroll-runs.approve', $run) }}" class="flex items-center gap-2">
-                    @csrf
-                    <input type="text" name="remarks" placeholder="Remarks (optional)" class="rounded-md border border-slate-300 px-2 py-1 text-xs">
-                    <button class="rounded-md bg-emerald-700 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-800">Approve</button>
-                </form>
-                <form method="POST" action="{{ route('payroll-runs.return', $run) }}">
-                    @csrf
-                    <button class="rounded-md border border-amber-300 px-3 py-2 text-xs font-semibold text-amber-700 hover:bg-amber-50">Return</button>
-                </form>
-                <form method="POST" action="{{ route('payroll-runs.reject', $run) }}">
-                    @csrf
-                    <button class="rounded-md border border-rose-200 px-3 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50">Reject</button>
-                </form>
-            @endif
-
-            @if ($canFinalize)
-                <form method="POST" action="{{ route('payroll-runs.finalize', $run) }}">
-                    @csrf
-                    <button class="rounded-md bg-slate-800 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-900">Finalize</button>
-                </form>
-            @endif
-        </div>
-    </div>
-
-    @if (! $run->details->isEmpty())
-        <div class="mb-5 grid grid-cols-2 gap-4 sm:grid-cols-4">
-            <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-                <div class="text-xs uppercase tracking-wide text-slate-500">Total Gross</div>
-                <div class="mt-1 font-mono text-lg font-semibold">₱{{ number_format($totalGross, 2) }}</div>
+                @if ($canFinalize)
+                    <form method="POST" action="{{ route('payroll-runs.finalize', $run) }}" data-submit-feedback>
+                        @csrf
+                        <x-button type="submit" variant="primary">Finalize</x-button>
+                    </form>
+                @endif
+                @if (! (auth()->user()->can('payroll.prepare') && $run->isEditable()) && ! $canReview && ! $canFinalize)
+                    <p class="text-sm text-muted">No payroll actions are available to your account for this run.</p>
+                @endif
             </div>
-            <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-                <div class="text-xs uppercase tracking-wide text-slate-500">Total Deductions</div>
-                <div class="mt-1 font-mono text-lg font-semibold">₱{{ number_format($totalDeductions, 2) }}</div>
-            </div>
-            <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-                <div class="text-xs uppercase tracking-wide text-slate-500">Total Net Pay</div>
-                <div class="mt-1 font-mono text-lg font-semibold">₱{{ number_format($totalNet, 2) }}</div>
-            </div>
-            <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-                <div class="text-xs uppercase tracking-wide text-slate-500">Employer Contributions</div>
-                <div class="mt-1 font-mono text-lg font-semibold">₱{{ number_format($employerContributions, 2) }}</div>
-            </div>
-        </div>
+        </x-card>
 
-        <div class="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
-            <table class="min-w-full divide-y divide-slate-200 text-xs">
-                <thead class="bg-slate-50 uppercase tracking-wide text-slate-500">
-                    <tr>
-                        <th class="px-3 py-3 text-left">Employee</th>
-                        <th class="px-3 py-3 text-right">Basic Pay</th>
-                        <th class="px-3 py-3 text-right">Earnings</th>
-                        <th class="px-3 py-3 text-right">Gross</th>
-                        <th class="px-3 py-3 text-right">Deductions</th>
-                        <th class="px-3 py-3 text-right">NTHP</th>
-                        <th class="px-3 py-3 text-right">LBP</th>
-                        <th class="px-3 py-3 text-right">Net Pay</th>
-                        <th class="px-3 py-3"></th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-100">
-                    @foreach ($run->details as $detail)
-                        <tr class="hover:bg-slate-50">
-                            <td class="px-3 py-3">
-                                <div class="font-medium text-slate-800">{{ $detail->employee_name_snapshot }}</div>
-                                <div class="text-[10px] text-slate-400">{{ $detail->position_snapshot }}</div>
-                            </td>
-                            <td class="px-3 py-3 text-right font-mono">{{ number_format((float) $detail->basic_pay, 2) }}</td>
-                            <td class="px-3 py-3 text-right font-mono">{{ number_format((float) $detail->total_earnings, 2) }}</td>
-                            <td class="px-3 py-3 text-right font-mono">{{ number_format((float) $detail->gross_pay, 2) }}</td>
-                            <td class="px-3 py-3 text-right font-mono">{{ number_format((float) $detail->total_deductions, 2) }}</td>
-                            <td class="px-3 py-3 text-right font-mono">{{ number_format((float) $detail->nthp_before_lbp, 2) }}</td>
-                            <td class="px-3 py-3 text-right font-mono">{{ number_format((float) $detail->lbp_loan_deduction, 2) }}</td>
-                            <td class="px-3 py-3 text-right font-mono font-semibold">{{ number_format((float) $detail->net_pay, 2) }}</td>
-                            <td class="px-3 py-3 text-right">
-                                @can('payroll.prepare')
-                                    @if ($run->isEditable())
-                                        <a href="{{ route('payroll-details.edit', [$run, $detail]) }}" class="text-emerald-700 hover:underline">Edit</a>
-                                    @endif
-                                @endcan
-                            </td>
+        @if ($run->details->isNotEmpty())
+            <x-card heading="Reports and documents">
+                <div class="flex flex-wrap gap-3">
+                    <x-button :href="route('payroll-runs.register', $run)">Register</x-button>
+                    <x-button :href="route('payroll-runs.payslips', $run)">Payslips</x-button>
+                    <x-button :href="route('reports.payroll-summary', $run)">Summary</x-button>
+                </div>
+            </x-card>
+        @endif
+
+        <section aria-labelledby="approval-history-heading" class="min-w-0">
+            <h2 id="approval-history-heading" class="mb-3 text-lg font-semibold">Approval History</h2>
+            <x-table label="Payroll approval history">
+                <thead><tr><th scope="col">Action</th><th scope="col">Acted By</th><th scope="col">When</th><th scope="col">Remarks</th></tr></thead>
+                <tbody>
+                    @forelse ($run->approvals as $approval)
+                        <tr>
+                            <td class="font-semibold">{{ str_replace('_', ' ', ucfirst(strtolower($approval->action))) }}</td>
+                            <td>{{ $approval->actedBy?->username ?? 'Unavailable user' }}</td>
+                            <td>{{ $approval->acted_at?->format('M d, Y g:i A') }}</td>
+                            <td class="ui-wrap">{{ $approval->remarks ?: 'No remarks' }}</td>
                         </tr>
-                    @endforeach
+                    @empty
+                        <tr><td colspan="4" class="py-8 text-center text-muted">No approval actions yet.</td></tr>
+                    @endforelse
                 </tbody>
-            </table>
-        </div>
-    @else
-        <div class="rounded-xl border border-dashed border-slate-300 bg-white p-10 text-center text-sm text-slate-500">
-            No payroll details yet. Click <strong>Compute payroll</strong> to generate them.
-        </div>
-    @endif
+            </x-table>
+        </section>
 
-    <div class="mt-5 rounded-xl border border-slate-200 bg-white shadow-sm">
-        <div class="border-b border-slate-100 px-5 py-3 text-sm font-semibold text-slate-700">Approval History</div>
-        <table class="min-w-full divide-y divide-slate-200 text-sm">
-            <thead class="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
-                <tr>
-                    <th class="px-5 py-2 text-left">Action</th>
-                    <th class="px-5 py-2 text-left">Acted By</th>
-                    <th class="px-5 py-2 text-left">When</th>
-                    <th class="px-5 py-2 text-left">Remarks</th>
-                </tr>
-            </thead>
-            <tbody class="divide-y divide-slate-100">
-                @forelse ($run->approvals as $approval)
-                    <tr>
-                        <td class="px-5 py-2 font-semibold text-slate-700">{{ $approval->action }}</td>
-                        <td class="px-5 py-2 text-slate-600">{{ $approval->actedBy?->username }}</td>
-                        <td class="px-5 py-2 text-slate-500">{{ $approval->acted_at?->format('M d, Y g:i A') }}</td>
-                        <td class="px-5 py-2 text-slate-500">{{ $approval->remarks ?: '—' }}</td>
-                    </tr>
-                @empty
-                    <tr><td colspan="4" class="px-5 py-6 text-center text-slate-500">No approval actions yet.</td></tr>
-                @endforelse
-            </tbody>
-        </table>
-    </div>
-
-    @can('blockchain.verify')
-        <div class="mt-5 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-            <h3 class="text-sm font-semibold text-slate-700">Blockchain Anchoring</h3>
-            @if ($run->status === 'FINALIZED')
-                @if ($run->anchor)
-                    <div class="mt-3 space-y-2 text-sm">
-                        <p>
-                            <span class="text-slate-500">Network:</span> {{ $run->anchor->network_name }} ·
-                            <span class="text-slate-500">Status:</span> {{ $run->anchor->anchor_status }} ·
-                            <span class="text-slate-500">Anchored:</span> {{ $run->anchor->anchored_at?->format('M d, Y g:i A') }}
-                        </p>
-                        <p class="break-all rounded-md bg-slate-50 px-3 py-2 font-mono text-xs">{{ $run->anchor->payload_hash }}</p>
-                        <a href="{{ route('blockchain-anchors.show', $run->anchor) }}" class="inline-block rounded-md border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50">View &amp; verify anchor</a>
-                    </div>
+        @can('blockchain.verify')
+            <x-card heading="Blockchain Anchoring">
+                @if ($run->status === 'FINALIZED')
+                    @if ($run->anchor)
+                        <div class="space-y-3 text-sm">
+                            <p class="break-words">Network: {{ $run->anchor->network_name }} · <x-status :value="$run->anchor->anchor_status" /></p>
+                            <p class="text-muted">Anchored: {{ $run->anchor->anchored_at?->format('M d, Y g:i A') }}</p>
+                            <p class="break-all rounded-lg bg-slate-50 p-3 font-mono">{{ $run->anchor->payload_hash }}</p>
+                            <x-button :href="route('blockchain-anchors.show', $run->anchor)">View &amp; verify anchor</x-button>
+                        </div>
+                    @else
+                        <p class="mb-3 text-muted">This finalized run has not been anchored yet.</p>
+                        <form method="POST" action="{{ route('payroll-runs.anchor', $run) }}" data-submit-feedback>
+                            @csrf
+                            <x-button type="submit" variant="primary">Anchor finalized payroll</x-button>
+                        </form>
+                    @endif
                 @else
-                    <p class="mt-2 text-sm text-slate-500">This finalized run has not been anchored yet.</p>
-                    <form method="POST" action="{{ route('payroll-runs.anchor', $run) }}" class="mt-3">
-                        @csrf
-                        <button class="rounded-md bg-slate-800 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-900">Anchor finalized payroll</button>
-                    </form>
+                    <p class="text-muted">Anchoring becomes available once the payroll run is finalized.</p>
                 @endif
-            @else
-                <p class="mt-2 text-sm text-slate-500">Anchoring becomes available once the payroll run is finalized.</p>
-            @endif
-        </div>
-    @endcan
+            </x-card>
+        @endcan
+    </div>
 @endsection

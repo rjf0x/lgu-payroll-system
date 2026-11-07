@@ -4,58 +4,59 @@
 @section('heading', 'Employees')
 
 @section('content')
-    <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <form method="GET" class="flex items-center gap-2">
-            <input
-                type="text"
-                name="q"
-                value="{{ $search }}"
-                placeholder="Search name or employee number"
-                class="w-72 rounded-md border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 focus:outline-none"
-            >
-            <button class="rounded-md border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50">Search</button>
-        </form>
-
+    <x-page-header description="Find an employee by name or employee number, then view their employment records.">
         @can('employees.manage')
-            <a href="{{ route('employees.create') }}" class="rounded-md bg-emerald-700 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-800">
-                + Add Employee
-            </a>
+            <x-button :href="route('employees.create')" variant="primary">Add Employee</x-button>
         @endcan
-    </div>
+    </x-page-header>
 
-    <div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-        <table class="min-w-full divide-y divide-slate-200 text-sm">
-            <thead class="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+    <x-card class="mb-6">
+        <form method="GET" action="{{ route('employees.index') }}" role="search" class="flex flex-col gap-3 sm:flex-row sm:items-end">
+            <div class="min-w-0 flex-1">
+                <x-form.input name="q" label="Search employees" type="search" :value="$search" placeholder="Name or employee number" />
+            </div>
+            <div class="flex flex-wrap gap-3">
+                <x-button type="submit" variant="primary">Search</x-button>
+                <x-button :href="route('employees.index')">Reset</x-button>
+            </div>
+        </form>
+    </x-card>
+
+    <div class="mb-3 flex flex-wrap items-center justify-between gap-2 text-sm text-muted">
+        <p>{{ number_format($employees->total()) }} {{ $employees->total() === 1 ? 'employee' : 'employees' }}{{ $search !== '' ? ' matching your search' : '' }}</p>
+        <p>Scroll within the table to see all columns.</p>
+    </div>
+    <x-table label="Employee directory">
+            <thead>
                 <tr>
-                    <th class="px-4 py-3 text-left">Employee No.</th>
-                    <th class="px-4 py-3 text-left">Name</th>
-                    <th class="px-4 py-3 text-left">Sex</th>
-                    <th class="px-4 py-3 text-right">Employments</th>
-                    <th class="px-4 py-3 text-right">Actions</th>
+                    <th scope="col">Employee No.</th>
+                    <th scope="col">Name</th>
+                    <th scope="col">Sex</th>
+                    <th scope="col" class="ui-money">Employments</th>
+                    <th scope="col" class="text-right">Actions</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-slate-100">
                 @forelse ($employees as $employee)
                     <tr class="hover:bg-slate-50">
-                        <td class="px-4 py-3 font-mono text-xs">{{ $employee->employee_number }}</td>
+                        <td class="font-mono">{{ $employee->employee_number }}</td>
                         <td class="px-4 py-3">
                             <a href="{{ route('employees.show', $employee) }}" class="font-medium text-emerald-700 hover:underline">{{ $employee->full_name }}</a>
                         </td>
                         <td class="px-4 py-3 text-slate-600">{{ $employee->sex }}</td>
                         <td class="px-4 py-3 text-right">{{ $employee->employment_records_count }}</td>
                         <td class="px-4 py-3 text-right">
-                            <a href="{{ route('employees.show', $employee) }}" class="text-emerald-700 hover:underline">View</a>
+                            <a href="{{ route('employees.show', $employee) }}">View<span class="sr-only"> {{ $employee->full_name }}</span></a>
                             @can('employees.manage')
-                                <a href="{{ route('employees.edit', $employee) }}" class="ml-3 text-slate-600 hover:underline">Edit</a>
+                                <a href="{{ route('employees.edit', $employee) }}" class="ml-4">Edit<span class="sr-only"> {{ $employee->full_name }}</span></a>
                             @endcan
                         </td>
                     </tr>
                 @empty
-                    <tr><td colspan="5" class="px-4 py-8 text-center text-slate-500">No employees found.</td></tr>
+                    <tr><td colspan="5" class="ui-wrap py-10 text-center text-muted">{{ $search !== '' ? 'No employees match your search. Try another name or reset the search.' : 'No employees found.' }}</td></tr>
                 @endforelse
             </tbody>
-        </table>
-    </div>
+    </x-table>
 
     <div class="mt-4">{{ $employees->links() }}</div>
 @endsection

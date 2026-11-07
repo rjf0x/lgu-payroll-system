@@ -1,6 +1,6 @@
 # UI/UX Improvement Plan
 
-**Status:** Stage 1 in progress; browser review and interaction prototype delivered, participant baselines pending
+**Status:** Stage 2 foundations implemented; Stage 1 participant baselines remain pending
 **Date:** November 7, 2026
 **Roles:** Admin, Payroll Officer, Approver, Viewer
 **Design guidance:** ui-ux-pro-max
@@ -48,9 +48,32 @@ The skill's accessible style guidance and targeted data-dense dashboard results 
 
 ### Stage 2: Establish foundations
 
+**Progress:** Implemented on November 7, 2026. Shared layout, navigation, form controls, error feedback, buttons, alerts, cards, page headers, status badges, and scrollable tables are available. The employee directory and payroll run screen use the new foundation. Stage 1 participant research remains open; proceeding with Stage 2 was explicitly authorized.
+
 - Implement shared components, accessible forms, navigation, responsive table containers, and status presentation.
 - Define consistent typography, spacing, colors, focus states, and button hierarchy.
 - Apply these patterns to the employee list and payroll run screen first.
+
+#### Delivered foundation
+
+- Retained emerald branding, with shared semantic colors, readable form text, consistent spacing, 44-pixel button/control heights, and visible focus indicators on light and dark surfaces.
+- Replaced duplicate desktop/mobile navigation with one responsive native menu. Groups collapse, the current group opens, breadcrumbs identify page hierarchy, and Pending Approvals has its own current-link indication.
+- Added field hints, linked inline errors, `aria-invalid`/`aria-describedby`, and a focused error summary after failed submissions. Existing server validation and preserved input remain in use.
+- Added submission feedback and duplicate-submit prevention to the employee form and payroll action forms. Controls restore when returning through browser history.
+- Added employee search/reset and result counts, responsive named table regions, scoped column headings, and descriptive row links. The payroll table uses a sticky employee column and readable monetary values.
+- Grouped the payroll overview, totals, employee breakdown, actions, documents, and approval history using shared components. Existing backend workflow and permission rules remain in place; richer stage guidance and decision confirmations belong to Stage 3.
+
+#### Verification
+
+- All four existing demonstration accounts reached their role dashboards with one main navigation and one current link. The approver queue indicated only Pending Approvals.
+- Employee directory and a populated finalized payroll run were checked in Microsoft Edge at 375, 768, 1024, and 1440 pixels. Neither screen overflowed the page; wide data stayed inside scrollable, keyboard-focusable table regions. Screenshots were inspected locally.
+- Mobile navigation opened with Enter and closed with Escape, returning focus to its summary control.
+- A real invalid employee-form submission displayed the error summary, focused it, and associated all invalid fields with their inline errors. The request failed validation and did not create an employee.
+- Browser-only synthetic submit events verified duplicate-submit blocking, busy feedback, and control restoration without creating application records.
+- Sampled contrast ratios: muted text on white 7.58:1, primary button text 7.68:1, and form-field boundaries on white 4.76:1. These samples do not constitute a full accessibility audit.
+- The full PHPUnit suite passed with 117 tests and 515 assertions, including nine foundation scenarios. Frontend build and PHP formatting checks passed.
+
+The shared components affect existing consumers, while full visual migration of other modules remains in Stage 4. Human task measurements, screen-reader review, and live pending-run/mixed-role browser walkthroughs remain open from Stage 1.
 
 ### Stage 3: Improve daily workflows
 
