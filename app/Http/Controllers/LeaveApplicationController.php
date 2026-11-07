@@ -78,6 +78,9 @@ class LeaveApplicationController extends Controller
         }
 
         DB::transaction(function () use ($leaveApplication): void {
+            $locked = LeaveApplication::whereKey($leaveApplication->getKey())->lockForUpdate()->firstOrFail();
+            $leaveApplication->setRawAttributes($locked->getAttributes(), true);
+            abort_unless($leaveApplication->approval_status === LeaveApplication::STATUS_PENDING, 422, 'This record has already been reviewed.');
             $year = (int) $leaveApplication->start_date->year;
 
             /** @var LeaveBalance $balance */
@@ -94,6 +97,8 @@ class LeaveApplicationController extends Controller
                     'available_balance' => 0,
                 ],
             );
+
+            $balance = LeaveBalance::whereKey($balance->getKey())->lockForUpdate()->firstOrFail();
 
             $used = (float) $balance->total_used + (float) $leaveApplication->total_days;
             $available = (float) $balance->opening_balance + (float) $balance->total_credits - $used;
@@ -132,11 +137,17 @@ class LeaveApplicationController extends Controller
             return back()->with('error', 'This application has already been reviewed.');
         }
 
-        $leaveApplication->update([
-            'approval_status' => LeaveApplication::STATUS_REJECTED,
-            'approved_by' => auth()->id(),
-            'approved_at' => now(),
-        ]);
+        DB::transaction(function () use ($leaveApplication): void {
+            $locked = LeaveApplication::whereKey($leaveApplication->getKey())->lockForUpdate()->firstOrFail();
+            $leaveApplication->setRawAttributes($locked->getAttributes(), true);
+            abort_unless($leaveApplication->approval_status === LeaveApplication::STATUS_PENDING, 422, 'This record has already been reviewed.');
+
+            $leaveApplication->update([
+                'approval_status' => LeaveApplication::STATUS_REJECTED,
+                'approved_by' => auth()->id(),
+                'approved_at' => now(),
+            ]);
+        });
 
         return redirect()
             ->route('leave-applications.show', $leaveApplication)

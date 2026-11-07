@@ -44,6 +44,9 @@ class PayrollComputationService
             ->get();
 
         DB::transaction(function () use ($run, $employments, $period): void {
+            $locked = PayrollRun::whereKey($run->getKey())->lockForUpdate()->firstOrFail();
+            $run->setRawAttributes($locked->getAttributes(), true);
+            abort_unless($run->isEditable(), 422, 'This payroll run can no longer be recomputed.');
             $run->details()->delete();
 
             foreach ($employments as $employment) {

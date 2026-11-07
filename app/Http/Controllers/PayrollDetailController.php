@@ -7,6 +7,7 @@ use App\Models\DeductionType;
 use App\Models\EarningType;
 use App\Models\PayrollDetail;
 use App\Models\PayrollRun;
+use App\Services\AuditLogger;
 use App\Services\PayrollComputationService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
@@ -20,7 +21,7 @@ class PayrollDetailController extends Controller
     {
         abort_unless($payrollRun->isEditable(), 403, 'This payroll run can no longer be edited.');
 
-        $payrollDetail->load(['employee', 'earnings', 'deductions']);
+        $payrollDetail->load(['employee', 'earnings', 'deductions.deductionType']);
 
         return view('payroll-details.edit', [
             'run' => $payrollRun,
@@ -43,6 +44,9 @@ class PayrollDetailController extends Controller
         abort_unless($payrollRun->isEditable(), 403, 'This payroll run can no longer be edited.');
 
         DB::transaction(function () use ($request, $payrollRun, $payrollDetail): void {
+            $locked = PayrollRun::whereKey($payrollRun->getKey())->lockForUpdate()->firstOrFail();
+            abort_unless($locked->isEditable(), 403, 'This payroll run can no longer be edited.');
+            $payrollDetail->refresh();
             // Earnings.
             $payrollDetail->earnings()->delete();
             $earningTypes = EarningType::whereIn('earning_type_id', array_keys((array) $request->input('earnings', [])))
@@ -69,6 +73,8 @@ class PayrollDetailController extends Controller
                 ->delete();
 
             $deductionTypes = DeductionType::whereIn('deduction_type_id', array_keys((array) $request->input('deductions', [])))
+                ->where('is_statutory', false)
+                ->where('status', 'ACTIVE')
                 ->where('deduction_category', '!=', 'LBP')
                 ->get()->keyBy('deduction_type_id');
 
@@ -91,6 +97,7 @@ class PayrollDetailController extends Controller
             ]);
 
             $this->service->recomputeTotals($payrollDetail, $payrollRun->payrollPeriod);
+            app(AuditLogger::class)->log('PAYROLL_DETAIL_UPDATED', 'Payroll', (int) auth()->id(), 'payroll_details', (string) $payrollDetail->getKey());
         });
 
         return redirect()

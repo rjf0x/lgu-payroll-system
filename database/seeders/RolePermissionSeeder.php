@@ -15,6 +15,7 @@ class RolePermissionSeeder extends Seeder
     {
         $permissions = [
             'users.manage' => 'Create, update, and deactivate user accounts.',
+            'settings.manage' => 'Manage system display and contact settings.',
             'roles.manage' => 'Manage roles and their permissions.',
             'employees.view' => 'View employee and employment records.',
             'employees.manage' => 'Create and update employee and employment records.',
@@ -44,7 +45,7 @@ class RolePermissionSeeder extends Seeder
             Role::ADMIN => [
                 'description' => 'Manages system configuration, user accounts, and access settings.',
                 'permissions' => [
-                    'users.manage', 'roles.manage', 'employees.view', 'employees.manage',
+                    'users.manage', 'settings.manage', 'roles.manage', 'employees.view', 'employees.manage',
                     'attendance.manage', 'leave.manage', 'compensation.manage', 'payroll.view',
                     'reports.generate', 'audit.view', 'blockchain.verify',
                 ],

@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Listeners\AuthenticationEventSubscriber;
 use App\Models\Permission;
+use App\Models\SystemSetting;
 use App\Models\User;
 use App\Services\Blockchain\BlockchainDriver;
 use App\Services\Blockchain\SimulatedBlockchainDriver;
@@ -13,6 +14,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
 
@@ -39,6 +41,9 @@ class AppServiceProvider extends ServiceProvider
         $this->registerPermissionGates();
         $this->registerAuthenticationAuditing();
         $this->registerRateLimiters();
+        View::composer('layouts.app', function (\Illuminate\View\View $view): void {
+            $view->with('systemSettings', SystemSetting::currentValues());
+        });
     }
 
     /**

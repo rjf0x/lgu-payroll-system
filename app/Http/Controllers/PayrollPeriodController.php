@@ -4,7 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\PayrollPeriodRequest;
 use App\Models\PayrollPeriod;
+use App\Services\AuditLogger;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class PayrollPeriodController extends Controller
@@ -46,7 +49,21 @@ class PayrollPeriodController extends Controller
 
     public function update(PayrollPeriodRequest $request, PayrollPeriod $payrollPeriod): RedirectResponse
     {
-        $payrollPeriod->update($request->validated());
+        DB::transaction(function () use ($request, $payrollPeriod): void {
+            $locked = PayrollPeriod::whereKey($payrollPeriod->getKey())->lockForUpdate()->firstOrFail();
+            if ($locked->runs()->exists()) {
+                foreach (['period_name', 'payroll_type', 'start_date', 'end_date', 'pay_date'] as $field) {
+                    $old = in_array($field, ['start_date', 'end_date', 'pay_date'], true) ? $locked->{$field}->toDateString() : $locked->{$field};
+                    $new = in_array($field, ['start_date', 'end_date', 'pay_date'], true) ? $request->date($field)->toDateString() : $request->validated($field);
+                    if ($old !== $new) {
+                        throw ValidationException::withMessages([$field => 'Period details cannot change once payroll runs exist. Create a new period instead.']);
+                    }
+                }
+            }
+            $old = $locked->getAttributes();
+            $locked->update($request->validated());
+            app(AuditLogger::class)->log('PERIOD_UPDATED', 'Payroll', (int) auth()->id(), 'payroll_periods', (string) $locked->getKey(), $old, $locked->getAttributes());
+        });
 
         return redirect()->route('payroll-periods.index')->with('status', 'Payroll period updated.');
     }

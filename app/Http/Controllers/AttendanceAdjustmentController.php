@@ -75,13 +75,16 @@ class AttendanceAdjustmentController extends Controller
         }
 
         DB::transaction(function () use ($attendanceAdjustment): void {
+            $locked = AttendanceAdjustment::whereKey($attendanceAdjustment->getKey())->lockForUpdate()->firstOrFail();
+            $attendanceAdjustment->setRawAttributes($locked->getAttributes(), true);
+            abort_unless($attendanceAdjustment->approval_status === self::STATUS_PENDING, 422, 'This record has already been reviewed.');
             $attendanceAdjustment->update([
                 'approval_status' => self::STATUS_APPROVED,
                 'reviewed_by' => auth()->id(),
                 'reviewed_at' => now(),
             ]);
 
-            $attendanceAdjustment->attendanceRecord->update([
+            $attendanceAdjustment->attendanceRecord()->lockForUpdate()->firstOrFail()->update([
                 'attendance_status' => $attendanceAdjustment->requested_attendance_status,
                 'credited_days' => $attendanceAdjustment->requested_credited_days,
             ]);
@@ -98,11 +101,17 @@ class AttendanceAdjustmentController extends Controller
             return back()->with('error', 'This adjustment has already been reviewed.');
         }
 
-        $attendanceAdjustment->update([
-            'approval_status' => self::STATUS_REJECTED,
-            'reviewed_by' => auth()->id(),
-            'reviewed_at' => now(),
-        ]);
+        DB::transaction(function () use ($attendanceAdjustment): void {
+            $locked = AttendanceAdjustment::whereKey($attendanceAdjustment->getKey())->lockForUpdate()->firstOrFail();
+            $attendanceAdjustment->setRawAttributes($locked->getAttributes(), true);
+            abort_unless($attendanceAdjustment->approval_status === self::STATUS_PENDING, 422, 'This record has already been reviewed.');
+
+            $attendanceAdjustment->update([
+                'approval_status' => self::STATUS_REJECTED,
+                'reviewed_by' => auth()->id(),
+                'reviewed_at' => now(),
+            ]);
+        });
 
         return redirect()
             ->route('attendance-adjustments.show', $attendanceAdjustment)

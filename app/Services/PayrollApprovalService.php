@@ -19,15 +19,16 @@ class PayrollApprovalService
 
     public function submit(PayrollRun $run, User $user): void
     {
-        if (! $run->isEditable()) {
-            abort(422, 'Only draft, returned, or rejected runs can be submitted.');
-        }
-
-        if (! $run->details()->exists()) {
-            abort(422, 'Compute the payroll before submitting it for approval.');
-        }
-
         DB::transaction(function () use ($run, $user): void {
+            $locked = PayrollRun::whereKey($run->getKey())->lockForUpdate()->firstOrFail();
+            $run->setRawAttributes($locked->getAttributes(), true);
+            if (! $run->isEditable()) {
+                abort(422, 'Only draft, returned, or rejected runs can be submitted.');
+            }
+
+            if (! $run->details()->exists()) {
+                abort(422, 'Compute the payroll before submitting it for approval.');
+            }
             $run->update([
                 'status' => PayrollRun::STATUS_PENDING_APPROVAL,
                 'submitted_by' => $user->user_id,
@@ -41,9 +42,10 @@ class PayrollApprovalService
 
     public function approve(PayrollRun $run, User $user, ?string $remarks = null): void
     {
-        $this->assertIndependentReviewer($run, $user);
-
         DB::transaction(function () use ($run, $user, $remarks): void {
+            $locked = PayrollRun::whereKey($run->getKey())->lockForUpdate()->firstOrFail();
+            $run->setRawAttributes($locked->getAttributes(), true);
+            $this->assertIndependentReviewer($run, $user);
             $run->update(['status' => PayrollRun::STATUS_APPROVED]);
 
             $this->record($run, PayrollApproval::ACTION_APPROVED, $user, $remarks);
@@ -53,9 +55,10 @@ class PayrollApprovalService
 
     public function reject(PayrollRun $run, User $user, ?string $remarks = null): void
     {
-        $this->assertIndependentReviewer($run, $user);
-
         DB::transaction(function () use ($run, $user, $remarks): void {
+            $locked = PayrollRun::whereKey($run->getKey())->lockForUpdate()->firstOrFail();
+            $run->setRawAttributes($locked->getAttributes(), true);
+            $this->assertIndependentReviewer($run, $user);
             $run->update(['status' => PayrollRun::STATUS_REJECTED]);
 
             $this->record($run, PayrollApproval::ACTION_REJECTED, $user, $remarks);
@@ -65,9 +68,10 @@ class PayrollApprovalService
 
     public function returnForCorrection(PayrollRun $run, User $user, ?string $remarks = null): void
     {
-        $this->assertIndependentReviewer($run, $user);
-
         DB::transaction(function () use ($run, $user, $remarks): void {
+            $locked = PayrollRun::whereKey($run->getKey())->lockForUpdate()->firstOrFail();
+            $run->setRawAttributes($locked->getAttributes(), true);
+            $this->assertIndependentReviewer($run, $user);
             $run->update(['status' => PayrollRun::STATUS_RETURNED]);
 
             $this->record($run, PayrollApproval::ACTION_RETURNED, $user, $remarks);
@@ -77,11 +81,12 @@ class PayrollApprovalService
 
     public function finalize(PayrollRun $run, User $user): void
     {
-        if ($run->status !== PayrollRun::STATUS_APPROVED) {
-            abort(422, 'Only an approved payroll run can be finalized.');
-        }
-
         DB::transaction(function () use ($run, $user): void {
+            $locked = PayrollRun::whereKey($run->getKey())->lockForUpdate()->firstOrFail();
+            $run->setRawAttributes($locked->getAttributes(), true);
+            if ($run->status !== PayrollRun::STATUS_APPROVED) {
+                abort(422, 'Only an approved payroll run can be finalized.');
+            }
             $run->update([
                 'status' => PayrollRun::STATUS_FINALIZED,
                 'finalized_by' => $user->user_id,

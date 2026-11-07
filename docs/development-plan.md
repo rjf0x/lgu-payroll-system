@@ -1,7 +1,7 @@
 # LGU Payroll Management System – Development Plan
 
 **Status:** Working plan for mock-defense build
-**Stack:** Laravel 13 / PHP 8.3 · MySQL · Blade + Tailwind 4 (Vite)
+**Stack:** Laravel 13 / PHP 8.5 · MySQL · Blade + Tailwind 4 (Vite)
 **Roles:** Admin, Payroll Officer, Approver, Viewer
 **Source of truth:** `database-schema.md`, `erd.md`, `system-architecture-diagram.md`, `data-flow-diagram.md`, `use-case-diagram.md`, `payroll-computation-design.md`
 
@@ -22,7 +22,7 @@
 | 8. Register, payslips, reports | ✅ Done | Client-column register + CSV export, printable payslips with publication status, reports hub and department summary. See `payroll-register-payslips-reports.md`. |
 | 9. Blockchain | ✅ Done | Deterministic SHA-256 anchoring behind a driver interface; verify with MATCH/MISMATCH. See `blockchain-anchoring.md`. |
 | 10. UI | ✅ Done | Four role dashboards with live summaries, permission-aware actions, shared responsive navigation, and dashboard feature tests. |
-| 11. Audit & hardening | In progress | Audit metadata viewer and filtered CSV export implemented behind `audit.view`; inactive sessions are blocked on subsequent protected requests. System settings and the remaining validation, authorization, and database-constraint review are pending. |
+| 11. Audit & hardening | Done | Audit viewer/export, permission-protected system settings, audited account/role changes, last-administrator protection, fresh-state checks under transaction locks, payroll input validation, and period-history constraints implemented. See Stage 11 notes below. |
 | 12–13 | Not started | Testing & QA; deployment & docs. |
 
 ---
@@ -83,6 +83,21 @@ At the start of development, the repository was a bare Laravel scaffold. The fol
 - **Separation of duties:** enforce in the Laravel backend (policy/middleware), not only in the interface.
 
 ---
+
+### Stage 11 implementation and verification
+
+Completed November 7, 2026 for the mock-defense scope.
+
+- **System settings:** Added persistent system name, organization name, and support email, protected by `settings.manage`. The application workspace uses the saved identity and support link. Currency, monthly frequency, timezone, audit logging, and security rules are displayed as enforced configuration. Settings cannot disable authorization or separation of duties, or alter historical reports.
+- **Audit:** Retained the existing metadata viewer/export and inactive-session enforcement. Account creation, account/role updates, deletion, settings changes, payroll run creation/deletion, period updates, and manual detail changes now record their corresponding audit events. Credential fields are omitted from account snapshots, and the logger recursively redacts known secret keys. Viewer/export queries retrieve metadata columns only.
+- **Account authorization:** Updates preserve at least one active account with user-management permission. Account and role changes commit together with their audit record. Referenced accounts cannot be deleted; the interface explains that they should be deactivated. Role IDs must be distinct.
+- **Payroll boundaries:** Run numbering locks its parent period; closed periods reject new runs. Approval transitions, recomputation, manual editing, and deletion recheck fresh run state under a transaction lock. Manual type IDs are validated; inactive earnings and statutory, inactive, or LBP deductions cannot be injected through the manual detail endpoint. Existing separation of duties remains enforced.
+- **Attendance/leave review:** Review decisions recheck current application/adjustment state under a lock. Leave approval also locks the balance before applying usage, and attendance approval locks the target attendance record.
+- **History and database constraints:** Period dates, type, name, and pay date cannot change once runs exist; closing a period remains possible. The payroll-period foreign key now restricts deletion instead of cascading payroll history. Settings keys are unique, and audit dates are indexed. Existing attendance, leave-balance, run-number, detail, payslip, anchor, and role-membership uniqueness/foreign-key constraints were reviewed.
+- **Migrations:** Both new migrations were applied to the development MySQL database. They add default settings and grant the new permission to the existing Admin role without resynchronizing or removing existing role grants. Fresh SQLite test migrations also pass.
+- **Verification:** 177 PHPUnit tests passed with 769 assertions, including 28 settings/hardening cases. PHP formatting and frontend build passed. Browser checks confirmed settings navigation for Admin only, 44-pixel controls, no page overflow at 375/768/1024/1440 pixels, and focused, linked errors with preserved nested input. The browser validation submission failed validation and did not save settings.
+
+Stage 12 still owns broader QA, documented payroll edge cases, the defense walkthrough, and concurrent-request/load testing against MySQL. The stale-model tests exercise the refreshed-state checks, but do not establish throughput or parallel-lock behavior under production load. Stage 13 production deployment, HTTPS, backups, and operational configuration remain separate. Audit records are application records, not a claim of tamper-proof storage.
 
 ## 5. Open items still requiring client confirmation
 

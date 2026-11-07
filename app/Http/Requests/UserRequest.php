@@ -32,7 +32,7 @@ class UserRequest extends FormRequest
             'account_status' => ['required', Rule::in([User::STATUS_ACTIVE, User::STATUS_INACTIVE])],
             'password' => [$isCreate ? 'required' : 'nullable', 'string', 'min:8'],
             'roles' => ['required', 'array', 'min:1'],
-            'roles.*' => ['integer', 'exists:roles,role_id'],
+            'roles.*' => ['integer', 'distinct', 'exists:roles,role_id'],
         ];
     }
 }

@@ -30,10 +30,27 @@ class AuditLogger
             'module' => $module,
             'record_table' => $recordTable,
             'record_id' => $recordId,
-            'old_values' => $oldValues,
-            'new_values' => $newValues,
+            'old_values' => $oldValues !== null ? $this->redact($oldValues) : null,
+            'new_values' => $newValues !== null ? $this->redact($newValues) : null,
             'ip_address' => $request->ip(),
             'user_agent' => $request->userAgent(),
         ]);
+    }
+
+    /** @param array<string|int, mixed> $values
+     * @return array<string|int, mixed>
+     */
+    private function redact(array $values): array
+    {
+        foreach ($values as $key => $value) {
+            $normalized = strtolower(str_replace('-', '_', (string) $key));
+            if (in_array($normalized, ['password', 'password_hash', 'remember_token', 'api_key', 'api_secret', 'access_token', 'refresh_token', 'authorization', 'cookie'], true)) {
+                $values[$key] = '[REDACTED]';
+            } elseif (is_array($value)) {
+                $values[$key] = $this->redact($value);
+            }
+        }
+
+        return $values;
     }
 }

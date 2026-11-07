@@ -60,7 +60,7 @@ class AuditLogController extends Controller
     private function filteredLogs(AuditLogFilterRequest $request): Builder
     {
         $filters = $request->validated();
-        $query = AuditLog::query()->with('user:user_id,username');
+        $query = AuditLog::query()->select(['audit_id', 'user_id', 'action', 'module', 'record_table', 'record_id', 'ip_address', 'created_at'])->with('user:user_id,username');
 
         foreach (['module', 'action', 'user_id'] as $field) {
             if (isset($filters[$field])) {

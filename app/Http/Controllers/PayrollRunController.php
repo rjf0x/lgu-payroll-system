@@ -6,10 +6,13 @@ use App\Http\Requests\PayrollRunRequest;
 use App\Models\PayrollEmployerContribution;
 use App\Models\PayrollPeriod;
 use App\Models\PayrollRun;
+use App\Services\AuditLogger;
 use App\Services\PayrollApprovalService;
 use App\Services\PayrollComputationService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class PayrollRunController extends Controller
@@ -39,15 +42,21 @@ class PayrollRunController extends Controller
     public function store(PayrollRunRequest $request): RedirectResponse
     {
         $periodId = $request->integer('payroll_period_id');
-        $nextNumber = (int) PayrollRun::where('payroll_period_id', $periodId)->max('run_number') + 1;
+        $run = DB::transaction(function () use ($request, $periodId): PayrollRun {
+            $period = PayrollPeriod::whereKey($periodId)->lockForUpdate()->firstOrFail();
+            if ($period->status !== 'OPEN') {
+                throw ValidationException::withMessages(['payroll_period_id' => 'Choose an open payroll period.']);
+            }
+            $nextNumber = (int) PayrollRun::where('payroll_period_id', $periodId)->max('run_number') + 1;
 
-        $run = PayrollRun::create([
-            'payroll_period_id' => $periodId,
-            'run_number' => $nextNumber,
-            'run_type' => $request->string('run_type')->toString(),
-            'status' => PayrollRun::STATUS_DRAFT,
-            'created_by' => auth()->id(),
-        ]);
+            $run = PayrollRun::create([
+                'payroll_period_id' => $periodId, 'run_number' => $nextNumber,
+                'run_type' => $request->validated('run_type'), 'status' => PayrollRun::STATUS_DRAFT, 'created_by' => auth()->id(),
+            ]);
+            app(AuditLogger::class)->log('PAYROLL_CREATED', 'Payroll', (int) auth()->id(), 'payroll_runs', (string) $run->getKey());
+
+            return $run;
+        });
 
         return redirect()
             ->route('payroll-runs.show', $run)
@@ -107,7 +116,12 @@ class PayrollRunController extends Controller
             return back()->with('error', 'Only draft, returned, or rejected runs can be deleted.');
         }
 
-        $payrollRun->delete();
+        DB::transaction(function () use ($payrollRun): void {
+            $locked = PayrollRun::whereKey($payrollRun->getKey())->lockForUpdate()->firstOrFail();
+            abort_unless($locked->isEditable(), 422, 'Only editable payroll runs can be deleted.');
+            $locked->delete();
+            app(AuditLogger::class)->log('PAYROLL_DELETED', 'Payroll', (int) auth()->id(), 'payroll_runs', (string) $locked->getKey());
+        });
 
         return redirect()->route('payroll-runs.index')->with('status', 'Payroll run deleted.');
     }

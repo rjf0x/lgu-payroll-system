@@ -10,8 +10,9 @@
 ])
 
 @php
+    $errorKey = str_replace(['[', ']'], ['.', ''], $name);
     $fieldId = $id ?? str_replace(['[', ']', '.'], ['-', '', '-'], $name);
-    $description = trim(implode(' ', array_filter([$attributes->get('aria-describedby'), $hint ? $fieldId.'-hint' : null, $errors->has($name) ? $fieldId.'-error' : null])));
+    $description = trim(implode(' ', array_filter([$attributes->get('aria-describedby'), $hint ? $fieldId.'-hint' : null, $errors->has($errorKey) ? $fieldId.'-error' : null])));
 @endphp
 
 <div class="min-w-0">
@@ -25,13 +26,13 @@
         type="{{ $type }}"
         id="{{ $fieldId }}"
         name="{{ $name }}"
-        value="{{ old($name, $value) }}"
+        value="{{ old($errorKey, $value) }}"
         @if ($required) required @endif
         @if ($step) step="{{ $step }}" @endif
-        aria-invalid="{{ $errors->has($name) ? 'true' : 'false' }}"
+        aria-invalid="{{ $errors->has($errorKey) ? 'true' : 'false' }}"
         @if ($description !== '') aria-describedby="{{ $description }}" @endif
         {{ $attributes->except(['aria-describedby', 'aria-invalid'])->class(['ui-field']) }}
     >
 
-    <x-form.feedback :name="$name" :id="$fieldId" :hint="$hint" />
+    <x-form.feedback :name="$errorKey" :id="$fieldId" :hint="$hint" />
 </div>

@@ -74,4 +74,9 @@
             <x-nav-link :href="route('audit-logs.index')" :active="request()->routeIs('audit-logs.*')">Audit trail</x-nav-link>
         </x-nav-group>
     @endcan
+    @can('settings.manage')
+        <x-nav-group label="System" :active="request()->routeIs('system-settings.*')">
+            <x-nav-link :href="route('system-settings.edit')" :active="request()->routeIs('system-settings.*')">System settings</x-nav-link>
+        </x-nav-group>
+    @endcan
 </nav>

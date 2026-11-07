@@ -29,6 +29,7 @@ use App\Http\Controllers\PositionController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SalaryGradeStepController;
 use App\Http\Controllers\SalaryScheduleController;
+use App\Http\Controllers\SystemSettingController;
 use App\Http\Controllers\TaxBracketController;
 use App\Http\Controllers\UserController;
 use App\Http\Middleware\EnsureAccountIsActive;
@@ -55,6 +56,10 @@ Route::middleware('guest')->group(function () {
 Route::middleware(['auth', EnsureAccountIsActive::class])->group(function () {
 
     Route::get('/dashboard', DashboardController::class)->name('dashboard');
+    Route::middleware('can:settings.manage')->group(function () {
+        Route::get('system-settings', [SystemSettingController::class, 'edit'])->name('system-settings.edit');
+        Route::put('system-settings', [SystemSettingController::class, 'update'])->name('system-settings.update');
+    });
 
     Route::middleware('can:audit.view')->group(function () {
         Route::get('audit-logs', [AuditLogController::class, 'index'])->name('audit-logs.index');

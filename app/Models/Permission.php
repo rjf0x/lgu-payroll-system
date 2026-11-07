@@ -16,6 +16,8 @@ class Permission extends Model
 
     public const USERS_MANAGE = 'users.manage';
 
+    public const SETTINGS_MANAGE = 'settings.manage';
+
     public const ROLES_MANAGE = 'roles.manage';
 
     public const EMPLOYEES_VIEW = 'employees.view';
@@ -57,6 +59,7 @@ class Permission extends Model
     {
         return [
             self::USERS_MANAGE,
+            self::SETTINGS_MANAGE,
             self::ROLES_MANAGE,
             self::EMPLOYEES_VIEW,
             self::EMPLOYEES_MANAGE,

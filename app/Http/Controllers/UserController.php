@@ -6,11 +6,17 @@ use App\Http\Requests\UserRequest;
 use App\Models\Employee;
 use App\Models\Role;
 use App\Models\User;
+use App\Services\AccountAccessService;
+use App\Services\AuditLogger;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class UserController extends Controller
 {
+    public function __construct(private readonly AccountAccessService $access, private readonly AuditLogger $audit) {}
+
     public function index(): View
     {
         $users = User::query()
@@ -30,8 +36,13 @@ class UserController extends Controller
 
     public function store(UserRequest $request): RedirectResponse
     {
-        $user = User::create($this->payload($request));
-        $user->roles()->sync($this->roleSync($request->input('roles', [])));
+        $user = DB::transaction(function () use ($request): User {
+            $user = User::create($this->payload($request));
+            $user->roles()->sync($this->roleSync($request->validated('roles')));
+            $this->audit->log('USER_CREATED', 'User Management', (int) auth()->id(), 'users', (string) $user->user_id, newValues: $this->access->auditValues($user));
+
+            return $user;
+        });
 
         return redirect()
             ->route('users.show', $user)
@@ -52,8 +63,15 @@ class UserController extends Controller
 
     public function update(UserRequest $request, User $user): RedirectResponse
     {
-        $user->update($this->payload($request));
-        $user->roles()->sync($this->roleSync($request->input('roles', [])));
+        DB::transaction(function () use ($request, $user): void {
+            $administrators = $this->access->lockAdministrators();
+            $target = User::whereKey($user->user_id)->lockForUpdate()->firstOrFail();
+            $this->access->ensureAdministratorRemains($administrators, $target, $request->validated('account_status'), $request->validated('roles'));
+            $oldValues = $this->access->auditValues($target);
+            $target->update($this->payload($request));
+            $target->roles()->sync($this->roleSync($request->validated('roles')));
+            $this->audit->log('USER_UPDATED', 'User Management', (int) auth()->id(), 'users', (string) $target->user_id, $oldValues, $this->access->auditValues($target) + ['password_changed' => $request->filled('password')]);
+        });
 
         return redirect()
             ->route('users.show', $user)
@@ -66,7 +84,22 @@ class UserController extends Controller
             return back()->with('error', 'You cannot delete your own account.');
         }
 
-        $user->delete();
+        try {
+            DB::transaction(function () use ($user): void {
+                $administrators = $this->access->lockAdministrators();
+                $target = User::whereKey($user->user_id)->lockForUpdate()->firstOrFail();
+                $this->access->ensureAdministratorRemains($administrators, $target, User::STATUS_INACTIVE, []);
+                $oldValues = $this->access->auditValues($target);
+                $target->delete();
+                $this->audit->log('USER_DELETED', 'User Management', (int) auth()->id(), 'users', (string) $user->user_id, oldValues: $oldValues);
+            });
+        } catch (QueryException $exception) {
+            if ((string) $exception->getCode() !== '23000') {
+                throw $exception;
+            }
+
+            return back()->with('error', 'This account is referenced by records and cannot be deleted. Deactivate it instead.');
+        }
 
         return redirect()
             ->route('users.index')

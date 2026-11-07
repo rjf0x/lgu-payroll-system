@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>@yield('title', 'Dashboard') | LGU Payroll System</title>
+    <title>@yield('title', 'Dashboard') | {{ $systemSettings['system_name'] }}</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="h-full font-sans antialiased">
@@ -12,16 +12,19 @@
     <details id="app-navigation" open class="w-full shrink-0 bg-brand-strong text-emerald-50 lg:sticky lg:top-0 lg:h-dvh lg:w-64 lg:overflow-y-auto">
         <summary class="min-h-14 cursor-pointer px-5 py-4 text-sm font-semibold lg:hidden">LGU Payroll · Menu</summary>
         <div class="hidden min-h-20 items-center gap-3 border-b border-white/15 px-5 lg:flex">
-            <span class="grid h-10 w-10 place-items-center rounded-lg bg-white text-sm font-bold text-brand">LGU</span>
-            <div>
-                <div class="text-sm font-semibold">Payroll System</div>
-                <div class="text-xs text-emerald-200">Local Government Unit</div>
+            <span class="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-white text-sm font-bold text-brand">LGU</span>
+            <div class="min-w-0">
+                <div class="break-words text-sm font-semibold">{{ $systemSettings['system_name'] }}</div>
+                <div class="break-words text-xs text-emerald-200">{{ $systemSettings['organization_name'] }}</div>
             </div>
         </div>
         <x-sidebar-navigation />
         <div class="border-t border-white/15 px-5 py-4 text-sm">
             <div class="break-words font-semibold">{{ auth()->user()->username }}</div>
             <div class="mt-1 text-emerald-200">{{ auth()->user()->roles->pluck('role_name')->implode(', ') ?: 'No role' }}</div>
+            @if ($systemSettings['support_email'])
+                <a href="mailto:{{ $systemSettings['support_email'] }}" class="mt-3 inline-flex min-h-11 items-center text-emerald-100 underline underline-offset-4">Contact support</a>
+            @endif
         </div>
     </details>
     <div class="flex min-w-0 flex-1 flex-col">
