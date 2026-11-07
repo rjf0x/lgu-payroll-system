@@ -13,24 +13,25 @@
             </div>
         </x-card>
     @endif
-    <div class="mb-4 flex items-center justify-between">
+    <div class="mb-6 flex flex-wrap items-center justify-between gap-4">
         <p class="text-sm text-slate-500">Grade-and-step or direct-rate compensation attached to an employment record.</p>
         @can('compensation.manage')
-            <a href="{{ route('compensation-profiles.create') }}" class="rounded-md bg-emerald-700 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-800">
+            <a href="{{ route('compensation-profiles.create') }}" class="ui-button ui-button-primary">
                 + Add Compensation Profile
             </a>
         @endcan
     </div>
 
-    <div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-        <table class="min-w-full divide-y divide-slate-200 text-sm">
+    <div class="min-w-0">
+        <x-results :items="$profiles" />
+        <x-table label="Compensation Profiles records">
             <thead class="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
                 <tr>
-                    <th class="px-4 py-3 text-left">Employee</th>
-                    <th class="px-4 py-3 text-left">Basis</th>
-                    <th class="px-4 py-3 text-right">Rate</th>
-                    <th class="px-4 py-3 text-left">Effective</th>
-                    <th class="px-4 py-3"></th>
+                    <th scope="col" class="px-4 py-3 text-left">Employee</th>
+                    <th scope="col" class="px-4 py-3 text-left">Basis</th>
+                    <th scope="col" class="px-4 py-3 text-right">Rate</th>
+                    <th scope="col" class="px-4 py-3 text-left">Effective</th>
+                    <th scope="col" class="px-4 py-3">Actions</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-slate-100">
@@ -62,7 +63,7 @@
                     <tr><td colspan="5" class="px-4 py-8 text-center text-slate-500">No compensation profiles.</td></tr>
                 @endforelse
             </tbody>
-        </table>
+        </x-table>
     </div>
 
     <div class="mt-4">{{ $profiles->links() }}</div>

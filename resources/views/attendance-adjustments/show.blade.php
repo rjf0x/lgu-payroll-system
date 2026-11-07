@@ -44,13 +44,13 @@
 
         @if ($adjustment->approval_status === 'PENDING')
             <div class="mt-6 flex gap-3">
-                <form method="POST" action="{{ route('attendance-adjustments.approve', $adjustment) }}">
+                <form method="POST" action="{{ route('attendance-adjustments.approve', $adjustment) }}" data-submit-feedback>
                     @csrf
-                    <button class="rounded-md bg-emerald-700 px-4 py-2 text-xs font-semibold text-white hover:bg-emerald-800">Approve &amp; apply</button>
+                    <button class="ui-button ui-button-primary">Approve &amp; apply</button>
                 </form>
-                <form method="POST" action="{{ route('attendance-adjustments.reject', $adjustment) }}">
+                <form method="POST" action="{{ route('attendance-adjustments.reject', $adjustment) }}" data-submit-feedback>
                     @csrf
-                    <button class="rounded-md border border-rose-200 px-4 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50">Reject</button>
+                    <button class="ui-button ui-button-danger">Reject</button>
                 </form>
             </div>
         @endif

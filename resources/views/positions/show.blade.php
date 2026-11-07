@@ -34,11 +34,11 @@
 
         @can('employees.manage')
             <div class="mt-6 flex gap-3">
-                <a href="{{ route('positions.edit', $position) }}" class="rounded-md border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50">Edit</a>
-                <form method="POST" action="{{ route('positions.destroy', $position) }}" onsubmit="return confirm('Delete this position?')">
+                <a href="{{ route('positions.edit', $position) }}" class="ui-button ui-button-secondary">Edit</a>
+                <form method="POST" action="{{ route('positions.destroy', $position) }}" onsubmit="return confirm('Delete this position?')" data-submit-feedback>
                     @csrf
                     @method('DELETE')
-                    <button class="rounded-md border border-rose-200 px-3 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50">Delete</button>
+                    <button class="ui-button ui-button-danger">Delete</button>
                 </form>
             </div>
         @endcan

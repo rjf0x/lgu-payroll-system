@@ -24,7 +24,7 @@
                     @endforeach
                 </dl>
                 @can('employees.manage')
-                    <form method="POST" action="{{ route('employees.destroy', $employee) }}" class="mt-5" onsubmit="return confirm('Archive this employee?')">
+                    <form method="POST" action="{{ route('employees.destroy', $employee) }}" class="mt-5" onsubmit="return confirm('Archive this employee?')" data-submit-feedback>
                         @csrf
                         @method('DELETE')
                         <x-button type="submit" variant="danger">Archive</x-button>

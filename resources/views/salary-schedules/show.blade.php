@@ -26,30 +26,30 @@
 
         @can('compensation.manage')
             <div class="mt-6 flex gap-3">
-                <a href="{{ route('salary-schedules.edit', $schedule) }}" class="rounded-md border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50">Edit</a>
-                <form method="POST" action="{{ route('salary-schedules.destroy', $schedule) }}" onsubmit="return confirm('Delete this schedule and its grade steps?')">
+                <a href="{{ route('salary-schedules.edit', $schedule) }}" class="ui-button ui-button-secondary">Edit</a>
+                <form method="POST" action="{{ route('salary-schedules.destroy', $schedule) }}" onsubmit="return confirm('Delete this schedule and its grade steps?')" data-submit-feedback>
                     @csrf
                     @method('DELETE')
-                    <button class="rounded-md border border-rose-200 px-3 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50">Delete</button>
+                    <button class="ui-button ui-button-danger">Delete</button>
                 </form>
             </div>
         @endcan
     </div>
 
-    <div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+    <div class="min-w-0">
         <div class="flex items-center justify-between border-b border-slate-100 px-6 py-4">
             <span class="text-sm font-semibold text-slate-700">Grade Steps</span>
             @can('compensation.manage')
                 <a href="{{ route('salary-grade-steps.create', ['salary_schedule_id' => $schedule->salary_schedule_id]) }}" class="text-xs font-semibold text-emerald-700 hover:underline">+ Add Grade Step</a>
             @endcan
         </div>
-        <table class="min-w-full divide-y divide-slate-200 text-sm">
+        <x-table label="Salary Schedule records">
             <thead class="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
                 <tr>
-                    <th class="px-4 py-3 text-left">Grade</th>
-                    <th class="px-4 py-3 text-left">Step</th>
-                    <th class="px-4 py-3 text-right">Monthly Salary</th>
-                    <th class="px-4 py-3"></th>
+                    <th scope="col" class="px-4 py-3 text-left">Grade</th>
+                    <th scope="col" class="px-4 py-3 text-left">Step</th>
+                    <th scope="col" class="px-4 py-3 text-right">Monthly Salary</th>
+                    <th scope="col" class="px-4 py-3">Actions</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-slate-100">
@@ -68,6 +68,6 @@
                     <tr><td colspan="4" class="px-4 py-8 text-center text-slate-500">No grade steps yet.</td></tr>
                 @endforelse
             </tbody>
-        </table>
+        </x-table>
     </div>
 @endsection

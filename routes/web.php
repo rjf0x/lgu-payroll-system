@@ -33,6 +33,7 @@ use App\Http\Controllers\SystemSettingController;
 use App\Http\Controllers\TaxBracketController;
 use App\Http\Controllers\UserController;
 use App\Http\Middleware\EnsureAccountIsActive;
+use App\Http\Middleware\PreventSensitiveResponseCaching;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -53,7 +54,7 @@ Route::middleware('guest')->group(function () {
 
 });
 
-Route::middleware(['auth', EnsureAccountIsActive::class])->group(function () {
+Route::middleware(['auth', EnsureAccountIsActive::class, PreventSensitiveResponseCaching::class])->group(function () {
 
     Route::get('/dashboard', DashboardController::class)->name('dashboard');
     Route::middleware('can:settings.manage')->group(function () {

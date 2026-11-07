@@ -10,6 +10,10 @@ class AdminUserSeeder extends Seeder
 {
     public function run(): void
     {
+        if (app()->isProduction()) {
+            throw new \RuntimeException('Use ProductionDatabaseSeeder to create the initial production administrator.');
+        }
+
         User::firstOrCreate(
             ['email' => 'admin@example.test'],
             [

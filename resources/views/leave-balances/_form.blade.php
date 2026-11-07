@@ -4,6 +4,8 @@
     method="POST"
     action="{{ $isEdit ? route('leave-balances.update', $balance) : route('leave-balances.store') }}"
     class="space-y-5 rounded-xl border border-slate-200 bg-white p-6 shadow-sm"
+
+    data-submit-feedback
 >
     @csrf
     @if ($isEdit)
@@ -40,10 +42,10 @@
         </p>
     @endif
 
-    <div class="flex gap-3">
-        <button class="rounded-md bg-emerald-700 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-800">
+    <div class="flex flex-wrap gap-3">
+        <button class="ui-button ui-button-primary">
             {{ $isEdit ? 'Save changes' : 'Create balance' }}
         </button>
-        <a href="{{ route('leave-balances.index') }}" class="rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50">Cancel</a>
+        <a href="{{ route('leave-balances.index') }}" class="ui-button ui-button-secondary">Cancel</a>
     </div>
 </form>

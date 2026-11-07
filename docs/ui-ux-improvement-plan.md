@@ -1,6 +1,6 @@
 # UI/UX Improvement Plan
 
-**Status:** Stage 3 daily workflows implemented; Stage 1 participant baselines remain pending
+**Status:** Stage 4 implementation and automated checks delivered; human usability and screen-reader acceptance remain pending
 **Date:** November 7, 2026
 **Roles:** Admin, Payroll Officer, Approver, Viewer
 **Design guidance:** ui-ux-pro-max
@@ -103,6 +103,27 @@ The shared components affect existing consumers, while full visual migration of 
 The development database had finalized runs available for browser inspection; pending-run state changes and mixed-role behavior were exercised through isolated feature tests. Staff task-time measurements, a live pending-run/mixed-role walkthrough in an isolated demo environment, and screen-reader testing remain open from Stage 1. Stage 4 will migrate the remaining screens and improve reports and print layouts.
 
 ### Stage 4: Complete and verify
+
+**Progress:** Implemented November 7, 2026. Human acceptance remains open because the Stage 1 participant baseline was not collected.
+
+#### Delivered screens and outputs
+
+- Extended shared table regions, scoped headers, result counts, consistent 44-pixel controls and submission feedback through the remaining master-data, attendance/leave, payroll/configuration, account and verification views. Filters have associated labels and explicit Apply/Reset actions rather than changing pages immediately when a selection changes. Existing server-side permissions and configured Viewer export access are preserved.
+- Added period/status search and independent pagination for payroll reports and export history. History displays the period/run, user and timestamp instead of raw filter JSON. Missing or malformed historical scope is identified without rendering arbitrary metadata. Report links distinguish registers, summaries, payslips and authorized CSV exports; history is explicitly an export-request log, not an archived download.
+- Registers and department summaries identify organization, payroll coverage, pay date, run status, employee count, PHP currency and view time. Non-finalized reports are labelled working copies. Print styles remove navigation/actions, repeat table headings, retain totals once and keep monetary values on one line. The wide register requests A3 landscape; payslips use A4 portrait and stack their columns on narrow screens.
+- Blockchain detail prioritizes the most recent integrity check and its timestamp, explains pending/failed outcomes, and distinguishes simulated proof from independent on-chain evidence. Prior verification does not imply a current check. Technical hashes and transaction metadata follow the outcome and guidance.
+- Dynamic payroll amount inputs use the existing accessible form components. Account role selection uses a fieldset/legend and linked feedback. Existing employee workspace and query-string pagination behavior are retained.
+
+#### Automated and browser verification
+
+- Feature checks cover secondary list/create screens, labels, table regions/header scope, submission feedback, report filtering, malformed scope, working-copy/print guidance, formula-safe CSV, latest verification-result priority, production setup/preflight and queue behavior. The full regression suite and final targeted checks are recorded in the Stage 13 release verification results.
+- A separate SQLite demo database and isolated headless Microsoft Edge profile were used; development payroll was not migrated, reseeded or changed. Eleven representative populated screens at 375/768/1024/1440 pixels showed no document overflow in 44 measurements. Wide tables remain inside named, focusable scroll regions. Reports and payslip screenshots and the register print layout were inspected locally.
+- Browser checks confirmed Enter/Escape mobile navigation with returned focus, focused and linked validation errors after a server-rejected employee form, an independent pending-run review, configured Viewer exports, and a mixed-role account that could prepare/submit but could not approve its own pending run. State-changing demonstrations affected only the separate fictional dataset.
+- Edge exported the sample eight-employee register as one A3 landscape PDF and a payslip as one A4 portrait PDF. The register's monetary wrapping was corrected during print inspection. Physical printer output, larger configured column sets, and long/multi-page production datasets still need acceptance.
+
+#### Acceptance still open
+
+Staff task-time/error baselines and comparable post-change measurements, participant usability review, a screen-reader walkthrough and complete keyboard-only task acceptance remain outstanding. Scripted checks do not substitute for those activities or establish full accessibility conformance. Stage 4 implementation is delivered; final human acceptance is not marked complete.
 
 - Apply the shared patterns to remaining modules.
 - Improve report discovery, readable metadata, verification outcomes, and print layouts.

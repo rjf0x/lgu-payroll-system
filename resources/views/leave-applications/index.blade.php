@@ -7,8 +7,8 @@
     <div class="mb-4 flex flex-wrap items-end justify-between gap-3">
         <form method="GET" class="flex flex-wrap items-end gap-2">
             <div>
-                <label class="block text-xs font-medium text-slate-500">Status</label>
-                <select name="status" onchange="this.form.submit()" class="mt-1 rounded-md border border-slate-300 px-3 py-2 text-sm">
+                <label for="filter-status" class="mb-1.5 block text-sm font-semibold">Status</label>
+                <select name="status" class="ui-field" id="filter-status">
                     <option value="">All</option>
                     @foreach (['PENDING', 'APPROVED', 'REJECTED'] as $option)
                         <option value="{{ $option }}" @selected($status === $option)>{{ ucfirst(strtolower($option)) }}</option>
@@ -16,29 +16,32 @@
                 </select>
             </div>
             <div>
-                <label class="block text-xs font-medium text-slate-500">Employee</label>
-                <select name="employee_id" onchange="this.form.submit()" class="mt-1 rounded-md border border-slate-300 px-3 py-2 text-sm">
+                <label for="filter-employee-id" class="mb-1.5 block text-sm font-semibold">Employee</label>
+                <select name="employee_id" class="ui-field" id="filter-employee-id">
                     <option value="">All</option>
                     @foreach ($employees as $employee)
                         <option value="{{ $employee->employee_id }}" @selected($employeeId === $employee->employee_id)>{{ $employee->full_name }}</option>
                     @endforeach
                 </select>
             </div>
+            <x-button type="submit">Apply filters</x-button>
+            <x-button :href="route('leave-applications.index')">Reset</x-button>
         </form>
 
-        <a href="{{ route('leave-applications.create') }}" class="rounded-md bg-emerald-700 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-800">+ File Leave</a>
+        <a href="{{ route('leave-applications.create') }}" class="ui-button ui-button-primary">+ File Leave</a>
     </div>
 
-    <div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-        <table class="min-w-full divide-y divide-slate-200 text-sm">
+    <div class="min-w-0">
+        <x-results :items="$applications" />
+        <x-table label="Leave Applications records">
             <thead class="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
                 <tr>
-                    <th class="px-4 py-3 text-left">Employee</th>
-                    <th class="px-4 py-3 text-left">Leave Type</th>
-                    <th class="px-4 py-3 text-left">Period</th>
-                    <th class="px-4 py-3 text-right">Days</th>
-                    <th class="px-4 py-3 text-left">Status</th>
-                    <th class="px-4 py-3"></th>
+                    <th scope="col" class="px-4 py-3 text-left">Employee</th>
+                    <th scope="col" class="px-4 py-3 text-left">Leave Type</th>
+                    <th scope="col" class="px-4 py-3 text-left">Period</th>
+                    <th scope="col" class="px-4 py-3 text-right">Days</th>
+                    <th scope="col" class="px-4 py-3 text-left">Status</th>
+                    <th scope="col" class="px-4 py-3">Actions</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-slate-100">
@@ -51,9 +54,7 @@
                         </td>
                         <td class="px-4 py-3 text-right">{{ number_format((float) $application->total_days, 2) }}</td>
                         <td class="px-4 py-3">
-                            <span class="inline-flex rounded-full px-2 py-0.5 text-xs font-semibold {{ $application->approval_status === 'APPROVED' ? 'bg-emerald-100 text-emerald-700' : ($application->approval_status === 'REJECTED' ? 'bg-rose-100 text-rose-700' : 'bg-amber-100 text-amber-700') }}">
-                                {{ $application->approval_status }}
-                            </span>
+                            <x-status :value="$application->approval_status" />
                         </td>
                         <td class="px-4 py-3 text-right">
                             <a href="{{ route('leave-applications.show', $application) }}" class="text-emerald-700 hover:underline">View</a>
@@ -63,7 +64,7 @@
                     <tr><td colspan="6" class="px-4 py-8 text-center text-slate-500">No leave applications.</td></tr>
                 @endforelse
             </tbody>
-        </table>
+        </x-table>
     </div>
 
     <div class="mt-4">{{ $applications->links() }}</div>

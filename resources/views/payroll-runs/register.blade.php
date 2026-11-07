@@ -4,23 +4,25 @@
 @section('heading', 'Payroll Register · '.$run->payrollPeriod->period_name.' #'.$run->run_number)
 
 @section('content')
-    <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+    <x-report-scope :run="$run" :organization-name="$systemSettings['organization_name']" />
+    <div class="no-print mb-4 flex flex-wrap items-center justify-between gap-3">
         <p class="text-sm text-slate-500">{{ $run->details->count() }} employee(s) · monthly payroll register.</p>
-        <div class="flex gap-2">
-            <a href="{{ route('payroll-runs.show', $run) }}" class="rounded-md border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50">Back to run</a>
-            <a href="{{ route('payroll-runs.payslips', $run) }}" class="rounded-md border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50">Payslips</a>
+        <div class="flex flex-wrap gap-3">
+            <a href="{{ route('payroll-runs.show', $run) }}" class="ui-button ui-button-secondary">Back to run</a>
+            <a href="{{ route('payroll-runs.payslips', $run) }}" class="ui-button ui-button-secondary">Payslips</a>
             @can('reports.generate')
-                <a href="{{ route('payroll-runs.register.export', $run) }}" class="rounded-md bg-emerald-700 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-800">Export CSV</a>
+                <a href="{{ route('payroll-runs.register.export', $run) }}" class="ui-button ui-button-primary">Export CSV</a>
             @endcan
+            <x-button onclick="window.print()">Print register</x-button>
         </div>
     </div>
 
-    <div class="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
-        <table class="min-w-full divide-y divide-slate-200 text-xs">
+    <div class="min-w-0">
+        <x-table label="Payroll Register records">
             <thead class="bg-slate-50 uppercase tracking-wide text-slate-500">
                 <tr>
                     @foreach ($headers as $header)
-                        <th class="whitespace-nowrap px-3 py-3 text-left">{{ $header }}</th>
+                        <th scope="col" class="whitespace-nowrap px-3 py-3 text-left">{{ $header }}</th>
                     @endforeach
                 </tr>
             </thead>
@@ -48,6 +50,19 @@
                     </tr>
                 </tfoot>
             @endif
-        </table>
+        </x-table>
     </div>
 @endsection
+
+@push('print-styles')
+    <style>
+        @media print {
+            @page { size: A3 landscape; }
+            .ui-table { font-size: 6.5pt; }
+            .ui-table th, .ui-table td { padding: 1.5mm 0.7mm; }
+            .ui-table td.text-right { white-space: nowrap !important; overflow-wrap: normal; }
+            .ui-table td:nth-child(2) { white-space: nowrap !important; }
+            .ui-table th:first-child, .ui-table th:nth-child(3), .ui-table th:nth-child(4) { min-width: 20mm; }
+        }
+    </style>
+@endpush

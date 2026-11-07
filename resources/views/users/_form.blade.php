@@ -7,6 +7,8 @@
     method="POST"
     action="{{ $isEdit ? route('users.update', $account) : route('users.store') }}"
     class="space-y-5 rounded-xl border border-slate-200 bg-white p-6 shadow-sm"
+
+    data-submit-feedback
 >
     @csrf
     @if ($isEdit)
@@ -38,11 +40,12 @@
         />
     </div>
 
-    <div>
-        <span class="block text-sm font-medium text-slate-700">Roles <span class="text-rose-600">*</span></span>
+    <fieldset aria-invalid="{{ $errors->has('roles') ? 'true' : 'false' }}" aria-describedby="roles-help{{ $errors->has('roles') ? ' roles-error' : '' }}">
+        <legend class="text-sm font-semibold">Roles (required)</legend>
+        <p id="roles-help" class="text-sm text-muted">Select at least one role. Permissions from multiple roles are combined.</p>
         <div class="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
             @foreach ($roles as $role)
-                <label class="flex items-center gap-2 text-sm text-slate-700">
+                <label class="flex min-h-11 items-center gap-2 text-sm text-slate-700">
                     <input
                         type="checkbox"
                         name="roles[]"
@@ -55,15 +58,15 @@
             @endforeach
         </div>
         @error('roles')
-            <p class="mt-1 text-xs text-rose-600">{{ $message }}</p>
+            <p id="roles-error" class="mt-1 text-sm text-rose-800">{{ $message }}</p>
         @enderror
-    </div>
+    </fieldset>
 
-    <div class="flex gap-3">
-        <button class="rounded-md bg-emerald-700 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-800">
+    <div class="flex flex-wrap gap-3">
+        <button class="ui-button ui-button-primary">
             {{ $isEdit ? 'Save changes' : 'Create account' }}
         </button>
-        <a href="{{ route('users.index') }}" class="rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50">
+        <a href="{{ route('users.index') }}" class="ui-button ui-button-secondary">
             Cancel
         </a>
     </div>

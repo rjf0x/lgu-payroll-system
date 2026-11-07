@@ -4,26 +4,27 @@
 @section('heading', 'Employment Records')
 
 @section('content')
-    <div class="mb-4 flex items-center justify-between">
+    <div class="mb-6 flex flex-wrap items-center justify-between gap-4">
         <p class="text-sm text-slate-500">Appointments linking employees to departments, positions, and employment types.</p>
         @can('employees.manage')
-            <a href="{{ route('employment-records.create') }}" class="rounded-md bg-emerald-700 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-800">
+            <a href="{{ route('employment-records.create') }}" class="ui-button ui-button-primary">
                 + Add Employment Record
             </a>
         @endcan
     </div>
 
-    <div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-        <table class="min-w-full divide-y divide-slate-200 text-sm">
+    <div class="min-w-0">
+        <x-results :items="$employmentRecords" />
+        <x-table label="Employment Records records">
             <thead class="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
                 <tr>
-                    <th class="px-4 py-3 text-left">Employee</th>
-                    <th class="px-4 py-3 text-left">Position</th>
-                    <th class="px-4 py-3 text-left">Department</th>
-                    <th class="px-4 py-3 text-left">Type</th>
-                    <th class="px-4 py-3 text-left">Start</th>
-                    <th class="px-4 py-3 text-left">Status</th>
-                    <th class="px-4 py-3"></th>
+                    <th scope="col" class="px-4 py-3 text-left">Employee</th>
+                    <th scope="col" class="px-4 py-3 text-left">Position</th>
+                    <th scope="col" class="px-4 py-3 text-left">Department</th>
+                    <th scope="col" class="px-4 py-3 text-left">Type</th>
+                    <th scope="col" class="px-4 py-3 text-left">Start</th>
+                    <th scope="col" class="px-4 py-3 text-left">Status</th>
+                    <th scope="col" class="px-4 py-3">Actions</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-slate-100">
@@ -48,7 +49,7 @@
                     <tr><td colspan="7" class="px-4 py-8 text-center text-slate-500">No employment records.</td></tr>
                 @endforelse
             </tbody>
-        </table>
+        </x-table>
     </div>
 
     <div class="mt-4">{{ $employmentRecords->links() }}</div>

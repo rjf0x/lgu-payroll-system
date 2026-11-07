@@ -46,12 +46,12 @@
         </div>
 
         <div class="mt-6 flex gap-3">
-            <a href="{{ route('users.edit', $user) }}" class="rounded-md border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50">Edit</a>
+            <a href="{{ route('users.edit', $user) }}" class="ui-button ui-button-secondary">Edit</a>
             @if ($user->user_id !== auth()->id())
-                <form method="POST" action="{{ route('users.destroy', $user) }}" onsubmit="return confirm('Delete this user account?')">
+                <form method="POST" action="{{ route('users.destroy', $user) }}" onsubmit="return confirm('Delete this user account?')" data-submit-feedback>
                     @csrf
                     @method('DELETE')
-                    <button class="rounded-md border border-rose-200 px-3 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50">Delete</button>
+                    <button class="ui-button ui-button-danger">Delete</button>
                 </form>
             @endif
         </div>

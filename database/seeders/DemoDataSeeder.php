@@ -23,6 +23,10 @@ class DemoDataSeeder extends Seeder
      */
     public function run(): void
     {
+        if (app()->isProduction()) {
+            throw new \RuntimeException('Fictional payroll data cannot be seeded in production.');
+        }
+
         $departments = $this->seedDepartments();
         $gradeSteps = $this->seedSalarySchedule();
         $positions = $this->seedPositions($departments);

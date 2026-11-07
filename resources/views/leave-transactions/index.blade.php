@@ -7,27 +7,30 @@
     <div class="mb-4 flex items-end justify-between gap-3">
         <form method="GET" class="flex items-end gap-2">
             <div>
-                <label class="block text-xs font-medium text-slate-500">Employee</label>
-                <select name="employee_id" onchange="this.form.submit()" class="mt-1 rounded-md border border-slate-300 px-3 py-2 text-sm">
+                <label for="filter-employee-id" class="mb-1.5 block text-sm font-semibold">Employee</label>
+                <select name="employee_id" class="ui-field" id="filter-employee-id">
                     <option value="">All employees</option>
                     @foreach ($employees as $employee)
                         <option value="{{ $employee->employee_id }}" @selected($employeeId === $employee->employee_id)>{{ $employee->full_name }}</option>
                     @endforeach
                 </select>
             </div>
+            <x-button type="submit">Apply filters</x-button>
+            <x-button :href="route('leave-transactions.index')">Reset</x-button>
         </form>
     </div>
 
-    <div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-        <table class="min-w-full divide-y divide-slate-200 text-sm">
+    <div class="min-w-0">
+        <x-results :items="$transactions" />
+        <x-table label="Leave Transactions records">
             <thead class="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
                 <tr>
-                    <th class="px-4 py-3 text-left">Date</th>
-                    <th class="px-4 py-3 text-left">Employee</th>
-                    <th class="px-4 py-3 text-left">Leave Type</th>
-                    <th class="px-4 py-3 text-left">Type</th>
-                    <th class="px-4 py-3 text-right">Days</th>
-                    <th class="px-4 py-3 text-right">Balance After</th>
+                    <th scope="col" class="px-4 py-3 text-left">Date</th>
+                    <th scope="col" class="px-4 py-3 text-left">Employee</th>
+                    <th scope="col" class="px-4 py-3 text-left">Leave Type</th>
+                    <th scope="col" class="px-4 py-3 text-left">Type</th>
+                    <th scope="col" class="px-4 py-3 text-right">Days</th>
+                    <th scope="col" class="px-4 py-3 text-right">Balance After</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-slate-100">
@@ -44,7 +47,7 @@
                     <tr><td colspan="6" class="px-4 py-8 text-center text-slate-500">No leave transactions.</td></tr>
                 @endforelse
             </tbody>
-        </table>
+        </x-table>
     </div>
 
     <div class="mt-4">{{ $transactions->links() }}</div>

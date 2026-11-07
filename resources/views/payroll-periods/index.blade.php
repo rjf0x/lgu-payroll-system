@@ -4,24 +4,25 @@
 @section('heading', 'Payroll Periods')
 
 @section('content')
-    <div class="mb-4 flex items-center justify-between">
+    <div class="mb-6 flex flex-wrap items-center justify-between gap-4">
         <p class="text-sm text-slate-500">Monthly payroll periods and their pay dates.</p>
         @can('payroll.prepare')
-            <a href="{{ route('payroll-periods.create') }}" class="rounded-md bg-emerald-700 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-800">+ Add Period</a>
+            <a href="{{ route('payroll-periods.create') }}" class="ui-button ui-button-primary">+ Add Period</a>
         @endcan
     </div>
 
-    <div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-        <table class="min-w-full divide-y divide-slate-200 text-sm">
+    <div class="min-w-0">
+        <x-results :items="$periods" />
+        <x-table label="Payroll Periods records">
             <thead class="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
                 <tr>
-                    <th class="px-4 py-3 text-left">Period</th>
-                    <th class="px-4 py-3 text-left">Type</th>
-                    <th class="px-4 py-3 text-left">Coverage</th>
-                    <th class="px-4 py-3 text-left">Pay Date</th>
-                    <th class="px-4 py-3 text-left">Status</th>
-                    <th class="px-4 py-3 text-right">Runs</th>
-                    <th class="px-4 py-3 text-right">Actions</th>
+                    <th scope="col" class="px-4 py-3 text-left">Period</th>
+                    <th scope="col" class="px-4 py-3 text-left">Type</th>
+                    <th scope="col" class="px-4 py-3 text-left">Coverage</th>
+                    <th scope="col" class="px-4 py-3 text-left">Pay Date</th>
+                    <th scope="col" class="px-4 py-3 text-left">Status</th>
+                    <th scope="col" class="px-4 py-3 text-right">Runs</th>
+                    <th scope="col" class="px-4 py-3 text-right">Actions</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-slate-100">
@@ -43,7 +44,7 @@
                     <tr><td colspan="7" class="px-4 py-8 text-center text-slate-500">No payroll periods.</td></tr>
                 @endforelse
             </tbody>
-        </table>
+        </x-table>
     </div>
 
     <div class="mt-4">{{ $periods->links() }}</div>

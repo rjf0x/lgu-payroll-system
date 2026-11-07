@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@yield('title', 'Dashboard') | {{ $systemSettings['system_name'] }}</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @stack('print-styles')
 </head>
 <body class="h-full font-sans antialiased">
 <a href="#main-content" class="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:bg-white focus:p-3 focus:text-brand">Skip to content</a>

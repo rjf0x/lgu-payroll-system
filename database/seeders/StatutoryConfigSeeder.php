@@ -16,6 +16,10 @@ class StatutoryConfigSeeder extends Seeder
      */
     public function run(): void
     {
+        if (app()->isProduction()) {
+            throw new \RuntimeException('Illustrative statutory rates cannot be seeded in production.');
+        }
+
         $effectiveFrom = '2024-01-01';
 
         $brackets = [

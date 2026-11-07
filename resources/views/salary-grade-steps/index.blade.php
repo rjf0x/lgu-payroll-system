@@ -5,8 +5,8 @@
 
 @section('content')
     <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <form method="GET" class="flex items-center gap-2">
-            <select name="salary_schedule_id" class="rounded-md border border-slate-300 px-3 py-2 text-sm shadow-sm" onchange="this.form.submit()">
+        <form method="GET" class="flex min-w-0 flex-wrap items-end gap-3">
+            <select name="salary_schedule_id" class="ui-field" aria-label="Salary schedule" id="filter-salary-schedule-id">
                 <option value="">All schedules</option>
                 @foreach ($schedules as $schedule)
                     <option value="{{ $schedule->salary_schedule_id }}" @selected($scheduleId === $schedule->salary_schedule_id)>
@@ -14,24 +14,27 @@
                     </option>
                 @endforeach
             </select>
+            <x-button type="submit">Apply filters</x-button>
+            <x-button :href="route('salary-grade-steps.index')">Reset</x-button>
         </form>
 
         @can('compensation.manage')
-            <a href="{{ route('salary-grade-steps.create', ['salary_schedule_id' => $scheduleId]) }}" class="rounded-md bg-emerald-700 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-800">
+            <a href="{{ route('salary-grade-steps.create', ['salary_schedule_id' => $scheduleId]) }}" class="ui-button ui-button-primary">
                 + Add Grade Step
             </a>
         @endcan
     </div>
 
-    <div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-        <table class="min-w-full divide-y divide-slate-200 text-sm">
+    <div class="min-w-0">
+        <x-results :items="$gradeSteps" />
+        <x-table label="Salary Grade Steps records">
             <thead class="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
                 <tr>
-                    <th class="px-4 py-3 text-left">Schedule</th>
-                    <th class="px-4 py-3 text-left">Grade</th>
-                    <th class="px-4 py-3 text-left">Step</th>
-                    <th class="px-4 py-3 text-right">Monthly Salary</th>
-                    <th class="px-4 py-3"></th>
+                    <th scope="col" class="px-4 py-3 text-left">Schedule</th>
+                    <th scope="col" class="px-4 py-3 text-left">Grade</th>
+                    <th scope="col" class="px-4 py-3 text-left">Step</th>
+                    <th scope="col" class="px-4 py-3 text-right">Monthly Salary</th>
+                    <th scope="col" class="px-4 py-3">Actions</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-slate-100">
@@ -51,7 +54,7 @@
                     <tr><td colspan="5" class="px-4 py-8 text-center text-slate-500">No grade steps.</td></tr>
                 @endforelse
             </tbody>
-        </table>
+        </x-table>
     </div>
 
     <div class="mt-4">{{ $gradeSteps->links() }}</div>

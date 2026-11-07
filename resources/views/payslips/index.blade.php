@@ -6,12 +6,12 @@
 @section('content')
     <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
         <p class="text-sm text-slate-500">Payslips can be generated once the run is approved or finalized.</p>
-        <div class="flex gap-2">
-            <a href="{{ route('payroll-runs.show', $run) }}" class="rounded-md border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50">Back to run</a>
+        <div class="flex flex-wrap gap-3">
+            <a href="{{ route('payroll-runs.show', $run) }}" class="ui-button ui-button-secondary">Back to run</a>
             @can('reports.generate')
-                <form method="POST" action="{{ route('payroll-runs.payslips.generate', $run) }}">
+                <form method="POST" action="{{ route('payroll-runs.payslips.generate', $run) }}" data-submit-feedback>
                     @csrf
-                    <button @disabled(! $canGenerate) class="rounded-md bg-emerald-700 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-800 disabled:opacity-50">
+                    <button @disabled(! $canGenerate) class="ui-button ui-button-primary">
                         Generate payslips
                     </button>
                 </form>
@@ -19,15 +19,15 @@
         </div>
     </div>
 
-    <div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-        <table class="min-w-full divide-y divide-slate-200 text-sm">
+    <div class="min-w-0">
+        <x-table label="Payslips records">
             <thead class="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
                 <tr>
-                    <th class="px-4 py-3 text-left">Employee</th>
-                    <th class="px-4 py-3 text-right">Net Pay</th>
-                    <th class="px-4 py-3 text-left">Payslip No.</th>
-                    <th class="px-4 py-3 text-left">Status</th>
-                    <th class="px-4 py-3 text-right">Actions</th>
+                    <th scope="col" class="px-4 py-3 text-left">Employee</th>
+                    <th scope="col" class="px-4 py-3 text-right">Net Pay</th>
+                    <th scope="col" class="px-4 py-3 text-left">Payslip No.</th>
+                    <th scope="col" class="px-4 py-3 text-left">Status</th>
+                    <th scope="col" class="px-4 py-3 text-right">Actions</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-slate-100">
@@ -50,7 +50,7 @@
                                 <a href="{{ route('payslips.show', $detail->payslip) }}" class="text-emerald-700 hover:underline">View</a>
                                 @can('reports.generate')
                                     @if ($detail->payslip->publication_status !== 'PUBLISHED')
-                                        <form method="POST" action="{{ route('payslips.publish', $detail->payslip) }}" class="ml-3 inline">
+                                        <form method="POST" action="{{ route('payslips.publish', $detail->payslip) }}" class="ml-3 inline" data-submit-feedback>
                                             @csrf
                                             <button class="text-slate-600 hover:underline">Publish</button>
                                         </form>
@@ -61,6 +61,6 @@
                     </tr>
                 @endforeach
             </tbody>
-        </table>
+        </x-table>
     </div>
 @endsection

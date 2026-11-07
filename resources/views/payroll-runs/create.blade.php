@@ -4,7 +4,7 @@
 @section('heading', 'New Payroll Run')
 
 @section('content')
-    <form method="POST" action="{{ route('payroll-runs.store') }}" class="space-y-5 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+    <form method="POST" action="{{ route('payroll-runs.store') }}" class="space-y-5 rounded-xl border border-slate-200 bg-white p-6 shadow-sm" data-submit-feedback>
         @csrf
 
         <x-form.select
@@ -24,9 +24,9 @@
 
         <p class="text-xs text-slate-500">The run is created as a draft; compute it to generate payroll details.</p>
 
-        <div class="flex gap-3">
-            <button class="rounded-md bg-emerald-700 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-800">Create run</button>
-            <a href="{{ route('payroll-runs.index') }}" class="rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50">Cancel</a>
+        <div class="flex flex-wrap gap-3">
+            <button class="ui-button ui-button-primary">Create run</button>
+            <a href="{{ route('payroll-runs.index') }}" class="ui-button ui-button-secondary">Cancel</a>
         </div>
     </form>
 @endsection

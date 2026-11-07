@@ -16,6 +16,10 @@ class UserAccountSeeder extends Seeder
      */
     public function run(): void
     {
+        if (app()->isProduction()) {
+            throw new \RuntimeException('Demonstration accounts cannot be seeded in production.');
+        }
+
         $accounts = [
             ['username' => 'admin', 'role' => Role::ADMIN],
             ['username' => 'officer', 'role' => Role::PAYROLL_OFFICER],

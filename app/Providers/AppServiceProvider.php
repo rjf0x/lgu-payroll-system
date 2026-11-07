@@ -11,6 +11,7 @@ use App\Services\Blockchain\BlockchainDriver;
 use App\Services\Blockchain\SimulatedBlockchainDriver;
 use App\Services\Blockchain\TestnetBlockchainDriver;
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Middleware\TrustProxies;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
@@ -41,10 +42,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        TrustProxies::at(config('deployment.trusted_proxies', []));
         $this->registerPermissionGates();
         $this->registerAuthenticationAuditing();
         $this->registerRateLimiters();
-        View::composer('layouts.app', function (\Illuminate\View\View $view): void {
+        View::composer(['layouts.app', 'layouts.print', 'payroll-runs.register', 'reports.payroll-summary'], function (\Illuminate\View\View $view): void {
             $view->with('systemSettings', SystemSetting::currentValues());
         });
     }

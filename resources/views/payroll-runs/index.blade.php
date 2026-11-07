@@ -5,30 +5,33 @@
 
 @section('content')
     <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <form method="GET" class="flex items-center gap-2">
-            <select name="status" onchange="this.form.submit()" class="rounded-md border border-slate-300 px-3 py-2 text-sm">
+        <form method="GET" class="flex min-w-0 flex-wrap items-end gap-3">
+            <select name="status" class="ui-field" aria-label="Status" id="filter-status">
                 <option value="">All statuses</option>
                 @foreach (['DRAFT', 'PENDING_APPROVAL', 'RETURNED', 'REJECTED', 'APPROVED', 'FINALIZED'] as $option)
                     <option value="{{ $option }}" @selected($status === $option)>{{ str_replace('_', ' ', $option) }}</option>
                 @endforeach
             </select>
+            <x-button type="submit">Apply filters</x-button>
+            <x-button :href="route('payroll-runs.index')">Reset</x-button>
         </form>
         @can('payroll.prepare')
-            <a href="{{ route('payroll-runs.create') }}" class="rounded-md bg-emerald-700 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-800">+ New Payroll Run</a>
+            <a href="{{ route('payroll-runs.create') }}" class="ui-button ui-button-primary">+ New Payroll Run</a>
         @endcan
     </div>
 
-    <div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-        <table class="min-w-full divide-y divide-slate-200 text-sm">
+    <div class="min-w-0">
+        <x-results :items="$runs" />
+        <x-table label="Monthly Payroll records">
             <thead class="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
                 <tr>
-                    <th class="px-4 py-3 text-left">Period</th>
-                    <th class="px-4 py-3 text-center">Run</th>
-                    <th class="px-4 py-3 text-left">Type</th>
-                    <th class="px-4 py-3 text-left">Status</th>
-                    <th class="px-4 py-3 text-right">Employees</th>
-                    <th class="px-4 py-3 text-left">Created By</th>
-                    <th class="px-4 py-3"></th>
+                    <th scope="col" class="px-4 py-3 text-left">Period</th>
+                    <th scope="col" class="px-4 py-3 text-center">Run</th>
+                    <th scope="col" class="px-4 py-3 text-left">Type</th>
+                    <th scope="col" class="px-4 py-3 text-left">Status</th>
+                    <th scope="col" class="px-4 py-3 text-right">Employees</th>
+                    <th scope="col" class="px-4 py-3 text-left">Created By</th>
+                    <th scope="col" class="px-4 py-3">Actions</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-slate-100">
@@ -38,7 +41,7 @@
                         <td class="px-4 py-3 text-center">#{{ $run->run_number }}</td>
                         <td class="px-4 py-3 text-slate-600">{{ $run->run_type }}</td>
                         <td class="px-4 py-3">
-                            <span class="inline-flex rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700">{{ $run->status }}</span>
+                            <x-status :value="$run->status" />
                         </td>
                         <td class="px-4 py-3 text-right">{{ $run->details_count }}</td>
                         <td class="px-4 py-3 text-slate-600">{{ $run->createdBy?->username }}</td>
@@ -50,7 +53,7 @@
                     <tr><td colspan="7" class="px-4 py-8 text-center text-slate-500">No payroll runs yet.</td></tr>
                 @endforelse
             </tbody>
-        </table>
+        </x-table>
     </div>
 
     <div class="mt-4">{{ $runs->links() }}</div>

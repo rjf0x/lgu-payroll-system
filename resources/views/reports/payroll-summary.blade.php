@@ -4,25 +4,27 @@
 @section('heading', 'Payroll Summary · '.$run->payrollPeriod->period_name.' #'.$run->run_number)
 
 @section('content')
-    <div class="mb-4 flex items-center justify-between">
+    <x-report-scope :run="$run" :organization-name="$systemSettings['organization_name']" />
+    <div class="no-print mb-6 flex flex-wrap items-center justify-between gap-4">
         <p class="text-sm text-slate-500">Totals by department for this payroll run.</p>
-        <div class="flex gap-2">
-            <a href="{{ route('payroll-runs.register', $run) }}" class="rounded-md border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50">Register</a>
+        <div class="flex flex-wrap gap-3">
+            <a href="{{ route('payroll-runs.register', $run) }}" class="ui-button ui-button-secondary">Register</a>
             @can('reports.generate')
-                <a href="{{ route('payroll-runs.register.export', $run) }}" class="rounded-md bg-emerald-700 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-800">Export CSV</a>
+                <a href="{{ route('payroll-runs.register.export', $run) }}" class="ui-button ui-button-primary">Export CSV</a>
             @endcan
+            <x-button onclick="window.print()">Print summary</x-button>
         </div>
     </div>
 
-    <div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-        <table class="min-w-full divide-y divide-slate-200 text-sm">
+    <div class="min-w-0">
+        <x-table label="Payroll Summary records">
             <thead class="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
                 <tr>
-                    <th class="px-5 py-3 text-left">Department</th>
-                    <th class="px-5 py-3 text-right">Employees</th>
-                    <th class="px-5 py-3 text-right">Gross</th>
-                    <th class="px-5 py-3 text-right">Deductions</th>
-                    <th class="px-5 py-3 text-right">Net</th>
+                    <th scope="col" class="px-5 py-3 text-left">Department</th>
+                    <th scope="col" class="px-5 py-3 text-right">Employees</th>
+                    <th scope="col" class="px-5 py-3 text-right">Gross</th>
+                    <th scope="col" class="px-5 py-3 text-right">Deductions</th>
+                    <th scope="col" class="px-5 py-3 text-right">Net</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-slate-100">
@@ -49,6 +51,6 @@
                     </tr>
                 </tfoot>
             @endif
-        </table>
+        </x-table>
     </div>
 @endsection

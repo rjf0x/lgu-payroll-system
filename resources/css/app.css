@@ -16,6 +16,23 @@
         'Segoe UI Symbol', 'Noto Color Emoji';
 }
 
+@media print {
+    @page { size: A4 portrait; margin: 12mm; }
+    body { background: white !important; color: black !important; font-size: 10pt; }
+    #app-navigation, .no-print, nav, form, dialog, #submission-status, a[href="#main-content"] { display: none !important; }
+    body > div, main, #main-content { display: block !important; width: 100% !important; max-width: none !important; margin: 0 !important; padding: 0 !important; }
+    header { padding: 0 0 4mm !important; border: 0 !important; }
+    .ui-table-scroll { overflow: visible !important; max-height: none !important; border: 0; box-shadow: none; }
+    .ui-table { width: 100%; white-space: normal; font-size: 8pt; }
+    .ui-table th, .ui-table td { position: static !important; padding: 2mm; white-space: normal !important; overflow-wrap: anywhere; background: white !important; color: black !important; }
+    thead { display: table-header-group; }
+    tfoot { display: table-row-group; }
+    tr, .print-keep { break-inside: avoid; }
+    h1, h2, h3 { break-after: avoid; }
+    .ui-card { box-shadow: none; border: 0; padding: 0; }
+    .print-document { max-width: none !important; margin: 0 !important; padding: 0 !important; border: 0 !important; box-shadow: none !important; }
+}
+
 @layer base {
     body { @apply bg-canvas text-base leading-relaxed text-ink; }
     :where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {

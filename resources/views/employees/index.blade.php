@@ -26,7 +26,7 @@
         <p>{{ number_format($employees->total()) }} {{ $employees->total() === 1 ? 'employee' : 'employees' }}{{ $search !== '' ? ' matching your search' : '' }}</p>
         <p>Scroll within the table to see all columns.</p>
     </div>
-    <x-table label="Employee directory">
+        <x-table label="Employee directory">
             <thead>
                 <tr>
                     <th scope="col">Employee No.</th>

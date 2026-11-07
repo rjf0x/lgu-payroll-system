@@ -6,7 +6,7 @@
 @section('content')
     <div class="mb-5 flex flex-wrap items-start justify-between gap-4">
         <p class="max-w-2xl text-sm text-slate-600">Review recorded activity by user, module, action, or date. This view and its CSV export contain event metadata; before/after payloads and browser identifiers are excluded.</p>
-        <a href="{{ route('audit-logs.export', $filters) }}" class="inline-flex min-h-11 items-center rounded-md bg-emerald-700 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700">Export filtered CSV</a>
+        <a href="{{ route('audit-logs.export', $filters) }}" class="ui-button ui-button-primary">Export filtered CSV</a>
     </div>
 
     @if ($errors->any())
@@ -27,14 +27,15 @@
         <x-form.input name="from" label="From date (inclusive)" type="date" :value="$filters['from'] ?? null" />
         <x-form.input name="to" label="To date (inclusive)" type="date" :value="$filters['to'] ?? null" />
         <div class="flex items-end gap-3">
-            <button class="min-h-11 rounded-md bg-emerald-700 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-800">Apply filters</button>
-            <a href="{{ route('audit-logs.index') }}" class="inline-flex min-h-11 items-center rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">Reset</a>
+            <button class="ui-button ui-button-primary">Apply filters</button>
+            <a href="{{ route('audit-logs.index') }}" class="ui-button ui-button-secondary">Reset</a>
         </div>
-    </form>
+        </form>
 
     <p class="mb-3 text-sm text-slate-600">{{ number_format($logs->total()) }} matching events. Newest first. Dates use {{ config('app.timezone') }}.</p>
     <div role="region" aria-label="Audit events" tabindex="0" class="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm focus-visible:outline-2 focus-visible:outline-emerald-700">
-        <table class="min-w-full divide-y divide-slate-200 text-left text-sm">
+        <x-results :items="$logs" />
+        <x-table label="Audit trail records">
             <caption class="sr-only">Recorded audit activity, newest first</caption>
             <thead class="bg-slate-50 text-slate-600">
                 <tr>
@@ -58,7 +59,7 @@
                     <tr><td colspan="7" class="px-4 py-10 text-center text-slate-600">No activity matches these filters. Try a wider date range or reset the filters.</td></tr>
                 @endforelse
             </tbody>
-        </table>
+        </x-table>
     </div>
     <div class="mt-4">{{ $logs->links() }}</div>
 @endsection

@@ -34,17 +34,22 @@ class PayrollRegisterController extends Controller
 
         return response()->streamDownload(function () use ($data): void {
             $out = fopen('php://output', 'w');
-            fputcsv($out, $data['headers']);
+            fputcsv($out, array_map($this->safeCsvCell(...), $data['headers']), escape: '');
 
             foreach ([...$data['rows'], $data['totals']] as $row) {
                 fputcsv($out, array_map(
-                    fn ($cell) => is_float($cell) ? number_format($cell, 2, '.', '') : $cell,
+                    fn ($cell) => is_float($cell) ? number_format($cell, 2, '.', '') : $this->safeCsvCell((string) $cell),
                     $row,
-                ));
+                ), escape: '');
             }
 
             fclose($out);
         }, $filename, ['Content-Type' => 'text/csv']);
+    }
+
+    private function safeCsvCell(string $value): string
+    {
+        return preg_match('/^(?:[\t\r\n]|\s*[=+@-])/u', $value) === 1 ? "'".$value : $value;
     }
 
     /**

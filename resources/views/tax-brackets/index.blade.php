@@ -4,25 +4,26 @@
 @section('heading', 'Tax Brackets')
 
 @section('content')
-    <div class="mb-4 flex items-center justify-between">
+    <div class="mb-6 flex flex-wrap items-center justify-between gap-4">
         <p class="text-sm text-slate-500">Effective-dated withholding tax brackets.</p>
         @can('compensation.manage')
-            <a href="{{ route('tax-brackets.create') }}" class="rounded-md bg-emerald-700 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-800">+ Add Bracket</a>
+            <a href="{{ route('tax-brackets.create') }}" class="ui-button ui-button-primary">+ Add Bracket</a>
         @endcan
     </div>
 
-    <div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-        <table class="min-w-full divide-y divide-slate-200 text-sm">
+    <div class="min-w-0">
+        <x-results :items="$brackets" />
+        <x-table label="Tax Brackets records">
             <thead class="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
                 <tr>
-                    <th class="px-4 py-3 text-left">Tax Type</th>
-                    <th class="px-4 py-3 text-left">Frequency</th>
-                    <th class="px-4 py-3 text-right">Min Income</th>
-                    <th class="px-4 py-3 text-right">Max Income</th>
-                    <th class="px-4 py-3 text-right">Base Tax</th>
-                    <th class="px-4 py-3 text-right">Marginal Rate</th>
-                    <th class="px-4 py-3 text-left">Effective</th>
-                    <th class="px-4 py-3 text-right">Actions</th>
+                    <th scope="col" class="px-4 py-3 text-left">Tax Type</th>
+                    <th scope="col" class="px-4 py-3 text-left">Frequency</th>
+                    <th scope="col" class="px-4 py-3 text-right">Min Income</th>
+                    <th scope="col" class="px-4 py-3 text-right">Max Income</th>
+                    <th scope="col" class="px-4 py-3 text-right">Base Tax</th>
+                    <th scope="col" class="px-4 py-3 text-right">Marginal Rate</th>
+                    <th scope="col" class="px-4 py-3 text-left">Effective</th>
+                    <th scope="col" class="px-4 py-3 text-right">Actions</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-slate-100">
@@ -45,7 +46,7 @@
                     <tr><td colspan="8" class="px-4 py-8 text-center text-slate-500">No tax brackets.</td></tr>
                 @endforelse
             </tbody>
-        </table>
+        </x-table>
     </div>
 
     <div class="mt-4">{{ $brackets->links() }}</div>

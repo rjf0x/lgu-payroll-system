@@ -35,7 +35,7 @@ class BlockchainAnchorController extends Controller
 
     public function show(BlockchainAnchor $blockchainAnchor): View
     {
-        $blockchainAnchor->load(['payrollRun.payrollPeriod', 'anchoredBy', 'verificationLogs.verifiedBy']);
+        $blockchainAnchor->load(['payrollRun.payrollPeriod', 'anchoredBy', 'verificationLogs' => fn ($query) => $query->orderByDesc('verified_at')->orderByDesc('verification_id'), 'verificationLogs.verifiedBy']);
 
         return view('blockchain.show', ['anchor' => $blockchainAnchor]);
     }

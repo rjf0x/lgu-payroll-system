@@ -7,28 +7,29 @@
     @php($period = $detail->payrollRun->payrollPeriod)
 
     <div class="border-b border-slate-200 pb-4 text-center">
-        <div class="text-xs font-semibold uppercase tracking-widest text-emerald-700">Local Government Unit</div>
+        <div class="text-sm font-semibold text-emerald-800">Payroll statement · Amounts in PHP</div>
         <h1 class="mt-1 text-xl font-bold">Employee Payslip</h1>
         <p class="text-sm text-slate-500">{{ $period->period_name }} · Pay date {{ $period->pay_date?->format('M d, Y') }}</p>
     </div>
 
-    <div class="mt-4 grid grid-cols-2 gap-4 text-sm">
+    <div class="mt-4 grid grid-cols-1 gap-4 text-sm sm:grid-cols-2 print:grid-cols-2">
         <div>
             <div class="text-xs uppercase tracking-wide text-slate-500">Employee</div>
             <div class="font-semibold">{{ $detail->employee_name_snapshot }}</div>
             <div class="text-slate-500">{{ $detail->employee_number_snapshot }}</div>
         </div>
-        <div class="text-right">
+        <div class="break-words sm:text-right print:text-right">
             <div class="text-xs uppercase tracking-wide text-slate-500">Payslip No.</div>
             <div class="font-mono text-xs">{{ $payslip->payslip_number }}</div>
             <div class="text-slate-500">{{ $detail->position_snapshot }}</div>
         </div>
     </div>
 
-    <div class="mt-6 grid grid-cols-2 gap-6 text-sm">
+    <div class="mt-6 grid grid-cols-1 gap-6 text-sm sm:grid-cols-2 print:grid-cols-2">
         <div>
             <h2 class="mb-2 border-b border-slate-200 pb-1 text-xs font-bold uppercase tracking-wide text-slate-600">Earnings</h2>
             <table class="w-full">
+                <caption class="sr-only">Payslip earnings in PHP</caption>
                 <tbody>
                     <tr><td class="py-1">Basic Pay</td><td class="py-1 text-right font-mono">{{ number_format((float) $detail->basic_pay, 2) }}</td></tr>
                     @foreach ($detail->earnings as $earning)
@@ -42,6 +43,7 @@
         <div>
             <h2 class="mb-2 border-b border-slate-200 pb-1 text-xs font-bold uppercase tracking-wide text-slate-600">Deductions</h2>
             <table class="w-full">
+                <caption class="sr-only">Payslip deductions in PHP</caption>
                 <tbody>
                     @foreach ($detail->deductions as $deduction)
                         <tr><td class="py-1">{{ $deduction->deduction_name_snapshot }}</td><td class="py-1 text-right font-mono">{{ number_format((float) $deduction->amount, 2) }}</td></tr>
@@ -68,7 +70,7 @@
         </div>
     @endif
 
-    <p class="mt-8 text-center text-xs text-slate-400">
+    <p class="mt-8 text-center text-xs text-muted">
         Generated {{ $payslip->generated_at?->format('M d, Y g:i A') }} · Status: {{ $payslip->publication_status }}
     </p>
 @endsection
