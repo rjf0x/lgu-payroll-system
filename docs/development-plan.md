@@ -22,13 +22,14 @@
 | 8. Register, payslips, reports | ✅ Done | Client-column register + CSV export, printable payslips with publication status, reports hub and department summary. See `payroll-register-payslips-reports.md`. |
 | 9. Blockchain | ✅ Done | Deterministic SHA-256 anchoring behind a driver interface; verify with MATCH/MISMATCH. See `blockchain-anchoring.md`. |
 | 10. UI | ✅ Done | Four role dashboards with live summaries, permission-aware actions, shared responsive navigation, and dashboard feature tests. |
-| 11–13 | ⬜ Not started | — |
+| 11. Audit & hardening | In progress | Audit metadata viewer and filtered CSV export implemented behind `audit.view`; inactive sessions are blocked on subsequent protected requests. System settings and the remaining validation, authorization, and database-constraint review are pending. |
+| 12–13 | Not started | Testing & QA; deployment & docs. |
 
 ---
 
-## 1. Current state of the codebase
+## 1. Initial scaffold baseline (historical)
 
-The repository is currently a bare Laravel scaffold, not yet the LGU system:
+At the start of development, the repository was a bare Laravel scaffold. The following snapshot is historical; the progress table above tracks the implemented system:
 
 - **Auth only:** `routes/web.php` has login/logout and a placeholder `/dashboard`. Login authenticates by **email**.
 - **One migration set:** Laravel defaults (`users` with `name`/`email`/`password`, `cache`, `jobs`). **None** of the 39 documented tables exist.

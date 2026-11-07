@@ -57,4 +57,8 @@
         <div class="px-3 pt-4 pb-1 text-[10px] font-bold uppercase tracking-wider text-emerald-300">Administration</div>
         <x-nav-link :href="route('users.index')" :active="request()->routeIs('users.*')">User Accounts</x-nav-link>
     @endcan
+    @can('audit.view')
+        <div class="px-3 pt-4 pb-1 text-xs font-bold uppercase tracking-wider text-emerald-300">Accountability</div>
+        <x-nav-link :href="route('audit-logs.index')" :active="request()->routeIs('audit-logs.*')">Audit trail</x-nav-link>
+    @endcan
 </nav>

@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AttendanceAdjustmentController;
 use App\Http\Controllers\AttendanceRecordController;
+use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\BlockchainAnchorController;
 use App\Http\Controllers\CompensationProfileController;
@@ -30,6 +31,7 @@ use App\Http\Controllers\SalaryGradeStepController;
 use App\Http\Controllers\SalaryScheduleController;
 use App\Http\Controllers\TaxBracketController;
 use App\Http\Controllers\UserController;
+use App\Http\Middleware\EnsureAccountIsActive;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -50,9 +52,14 @@ Route::middleware('guest')->group(function () {
 
 });
 
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', EnsureAccountIsActive::class])->group(function () {
 
     Route::get('/dashboard', DashboardController::class)->name('dashboard');
+
+    Route::middleware('can:audit.view')->group(function () {
+        Route::get('audit-logs', [AuditLogController::class, 'index'])->name('audit-logs.index');
+        Route::get('audit-logs/export', [AuditLogController::class, 'export'])->name('audit-logs.export');
+    });
 
     Route::post('/logout', [
         AuthenticatedSessionController::class,
