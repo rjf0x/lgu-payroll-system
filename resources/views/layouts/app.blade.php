@@ -68,6 +68,7 @@
                 @can('payroll.approve')
                     <x-nav-link :href="route('payroll-runs.index', ['status' => 'PENDING_APPROVAL'])" :active="request()->query('status') === 'PENDING_APPROVAL'">Pending Approvals</x-nav-link>
                 @endcan
+                <x-nav-link :href="route('reports.index')" :active="request()->routeIs('reports.*')">Reports</x-nav-link>
             @endcan
 
             @can('users.manage')

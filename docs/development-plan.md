@@ -19,7 +19,8 @@
 | 5. Earnings & deductions | ✅ Done | Earning/deduction types + assignments; effective-dated tax brackets and contribution rates. See `earnings-deductions-modules.md`. |
 | 6. Payroll engine | ✅ Done | Periods, runs, details; computation service with snapshots; documented example verified. See `payroll-computation-engine.md`. |
 | 7. Approval & SoD | ✅ Done | Submit/review/approve/reject/return/finalize with `payroll_approvals` history and backend-enforced separation of duties. See `payroll-approval-workflow.md`. |
-| 8–13 | ⬜ Not started | — |
+| 8. Register, payslips, reports | ✅ Done | Client-column register + CSV export, printable payslips with publication status, reports hub and department summary. See `payroll-register-payslips-reports.md`. |
+| 9–13 | ⬜ Not started | — |
 
 ---
 

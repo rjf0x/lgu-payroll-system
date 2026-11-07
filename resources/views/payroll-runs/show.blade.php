@@ -55,6 +55,12 @@
                 @endif
             @endcan
 
+            @if ($run->details->isNotEmpty())
+                <a href="{{ route('payroll-runs.register', $run) }}" class="rounded-md border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50">Register</a>
+                <a href="{{ route('payroll-runs.payslips', $run) }}" class="rounded-md border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50">Payslips</a>
+                <a href="{{ route('reports.payroll-summary', $run) }}" class="rounded-md border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50">Summary</a>
+            @endif
+
             @if ($canReview)
                 <form method="POST" action="{{ route('payroll-runs.approve', $run) }}" class="flex items-center gap-2">
                     @csrf

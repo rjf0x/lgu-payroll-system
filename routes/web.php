@@ -19,8 +19,11 @@ use App\Http\Controllers\LeaveTypeController;
 use App\Http\Controllers\PayrollApprovalController;
 use App\Http\Controllers\PayrollDetailController;
 use App\Http\Controllers\PayrollPeriodController;
+use App\Http\Controllers\PayrollRegisterController;
 use App\Http\Controllers\PayrollRunController;
+use App\Http\Controllers\PayslipController;
 use App\Http\Controllers\PositionController;
+use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SalaryGradeStepController;
 use App\Http\Controllers\SalaryScheduleController;
 use App\Http\Controllers\TaxBracketController;
@@ -161,5 +164,25 @@ Route::middleware('auth')->group(function () {
         ->whereNumber('payroll_run')->middleware('can:payroll.review')->name('payroll-runs.return');
     Route::post('payroll-runs/{payroll_run}/finalize', [PayrollApprovalController::class, 'finalize'])
         ->whereNumber('payroll_run')->middleware('can:payroll.finalize')->name('payroll-runs.finalize');
+
+    // Register, payslips, and reports.
+    Route::middleware('can:payroll.view')->group(function () {
+        Route::get('payroll-runs/{payroll_run}/register', [PayrollRegisterController::class, 'show'])
+            ->whereNumber('payroll_run')->name('payroll-runs.register');
+        Route::get('payroll-runs/{payroll_run}/payslips', [PayslipController::class, 'index'])
+            ->whereNumber('payroll_run')->name('payroll-runs.payslips');
+        Route::get('payslips/{payslip}', [PayslipController::class, 'show'])->name('payslips.show');
+        Route::get('payroll-runs/{payroll_run}/summary', [ReportController::class, 'summary'])
+            ->whereNumber('payroll_run')->name('reports.payroll-summary');
+        Route::get('reports', [ReportController::class, 'index'])->name('reports.index');
+    });
+
+    Route::middleware('can:reports.generate')->group(function () {
+        Route::get('payroll-runs/{payroll_run}/register/export', [PayrollRegisterController::class, 'export'])
+            ->whereNumber('payroll_run')->name('payroll-runs.register.export');
+        Route::post('payroll-runs/{payroll_run}/payslips/generate', [PayslipController::class, 'generate'])
+            ->whereNumber('payroll_run')->name('payroll-runs.payslips.generate');
+        Route::post('payslips/{payslip}/publish', [PayslipController::class, 'publish'])->name('payslips.publish');
+    });
 
 });
