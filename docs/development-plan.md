@@ -23,7 +23,8 @@
 | 9. Blockchain | ✅ Done | Deterministic SHA-256 anchoring behind a driver interface; verify with MATCH/MISMATCH. See `blockchain-anchoring.md`. |
 | 10. UI | ✅ Done | Four role dashboards with live summaries, permission-aware actions, shared responsive navigation, and dashboard feature tests. |
 | 11. Audit & hardening | Done | Audit viewer/export, permission-protected system settings, audited account/role changes, last-administrator protection, fresh-state checks under transaction locks, payroll input validation, and period-history constraints implemented. See Stage 11 notes below. |
-| 12–13 | Not started | Testing & QA; deployment & docs. |
+| 12. Testing & QA | Done (mock-defense scope) | Payroll boundary regression tests, complete HTTP workflow, repeatable demo scenarios, and isolated MySQL concurrency checks. See Stage 12 notes below. |
+| 13. Deployment & docs | Not started | Production deployment, HTTPS, backups, and operational/defense materials. |
 
 ---
 
@@ -97,7 +98,65 @@ Completed November 7, 2026 for the mock-defense scope.
 - **Migrations:** Both new migrations were applied to the development MySQL database. They add default settings and grant the new permission to the existing Admin role without resynchronizing or removing existing role grants. Fresh SQLite test migrations also pass.
 - **Verification:** 177 PHPUnit tests passed with 769 assertions, including 28 settings/hardening cases. PHP formatting and frontend build passed. Browser checks confirmed settings navigation for Admin only, 44-pixel controls, no page overflow at 375/768/1024/1440 pixels, and focused, linked errors with preserved nested input. The browser validation submission failed validation and did not save settings.
 
-Stage 12 still owns broader QA, documented payroll edge cases, the defense walkthrough, and concurrent-request/load testing against MySQL. The stale-model tests exercise the refreshed-state checks, but do not establish throughput or parallel-lock behavior under production load. Stage 13 production deployment, HTTPS, backups, and operational configuration remain separate. Audit records are application records, not a claim of tamper-proof storage.
+Stage 12 follow-up results are recorded below. The Stage 11 stale-model tests exercise refreshed-state checks; Stage 12 adds independent-process MySQL contention checks. Stage 13 production deployment, HTTPS, backups, and operational configuration remain separate. Audit records are application records, not a claim of tamper-proof storage.
+
+### Stage 12 implementation and verification
+
+Completed November 7, 2026 for the mock-defense scope.
+
+- **Payroll regression coverage:** Retained the documented PHP 45,000 computation example. Added contribution floor/ceiling cases, zero-tax and bracket boundaries, monthly rounding, version selection, inclusive period-end expiration, expired/future configuration, annual-versus-monthly table selection, separate LBP treatment, repeat-computation row counts, and daily employees with absence records.
+- **Defects corrected:** Annual tax projection now chooses the newest effective annual table before matching an income bracket. Tax and contribution expiration use the period-end cutoff consistently. Daily employees with recorded absences no longer receive the full-month fallback reserved for missing attendance. The demo salary-step lookup retains Step 1 when Step 2 is also seeded. Existing configured percentages and the documented computation example are unchanged.
+- **Workflow coverage:** The new HTTP walkthrough exercises the seeded Officer, Approver, and Viewer accounts through computation, submission, denied unauthorized actions, independent approval, finalization, blocked recomputation, the register, idempotent payslip generation, publication, and simulated hash verification. A test-only stored-amount change produces MISMATCH after an initial MATCH. Existing authentication, inactive-account, RBAC, approval, rejection/return, and mixed-role separation-of-duties tests remain in the full suite.
+- **Repeatable demo fixtures:** The opt-in `DemoPayrollWorkflowSeeder` creates four named scenarios using the existing eight fictional employees and role accounts. It uses the computation/approval services, preserves existing runs on subsequent executions, and rejects production environments. It is deliberately separate from the default `DatabaseSeeder`; it does not anchor anything automatically.
+- **MySQL contention:** Two separate PHP processes load the same pending run before approval; exactly one succeeds and the other receives 422, with one approval and audit event. Four parallel controller invocations create sequential run numbers without duplicates or lost audit events. A parent-held row lock and worker readiness barrier coordinate contention. These are bounded concurrency smoke checks, not HTTP load tests or production throughput measurements.
+- **Database isolation:** Tests allow only in-memory SQLite or MySQL databases named with the `lgu_payroll_qa_` prefix. The guard checks the resolved connection, including connection-URL overrides, before test migrations run. Regression tests verify rejection of the development database, persistent SQLite, and an unsafe URL override. MySQL checks used the separate `lgu_payroll_qa_stage12` database; the development database was not migrated, reseeded, or changed.
+- **Verification:** The final suite contains 200 tests. SQLite: 198 passed, 2 MySQL-only tests skipped, 832 assertions. Isolated MySQL: 200 passed, 850 assertions. Pint and the Vite production build passed. The existing optional `fontaine` build advisory remains; no dependencies were changed.
+
+#### Reproducing QA
+
+The normal command uses disposable in-memory SQLite:
+
+```powershell
+php artisan test --compact
+```
+
+For MySQL, provision an empty, disposable database named `lgu_payroll_qa_stage12` and use the existing local connection credentials. In a separate PowerShell session, with configuration caching disabled and no `DB_URL` overriding the connection:
+
+```powershell
+$env:DB_CONNECTION = 'mysql'
+$env:DB_DATABASE = 'lgu_payroll_qa_stage12'
+php artisan test --compact
+```
+
+The suite migrates this QA database, and the concurrency class runs `migrate:fresh` inside it. Its contents are disposable. To run only the MySQL contention checks in that same session:
+
+```powershell
+php artisan test --compact --group=mysql
+```
+
+#### Mock-defense walkthrough
+
+Use a separate local demo/QA environment, not live payroll data. After fresh migrations and the default `DatabaseSeeder`, run the opt-in fixture seeder. Keep the app's blockchain driver set to `simulated`:
+
+```powershell
+php artisan db:seed --class=DemoPayrollWorkflowSeeder --no-interaction
+```
+
+| Scenario | Initial state | Demonstration |
+|---|---|---|
+| DEMO QA - Ready to prepare | DRAFT, January 2026 | Officer computes and submits; Approver reviews and finalizes. |
+| DEMO QA - Pending review | PENDING_APPROVAL, February 2026 | Approver examines totals and approves, rejects, or returns with remarks. |
+| DEMO QA - Returned for correction | RETURNED, March 2026 | Officer inspects the correction remark, adjusts inputs, recomputes, and resubmits. |
+| DEMO QA - Finalized proof | FINALIZED, April 2026 | Show locked computation, register/export, payslips, and simulated anchoring/verification. |
+
+1. Sign in as `viewer` and show read-only payroll/register access. Payroll preparation and approval requests must be denied.
+2. Sign in as `officer`, open **Ready to prepare**, review employee inputs, compute all eight employees, inspect the register, and submit. The Officer cannot approve their own preparation. An account holding both preparation and approval roles is also blocked from reviewing its own run by the existing separation-of-duties tests.
+3. Sign in as `approver`, review the pending run and its history, approve, then finalize. Return/reject demonstrations require remarks; use the separate pending scenario for those branches.
+4. Open the finalized run. Recomputing must be blocked. Generate payslips twice and show that the second operation creates no duplicate payslips; publish one and open its printable view. Export the register and inspect the department summary.
+5. As Officer or Approver, anchor the finalized run using the simulated driver and verify MATCH. Explain that only hash/metadata are anchored. The automated test demonstrates MISMATCH using isolated test data; do not edit finalized demo or live data to stage a mismatch.
+6. As `admin`, inspect the audit trail and settings. Demo accounts use the existing development-only password `password`; they are not production credentials.
+
+The HTTP walkthrough is automated; a human mock-defense rehearsal and the pending UI plan's mixed-role browser/screen-reader acceptance are not recorded as completed here. Demo attendance may be absent and therefore exercise the existing full-month fallback; it is not evidence of approved attendance. Current calculation code still uses rounded PHP floats, annual tax projection, and illustrative statutory data. Adopted rates, contribution coverage, withholding/annualization, allowance taxability, and paid-day policies need client confirmation before live payroll. Production-scale load testing and operational readiness remain outstanding; Stage 13 is not started.
 
 ## 5. Open items still requiring client confirmation
 

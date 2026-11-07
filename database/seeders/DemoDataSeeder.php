@@ -158,7 +158,7 @@ class DemoDataSeeder extends Seeder
         $gradeSteps = [];
 
         foreach ($stepAmounts as [$grade, $step, $amount]) {
-            $gradeSteps[$grade] = SalaryGradeStep::updateOrCreate(
+            $gradeStep = SalaryGradeStep::updateOrCreate(
                 [
                     'salary_schedule_id' => $schedule->salary_schedule_id,
                     'grade_number' => $grade,
@@ -166,6 +166,9 @@ class DemoDataSeeder extends Seeder
                 ],
                 ['monthly_salary' => $amount],
             );
+            if ($step === 1) {
+                $gradeSteps[$grade] = $gradeStep;
+            }
         }
 
         return $gradeSteps;

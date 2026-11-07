@@ -221,12 +221,23 @@ class PayrollComputationService
     {
         $annualTaxable = max(0.0, ($taxableMonthlyGross - $monthlyPreTaxContributions) * 12);
 
-        $bracket = TaxBracket::query()
+        $effectiveDate = TaxBracket::query()
             ->where('tax_type', 'ANNUAL')
+            ->where('pay_frequency', 'ANNUAL')
             ->whereDate('effective_from', '<=', $period->end_date)
             ->where(fn ($query) => $query
                 ->whereNull('effective_to')
-                ->orWhereDate('effective_to', '>=', $period->start_date))
+                ->orWhereDate('effective_to', '>=', $period->end_date))
+            ->max('effective_from');
+
+        if ($effectiveDate === null) {
+            return 0.0;
+        }
+
+        $bracket = TaxBracket::query()
+            ->where('tax_type', 'ANNUAL')->where('pay_frequency', 'ANNUAL')
+            ->where('effective_from', $effectiveDate)
+            ->where(fn ($query) => $query->whereNull('effective_to')->orWhereDate('effective_to', '>=', $period->end_date))
             ->where('minimum_income', '<=', $annualTaxable)
             ->where(fn ($query) => $query
                 ->whereNull('maximum_income')
@@ -245,7 +256,7 @@ class PayrollComputationService
     }
 
     /**
-     * @return array{worked: float, present: float, absent: float, leave: float}
+     * @return array{worked: float, present: float, absent: float, leave: float, has_records: bool}
      */
     private function attendanceDays(EmploymentRecord $employment, PayrollPeriod $period): array
     {
@@ -256,6 +267,7 @@ class PayrollComputationService
             ->get();
 
         return [
+            'has_records' => $records->isNotEmpty(),
             'worked' => round((float) $records->whereIn('attendance_status', [
                 AttendanceRecord::STATUS_PRESENT, AttendanceRecord::STATUS_HALF_DAY,
             ])->sum('credited_days'), 2),
@@ -268,14 +280,14 @@ class PayrollComputationService
     }
 
     /**
-     * @param  array{worked: float, present: float, absent: float, leave: float}  $days
+     * @param  array{worked: float, present: float, absent: float, leave: float, has_records: bool}  $days
      */
     private function basicPay(?CompensationProfile $profile, string $payBasis, float $serviceFraction, array $days): float
     {
         $rate = $this->rateFor($profile);
 
         if ($payBasis === CompensationProfile::BASIS_DAILY) {
-            $creditedDays = $days['present'] > 0 ? $days['present'] : self::PAYROLL_DAYS_PER_MONTH;
+            $creditedDays = $days['has_records'] ? $days['present'] : self::PAYROLL_DAYS_PER_MONTH;
 
             return round($rate * $creditedDays, 2);
         }
@@ -390,7 +402,7 @@ class PayrollComputationService
         return ContributionRate::query()
             ->where('contribution_type', $contributionType)
             ->whereDate('effective_from', '<=', $period->end_date)
-            ->where(fn ($query) => $query->whereNull('effective_to')->orWhereDate('effective_to', '>=', $period->start_date))
+            ->where(fn ($query) => $query->whereNull('effective_to')->orWhereDate('effective_to', '>=', $period->end_date))
             ->orderByDesc('effective_from')
             ->first();
     }
