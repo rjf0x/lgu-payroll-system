@@ -20,7 +20,8 @@
 | 6. Payroll engine | ✅ Done | Periods, runs, details; computation service with snapshots; documented example verified. See `payroll-computation-engine.md`. |
 | 7. Approval & SoD | ✅ Done | Submit/review/approve/reject/return/finalize with `payroll_approvals` history and backend-enforced separation of duties. See `payroll-approval-workflow.md`. |
 | 8. Register, payslips, reports | ✅ Done | Client-column register + CSV export, printable payslips with publication status, reports hub and department summary. See `payroll-register-payslips-reports.md`. |
-| 9–13 | ⬜ Not started | — |
+| 9. Blockchain | ✅ Done | Deterministic SHA-256 anchoring behind a driver interface; verify with MATCH/MISMATCH. See `blockchain-anchoring.md`. |
+| 10–13 | ⬜ Not started | — |
 
 ---
 

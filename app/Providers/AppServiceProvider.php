@@ -5,6 +5,9 @@ namespace App\Providers;
 use App\Listeners\AuthenticationEventSubscriber;
 use App\Models\Permission;
 use App\Models\User;
+use App\Services\Blockchain\BlockchainDriver;
+use App\Services\Blockchain\SimulatedBlockchainDriver;
+use App\Services\Blockchain\TestnetBlockchainDriver;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Event;
@@ -20,7 +23,12 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->bind(BlockchainDriver::class, function (): BlockchainDriver {
+            return match (config('blockchain.driver')) {
+                'testnet' => new TestnetBlockchainDriver,
+                default => new SimulatedBlockchainDriver,
+            };
+        });
     }
 
     /**

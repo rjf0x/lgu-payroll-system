@@ -63,6 +63,8 @@ class PayrollRunController extends Controller
             'finalizedBy',
             'details.employmentRecord.position',
             'approvals.actedBy',
+            'anchor.anchoredBy',
+            'anchor.verificationLogs',
         ]);
 
         $detailIds = $payrollRun->details->pluck('payroll_detail_id');

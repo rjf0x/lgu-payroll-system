@@ -69,6 +69,9 @@
                     <x-nav-link :href="route('payroll-runs.index', ['status' => 'PENDING_APPROVAL'])" :active="request()->query('status') === 'PENDING_APPROVAL'">Pending Approvals</x-nav-link>
                 @endcan
                 <x-nav-link :href="route('reports.index')" :active="request()->routeIs('reports.*')">Reports</x-nav-link>
+                @can('blockchain.verify')
+                    <x-nav-link :href="route('blockchain.index')" :active="request()->routeIs('blockchain.*') || request()->routeIs('blockchain-anchors.*')">Blockchain Verification</x-nav-link>
+                @endcan
             @endcan
 
             @can('users.manage')

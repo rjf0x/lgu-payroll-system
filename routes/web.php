@@ -3,6 +3,7 @@
 use App\Http\Controllers\AttendanceAdjustmentController;
 use App\Http\Controllers\AttendanceRecordController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
+use App\Http\Controllers\BlockchainAnchorController;
 use App\Http\Controllers\CompensationProfileController;
 use App\Http\Controllers\ContributionRateController;
 use App\Http\Controllers\DeductionTypeController;
@@ -183,6 +184,17 @@ Route::middleware('auth')->group(function () {
         Route::post('payroll-runs/{payroll_run}/payslips/generate', [PayslipController::class, 'generate'])
             ->whereNumber('payroll_run')->name('payroll-runs.payslips.generate');
         Route::post('payslips/{payslip}/publish', [PayslipController::class, 'publish'])->name('payslips.publish');
+    });
+
+    // Blockchain anchoring & verification (only a hash and metadata leave the app).
+    Route::middleware('can:blockchain.verify')->group(function () {
+        Route::get('blockchain', [BlockchainAnchorController::class, 'index'])->name('blockchain.index');
+        Route::post('payroll-runs/{payroll_run}/anchor', [BlockchainAnchorController::class, 'anchor'])
+            ->whereNumber('payroll_run')->name('payroll-runs.anchor');
+        Route::get('blockchain-anchors/{blockchain_anchor}', [BlockchainAnchorController::class, 'show'])
+            ->name('blockchain-anchors.show');
+        Route::post('blockchain-anchors/{blockchain_anchor}/verify', [BlockchainAnchorController::class, 'verify'])
+            ->name('blockchain-anchors.verify');
     });
 
 });

@@ -178,4 +178,31 @@
             </tbody>
         </table>
     </div>
+
+    @can('blockchain.verify')
+        <div class="mt-5 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+            <h3 class="text-sm font-semibold text-slate-700">Blockchain Anchoring</h3>
+            @if ($run->status === 'FINALIZED')
+                @if ($run->anchor)
+                    <div class="mt-3 space-y-2 text-sm">
+                        <p>
+                            <span class="text-slate-500">Network:</span> {{ $run->anchor->network_name }} ·
+                            <span class="text-slate-500">Status:</span> {{ $run->anchor->anchor_status }} ·
+                            <span class="text-slate-500">Anchored:</span> {{ $run->anchor->anchored_at?->format('M d, Y g:i A') }}
+                        </p>
+                        <p class="break-all rounded-md bg-slate-50 px-3 py-2 font-mono text-xs">{{ $run->anchor->payload_hash }}</p>
+                        <a href="{{ route('blockchain-anchors.show', $run->anchor) }}" class="inline-block rounded-md border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50">View &amp; verify anchor</a>
+                    </div>
+                @else
+                    <p class="mt-2 text-sm text-slate-500">This finalized run has not been anchored yet.</p>
+                    <form method="POST" action="{{ route('payroll-runs.anchor', $run) }}" class="mt-3">
+                        @csrf
+                        <button class="rounded-md bg-slate-800 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-900">Anchor finalized payroll</button>
+                    </form>
+                @endif
+            @else
+                <p class="mt-2 text-sm text-slate-500">Anchoring becomes available once the payroll run is finalized.</p>
+            @endif
+        </div>
+    @endcan
 @endsection

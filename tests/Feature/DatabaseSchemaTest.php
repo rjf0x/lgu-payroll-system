@@ -81,6 +81,7 @@ class DatabaseSchemaTest extends TestCase
             'first_name' => 'Maria',
             'middle_name' => 'Santos',
             'last_name' => 'Dela Cruz',
+            'suffix' => null,
         ]);
 
         $record = EmploymentRecord::factory()->create([
