@@ -21,7 +21,8 @@
 | 7. Approval & SoD | ✅ Done | Submit/review/approve/reject/return/finalize with `payroll_approvals` history and backend-enforced separation of duties. See `payroll-approval-workflow.md`. |
 | 8. Register, payslips, reports | ✅ Done | Client-column register + CSV export, printable payslips with publication status, reports hub and department summary. See `payroll-register-payslips-reports.md`. |
 | 9. Blockchain | ✅ Done | Deterministic SHA-256 anchoring behind a driver interface; verify with MATCH/MISMATCH. See `blockchain-anchoring.md`. |
-| 10–13 | ⬜ Not started | — |
+| 10. UI | ✅ Done | Four role dashboards with live summaries, permission-aware actions, shared responsive navigation, and dashboard feature tests. |
+| 11–13 | ⬜ Not started | — |
 
 ---
 

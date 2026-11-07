@@ -6,6 +6,7 @@ use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\BlockchainAnchorController;
 use App\Http\Controllers\CompensationProfileController;
 use App\Http\Controllers\ContributionRateController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DeductionTypeController;
 use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\EarningTypeController;
@@ -51,9 +52,7 @@ Route::middleware('guest')->group(function () {
 
 Route::middleware('auth')->group(function () {
 
-    Route::get('/dashboard', function () {
-        return view('dashboard');
-    })->name('dashboard');
+    Route::get('/dashboard', DashboardController::class)->name('dashboard');
 
     Route::post('/logout', [
         AuthenticatedSessionController::class,
