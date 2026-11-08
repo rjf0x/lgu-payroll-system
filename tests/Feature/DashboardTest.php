@@ -2,6 +2,9 @@
 
 namespace Tests\Feature;
 
+use App\Models\Department;
+use App\Models\Employee;
+use App\Models\EmploymentRecord;
 use App\Models\PayrollRun;
 use App\Models\Role;
 use App\Models\User;
@@ -48,6 +51,44 @@ class DashboardTest extends TestCase
     public function test_guests_are_redirected_to_login(): void
     {
         $this->get(route('dashboard'))->assertRedirect(route('login'));
+    }
+
+    public function test_officer_statistics_count_current_employees_and_actionable_runs_and_refresh_after_changes(): void
+    {
+        $this->travelTo(now()->setDate(2026, 11, 8));
+        $user = $this->userWithRole(Role::PAYROLL_OFFICER);
+        $department = Department::factory()->create();
+        $employee = Employee::factory()->create();
+        EmploymentRecord::factory()->recycle($department)->count(2)->create(['employee_id' => $employee->employee_id, 'department_id' => $department->department_id]);
+        foreach ([
+            ['employment_status' => EmploymentRecord::STATUS_INACTIVE],
+            ['start_date' => '2026-11-09'],
+            ['end_date' => '2026-11-07'],
+        ] as $attributes) {
+            EmploymentRecord::factory()->recycle($department)->create(array_merge(['department_id' => $department->department_id], $attributes));
+        }
+        $deleted = Employee::factory()->create();
+        EmploymentRecord::factory()->recycle($department)->create(['employee_id' => $deleted->employee_id, 'department_id' => $department->department_id]);
+        $deleted->delete();
+        Department::factory()->create();
+        $draft = PayrollRun::factory()->create();
+        foreach ([PayrollRun::STATUS_RETURNED, PayrollRun::STATUS_REJECTED, PayrollRun::STATUS_APPROVED,
+            PayrollRun::STATUS_PENDING_APPROVAL, PayrollRun::STATUS_PROCESSING, PayrollRun::STATUS_FINALIZED,
+            PayrollRun::STATUS_CANCELLED] as $status) {
+            PayrollRun::factory()->create(['status' => $status]);
+        }
+
+        $this->actingAs($user)->get(route('dashboard'))->assertOk()
+            ->assertViewHas('metrics', [
+                'Active employees' => 1, 'Departments' => 2, 'Pending payroll tasks' => 3, 'Finalized runs' => 1,
+            ]);
+
+        $draft->update(['status' => PayrollRun::STATUS_FINALIZED]);
+        EmploymentRecord::factory()->recycle($department)->create(['department_id' => $department->department_id, 'start_date' => '2026-11-08', 'end_date' => '2026-11-08']);
+
+        $this->get(route('dashboard'))->assertOk()->assertViewHas('metrics', [
+            'Active employees' => 2, 'Departments' => 2, 'Pending payroll tasks' => 2, 'Finalized runs' => 2,
+        ]);
     }
 
     public function test_unassigned_account_cannot_see_payroll_or_management_data(): void

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\AttendanceAdjustment;
 use App\Models\Department;
 use App\Models\Employee;
+use App\Models\EmploymentRecord;
 use App\Models\LeaveApplication;
 use App\Models\PayrollRun;
 use App\Models\Role;
@@ -22,20 +23,22 @@ class DashboardController extends Controller
             ->first(fn (string $role): bool => $user->roles->contains('role_name', $role));
         $metrics = [];
         if ($user->can('employees.view')) {
-            $metrics['Employees'] = Employee::count();
+            $today = today()->toDateString();
+            $metrics['Active employees'] = Employee::whereHas('employmentRecords', fn ($query) => $query
+                ->where('employment_status', EmploymentRecord::STATUS_ACTIVE)
+                ->whereDate('start_date', '<=', $today)
+                ->where(fn ($query) => $query->whereNull('end_date')->orWhereDate('end_date', '>=', $today)))->count();
             $metrics['Departments'] = Department::count();
         }
         if ($user->can('users.manage')) {
             $metrics['Active accounts'] = User::where('account_status', User::STATUS_ACTIVE)->count();
-        }
-        if ($user->can('payroll.view')) {
-            $metrics['Finalized runs'] = PayrollRun::where('status', PayrollRun::STATUS_FINALIZED)->count();
         }
         $runs = PayrollRun::query()->with('payrollPeriod')->withCount('details');
         $nextActions = [];
         if ($user->can('payroll.view') && $user->can('payroll.prepare')) {
             $editable = PayrollRun::whereIn('status', [PayrollRun::STATUS_DRAFT, PayrollRun::STATUS_RETURNED, PayrollRun::STATUS_REJECTED]);
             $count = (clone $editable)->count();
+            $metrics['Pending payroll tasks'] = $count;
             $next = $editable->orderByRaw("CASE WHEN status IN ('RETURNED', 'REJECTED') THEN 0 ELSE 1 END")->orderByDesc('updated_at')->first();
             $nextActions[] = ['title' => 'Payroll preparation', 'count' => $count, 'description' => 'Draft, returned, and rejected runs needing preparation or correction.', 'href' => $next ? route('payroll-runs.show', $next) : route('payroll-runs.create'), 'label' => $next ? 'Continue preparation' : 'Prepare payroll'];
         }
@@ -50,6 +53,7 @@ class DashboardController extends Controller
         if ($user->can('payroll.view') && $user->can('payroll.finalize')) {
             $approved = PayrollRun::where('status', PayrollRun::STATUS_APPROVED);
             $count = (clone $approved)->count();
+            $metrics['Pending payroll tasks'] = ($metrics['Pending payroll tasks'] ?? 0) + $count;
             $next = $approved->orderBy('updated_at')->first();
             $nextActions[] = ['title' => 'Ready to finalize', 'count' => $count, 'description' => 'Approved runs awaiting finalization.', 'href' => $next ? route('payroll-runs.show', $next) : route('payroll-runs.index', ['status' => PayrollRun::STATUS_APPROVED]), 'label' => $next ? 'Review approved payroll' : 'View approved payroll'];
         }
@@ -65,6 +69,10 @@ class DashboardController extends Controller
                 ->where(fn ($query) => $query->whereNull('submitted_by')->orWhere('submitted_by', '!=', $user->user_id));
         } elseif ($dashboardRole === Role::VIEWER) {
             $runs->where('status', PayrollRun::STATUS_FINALIZED);
+        }
+
+        if ($user->can('payroll.view')) {
+            $metrics['Finalized runs'] = PayrollRun::where('status', PayrollRun::STATUS_FINALIZED)->count();
         }
 
         return view('dashboard', [

@@ -110,11 +110,14 @@
         </x-card>
     @endif
     @if ($metrics)
-        <dl class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <section aria-labelledby="dashboard-statistics-heading">
+        <h2 id="dashboard-statistics-heading" class="ui-section-heading mb-4">Dashboard statistics</h2>
+        <dl @class(['grid auto-rows-fr grid-cols-1 gap-4 sm:grid-cols-2', 'xl:grid-cols-5' => count($metrics) === 5, 'xl:grid-cols-4' => count($metrics) === 4, 'xl:grid-cols-3' => count($metrics) === 3])>
             @foreach ($metrics as $label => $value)
                 <x-dashboard-stat :label="$label" :value="$value" />
             @endforeach
         </dl>
+        </section>
     @endif
     <section class="ui-card">
         <h2 class="ui-section-heading">Quick actions</h2>
