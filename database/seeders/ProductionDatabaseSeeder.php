@@ -18,7 +18,14 @@ class ProductionDatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        $credentials = (array) config('deployment.bootstrap_admin');
+        $this->createAdmin((array) config('deployment.bootstrap_admin'));
+    }
+
+    /**
+     * @param  array{username?: string|null, email?: string|null, password?: string|null}  $credentials
+     */
+    public function createAdmin(array $credentials): void
+    {
         Validator::make($credentials, [
             'username' => ['required', 'string', 'max:50', 'regex:/^[A-Za-z0-9_.-]+$/'],
             'email' => ['required', 'email', 'max:255'],
