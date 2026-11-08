@@ -145,4 +145,44 @@ class UiFoundationsTest extends TestCase
         $this->get(route('employees.index', ['q' => '<script>']))->assertOk()
             ->assertSee('No employees match your search.')->assertDontSee('<script>', false);
     }
+
+    public static function payrollRecordNavigationCases(): array
+    {
+        return [
+            'approver pending review' => [Role::APPROVER, PayrollRun::STATUS_PENDING_APPROVAL, 'Pending Approvals'],
+            'viewer pending record' => [Role::VIEWER, PayrollRun::STATUS_PENDING_APPROVAL, 'Monthly Payroll'],
+            'approver finalized record' => [Role::APPROVER, PayrollRun::STATUS_FINALIZED, 'Monthly Payroll'],
+        ];
+    }
+
+    #[DataProvider('payrollRecordNavigationCases')]
+    public function test_payroll_record_navigation_identifies_the_relevant_work_queue(string $role, string $status, string $label): void
+    {
+        $user = $this->userWithRole($role);
+        $run = PayrollRun::factory()->create(['status' => $status]);
+
+        $response = $this->actingAs($user)->get(route('payroll-runs.show', $run))->assertOk();
+
+        $document = $this->document($response->getContent());
+        $current = $document->query('//nav[@aria-label="Main navigation"]//a[@aria-current="page"]');
+        $this->assertSame(1, $current->length);
+        $this->assertSame($label, trim($current->item(0)->textContent));
+    }
+
+    public function test_administration_links_share_one_group_and_retain_their_permissions(): void
+    {
+        $user = $this->userWithRole(Role::ADMIN);
+
+        $response = $this->actingAs($user)->get(route('system-settings.edit'))->assertOk();
+
+        $document = $this->document($response->getContent());
+        foreach (['users.index', 'audit-logs.index', 'system-settings.edit'] as $route) {
+            $this->assertSame(1, $document->query('//details[@data-navigation-group="administration"]//a[@href="'.route($route).'"]')->length);
+        }
+
+        $viewer = $this->userWithRole(Role::VIEWER);
+        $viewerPage = $this->actingAs($viewer)->get(route('dashboard'))->assertOk();
+        $viewerDocument = $this->document($viewerPage->getContent());
+        $this->assertSame(0, $viewerDocument->query('//details[@data-navigation-group="administration"]')->length);
+    }
 }

@@ -1,4 +1,4 @@
-const navigation = document.getElementById('app-navigation');
+import './navigation.js';
 const confirmation = document.getElementById('confirmation-dialog');
 let pendingConfirmation = null;
 
@@ -13,19 +13,6 @@ if (confirmation && typeof confirmation.showModal === 'function') {
         pending.form.requestSubmit(pending.submitter);
     });
     confirmation.addEventListener('close', () => { pendingConfirmation = null; });
-}
-
-if (navigation) {
-    const desktop = window.matchMedia('(min-width: 1024px)');
-    const updateNavigation = () => { navigation.open = desktop.matches; };
-    updateNavigation();
-    desktop.addEventListener('change', updateNavigation);
-    navigation.addEventListener('keydown', (event) => {
-        if (event.key === 'Escape' && !desktop.matches && navigation.open) {
-            navigation.open = false;
-            navigation.querySelector('summary').focus();
-        }
-    });
 }
 
 const errorSummary = document.querySelector('[data-error-summary]');
