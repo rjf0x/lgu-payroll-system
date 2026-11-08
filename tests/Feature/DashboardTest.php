@@ -89,13 +89,54 @@ class DashboardTest extends TestCase
             ->assertViewHas('metrics', fn (array $metrics): bool => $metrics['Active accounts'] === 1);
     }
 
+    public function test_recent_payroll_shows_five_runs_in_processing_chronology_with_coverage_and_finalization_dates(): void
+    {
+        $user = $this->userWithRole(Role::ADMIN);
+        $role = Role::where('role_name', Role::PAYROLL_OFFICER)->firstOrFail();
+        $user->roles()->attach($role->role_id, ['assigned_at' => now()]);
+        $recent = PayrollRun::factory()->create([
+            'status' => PayrollRun::STATUS_FINALIZED,
+            'run_number' => 7,
+            'processed_at' => '2026-01-10 09:00:00',
+            'finalized_at' => '2026-02-01 09:00:00',
+            'created_at' => '2026-01-01 09:00:00',
+        ]);
+        $recent->payrollPeriod->update(['start_date' => '2026-01-01', 'end_date' => '2026-01-31']);
+        $processed = PayrollRun::factory()->create([
+            'status' => PayrollRun::STATUS_PROCESSING,
+            'processed_at' => '2026-01-20 09:00:00',
+            'created_at' => '2026-01-01 09:00:00',
+        ]);
+        $draft = PayrollRun::factory()->create(['created_at' => '2026-01-15 09:00:00']);
+        $older = collect();
+        foreach ([14, 13, 12, 11] as $day) {
+            $older->push(PayrollRun::factory()->create(['created_at' => '2026-01-'.$day.' 09:00:00']));
+        }
+
+        $this->actingAs($user)->get(route('dashboard'))
+            ->assertOk()
+            ->assertViewHas('runs', fn ($runs): bool => $runs->modelKeys() === [
+                $recent->payroll_run_id, $processed->payroll_run_id, $draft->payroll_run_id,
+                $older[0]->payroll_run_id, $older[1]->payroll_run_id,
+            ])
+            ->assertSee('Jan 01, 2026')->assertSee('Jan 31, 2026')->assertSee('Feb 01, 2026')
+            ->assertSee('Not finalized')->assertSee('View records')->assertSee('View All Payroll Runs')
+            ->assertSee('Browse older payroll records');
+    }
+
     public function test_multiple_roles_use_admin_dashboard_and_combined_permissions(): void
     {
         $user = $this->userWithRole(Role::ADMIN);
         $role = Role::where('role_name', Role::PAYROLL_OFFICER)->firstOrFail();
         $user->roles()->attach($role->role_id, ['assigned_at' => now()]);
 
+        User::factory()->count(2)->create(['account_status' => User::STATUS_INACTIVE]);
+
         $this->actingAs($user)->get(route('dashboard'))
-            ->assertOk()->assertSee('Admin Dashboard')->assertSee('Add user')->assertSee('Prepare payroll');
+            ->assertOk()->assertSee('Admin Dashboard')->assertSee('Add user')->assertSee('Prepare payroll')
+            ->assertSee('Total unique users')
+            ->assertSee('Accounts with multiple roles appear in each role.')
+            ->assertViewHas('totalUniqueUsers', 3)
+            ->assertViewHas('roles', fn ($roles): bool => $roles->sum('users_count') === 2);
     }
 }

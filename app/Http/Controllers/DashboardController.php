@@ -71,7 +71,10 @@ class DashboardController extends Controller
             'dashboardRole' => $dashboardRole,
             'nextActions' => $nextActions,
             'metrics' => $metrics,
-            'runs' => $user->can('payroll.view') ? $runs->orderByDesc('payroll_run_id')->limit(6)->get() : collect(),
+            'totalUniqueUsers' => $user->can('users.manage') ? User::count() : null,
+            'runs' => $user->can('payroll.view') ? $runs
+                ->orderByRaw('COALESCE(finalized_at, processed_at, created_at) DESC')
+                ->orderByDesc('payroll_run_id')->limit(5)->get() : collect(),
             'roles' => $user->can('users.manage') ? Role::withCount('users')->orderBy('role_name')->get() : collect(),
         ]);
     }

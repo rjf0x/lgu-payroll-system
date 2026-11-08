@@ -2,7 +2,7 @@
 
 <section {{ $attributes->class(['ui-card']) }}>
     @if ($heading)
-        <h2 class="mb-4 text-lg font-semibold text-ink">{{ $heading }}</h2>
+        <h2 class="ui-section-heading mb-4">{{ $heading }}</h2>
     @endif
     {{ $slot }}
 </section>
