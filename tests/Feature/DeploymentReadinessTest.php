@@ -6,6 +6,8 @@ use App\Models\Role;
 use App\Models\User;
 use Database\Seeders\DatabaseSeeder;
 use Database\Seeders\DemoDataSeeder;
+use Database\Seeders\DemoEmployeeSeeder;
+use Database\Seeders\PayrollMasterDataSeeder;
 use Database\Seeders\ProductionDatabaseSeeder;
 use Database\Seeders\StatutoryConfigSeeder;
 use Database\Seeders\UserAccountSeeder;
@@ -22,7 +24,7 @@ class DeploymentReadinessTest extends TestCase
 
     public static function demonstrationSeeders(): array
     {
-        return [[DatabaseSeeder::class], [DemoDataSeeder::class], [UserAccountSeeder::class], [StatutoryConfigSeeder::class]];
+        return [[DatabaseSeeder::class], [DemoDataSeeder::class], [DemoEmployeeSeeder::class], [PayrollMasterDataSeeder::class], [UserAccountSeeder::class], [StatutoryConfigSeeder::class]];
     }
 
     #[DataProvider('demonstrationSeeders')]
@@ -49,9 +51,10 @@ class DeploymentReadinessTest extends TestCase
 
     public function test_production_setup_creates_one_admin_without_demo_payroll_or_rates(): void
     {
+        $this->app->detectEnvironment(fn () => 'production');
         $this->configureInitialAccount();
 
-        $this->seed(ProductionDatabaseSeeder::class);
+        $this->app->make(ProductionDatabaseSeeder::class)->run();
 
         $this->assertDatabaseCount('users', 1);
         $admin = User::firstOrFail();

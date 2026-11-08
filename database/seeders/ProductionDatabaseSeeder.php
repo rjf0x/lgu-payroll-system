@@ -37,7 +37,17 @@ class ProductionDatabaseSeeder extends Seeder
         }
 
         DB::transaction(function () use ($credentials): void {
-            $this->call([RolePermissionSeeder::class, SystemSettingSeeder::class, EmploymentTypeSeeder::class]);
+            $this->call([
+                RolePermissionSeeder::class,
+                SystemSettingSeeder::class,
+                EmploymentTypeSeeder::class,
+            ]);
+
+            if (app()->environment(['local', 'testing'])) {
+                $this->call(PayrollMasterDataSeeder::class);
+            } else {
+                $this->call([EarningTypeSeeder::class, DeductionTypeSeeder::class]);
+            }
             $user = User::create([
                 'username' => $credentials['username'],
                 'email' => $credentials['email'],

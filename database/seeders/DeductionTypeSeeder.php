@@ -8,7 +8,8 @@ use Illuminate\Database\Seeder;
 class DeductionTypeSeeder extends Seeder
 {
     /**
-     * Seed the deduction types drawn from the client payroll register.
+     * Seed deduction types from Payrolll.xlsx, Payroll!N3:AI3 and AL3.
+     * Normalize September dues to MONTHLY DUES and retain PhilHealth for the engine.
      *
      * Statutory contributions and withholding tax are computed by the payroll engine;
      * the remaining entries are entered manually by the Payroll Officer.
@@ -54,7 +55,7 @@ class DeductionTypeSeeder extends Seeder
         ];
 
         foreach ($deductions as $deduction) {
-            DeductionType::updateOrCreate(
+            DeductionType::firstOrCreate(
                 ['deduction_name' => $deduction['name'], 'deduction_category' => $deduction['category']],
                 [
                     'computation_type' => $deduction['type'],

@@ -32,14 +32,14 @@ class StatutoryConfigSeeder extends Seeder
         ];
 
         foreach ($brackets as $bracket) {
-            TaxBracket::updateOrCreate(
+            TaxBracket::whereDate('effective_from', $effectiveFrom)->firstOrCreate(
                 [
                     'tax_type' => 'ANNUAL',
                     'pay_frequency' => 'ANNUAL',
                     'minimum_income' => $bracket['minimum'],
-                    'effective_from' => $effectiveFrom,
                 ],
                 [
+                    'effective_from' => $effectiveFrom,
                     'maximum_income' => $bracket['maximum'],
                     'base_tax' => $bracket['base_tax'],
                     'marginal_tax_rate' => $bracket['rate'],
@@ -54,12 +54,12 @@ class StatutoryConfigSeeder extends Seeder
         ];
 
         foreach ($rates as $rate) {
-            ContributionRate::updateOrCreate(
+            ContributionRate::whereDate('effective_from', $effectiveFrom)->firstOrCreate(
                 [
                     'contribution_type' => $rate['type'],
-                    'effective_from' => $effectiveFrom,
                 ],
                 [
+                    'effective_from' => $effectiveFrom,
                     'minimum_compensation' => $rate['minimum'],
                     'maximum_compensation' => $rate['maximum'],
                     'employee_rate' => $rate['employee'],

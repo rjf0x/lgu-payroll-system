@@ -12,7 +12,7 @@ class CreateInitialAdminTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_creates_an_active_administrator_without_demo_data(): void
+    public function test_creates_an_active_administrator_with_local_payroll_setup(): void
     {
         $this->artisan('app:create-admin')
             ->expectsQuestion('Username', 'first.admin')
@@ -28,7 +28,16 @@ class CreateInitialAdminTest extends TestCase
         $this->assertTrue($admin->isActive());
         $this->assertTrue($admin->hasRole(Role::ADMIN));
         $this->assertTrue(Hash::check('Initial-Admin-2026!Safe', $admin->password_hash));
-        $this->assertDatabaseCount('employees', 0);
+        $this->assertDatabaseCount('employees', 8);
+        $this->assertDatabaseCount('employment_records', 8);
+        $this->assertDatabaseCount('compensation_profiles', 8);
+        $this->assertDatabaseCount('departments', 4);
+        $this->assertDatabaseCount('positions', 6);
+        $this->assertDatabaseCount('salary_grade_steps', 6);
+        $this->assertDatabaseCount('earning_types', 6);
+        $this->assertDatabaseCount('deduction_types', 24);
+        $this->assertDatabaseCount('tax_brackets', 6);
+        $this->assertDatabaseCount('contribution_rates', 3);
         $this->assertDatabaseHas('audit_logs', ['action' => 'PRODUCTION_BOOTSTRAPPED']);
     }
 

@@ -8,7 +8,7 @@ use Illuminate\Database\Seeder;
 class EarningTypeSeeder extends Seeder
 {
     /**
-     * Seed the manually entered allowance types from the client payroll register.
+     * Seed the manually entered allowance types from Payrolll.xlsx, Payroll!G3:L3.
      *
      * Tax classifications are initial placeholders and must be confirmed against
      * BIR rules and the Municipal Accounting Office before production use.
@@ -25,7 +25,7 @@ class EarningTypeSeeder extends Seeder
         ];
 
         foreach ($earnings as $earning) {
-            EarningType::updateOrCreate(
+            EarningType::firstOrCreate(
                 ['earning_name' => $earning['earning_name']],
                 [
                     'earning_category' => 'ALLOWANCE',
