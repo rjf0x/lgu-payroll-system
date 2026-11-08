@@ -59,13 +59,15 @@
     @if ($nextActions)
         <section aria-labelledby="next-actions-heading">
             <h2 id="next-actions-heading" class="ui-section-heading mb-4">Next actions</h2>
-            <div class="grid gap-4 md:grid-cols-2">
+            <div class="grid auto-rows-fr gap-4 md:grid-cols-2 lg:grid-cols-3">
                 @foreach ($nextActions as $action)
-                    <x-card class="flex flex-col items-start">
+                    <x-card :class="'flex h-full flex-col items-start border-t-4 '.($action['title'] === 'Payroll preparation' ? 'border-t-brand ring-1 ring-brand-border' : 'border-t-slate-200')">
                         <div class="mb-4 flex items-center gap-3">
                             <span class="ui-icon-tile">
                                 <x-nav-icon :name="[
                                     'Payroll preparation' => 'Payroll',
+                                    'Payroll corrections' => 'Earnings & Deductions',
+                                    'Ready to submit' => 'Statutory',
                                     'Independent review' => 'Administration',
                                     'Ready to finalize' => 'Statutory',
                                 ][$action['title']] ?? 'Dashboard'" />
@@ -83,27 +85,48 @@
                             <p class="mt-3 text-sm font-semibold text-muted">No items pending</p>
                             <p class="mb-5 mt-1 text-sm text-muted">
                                 @switch($action['title'])
-                                    @case('Payroll preparation') No payroll runs need preparation or correction. You can start a new payroll when ready. @break
+                                    @case('Payroll preparation') No draft runs need preparation. You can start a new payroll when ready. @break
+                                    @case('Payroll corrections') No returned or rejected runs need correction. Feedback will appear in the payroll record when a reviewer requests changes. @break
+                                    @case('Ready to submit') No draft runs are ready for submission. Complete and confirm every employee's payroll inputs first. @break
                                     @case('Independent review') No submitted payroll runs are awaiting your independent review. @break
                                     @case('Ready to finalize') No approved payroll runs are awaiting finalization. @break
                                     @default New items will appear here when they need your attention.
                                 @endswitch
                             </p>
                         @endif
-                        <x-button :href="$action['href']" :variant="$action['count'] > 0 ? 'primary' : 'secondary'" class="mt-auto">{{ $action['label'] }}</x-button>
+                        <x-button :href="$action['href']" :variant="$action['title'] === 'Payroll preparation' || $action['count'] > 0 ? 'primary' : 'secondary'" class="mt-auto w-full text-center">{{ $action['label'] }}</x-button>
                     </x-card>
                 @endforeach
             </div>
         </section>
     @endif
     @if ($dashboardRole === 'Viewer')
-        <x-card heading="Find finalized records">
-            <p class="mb-4 text-sm text-muted">Open finalized payroll records and authorized reports.</p>
-            <div class="flex flex-wrap gap-3">
-                @can('payroll.view')<x-button :href="route('payroll-runs.index', ['status' => 'FINALIZED'])" variant="primary">Browse finalized payroll</x-button>@endcan
-                @can('employees.view')<x-button :href="route('employees.index')">Employee directory</x-button>@endcan
+        <section aria-labelledby="payroll-records-reports-heading">
+            <h2 id="payroll-records-reports-heading" class="ui-section-heading">Payroll Records and Reports</h2>
+            <p class="mb-4 mt-1 text-sm text-muted">Access finalized payroll transactions, authorized employee information, and available payroll reports. Your access is read-only.</p>
+            <div class="grid auto-rows-fr gap-4 md:grid-cols-2">
+                @can('payroll.view')
+                    <x-card class="flex h-full flex-col items-start gap-4">
+                        <span class="ui-icon-tile"><x-nav-icon name="Payroll" /></span>
+                        <div>
+                            <h3 class="ui-section-heading">Finalized Payroll</h3>
+                            <p class="mt-2 text-sm text-muted">Browse completed payroll transactions and review their employee breakdowns and authorized payroll documents.</p>
+                        </div>
+                        <div class="mt-auto pt-2"><x-button :href="route('payroll-runs.index', ['status' => 'FINALIZED'])" variant="primary">Browse finalized payroll</x-button></div>
+                    </x-card>
+                @endcan
+                @can('employees.view')
+                    <x-card class="flex h-full flex-col items-start gap-4">
+                        <span class="ui-icon-tile"><x-nav-icon name="Organization" /></span>
+                        <div>
+                            <h3 class="ui-section-heading">Employee Directory</h3>
+                            <p class="mt-2 text-sm text-muted">Find authorized employee information, employment records, and related details without changing records.</p>
+                        </div>
+                        <div class="mt-auto pt-2"><x-button :href="route('employees.index')" variant="primary">View employee directory</x-button></div>
+                    </x-card>
+                @endcan
             </div>
-        </x-card>
+        </section>
     @endif
     @if ($metrics)
         <section aria-labelledby="dashboard-statistics-heading">

@@ -130,16 +130,18 @@ class DailyWorkflowTest extends TestCase
     {
         $user = $this->userWithRoles(Role::ADMIN, Role::PAYROLL_OFFICER, Role::APPROVER);
         $returned = PayrollRun::factory()->create(['status' => 'RETURNED']);
-        PayrollRun::factory()->create(['status' => 'DRAFT']);
+        $draft = PayrollRun::factory()->create(['status' => 'DRAFT']);
         $pending = PayrollRun::factory()->create(['status' => 'PENDING_APPROVAL']);
         PayrollRun::factory()->create(['status' => 'PENDING_APPROVAL', 'created_by' => $user->user_id]);
 
         $this->actingAs($user)->get(route('dashboard'))->assertOk()->assertSee('Manage user access')
-            ->assertViewHas('nextActions', function (array $actions) use ($returned, $pending): bool {
+            ->assertViewHas('nextActions', function (array $actions) use ($draft, $returned, $pending): bool {
                 $byTitle = collect($actions)->keyBy('title');
 
-                return $byTitle['Payroll preparation']['count'] === 2
-                    && $byTitle['Payroll preparation']['href'] === route('payroll-runs.show', $returned)
+                return $byTitle['Payroll preparation']['count'] === 1
+                    && $byTitle['Payroll preparation']['href'] === route('payroll-runs.show', $draft)
+                    && $byTitle['Payroll corrections']['count'] === 1
+                    && $byTitle['Payroll corrections']['href'] === route('payroll-runs.show', $returned)
                     && $byTitle['Independent review']['count'] === 1
                     && $byTitle['Independent review']['href'] === route('payroll-runs.show', $pending);
             });

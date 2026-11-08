@@ -8,6 +8,7 @@ use App\Models\EmploymentRecord;
 use App\Models\PayrollRun;
 use App\Models\Role;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
@@ -33,12 +34,28 @@ class DashboardController extends Controller
         }
         $runs = PayrollRun::query()->with('payrollPeriod')->withCount('details');
         $nextActions = [];
+        $incompleteInputs = fn (Builder $query): Builder => $query->whereNull('payable_days')
+            ->orWhereNull('input_confirmed_at')->orWhereNull('input_reference')->orWhere('input_reference', '');
         if ($user->can('payroll.view') && $user->can('payroll.prepare')) {
-            $editable = PayrollRun::whereIn('status', [PayrollRun::STATUS_DRAFT, PayrollRun::STATUS_RETURNED, PayrollRun::STATUS_REJECTED]);
-            $count = (clone $editable)->count();
-            $metrics['Pending payroll tasks'] = $count;
-            $next = $editable->orderByRaw("CASE WHEN status IN ('RETURNED', 'REJECTED') THEN 0 ELSE 1 END")->orderByDesc('updated_at')->first();
-            $nextActions[] = ['title' => 'Payroll preparation', 'count' => $count, 'description' => 'Draft, returned, and rejected runs needing preparation or correction.', 'href' => $next ? route('payroll-runs.show', $next) : route('payroll-runs.create'), 'label' => $next ? 'Continue preparation' : 'Prepare payroll'];
+            $metrics['Pending payroll tasks'] = PayrollRun::whereIn('status', [PayrollRun::STATUS_DRAFT, PayrollRun::STATUS_RETURNED, PayrollRun::STATUS_REJECTED])->count();
+            $preparation = PayrollRun::where('status', PayrollRun::STATUS_DRAFT);
+            if ($user->can('payroll.submit')) {
+                $preparation->where(fn (Builder $query) => $query->whereDoesntHave('details')->orWhereHas('details', $incompleteInputs));
+            }
+            $count = (clone $preparation)->count();
+            $next = $preparation->oldest('updated_at')->orderBy('payroll_run_id')->first();
+            $nextActions[] = ['title' => 'Payroll preparation', 'count' => $count, 'description' => $user->can('payroll.submit') ? 'Draft runs needing computation or confirmed payroll inputs.' : 'Draft runs available for preparation and input review.', 'href' => $next ? route('payroll-runs.show', $next) : route('payroll-runs.create'), 'label' => $next ? 'Continue preparation' : 'Prepare payroll'];
+
+            $corrections = PayrollRun::whereIn('status', [PayrollRun::STATUS_RETURNED, PayrollRun::STATUS_REJECTED]);
+            $count = (clone $corrections)->count();
+            $next = $corrections->oldest('updated_at')->orderBy('payroll_run_id')->first();
+            $nextActions[] = ['title' => 'Payroll corrections', 'count' => $count, 'description' => 'Returned and rejected runs needing changes before resubmission.', 'href' => $next ? route('payroll-runs.show', $next) : route('payroll-runs.index', ['status' => PayrollRun::STATUS_RETURNED]), 'label' => $next ? 'Correct next payroll' : 'View returned payroll'];
+        }
+        if ($user->can('payroll.view') && $user->can('payroll.submit')) {
+            $ready = PayrollRun::where('status', PayrollRun::STATUS_DRAFT)->has('details')->whereDoesntHave('details', $incompleteInputs);
+            $count = (clone $ready)->count();
+            $next = $ready->oldest('updated_at')->orderBy('payroll_run_id')->first();
+            $nextActions[] = ['title' => 'Ready to submit', 'count' => $count, 'description' => 'Draft runs with confirmed inputs for every employee. Check totals before submitting.', 'href' => $next ? route('payroll-runs.show', $next) : route('payroll-runs.index', ['status' => PayrollRun::STATUS_DRAFT]), 'label' => $next ? 'Review and submit payroll' : 'View draft payroll'];
         }
         if ($user->can('payroll.view') && ($user->can('payroll.approve') || $user->can('payroll.review') || $user->can('payroll.reject'))) {
             $reviewable = PayrollRun::where('status', PayrollRun::STATUS_PENDING_APPROVAL)

@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Department;
 use App\Models\Employee;
 use App\Models\EmploymentRecord;
+use App\Models\PayrollDetail;
 use App\Models\PayrollRun;
 use App\Models\Role;
 use App\Models\User;
@@ -51,6 +52,61 @@ class DashboardTest extends TestCase
     public function test_guests_are_redirected_to_login(): void
     {
         $this->get(route('dashboard'))->assertRedirect(route('login'));
+    }
+
+    public function test_officer_action_queues_are_distinct_and_follow_input_completeness(): void
+    {
+        $officer = $this->userWithRole(Role::PAYROLL_OFFICER);
+        PayrollRun::factory()->create();
+        $partial = PayrollRun::factory()->create();
+        PayrollDetail::factory()->create(['payroll_run_id' => $partial->getKey()]);
+        $missing = PayrollDetail::factory()->create(['payroll_run_id' => $partial->getKey(), 'input_confirmed_at' => null]);
+        $ready = PayrollRun::factory()->create();
+        PayrollDetail::factory()->count(2)->create(['payroll_run_id' => $ready->getKey()]);
+        $blank = PayrollRun::factory()->create();
+        PayrollDetail::factory()->create(['payroll_run_id' => $blank->getKey(), 'input_reference' => '']);
+        $returned = PayrollRun::factory()->create(['status' => 'RETURNED']);
+        PayrollRun::factory()->create(['status' => 'REJECTED']);
+        foreach (['PENDING_APPROVAL', 'APPROVED', 'FINALIZED', 'CANCELLED', 'PROCESSING'] as $status) {
+            PayrollRun::factory()->create(['status' => $status]);
+        }
+
+        $this->actingAs($officer)->get(route('dashboard'))->assertOk()
+            ->assertViewHas('nextActions', function (array $actions) use ($ready, $returned): bool {
+                $byTitle = collect($actions)->keyBy('title');
+
+                return $byTitle->keys()->all() === ['Payroll preparation', 'Payroll corrections', 'Ready to submit']
+                    && $byTitle['Payroll preparation']['count'] === 3
+                    && $byTitle['Payroll corrections']['count'] === 2
+                    && $byTitle['Ready to submit']['count'] === 1
+                    && $byTitle['Ready to submit']['href'] === route('payroll-runs.show', $ready)
+                    && $byTitle['Payroll corrections']['href'] === route('payroll-runs.show', $returned);
+            })
+            ->assertViewHas('metrics', fn (array $metrics): bool => $metrics['Pending payroll tasks'] === 6);
+
+        $missing->update(['input_confirmed_at' => now()]);
+        $this->get(route('dashboard'))->assertOk()->assertViewHas('nextActions', function (array $actions): bool {
+            $byTitle = collect($actions)->keyBy('title');
+
+            return $byTitle['Payroll preparation']['count'] === 2
+                && $byTitle['Payroll corrections']['count'] === 2
+                && $byTitle['Ready to submit']['count'] === 2;
+        });
+    }
+
+    public function test_empty_officer_queues_explain_the_next_step_and_other_roles_keep_their_actions(): void
+    {
+        $officer = $this->userWithRole(Role::PAYROLL_OFFICER);
+        $this->actingAs($officer)->get(route('dashboard'))->assertOk()
+            ->assertSee('No draft runs need preparation.')->assertSee('No returned or rejected runs need correction.')
+            ->assertSee('No draft runs are ready for submission.')
+            ->assertViewHas('nextActions', fn (array $actions): bool => count($actions) === 3 && collect($actions)->sum('count') === 0);
+
+        $approver = $this->userWithRole(Role::APPROVER);
+        $this->actingAs($approver)->get(route('dashboard'))->assertOk()
+            ->assertViewHas('nextActions', fn (array $actions): bool => array_column($actions, 'title') === ['Independent review', 'Ready to finalize']);
+        $viewer = $this->userWithRole(Role::VIEWER);
+        $this->actingAs($viewer)->get(route('dashboard'))->assertOk()->assertViewHas('nextActions', []);
     }
 
     public function test_officer_statistics_count_current_employees_and_actionable_runs_and_refresh_after_changes(): void
