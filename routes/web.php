@@ -105,6 +105,7 @@ Route::middleware(['auth', EnsureAccountIsActive::class, PreventSensitiveRespons
     // Payroll processing.
     Route::middleware('can:payroll.view')->group(function () {
         Route::get('payroll-periods', [PayrollPeriodController::class, 'index'])->name('payroll-periods.index');
+        Route::get('payroll-periods/{payroll_period}', [PayrollPeriodController::class, 'show'])->whereNumber('payroll_period')->name('payroll-periods.show');
         Route::get('payroll-runs', [PayrollRunController::class, 'index'])->name('payroll-runs.index');
         Route::get('payroll-runs/{payroll_run}', [PayrollRunController::class, 'show'])
             ->whereNumber('payroll_run')->name('payroll-runs.show');
@@ -113,6 +114,7 @@ Route::middleware(['auth', EnsureAccountIsActive::class, PreventSensitiveRespons
     Route::middleware('can:payroll.prepare')->group(function () {
         Route::get('payroll-periods/create', [PayrollPeriodController::class, 'create'])->name('payroll-periods.create');
         Route::post('payroll-periods', [PayrollPeriodController::class, 'store'])->name('payroll-periods.store');
+        Route::post('payroll-periods/{payroll_period}/close', [PayrollPeriodController::class, 'close'])->whereNumber('payroll_period')->name('payroll-periods.close');
         Route::get('payroll-periods/{payroll_period}/edit', [PayrollPeriodController::class, 'edit'])->name('payroll-periods.edit');
         Route::put('payroll-periods/{payroll_period}', [PayrollPeriodController::class, 'update'])->name('payroll-periods.update');
         Route::delete('payroll-periods/{payroll_period}', [PayrollPeriodController::class, 'destroy'])->name('payroll-periods.destroy');

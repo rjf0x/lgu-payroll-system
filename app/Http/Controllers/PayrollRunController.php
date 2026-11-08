@@ -25,6 +25,7 @@ class PayrollRunController extends Controller
             ->with(['payrollPeriod', 'createdBy'])
             ->withCount('details')
             ->when($status !== null, fn ($query) => $query->where('status', $status))
+            ->when($request->filled('payroll_period_id'), fn ($query) => $query->where('payroll_period_id', $request->integer('payroll_period_id')))
             ->orderByDesc('payroll_run_id')
             ->paginate(15)
             ->withQueryString();

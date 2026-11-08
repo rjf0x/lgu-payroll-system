@@ -6,6 +6,10 @@
 @section('content')
     <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
         <form method="GET" class="flex min-w-0 flex-wrap items-end gap-3">
+            @if (request()->filled('payroll_period_id'))
+                <input type="hidden" name="payroll_period_id" value="{{ request()->integer('payroll_period_id') }}">
+                <span class="text-sm text-slate-600">Runs for selected payroll period</span>
+            @endif
             <select name="status" class="ui-field" aria-label="Status" id="filter-status">
                 <option value="">All statuses</option>
                 @foreach (['DRAFT', 'PENDING_APPROVAL', 'RETURNED', 'REJECTED', 'APPROVED', 'FINALIZED'] as $option)

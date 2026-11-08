@@ -15,12 +15,14 @@ class PayrollPeriodFactory extends Factory
      */
     public function definition(): array
     {
+        $start = now()->startOfMonth()->addMonths(fake()->unique()->numberBetween(0, 2400));
+
         return [
-            'period_name' => now()->format('F Y'),
+            'period_name' => $start->format('F Y'),
             'payroll_type' => PayrollPeriod::TYPE_MONTHLY,
-            'start_date' => now()->startOfMonth()->toDateString(),
-            'end_date' => now()->endOfMonth()->toDateString(),
-            'pay_date' => now()->endOfMonth()->toDateString(),
+            'start_date' => $start->toDateString(),
+            'end_date' => $start->copy()->endOfMonth()->toDateString(),
+            'pay_date' => $start->copy()->endOfMonth()->toDateString(),
             'status' => 'OPEN',
         ];
     }
