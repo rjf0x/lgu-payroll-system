@@ -90,6 +90,10 @@
 
 #app-navigation[data-navigation-enhanced] #navigation-panel { height: 100dvh; }
 
+@media (width < 48rem) {
+    #main-content, #main-content [id] { scroll-margin-top: 10rem; }
+}
+
 @media (width < 64rem) {
     #app-navigation[data-navigation-enhanced] { position: fixed; inset: 0 auto 0 0; z-index: 50; width: min(20rem, calc(100vw - 2.5rem)); height: 100dvh; box-shadow: 12px 0 40px rgb(15 23 42 / 20%); }
     #app-navigation[data-navigation-enhanced]:not([open]), #app-navigation[data-navigation-enhanced] > summary { display: none; }

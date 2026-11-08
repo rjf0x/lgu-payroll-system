@@ -1,4 +1,5 @@
 import './navigation.js';
+import './header.js';
 const confirmation = document.getElementById('confirmation-dialog');
 let pendingConfirmation = null;
 
