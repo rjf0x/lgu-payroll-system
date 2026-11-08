@@ -31,7 +31,7 @@ class UiCompletionTest extends TestCase
 
     public static function secondaryScreens(): array
     {
-        $indexes = ['departments', 'positions', 'employment-records', 'salary-schedules', 'salary-grade-steps', 'compensation-profiles', 'earning-types', 'deduction-types', 'employee-earning-assignments', 'employee-deduction-assignments', 'tax-brackets', 'contribution-rates', 'attendance-records', 'attendance-adjustments', 'leave-applications', 'leave-balances', 'leave-transactions', 'leave-types', 'payroll-periods', 'payroll-runs', 'payslips', 'users', 'blockchain', 'reports'];
+        $indexes = ['departments', 'positions', 'employment-records', 'salary-schedules', 'salary-grade-steps', 'compensation-profiles', 'earning-types', 'deduction-types', 'employee-earning-assignments', 'employee-deduction-assignments', 'tax-brackets', 'contribution-rates', 'payroll-periods', 'payroll-runs', 'payslips', 'users', 'blockchain', 'reports'];
         $cases = [];
 
         foreach ($indexes as $name) {
@@ -40,7 +40,7 @@ class UiCompletionTest extends TestCase
             }
         }
 
-        foreach (['departments', 'positions', 'employees', 'users', 'attendance-records', 'leave-applications', 'earning-types', 'deduction-types', 'tax-brackets', 'contribution-rates', 'payroll-periods'] as $name) {
+        foreach (['departments', 'positions', 'employees', 'users', 'earning-types', 'deduction-types', 'tax-brackets', 'contribution-rates', 'payroll-periods'] as $name) {
             $cases[$name.' form'] = [$name.'.create', $name === 'payroll-periods' ? Role::PAYROLL_OFFICER : Role::ADMIN];
         }
 

@@ -10,6 +10,9 @@
     </x-page-header>
 
     <div class="space-y-6">
+        @if ($run->isEditable() && $run->details->contains(fn ($detail) => $detail->payable_days === null || $detail->input_confirmed_at === null))
+            <x-alert variant="warning">Payroll inputs are incomplete. Open each employee's payroll detail, enter approved payable days and an approval reference, and confirm the inputs before submitting. Totals are provisional until all inputs are complete.</x-alert>
+        @endif
         <x-payroll-progress :run="$run" :can-submit="$canSubmit" :can-review="$canReview" :can-finalize="$canFinalize" :independent="$isIndependentReviewer" />
         <x-card heading="Run overview">
             <dl class="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
@@ -55,6 +58,10 @@
                                 <td class="ui-wrap max-w-64">
                                     <div class="font-semibold">{{ $detail->employee_name_snapshot }}</div>
                                     <div class="mt-1 text-sm text-muted">{{ $detail->position_snapshot }}</div>
+                                    <div class="mt-1 text-xs text-muted">Payable days: {{ $detail->payable_days ?? 'Input required' }}</div>
+                                    @if ($detail->input_reference)
+                                        <div class="mt-1 whitespace-normal break-words text-xs text-muted">Source: {{ $detail->input_reference }}</div>
+                                    @endif
                                 </td>
                                 <td class="ui-money">{{ number_format((float) $detail->basic_pay, 2) }}</td>
                                 <td class="ui-money">{{ number_format((float) $detail->total_earnings, 2) }}</td>
@@ -89,7 +96,7 @@
             <div class="flex flex-wrap items-start gap-3">
                 @can('payroll.prepare')
                     @if ($run->isEditable())
-                        <form method="POST" action="{{ route('payroll-runs.compute', $run) }}" @if ($run->details->isNotEmpty()) data-confirm data-confirm-title="Recompute payroll?" data-confirm-description="Recomputation replaces the calculated employee details for this run using the current payroll inputs. Check any manual adjustments afterwards." @endif data-confirm-context="{{ $confirmationContext }}" onsubmit="return window.payrollConfirmationReady || !this.hasAttribute('data-confirm') || confirm((event.submitter?.dataset.confirmDescription || this.dataset.confirmDescription) + '\n' + this.dataset.confirmContext)" data-submit-feedback>
+                        <form method="POST" action="{{ route('payroll-runs.compute', $run) }}" @if ($run->details->isNotEmpty()) data-confirm data-confirm-title="Recompute payroll?" data-confirm-description="Recomputation refreshes calculated totals using current compensation and statutory settings. Confirmed payable days and manual adjustments are retained. Review the totals afterwards." @endif data-confirm-context="{{ $confirmationContext }}" onsubmit="return window.payrollConfirmationReady || !this.hasAttribute('data-confirm') || confirm((event.submitter?.dataset.confirmDescription || this.dataset.confirmDescription) + '\n' + this.dataset.confirmContext)" data-submit-feedback>
                             @csrf
                             <x-button type="submit" :variant="$canSubmit ? 'secondary' : 'primary'" data-submitting-label="Computing payroll…">{{ $run->details->isEmpty() ? 'Compute payroll' : 'Recompute' }}</x-button>
                         </form>

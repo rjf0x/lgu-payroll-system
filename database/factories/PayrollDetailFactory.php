@@ -26,7 +26,7 @@ class PayrollDetailFactory extends Factory
             'employee_number_snapshot' => 'TEST-001', 'employee_name_snapshot' => 'Test Employee',
             'basic_pay' => 45000, 'total_earnings' => 0, 'gross_pay' => 45000, 'total_deductions' => 0,
             'nthp_before_lbp' => 45000, 'lbp_loan_deduction' => 0, 'net_pay' => 45000,
-            'days_worked' => 22, 'days_present' => 22, 'days_absent' => 0, 'days_on_leave' => 0, 'payroll_status' => 'COMPUTED',
+            'payable_days' => 22, 'input_reference' => 'Approved test payroll input', 'input_confirmed_at' => now(), 'payroll_status' => 'COMPUTED',
         ];
     }
 }

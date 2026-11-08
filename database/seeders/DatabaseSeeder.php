@@ -22,7 +22,6 @@ class DatabaseSeeder extends Seeder
             RolePermissionSeeder::class,
             SystemSettingSeeder::class,
             EmploymentTypeSeeder::class,
-            LeaveTypeSeeder::class,
             EarningTypeSeeder::class,
             DeductionTypeSeeder::class,
             StatutoryConfigSeeder::class,

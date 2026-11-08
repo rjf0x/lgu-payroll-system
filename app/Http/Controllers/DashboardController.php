@@ -2,11 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\AttendanceAdjustment;
 use App\Models\Department;
 use App\Models\Employee;
 use App\Models\EmploymentRecord;
-use App\Models\LeaveApplication;
 use App\Models\PayrollRun;
 use App\Models\Role;
 use App\Models\User;
@@ -56,12 +54,6 @@ class DashboardController extends Controller
             $metrics['Pending payroll tasks'] = ($metrics['Pending payroll tasks'] ?? 0) + $count;
             $next = $approved->orderBy('updated_at')->first();
             $nextActions[] = ['title' => 'Ready to finalize', 'count' => $count, 'description' => 'Approved runs awaiting finalization.', 'href' => $next ? route('payroll-runs.show', $next) : route('payroll-runs.index', ['status' => PayrollRun::STATUS_APPROVED]), 'label' => $next ? 'Review approved payroll' : 'View approved payroll'];
-        }
-        if ($user->can('leave.manage')) {
-            $nextActions[] = ['title' => 'Leave applications', 'count' => LeaveApplication::where('approval_status', 'PENDING')->count(), 'description' => 'Applications awaiting a decision.', 'href' => route('leave-applications.index', ['status' => 'PENDING']), 'label' => 'Review leave applications'];
-        }
-        if ($user->can('attendance.manage')) {
-            $nextActions[] = ['title' => 'Attendance adjustments', 'count' => AttendanceAdjustment::where('approval_status', 'PENDING')->count(), 'description' => 'Attendance corrections awaiting review.', 'href' => route('attendance-adjustments.index', ['status' => 'PENDING']), 'label' => 'Review adjustments'];
         }
         if ($dashboardRole === Role::APPROVER) {
             $runs->where('status', PayrollRun::STATUS_PENDING_APPROVAL)

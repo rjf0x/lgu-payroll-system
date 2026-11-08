@@ -2,7 +2,6 @@
 
 namespace Tests\Feature;
 
-use App\Models\AttendanceRecord;
 use App\Models\CompensationProfile;
 use App\Models\ContributionRate;
 use App\Models\EmploymentRecord;
@@ -139,14 +138,13 @@ class PayrollEdgeCaseTest extends TestCase
         $this->assertDatabaseCount('payroll_employer_contributions', 1);
     }
 
-    public function test_a_daily_employee_with_only_absences_is_not_given_the_no_attendance_fallback(): void
+    public function test_daily_employee_without_approved_inputs_is_not_given_full_month_pay(): void
     {
         $this->seed(DeductionTypeSeeder::class);
         $record = EmploymentRecord::factory()->create();
         CompensationProfile::factory()->create(['employment_id' => $record->getKey(), 'pay_basis' => 'DAILY', 'basic_rate' => 800, 'effective_from' => '2024-01-01']);
         $period = PayrollPeriod::factory()->create(['start_date' => '2026-01-01', 'end_date' => '2026-01-31', 'pay_date' => '2026-01-31']);
         $run = PayrollRun::factory()->create(['payroll_period_id' => $period->getKey()]);
-        AttendanceRecord::factory()->create(['employee_id' => $record->employee_id, 'attendance_date' => '2026-01-05', 'attendance_status' => 'ABSENT', 'credited_days' => 0]);
 
         app(PayrollComputationService::class)->computeRun($run);
 

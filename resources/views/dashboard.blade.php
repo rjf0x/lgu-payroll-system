@@ -68,8 +68,6 @@
                                     'Payroll preparation' => 'Payroll',
                                     'Independent review' => 'Administration',
                                     'Ready to finalize' => 'Statutory',
-                                    'Leave applications' => 'Leave',
-                                    'Attendance adjustments' => 'Attendance',
                                 ][$action['title']] ?? 'Dashboard'" />
                             </span>
                             <h3 class="ui-section-heading">{{ $action['title'] }}</h3>
@@ -88,8 +86,6 @@
                                     @case('Payroll preparation') No payroll runs need preparation or correction. You can start a new payroll when ready. @break
                                     @case('Independent review') No submitted payroll runs are awaiting your independent review. @break
                                     @case('Ready to finalize') No approved payroll runs are awaiting finalization. @break
-                                    @case('Leave applications') No leave applications are awaiting a decision. New requests will appear here. @break
-                                    @case('Attendance adjustments') No attendance corrections are awaiting review. New requests will appear here. @break
                                     @default New items will appear here when they need your attention.
                                 @endswitch
                             </p>
@@ -125,7 +121,6 @@
             @can('users.manage') <x-dashboard-action :href="route('users.create')" icon="Administration">Add user</x-dashboard-action> @endcan
             @can('employees.view') <x-dashboard-action :href="route('employees.index')" icon="Organization">Employee directory</x-dashboard-action> @endcan
             @can('compensation.manage') <x-dashboard-action :href="route('salary-schedules.index')" icon="Compensation">Salary schedules</x-dashboard-action> @endcan
-            @can('attendance.manage') <x-dashboard-action :href="route('attendance-records.index')" icon="Attendance">Record attendance</x-dashboard-action> @endcan
             @can('payroll.prepare') <x-dashboard-action :href="route('payroll-runs.create')" icon="Payroll">Prepare payroll</x-dashboard-action> @endcan
             @can('payroll.approve') <x-dashboard-action :href="route('payroll-runs.index', ['status' => 'PENDING_APPROVAL'])" icon="Statutory">Pending approvals</x-dashboard-action> @endcan
             @can('payroll.view') <x-dashboard-action :href="route('reports.index')" icon="Statutory">View reports</x-dashboard-action> @endcan

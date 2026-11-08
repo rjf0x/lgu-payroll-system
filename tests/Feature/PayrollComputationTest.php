@@ -2,7 +2,6 @@
 
 namespace Tests\Feature;
 
-use App\Models\AttendanceRecord;
 use App\Models\CompensationProfile;
 use App\Models\Department;
 use App\Models\Employee;
@@ -26,6 +25,8 @@ use Tests\TestCase;
 class PayrollComputationTest extends TestCase
 {
     use RefreshDatabase;
+
+    private float $payableDays = 22.0;
 
     private EmploymentRecord $record;
 
@@ -92,6 +93,7 @@ class PayrollComputationTest extends TestCase
 
     private function compute(): PayrollDetail
     {
+        PayrollDetail::factory()->create(['payroll_run_id' => $this->run->getKey(), 'employment_id' => $this->record->getKey(), 'payable_days' => $this->payableDays]);
         app(PayrollComputationService::class)->computeRun($this->run);
 
         return $this->run->details()->firstOrFail();
@@ -139,30 +141,20 @@ class PayrollComputationTest extends TestCase
         $this->assertSame(6725.0, $employerTotal);
     }
 
-    public function test_leave_without_pay_reduces_basic_pay(): void
+    public function test_approved_payable_days_reduce_basic_pay(): void
     {
-        AttendanceRecord::factory()->create([
-            'employee_id' => $this->record->employee_id,
-            'attendance_date' => '2025-01-06',
-            'attendance_status' => AttendanceRecord::STATUS_ABSENT,
-            'credited_days' => 0,
-        ]);
-        AttendanceRecord::factory()->create([
-            'employee_id' => $this->record->employee_id,
-            'attendance_date' => '2025-01-07',
-            'attendance_status' => AttendanceRecord::STATUS_ABSENT,
-            'credited_days' => 0,
-        ]);
+        $this->payableDays = 20;
 
         $detail = $this->compute();
 
         // (22 - 2) / 22 * 45000 = 40909.09
         $this->assertSame('40909.09', (string) $detail->basic_pay);
-        $this->assertSame('2.00', (string) $detail->days_absent);
+        $this->assertSame('20.00', (string) $detail->payable_days);
     }
 
     public function test_daily_rate_employee_is_paid_per_credited_day(): void
     {
+        $this->payableDays = 1.5;
         $this->record->compensationProfiles()->delete();
         CompensationProfile::factory()->create([
             'employment_id' => $this->record->employment_id,
@@ -171,19 +163,6 @@ class PayrollComputationTest extends TestCase
             'basic_rate' => 800,
             'service_fraction' => 1.0,
             'effective_from' => '2024-01-01',
-        ]);
-
-        AttendanceRecord::factory()->create([
-            'employee_id' => $this->record->employee_id,
-            'attendance_date' => '2025-01-06',
-            'attendance_status' => AttendanceRecord::STATUS_PRESENT,
-            'credited_days' => 1,
-        ]);
-        AttendanceRecord::factory()->create([
-            'employee_id' => $this->record->employee_id,
-            'attendance_date' => '2025-01-07',
-            'attendance_status' => AttendanceRecord::STATUS_HALF_DAY,
-            'credited_days' => 0.5,
         ]);
 
         $detail = $this->compute();

@@ -1,6 +1,6 @@
 # LGU Payroll Management System
 
-Laravel 13 / PHP 8.5 application for employee records, attendance and leave, monthly payroll, independent approval, registers, payslips, audit records, and Hyperledger Besu hash verification. The interface uses Blade and Tailwind 4.
+Laravel 13 / PHP 8.5 application for employee records, approved manual payroll inputs, monthly payroll, independent approval, registers, payslips, audit records, and Hyperledger Besu hash verification. The interface uses Blade and Tailwind 4.
 
 The current release is prepared for local review and mock defense. Production hosting, HTTPS validation, backup restore acceptance, payroll-policy approval, and human accessibility/usability acceptance remain open. See [development progress](docs/development-plan.md) and [UI/UX progress](docs/ui-ux-improvement-plan.md).
 

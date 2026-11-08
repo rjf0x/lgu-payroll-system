@@ -24,10 +24,6 @@ class Permission extends Model
 
     public const EMPLOYEES_MANAGE = 'employees.manage';
 
-    public const ATTENDANCE_MANAGE = 'attendance.manage';
-
-    public const LEAVE_MANAGE = 'leave.manage';
-
     public const COMPENSATION_MANAGE = 'compensation.manage';
 
     public const PAYROLL_PREPARE = 'payroll.prepare';
@@ -63,8 +59,6 @@ class Permission extends Model
             self::ROLES_MANAGE,
             self::EMPLOYEES_VIEW,
             self::EMPLOYEES_MANAGE,
-            self::ATTENDANCE_MANAGE,
-            self::LEAVE_MANAGE,
             self::COMPENSATION_MANAGE,
             self::PAYROLL_PREPARE,
             self::PAYROLL_SUBMIT,

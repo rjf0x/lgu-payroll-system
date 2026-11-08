@@ -123,6 +123,7 @@ class PayrollRunFlowTest extends TestCase
 
         $this->actingAs($officer)
             ->put(route('payroll-details.update', [$run, $detail]), [
+                'payable_days' => 22, 'input_reference' => 'Approved test summary', 'inputs_confirmed' => 1,
                 'earnings' => [$pera->earning_type_id => 2000],
                 'deductions' => [],
                 'lbp_loan_deduction' => 500,

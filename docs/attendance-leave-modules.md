@@ -1,5 +1,7 @@
 # Attendance & Leave Modules (Stage 4)
 
+> Retired during development: these modules and routes have been removed. Payroll now uses explicitly confirmed payable-day inputs and approved manual adjustments, with an approval reference. This document records the previous implementation.
+
 **Stage:** 4 of the development plan
 **Status:** Implemented for the mock-defense build
 **Related:** `database-implementation.md`, `authentication-authorization.md`, `database-schema.md` §6

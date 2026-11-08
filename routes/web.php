@@ -1,7 +1,5 @@
 <?php
 
-use App\Http\Controllers\AttendanceAdjustmentController;
-use App\Http\Controllers\AttendanceRecordController;
 use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\BlockchainAnchorController;
@@ -15,10 +13,6 @@ use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\EmployeeDeductionAssignmentController;
 use App\Http\Controllers\EmployeeEarningAssignmentController;
 use App\Http\Controllers\EmploymentRecordController;
-use App\Http\Controllers\LeaveApplicationController;
-use App\Http\Controllers\LeaveBalanceController;
-use App\Http\Controllers\LeaveTransactionController;
-use App\Http\Controllers\LeaveTypeController;
 use App\Http\Controllers\PayrollApprovalController;
 use App\Http\Controllers\PayrollDetailController;
 use App\Http\Controllers\PayrollPeriodController;
@@ -107,36 +101,6 @@ Route::middleware(['auth', EnsureAccountIsActive::class, PreventSensitiveRespons
     }
 
     Route::resource('users', UserController::class)->middleware('can:users.manage');
-
-    // Attendance management.
-    Route::middleware('can:attendance.manage')->group(function () {
-        Route::resource('attendance-records', AttendanceRecordController::class)->except('show');
-
-        Route::resource('attendance-adjustments', AttendanceAdjustmentController::class)
-            ->except(['edit', 'update', 'destroy']);
-        Route::post('attendance-adjustments/{attendance_adjustment}/approve', [
-            AttendanceAdjustmentController::class, 'approve',
-        ])->name('attendance-adjustments.approve');
-        Route::post('attendance-adjustments/{attendance_adjustment}/reject', [
-            AttendanceAdjustmentController::class, 'reject',
-        ])->name('attendance-adjustments.reject');
-    });
-
-    // Leave management.
-    Route::middleware('can:leave.manage')->group(function () {
-        Route::resource('leave-types', LeaveTypeController::class)->except('show');
-        Route::resource('leave-balances', LeaveBalanceController::class)->except(['show', 'destroy']);
-
-        Route::resource('leave-applications', LeaveApplicationController::class)->except(['edit', 'update']);
-        Route::post('leave-applications/{leave_application}/approve', [
-            LeaveApplicationController::class, 'approve',
-        ])->name('leave-applications.approve');
-        Route::post('leave-applications/{leave_application}/reject', [
-            LeaveApplicationController::class, 'reject',
-        ])->name('leave-applications.reject');
-
-        Route::resource('leave-transactions', LeaveTransactionController::class)->only('index');
-    });
 
     // Payroll processing.
     Route::middleware('can:payroll.view')->group(function () {

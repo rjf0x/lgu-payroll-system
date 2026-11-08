@@ -2,12 +2,8 @@
 
 namespace Tests\Feature;
 
-use App\Http\Controllers\LeaveApplicationController;
 use App\Models\AuditLog;
 use App\Models\DeductionType;
-use App\Models\Employee;
-use App\Models\LeaveApplication;
-use App\Models\LeaveType;
 use App\Models\PayrollDetail;
 use App\Models\PayrollPeriod;
 use App\Models\PayrollRun;
@@ -184,26 +180,6 @@ class HardeningTest extends TestCase
         }
 
         $this->assertSame('FINALIZED', $stale->fresh()->status);
-    }
-
-    public function test_stale_leave_review_cannot_apply_usage_after_another_decision(): void
-    {
-        $user = $this->userWithRole(Role::ADMIN);
-        $employee = Employee::factory()->create();
-        $type = LeaveType::factory()->create();
-        $this->actingAs($user)->post(route('leave-applications.store'), ['employee_id' => $employee->getKey(), 'leave_type_id' => $type->getKey(), 'start_date' => '2026-11-09', 'end_date' => '2026-11-09', 'total_days' => 1])->assertRedirect();
-        $stale = LeaveApplication::firstOrFail();
-        LeaveApplication::whereKey($stale->getKey())->update(['approval_status' => 'REJECTED']);
-
-        try {
-            app(LeaveApplicationController::class)->approve($stale);
-            $this->fail('A stale review must not record leave usage.');
-        } catch (HttpException $exception) {
-            $this->assertSame(422, $exception->getStatusCode());
-        }
-
-        $this->assertSame('REJECTED', $stale->fresh()->approval_status);
-        $this->assertDatabaseCount('leave_transactions', 0);
     }
 
     public static function restrictedDeductions(): array

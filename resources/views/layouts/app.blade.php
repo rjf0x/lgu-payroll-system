@@ -66,7 +66,7 @@
                         <h2 class="text-sm font-semibold text-ink">Activity shortcuts</h2>
                         <p class="mb-2 mt-1 text-xs text-muted">Open a queue to see its current status.</p>
                         <nav aria-label="Activity shortcuts" class="flex flex-col gap-1 text-sm">
-                            @canany(['payroll.prepare', 'payroll.approve', 'payroll.review', 'payroll.finalize', 'leave.manage', 'attendance.manage'])
+                            @canany(['payroll.prepare', 'payroll.approve', 'payroll.review', 'payroll.finalize'])
                                 <a href="{{ route('dashboard') }}#next-actions-heading" class="flex min-h-11 items-center rounded-lg px-3 font-semibold text-brand hover:bg-brand-soft">View next actions</a>
                             @endcanany
                             @can('payroll.view')

@@ -47,6 +47,7 @@ class PayrollDetailController extends Controller
             $locked = PayrollRun::whereKey($payrollRun->getKey())->lockForUpdate()->firstOrFail();
             abort_unless($locked->isEditable(), 403, 'This payroll run can no longer be edited.');
             $payrollDetail->refresh();
+            $oldValues = $payrollDetail->only(['payable_days', 'input_reference', 'basic_pay', 'net_pay', 'lbp_loan_deduction']);
             // Earnings.
             $payrollDetail->earnings()->delete();
             $earningTypes = EarningType::whereIn('earning_type_id', array_keys((array) $request->input('earnings', [])))
@@ -94,10 +95,22 @@ class PayrollDetailController extends Controller
 
             $payrollDetail->update([
                 'lbp_loan_deduction' => round((float) $request->input('lbp_loan_deduction', 0), 2),
+                'payable_days' => $request->validated('payable_days'),
+                'input_reference' => $request->validated('input_reference'),
+                'input_recorded_by' => $request->user()->getKey(),
+                'input_confirmed_at' => now(),
+                'manual_adjustments' => true,
             ]);
 
-            $this->service->recomputeTotals($payrollDetail, $payrollRun->payrollPeriod);
-            app(AuditLogger::class)->log('PAYROLL_DETAIL_UPDATED', 'Payroll', (int) auth()->id(), 'payroll_details', (string) $payrollDetail->getKey());
+            $this->service->computeDetail($payrollRun, $payrollDetail->employmentRecord, $payrollRun->payrollPeriod);
+            $payrollDetail->refresh();
+            app(AuditLogger::class)->log('PAYROLL_DETAIL_UPDATED', 'Payroll', (int) auth()->id(), 'payroll_details', (string) $payrollDetail->getKey(), oldValues: $oldValues, newValues: [
+                'payable_days' => $payrollDetail->payable_days,
+                'input_reference' => $payrollDetail->input_reference,
+                'lbp_loan_deduction' => $payrollDetail->lbp_loan_deduction,
+                'basic_pay' => $payrollDetail->basic_pay,
+                'net_pay' => $payrollDetail->net_pay,
+            ]);
         });
 
         return redirect()

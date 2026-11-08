@@ -87,7 +87,8 @@ class PayrollRunController extends Controller
             'totalDeductions' => (float) $payrollRun->details->sum('total_deductions'),
             'totalNet' => (float) $payrollRun->details->sum('net_pay'),
             'employerContributions' => (float) PayrollEmployerContribution::whereIn('payroll_detail_id', $detailIds)->sum('amount'),
-            'canSubmit' => $user->can('payroll.submit') && $payrollRun->isEditable() && $payrollRun->details->isNotEmpty(),
+            'canSubmit' => $user->can('payroll.submit') && $payrollRun->isEditable() && $payrollRun->details->isNotEmpty()
+                && $payrollRun->details->every(fn ($detail): bool => $detail->payable_days !== null && $detail->input_confirmed_at !== null && filled($detail->input_reference)),
             'isIndependentReviewer' => $independent,
             'canApprove' => $pendingReview && $user->can('payroll.approve'),
             'canReject' => $pendingReview && $user->can('payroll.reject'),

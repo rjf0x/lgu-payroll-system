@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Models\AttendanceRecord;
 use App\Models\CompensationProfile;
 use App\Models\ContributionRate;
 use App\Models\DeductionType;
@@ -17,7 +16,7 @@ use Illuminate\Support\Facades\DB;
 use RuntimeException;
 
 /**
- * Computes monthly payroll from compensation, attendance, and configured
+ * Computes monthly payroll from compensation, approved payable-day inputs, and configured
  * earnings, deductions, tax brackets, and contribution rates.
  *
  * Monetary values use PHP floats rounded to 2 decimals at each step; the design
@@ -47,7 +46,7 @@ class PayrollComputationService
             $locked = PayrollRun::whereKey($run->getKey())->lockForUpdate()->firstOrFail();
             $run->setRawAttributes($locked->getAttributes(), true);
             abort_unless($run->isEditable(), 422, 'This payroll run can no longer be recomputed.');
-            $run->details()->delete();
+            $run->details()->whereNotIn('employment_id', $employments->modelKeys())->delete();
 
             foreach ($employments as $employment) {
                 $this->computeDetail($run, $employment, $period);
@@ -72,9 +71,9 @@ class PayrollComputationService
         $serviceFraction = (float) ($profile?->service_fraction ?? 1.0);
         $gradeStep = $profile?->gradeStep;
 
-        $days = $this->attendanceDays($employment, $period);
+        $detail = $run->details()->firstOrNew(['employment_id' => $employment->employment_id]);
 
-        $detail = $run->details()->create([
+        $detail->fill([
             'employee_id' => $employment->employee_id,
             'employment_id' => $employment->employment_id,
             'employee_number_snapshot' => $employment->employee->employee_number,
@@ -85,22 +84,23 @@ class PayrollComputationService
             'salary_step_snapshot' => $gradeStep?->step_number,
             'salary_rate_snapshot' => $this->rateFor($profile),
             'pay_basis_snapshot' => $payBasis,
-            'basic_pay' => $this->basicPay($profile, $payBasis, $serviceFraction, $days),
+            'basic_pay' => $this->basicPay($profile, $payBasis, $serviceFraction, $detail->payable_days === null ? 0.0 : (float) $detail->payable_days),
             'total_earnings' => 0,
             'gross_pay' => 0,
             'total_deductions' => 0,
             'nthp_before_lbp' => 0,
-            'lbp_loan_deduction' => 0,
+            'lbp_loan_deduction' => $detail->lbp_loan_deduction ?? 0,
             'net_pay' => 0,
-            'days_worked' => $days['worked'],
-            'days_present' => $days['present'],
-            'days_absent' => $days['absent'],
-            'days_on_leave' => $days['leave'],
-            'payroll_status' => 'COMPUTED',
+            'payroll_status' => $detail->input_confirmed_at ? 'COMPUTED' : 'INPUT_REQUIRED',
         ]);
 
-        $this->seedEarnings($detail, $employment, $periodEnd);
-        $this->seedDeductions($detail, $employment, $periodEnd);
+        $detail->save();
+        if (! $detail->manual_adjustments) {
+            $detail->earnings()->delete();
+            $detail->deductions()->delete();
+            $this->seedEarnings($detail, $employment, $periodEnd);
+            $this->seedDeductions($detail, $employment, $periodEnd);
+        }
         $this->recomputeTotals($detail, $period);
 
         return $detail;
@@ -255,54 +255,14 @@ class PayrollComputationService
         return round(max(0.0, $annualTax) / 12, 2);
     }
 
-    /**
-     * @return array{worked: float, present: float, absent: float, leave: float, has_records: bool}
-     */
-    private function attendanceDays(EmploymentRecord $employment, PayrollPeriod $period): array
-    {
-        $records = AttendanceRecord::query()
-            ->where('employee_id', $employment->employee_id)
-            ->whereDate('attendance_date', '>=', $period->start_date)
-            ->whereDate('attendance_date', '<=', $period->end_date)
-            ->get();
-
-        return [
-            'has_records' => $records->isNotEmpty(),
-            'worked' => round((float) $records->whereIn('attendance_status', [
-                AttendanceRecord::STATUS_PRESENT, AttendanceRecord::STATUS_HALF_DAY,
-            ])->sum('credited_days'), 2),
-            'present' => round((float) $records->whereIn('attendance_status', [
-                AttendanceRecord::STATUS_PRESENT, AttendanceRecord::STATUS_HALF_DAY,
-            ])->sum('credited_days'), 2),
-            'absent' => (float) $records->where('attendance_status', AttendanceRecord::STATUS_ABSENT)->count(),
-            'leave' => round((float) $records->where('attendance_status', AttendanceRecord::STATUS_ON_LEAVE)->sum('credited_days'), 2),
-        ];
-    }
-
-    /**
-     * @param  array{worked: float, present: float, absent: float, leave: float, has_records: bool}  $days
-     */
-    private function basicPay(?CompensationProfile $profile, string $payBasis, float $serviceFraction, array $days): float
+    private function basicPay(?CompensationProfile $profile, string $payBasis, float $serviceFraction, float $payableDays): float
     {
         $rate = $this->rateFor($profile);
-
         if ($payBasis === CompensationProfile::BASIS_DAILY) {
-            $creditedDays = $days['has_records'] ? $days['present'] : self::PAYROLL_DAYS_PER_MONTH;
-
-            return round($rate * $creditedDays, 2);
+            return round($rate * $payableDays, 2);
         }
 
-        // MONTHLY, PROPORTIONAL_MONTHLY, and HOURLY fallback use a monthly base.
-        $monthly = $rate * $serviceFraction;
-
-        if ($days['present'] <= 0 && $days['absent'] <= 0 && $days['leave'] <= 0) {
-            return round($monthly, 2); // No attendance recorded: assume a complete month.
-        }
-
-        $paidDays = max(0.0, self::PAYROLL_DAYS_PER_MONTH - $days['absent']);
-        $factor = min(1.0, $paidDays / self::PAYROLL_DAYS_PER_MONTH);
-
-        return round($monthly * $factor, 2);
+        return round($rate * $serviceFraction * min(1.0, $payableDays / self::PAYROLL_DAYS_PER_MONTH), 2);
     }
 
     private function rateFor(?CompensationProfile $profile): float

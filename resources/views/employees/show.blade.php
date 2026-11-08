@@ -12,8 +12,6 @@
         @foreach (['employment' => 'Employment', 'compensation' => 'Compensation', 'earnings' => 'Earnings', 'deductions' => 'Deductions'] as $anchor => $label)
             <a href="#{{ $anchor }}" class="ui-button ui-button-secondary">{{ $label }}</a>
         @endforeach
-        @can('attendance.manage')<a href="#attendance" class="ui-button ui-button-secondary">Attendance</a>@endcan
-        @can('leave.manage')<a href="#leave" class="ui-button ui-button-secondary">Leave</a>@endcan
     </nav>
     <div class="grid min-w-0 gap-6 xl:grid-cols-3">
         <div class="min-w-0">
@@ -61,47 +59,6 @@
             <x-employee-assignment-section id="compensation" heading="Compensation" :records="$compensation" route="compensation-profiles" :employee="$employee" kind="compensation" />
             <x-employee-assignment-section id="earnings" heading="Earnings" :records="$earnings" route="employee-earning-assignments" :employee="$employee" kind="earnings" />
             <x-employee-assignment-section id="deductions" heading="Deductions" :records="$deductions" route="employee-deduction-assignments" :employee="$employee" kind="deductions" />
-            @can('attendance.manage')
-                <x-card id="attendance" heading="Attendance" class="scroll-mt-6">
-                    <div class="mb-4 flex flex-wrap gap-3">
-                        <x-button :href="route('attendance-records.create', ['employee_id' => $employee->employee_id, 'employee_workspace' => 1])">Record attendance</x-button>
-                        <x-button :href="route('attendance-records.index', ['employee_id' => $employee->employee_id])">View all attendance</x-button>
-                    </div>
-                    <p class="mb-2 text-sm text-muted">Five most recent records by attendance date.</p>
-                    <ul class="divide-y divide-slate-200">
-                        @forelse ($attendance as $record)
-                            <li class="flex flex-wrap items-center justify-between gap-3 py-3 text-sm"><span>{{ $record->attendance_date?->format('M d, Y') }} · {{ $record->credited_days }} credited days</span><x-status :value="$record->attendance_status" /></li>
-                        @empty
-                            <li class="py-3 text-sm text-muted">No attendance records.</li>
-                        @endforelse
-                    </ul>
-                </x-card>
-            @endcan
-            @can('leave.manage')
-                <x-card id="leave" heading="Leave" class="scroll-mt-6">
-                    <div class="mb-4 flex flex-wrap gap-3">
-                        <x-button :href="route('leave-applications.create', ['employee_id' => $employee->employee_id, 'employee_workspace' => 1])">File leave</x-button>
-                        <x-button :href="route('leave-applications.index', ['employee_id' => $employee->employee_id])">View all leave applications</x-button>
-                        <x-button :href="route('leave-balances.index', ['employee_id' => $employee->employee_id])">Manage leave balances</x-button>
-                    </div>
-                    <h3 class="font-semibold">Balances for {{ now()->year }}</h3>
-                    <ul class="mb-4 text-sm text-muted">
-                        @forelse ($leaveBalances as $balance)
-                            <li class="py-1">{{ $balance->leaveType->leave_name }}: {{ $balance->available_balance }} days available</li>
-                        @empty
-                            <li class="py-1">No leave balances recorded for this year.</li>
-                        @endforelse
-                    </ul>
-                    <h3 class="font-semibold">Recent applications</h3>
-                    <ul class="divide-y divide-slate-200">
-                        @forelse ($leave as $application)
-                            <li class="py-3 text-sm"><a href="{{ route('leave-applications.show', $application) }}" class="inline-flex min-h-11 items-center font-semibold text-brand hover:underline">{{ $application->leaveType->leave_name }} · {{ $application->start_date?->format('M d, Y') }} to {{ $application->end_date?->format('M d, Y') }}</a><div><x-status :value="$application->approval_status" /></div></li>
-                        @empty
-                            <li class="py-3 text-sm text-muted">No leave applications.</li>
-                        @endforelse
-                    </ul>
-                </x-card>
-            @endcan
         </div>
     </div>
 @endsection

@@ -53,6 +53,12 @@ class DemoWorkflowTest extends TestCase
         $this->actingAs($viewer)->post(route('payroll-runs.compute', $run))->assertForbidden();
         $this->actingAs($officer)->post(route('payroll-runs.compute', $run))->assertRedirect();
         $this->assertSame(8, $run->details()->count());
+        foreach ($run->details as $detail) {
+            $this->put(route('payroll-details.update', [$run, $detail]), [
+                'payable_days' => 22, 'input_reference' => 'Approved fictional QA summary', 'inputs_confirmed' => 1,
+                'earnings' => [], 'deductions' => [], 'lbp_loan_deduction' => 0,
+            ])->assertRedirect();
+        }
         $this->post(route('payroll-runs.submit', $run))->assertRedirect();
         $this->post(route('payroll-runs.approve', $run))->assertForbidden();
         $this->actingAs($approver)->post(route('payroll-runs.approve', $run), ['remarks' => 'QA reviewed'])->assertRedirect();

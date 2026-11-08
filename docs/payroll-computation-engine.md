@@ -1,5 +1,7 @@
 # Payroll Computation Engine (Stage 6)
 
+> Current input workflow: attendance and leave management have been removed. Payroll Officers enter approved payable days and adjustments, record an approval reference, and confirm each employee input before submission. Recomputing preserves confirmed inputs and manual adjustments; missing inputs never assume a complete month. Monthly pay retains the existing 22-day equivalent; daily pay uses approved payable days. Earlier attendance descriptions below are historical.
+
 **Stage:** 6 of the development plan
 **Status:** Implemented for the mock-defense build
 **Related:** `database-implementation.md`, `earnings-deductions-modules.md`, `attendance-leave-modules.md`, `payroll-computation-design.md`

@@ -28,10 +28,11 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
     'nthp_before_lbp',
     'lbp_loan_deduction',
     'net_pay',
-    'days_worked',
-    'days_present',
-    'days_absent',
-    'days_on_leave',
+    'payable_days',
+    'input_reference',
+    'input_recorded_by',
+    'input_confirmed_at',
+    'manual_adjustments',
     'payroll_status',
 ])]
 class PayrollDetail extends Model
@@ -46,6 +47,9 @@ class PayrollDetail extends Model
     protected function casts(): array
     {
         return [
+            'payable_days' => 'decimal:2',
+            'input_confirmed_at' => 'datetime',
+            'manual_adjustments' => 'boolean',
             'salary_rate_snapshot' => 'decimal:2',
             'basic_pay' => 'decimal:2',
             'total_earnings' => 'decimal:2',
@@ -54,10 +58,6 @@ class PayrollDetail extends Model
             'nthp_before_lbp' => 'decimal:2',
             'lbp_loan_deduction' => 'decimal:2',
             'net_pay' => 'decimal:2',
-            'days_worked' => 'decimal:2',
-            'days_present' => 'decimal:2',
-            'days_absent' => 'decimal:2',
-            'days_on_leave' => 'decimal:2',
         ];
     }
 

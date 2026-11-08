@@ -24,21 +24,7 @@
         </x-nav-group>
     @endcan
 
-    @can('attendance.manage')
-        <x-nav-group label="Attendance" :active="request()->routeIs('attendance-records.*', 'attendance-adjustments.*')">
-            <x-nav-link :href="route('attendance-records.index')" :active="request()->routeIs('attendance-records.*')">Attendance Records</x-nav-link>
-            <x-nav-link :href="route('attendance-adjustments.index')" :active="request()->routeIs('attendance-adjustments.*')">Adjustments</x-nav-link>
-        </x-nav-group>
-    @endcan
 
-    @can('leave.manage')
-        <x-nav-group label="Leave" :active="request()->routeIs('leave-*')">
-            <x-nav-link :href="route('leave-applications.index')" :active="request()->routeIs('leave-applications.*')">Leave Applications</x-nav-link>
-            <x-nav-link :href="route('leave-balances.index')" :active="request()->routeIs('leave-balances.*')">Leave Balances</x-nav-link>
-            <x-nav-link :href="route('leave-transactions.index')" :active="request()->routeIs('leave-transactions.*')">Leave Transactions</x-nav-link>
-            <x-nav-link :href="route('leave-types.index')" :active="request()->routeIs('leave-types.*')">Leave Types</x-nav-link>
-        </x-nav-group>
-    @endcan
 
     </div>
     @can('employees.view')

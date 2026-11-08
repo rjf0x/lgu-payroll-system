@@ -29,6 +29,9 @@ class PayrollApprovalService
             if (! $run->details()->exists()) {
                 abort(422, 'Compute the payroll before submitting it for approval.');
             }
+            if ($run->details()->where(fn ($query) => $query->whereNull('payable_days')->orWhereNull('input_confirmed_at')->orWhereNull('input_reference')->orWhere('input_reference', ''))->exists()) {
+                abort(422, 'Enter and confirm approved payroll inputs for every employee before submission.');
+            }
             $run->update([
                 'status' => PayrollRun::STATUS_PENDING_APPROVAL,
                 'submitted_by' => $user->user_id,

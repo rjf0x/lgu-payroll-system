@@ -48,11 +48,15 @@ class DemoPayrollWorkflowSeeder extends Seeder
                 }
 
                 app(PayrollComputationService::class)->computeRun($run);
+                foreach ($run->details as $detail) {
+                    $detail->update(['payable_days' => 22, 'input_reference' => 'Fictional approved demo summary', 'input_recorded_by' => $officer->getKey(), 'input_confirmed_at' => now()]);
+                }
+                app(PayrollComputationService::class)->computeRun($run);
                 $workflow = app(PayrollApprovalService::class);
                 $workflow->submit($run, $officer);
 
                 if ($month === 3) {
-                    $workflow->returnForCorrection($run, $approver, 'Demo: confirm attendance before resubmission.');
+                    $workflow->returnForCorrection($run, $approver, 'Demo: confirm approved payroll inputs before resubmission.');
                 } elseif ($month === 4) {
                     $workflow->approve($run, $approver, 'Demo: reviewed fictional payroll.');
                     $workflow->finalize($run, $approver);

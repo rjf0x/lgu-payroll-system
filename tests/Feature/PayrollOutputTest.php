@@ -88,6 +88,10 @@ class PayrollOutputTest extends TestCase
         ]);
 
         app(PayrollComputationService::class)->computeRun($run);
+        foreach ($run->details as $detail) {
+            $detail->update(['payable_days' => 22, 'input_reference' => 'Approved test summary', 'input_confirmed_at' => now()]);
+        }
+        app(PayrollComputationService::class)->computeRun($run);
 
         $run->update(['status' => $status]);
 

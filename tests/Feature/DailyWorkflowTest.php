@@ -2,14 +2,12 @@
 
 namespace Tests\Feature;
 
-use App\Models\AttendanceRecord;
 use App\Models\CompensationProfile;
 use App\Models\DeductionType;
 use App\Models\EarningType;
 use App\Models\Employee;
 use App\Models\EmployeeDeductionAssignment;
 use App\Models\EmploymentRecord;
-use App\Models\LeaveType;
 use App\Models\PayrollRun;
 use App\Models\Permission;
 use App\Models\Role;
@@ -107,8 +105,8 @@ class DailyWorkflowTest extends TestCase
         $this->assertSame(0, $document->query('//button[@formaction="'.route('payroll-runs.approve', $run).'"]')->length);
         $this->assertSame(0, $document->query('//button[@formaction="'.route('payroll-runs.reject', $run).'"]')->length);
 
-        $this->post(route('payroll-runs.return', $run), ['remarks' => 'Correct the attendance inputs.'])->assertRedirect();
-        $this->assertDatabaseHas('payroll_approvals', ['payroll_run_id' => $run->payroll_run_id, 'action' => 'RETURNED', 'remarks' => 'Correct the attendance inputs.']);
+        $this->post(route('payroll-runs.return', $run), ['remarks' => 'Correct the approved payroll inputs.'])->assertRedirect();
+        $this->assertDatabaseHas('payroll_approvals', ['payroll_run_id' => $run->payroll_run_id, 'action' => 'RETURNED', 'remarks' => 'Correct the approved payroll inputs.']);
         $this->assertSame('RETURNED', $run->fresh()->status);
     }
 
@@ -167,8 +165,6 @@ class DailyWorkflowTest extends TestCase
             ['compensation-profiles', 'profile', 'employment_id'],
             ['employee-earning-assignments', 'assignment', 'employment_id'],
             ['employee-deduction-assignments', 'assignment', 'employment_id'],
-            ['attendance-records', 'record', 'employee_id'],
-            ['leave-applications', 'application', 'employee_id'],
         ];
     }
 
@@ -183,21 +179,6 @@ class DailyWorkflowTest extends TestCase
             ->assertOk()->assertViewHas($variable, fn ($model): bool => (int) $model->{$field} === (int) $id)
             ->assertViewHas('workspaceEmployee', fn ($employee): bool => $employee->employee_id === $record->employee_id)
             ->assertSee('name="employee_workspace" value="1"', false)->assertSee('Back to employee workspace');
-    }
-
-    public function test_related_attendance_save_returns_to_the_actual_employee_without_accepting_an_external_return_url(): void
-    {
-        $user = $this->userWithRoles(Role::ADMIN);
-        $employee = Employee::factory()->create();
-
-        $this->actingAs($user)->post(route('attendance-records.store'), [
-            'employee_id' => $employee->employee_id, 'attendance_date' => '2026-11-07',
-            'attendance_status' => 'PRESENT', 'credited_days' => 1, 'employee_workspace' => 1,
-            'return_url' => 'https://example.com/unsafe',
-        ])->assertRedirect(route('employees.show', $employee).'#attendance');
-
-        $this->assertDatabaseHas('attendance_records', ['employee_id' => $employee->employee_id, 'attendance_status' => 'PRESENT']);
-        $this->assertSame('2026-11-07', AttendanceRecord::firstOrFail()->attendance_date->toDateString());
     }
 
     public function test_earning_save_and_filtered_list_keep_employee_context(): void
@@ -223,7 +204,7 @@ class DailyWorkflowTest extends TestCase
     {
         $user = $this->userWithRoles(Role::ADMIN);
 
-        $this->actingAs($user)->getJson(route('leave-applications.create', ['employee_id' => 999999, 'employee_workspace' => 1]))
+        $this->actingAs($user)->getJson(route('employment-records.create', ['employee_id' => 999999, 'employee_workspace' => 1]))
             ->assertUnprocessable()->assertJsonValidationErrors('employee_id');
     }
 
@@ -261,20 +242,6 @@ class DailyWorkflowTest extends TestCase
             ->assertRedirect(route('employees.show', $record->employee_id).'#deductions');
 
         $this->assertSame('150.00', $assignment->fresh()->amount);
-    }
-
-    public function test_leave_filing_returns_to_the_employee_without_approving_it(): void
-    {
-        $user = $this->userWithRoles(Role::ADMIN);
-        $employee = Employee::factory()->create();
-        $type = LeaveType::factory()->create();
-
-        $this->actingAs($user)->post(route('leave-applications.store'), [
-            'employee_id' => $employee->employee_id, 'leave_type_id' => $type->leave_type_id,
-            'start_date' => '2026-11-09', 'end_date' => '2026-11-09', 'total_days' => 1, 'employee_workspace' => 1,
-        ])->assertRedirect(route('employees.show', $employee).'#leave');
-
-        $this->assertDatabaseHas('leave_applications', ['employee_id' => $employee->employee_id, 'approval_status' => 'PENDING']);
     }
 
     public function test_employment_creation_returns_to_the_selected_employee(): void

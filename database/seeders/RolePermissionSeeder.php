@@ -19,8 +19,6 @@ class RolePermissionSeeder extends Seeder
             'roles.manage' => 'Manage roles and their permissions.',
             'employees.view' => 'View employee and employment records.',
             'employees.manage' => 'Create and update employee and employment records.',
-            'attendance.manage' => 'Record attendance and manage attendance adjustments.',
-            'leave.manage' => 'Manage leave applications, balances, and transactions.',
             'compensation.manage' => 'Manage salary schedules, grade steps, and compensation profiles.',
             'payroll.prepare' => 'Prepare and compute a monthly payroll run.',
             'payroll.submit' => 'Submit a payroll run for independent approval.',
@@ -46,14 +44,14 @@ class RolePermissionSeeder extends Seeder
                 'description' => 'Manages system configuration, user accounts, and access settings.',
                 'permissions' => [
                     'users.manage', 'settings.manage', 'roles.manage', 'employees.view', 'employees.manage',
-                    'attendance.manage', 'leave.manage', 'compensation.manage', 'payroll.view',
+                    'compensation.manage', 'payroll.view',
                     'reports.generate', 'audit.view', 'blockchain.verify',
                 ],
             ],
             Role::PAYROLL_OFFICER => [
                 'description' => 'Maintains payroll inputs, prepares payroll computations, and submits payroll for approval.',
                 'permissions' => [
-                    'employees.view', 'employees.manage', 'attendance.manage', 'leave.manage',
+                    'employees.view', 'employees.manage',
                     'compensation.manage', 'payroll.prepare', 'payroll.submit', 'payroll.view',
                     'reports.generate', 'blockchain.verify',
                 ],

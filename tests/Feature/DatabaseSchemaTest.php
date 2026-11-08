@@ -34,8 +34,6 @@ class DatabaseSchemaTest extends TestCase
             'employment_records', 'employment_history',
             'salary_schedules', 'salary_grade_steps', 'compensation_profiles',
             'earning_types', 'employee_earning_assignments',
-            'attendance_records', 'attendance_adjustments',
-            'leave_types', 'leave_balances', 'leave_applications', 'leave_transactions',
             'deduction_types', 'employee_deduction_assignments',
             'tax_brackets', 'contribution_rates',
             'payroll_periods', 'payroll_runs', 'payroll_approvals', 'payroll_details',
