@@ -28,6 +28,31 @@ Demo accounts are `admin`, `officer`, `approver`, and `viewer`, with development
 
 For real local blockchain anchoring, follow [Besu setup](docs/blockchain-anchoring.md). The setup generates ignored local keys and deploys the contract; existing simulated anchors remain simulated.
 
+### Create your own initial administrator
+
+As an alternative to the demo-account setup above, migrate a new database without `--seed`, then run the interactive administrator command:
+
+```powershell
+php artisan migrate --no-interaction
+php artisan app:create-admin
+```
+
+Enter your username, email, password, and password confirmation when prompted. The password requires at least 16 characters with uppercase, lowercase, numbers, and symbols. The command requires an empty users table and refuses to change existing accounts.
+
+With `APP_ENV=local`, this also seeds 4 departments, 6 positions, an illustrative salary schedule with 6 grade/step entries, 8 fictional employees with employment records and compensation profiles, 6 earning types, 24 deduction types, 6 annual tax brackets, and 3 contribution rates (GSIS, PhilHealth, and Pag-IBIG). Roles, permissions, employment types, and system defaults are included. Create Payroll Officer and Approver accounts through **Add User** after signing in; this setup does not create the demo user accounts required by `DemoPayrollWorkflowSeeder`.
+
+### Seed payroll setup data for an existing administrator
+
+To add the same payroll setup data when your administrator already exists, run:
+
+```powershell
+php artisan db:seed --class=PayrollMasterDataSeeder --no-interaction
+```
+
+This seeder preserves existing matching records and their edited values. It does not create user accounts or payroll runs. It is restricted to local and testing environments because its employees, salary amounts, tax brackets, and contribution rates are illustrative. Replace these with approved reference data before real payroll use. The earning and deduction labels are based on the supplied payroll workbook, with normalized names.
+
+See the [browser workflow and mock data](docs/browser-workflow-mock-data.md) for a manual walkthrough.
+
 ## Verification
 
 ```powershell
@@ -57,7 +82,7 @@ The production template is `.env.production.example`. It is an example, not a co
 2. Extract the release into a new release directory. Set only `public/` as the web root. Run `composer install --no-dev --prefer-dist --optimize-autoloader --no-interaction`. Provide the production environment through the host's secret manager or a protected `.env` outside the web root.
 3. Generate APP_KEY once for a new installation. Preserve that key through upgrades; changing it invalidates encrypted sessions and other encrypted values. Set APP_DEBUG=false, a verified HTTPS APP_URL, secure session cookies, and only the actual proxy IP addresses/CIDRs in TRUSTED_PROXIES. Do not trust arbitrary forwarded headers.
 4. Apply migrations with `php artisan migrate --force --no-interaction` on the selected database after taking a restorable backup. Never run `migrate:fresh` on staging history or production.
-5. For the first installation with an empty users table, temporarily provide INITIAL_ADMIN_USERNAME, INITIAL_ADMIN_EMAIL, and INITIAL_ADMIN_PASSWORD via the environment. The password must contain at least 16 characters, mixed case, digits and symbols. Run `php artisan db:seed --class=ProductionDatabaseSeeder --force --no-interaction`. Existing accounts are never overwritten. Only roles, permissions, system identity defaults, employment types, and one administrator are created; no employees, salary schedules or statutory amounts are seeded.
+5. For the first installation with an empty users table, temporarily provide INITIAL_ADMIN_USERNAME, INITIAL_ADMIN_EMAIL, and INITIAL_ADMIN_PASSWORD via the environment. The password must contain at least 16 characters, mixed case, digits and symbols. Run `php artisan db:seed --class=ProductionDatabaseSeeder --force --no-interaction`. Existing accounts are never overwritten. Roles, permissions, system identity defaults, employment types, earning types, deduction types, and one administrator are created; no employees, salary schedules or statutory amounts are seeded in production.
 6. Remove the INITIAL_ADMIN_PASSWORD secret after bootstrap and rebuild configuration caches. Configure organization identity and authorized staff through the interface. Import only client-approved reference data and payroll policies.
 7. Configure Besu's actual chain ID, contract and public sender addresses, node RPC and Web3Signer URLs. Keep signing keys in managed infrastructure. The local four-container stack and raw development key are not a production deployment design. Restrict and authenticate RPC/signing access; test hash anchoring and verification in staging.
 8. Install the report worker below, then warm caches with `php artisan optimize --no-interaction`. Run `php artisan deployment:check --production --no-interaction`. Resolve every failure; the final message also identifies manual checks the command cannot prove.
