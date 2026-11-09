@@ -109,14 +109,17 @@ class PayrollOutputTest extends TestCase
             ->assertSee('Net Take Home Pay');
     }
 
-    public function test_register_csv_export_records_a_generated_report(): void
+    public function test_register_spreadsheet_export_records_a_generated_report(): void
     {
         $run = $this->makeRun();
+        $run->payrollPeriod->update(['period_name' => 'November 2026']);
+        $run->update(['run_number' => 2]);
 
         $this->actingAs($this->officer())
             ->get(route('payroll-runs.register.export', $run))
             ->assertOk()
-            ->assertHeader('content-type', 'text/csv; charset=utf-8');
+            ->assertHeader('content-type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+            ->assertDownload('payroll-register-november-2026-run-2.xlsx');
 
         $this->assertDatabaseHas('generated_reports', [
             'report_type' => 'PAYROLL_REGISTER',

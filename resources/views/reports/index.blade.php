@@ -28,7 +28,7 @@
                             <a href="{{ route('payroll-runs.register', $run) }}" aria-label="Register for {{ $run->payrollPeriod->period_name }}, run {{ $run->run_number }}">Register</a>
                             <a href="{{ route('reports.payroll-summary', $run) }}">Department summary</a>
                             <a href="{{ route('payroll-runs.payslips', $run) }}">Payslips</a>
-                            @can('reports.generate')<a href="{{ route('payroll-runs.register.export', $run) }}">Export CSV</a>@endcan
+                            @can('reports.generate')<a href="{{ route('payroll-runs.register.export', $run) }}">Export spreadsheet</a>@endcan
                         </div></td>
                     </tr>
                 @empty

@@ -15,6 +15,7 @@ use DOMXPath;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
+use ZipArchive;
 
 class UiCompletionTest extends TestCase
 {
@@ -111,7 +112,7 @@ class UiCompletionTest extends TestCase
         $this->get(route('reports.payroll-summary', $run))->assertOk()->assertSee('Print summary')->assertSee('Amounts in PHP.');
     }
 
-    public function test_register_csv_neutralizes_formula_text(): void
+    public function test_register_spreadsheet_preserves_formula_text_without_executing_it(): void
     {
         $user = $this->administrator();
         $run = PayrollRun::factory()->create(['status' => 'FINALIZED']);
@@ -119,9 +120,22 @@ class UiCompletionTest extends TestCase
 
         $response = $this->actingAs($user)->get(route('payroll-runs.register.export', $run))->assertOk();
 
-        $lines = explode("\n", trim($response->streamedContent()));
-        $row = str_getcsv($lines[1], escape: '');
-        $this->assertSame("'=SUM(1,1)", $row[2]);
+        $path = tempnam(sys_get_temp_dir(), 'payroll-test-');
+        $archive = new ZipArchive;
+        try {
+            file_put_contents($path, $response->streamedContent());
+            $this->assertTrue($archive->open($path) === true);
+            $document = new DOMDocument;
+            $this->assertTrue($document->loadXML($archive->getFromName('xl/worksheets/sheet1.xml')));
+            $xpath = new DOMXPath($document);
+            $xpath->registerNamespace('s', 'http://schemas.openxmlformats.org/spreadsheetml/2006/main');
+            $this->assertSame('inlineStr', $xpath->evaluate('string(//s:c[@r="D4"]/@t)'));
+            $this->assertSame('=SUM(1,1)', $xpath->evaluate('string(//s:c[@r="D4"]/s:is/s:t)'));
+            $this->assertSame(0, $xpath->query('//s:c[@r="D4"]/s:f')->length);
+        } finally {
+            $archive->close();
+            unlink($path);
+        }
     }
 
     public function test_anchor_page_prioritizes_latest_integrity_result_over_technical_evidence(): void

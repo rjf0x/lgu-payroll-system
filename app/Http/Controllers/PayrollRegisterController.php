@@ -6,6 +6,8 @@ use App\Models\DeductionType;
 use App\Models\EarningType;
 use App\Models\GeneratedReport;
 use App\Models\PayrollRun;
+use App\Services\PayrollSpreadsheetService;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -19,9 +21,10 @@ class PayrollRegisterController extends Controller
         return view('payroll-runs.register', $this->registerData($payrollRun) + ['run' => $payrollRun]);
     }
 
-    public function export(PayrollRun $payrollRun): StreamedResponse
+    public function export(PayrollRun $payrollRun, PayrollSpreadsheetService $spreadsheet): StreamedResponse
     {
         $data = $this->registerData($payrollRun);
+        $contents = $spreadsheet->generate($data, $payrollRun->payrollPeriod->start_date->month, $payrollRun->payrollPeriod->start_date->year);
 
         GeneratedReport::create([
             'report_type' => 'PAYROLL_REGISTER',
@@ -30,26 +33,11 @@ class PayrollRegisterController extends Controller
             'generated_at' => now(),
         ]);
 
-        $filename = 'payroll-register-'.$payrollRun->payroll_run_id.'.csv';
+        $filename = Str::slug('Payroll Register '.$payrollRun->payrollPeriod->period_name.' Run '.$payrollRun->run_number).'.xlsx';
 
-        return response()->streamDownload(function () use ($data): void {
-            $out = fopen('php://output', 'w');
-            fputcsv($out, array_map($this->safeCsvCell(...), $data['headers']), escape: '');
-
-            foreach ([...$data['rows'], $data['totals']] as $row) {
-                fputcsv($out, array_map(
-                    fn ($cell) => is_float($cell) ? number_format($cell, 2, '.', '') : $this->safeCsvCell((string) $cell),
-                    $row,
-                ), escape: '');
-            }
-
-            fclose($out);
-        }, $filename, ['Content-Type' => 'text/csv']);
-    }
-
-    private function safeCsvCell(string $value): string
-    {
-        return preg_match('/^(?:[\t\r\n]|\s*[=+@-])/u', $value) === 1 ? "'".$value : $value;
+        return response()->streamDownload(function () use ($contents): void {
+            echo $contents;
+        }, $filename, ['Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet']);
     }
 
     /**
