@@ -8,15 +8,15 @@
         <x-card class="mb-5">
             <p class="mb-3 text-sm text-muted">Showing records for <strong>{{ $filterEmployee->full_name }}</strong> · {{ $filterEmployee->employee_number }}</p>
             <div class="flex flex-wrap gap-3">
-                <x-button :href="route('employees.show', $filterEmployee)">Back to employee workspace</x-button>
-                <x-button :href="route('employee-deduction-assignments.index')">Show all employees</x-button>
+                <x-button icon="back" :href="route('employees.show', $filterEmployee)">Back to employee workspace</x-button>
+                <x-button icon="list" :href="route('employee-deduction-assignments.index')">Show all employees</x-button>
             </div>
         </x-card>
     @endif
     <div class="mb-6 flex flex-wrap items-center justify-between gap-4">
         <p class="text-sm text-slate-500">Standing deductions assigned to an employment record (loans, dues, savings).</p>
         @can('compensation.manage')
-            <a href="{{ route('employee-deduction-assignments.create') }}" class="ui-button ui-button-primary">+ Add Assignment</a>
+            <x-button icon="add" variant="primary" href="{{ route('employee-deduction-assignments.create') }}">+ Add Assignment</x-button>
         @endcan
     </div>
 
@@ -45,7 +45,7 @@
                         <td class="px-4 py-3 text-slate-600">{{ $assignment->effective_from?->format('M d, Y') }} – {{ $assignment->effective_to?->format('M d, Y') ?? 'present' }}</td>
                         <td class="px-4 py-3 text-right">
                             @can('compensation.manage')
-                                <a href="{{ route('employee-deduction-assignments.edit', $assignment) }}" class="text-slate-600 hover:underline">Edit</a>
+                                <x-button icon="edit" variant="secondary" href="{{ route('employee-deduction-assignments.edit', $assignment) }}">Edit</x-button>
                             @endcan
                         </td>
                     </tr>

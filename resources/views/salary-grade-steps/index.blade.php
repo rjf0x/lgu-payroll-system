@@ -14,14 +14,14 @@
                     </option>
                 @endforeach
             </select>
-            <x-button type="submit">Apply filters</x-button>
-            <x-button :href="route('salary-grade-steps.index')">Reset</x-button>
+            <x-button icon="filter" type="submit">Apply filters</x-button>
+            <x-button icon="reset" :href="route('salary-grade-steps.index')">Reset</x-button>
         </form>
 
         @can('compensation.manage')
-            <a href="{{ route('salary-grade-steps.create', ['salary_schedule_id' => $scheduleId]) }}" class="ui-button ui-button-primary">
+            <x-button icon="add" variant="primary" href="{{ route('salary-grade-steps.create', ['salary_schedule_id' => $scheduleId]) }}">
                 + Add Grade Step
-            </a>
+            </x-button>
         @endcan
     </div>
 
@@ -46,7 +46,7 @@
                         <td class="px-4 py-3 text-right font-mono">₱{{ number_format((float) $step->monthly_salary, 2) }}</td>
                         <td class="px-4 py-3 text-right">
                             @can('compensation.manage')
-                                <a href="{{ route('salary-grade-steps.edit', $step) }}" class="text-slate-600 hover:underline">Edit</a>
+                                <x-button icon="edit" variant="secondary" href="{{ route('salary-grade-steps.edit', $step) }}">Edit</x-button>
                             @endcan
                         </td>
                     </tr>

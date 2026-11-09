@@ -7,7 +7,7 @@
     <div class="mb-6 flex flex-wrap items-center justify-between gap-4">
         <p class="text-sm text-slate-500">Effective-dated withholding tax brackets.</p>
         @can('compensation.manage')
-            <a href="{{ route('tax-brackets.create') }}" class="ui-button ui-button-primary">+ Add Bracket</a>
+            <x-button icon="add" variant="primary" href="{{ route('tax-brackets.create') }}">+ Add Bracket</x-button>
         @endcan
     </div>
 
@@ -38,7 +38,7 @@
                         <td class="px-4 py-3 text-slate-600">{{ $bracket->effective_from?->format('M d, Y') }}</td>
                         <td class="px-4 py-3 text-right">
                             @can('compensation.manage')
-                                <a href="{{ route('tax-brackets.edit', $bracket) }}" class="text-slate-600 hover:underline">Edit</a>
+                                <x-button icon="edit" variant="secondary" href="{{ route('tax-brackets.edit', $bracket) }}">Edit</x-button>
                             @endcan
                         </td>
                     </tr>

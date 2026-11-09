@@ -26,11 +26,11 @@
 
         @can('compensation.manage')
             <div class="mt-6 flex gap-3">
-                <a href="{{ route('salary-schedules.edit', $schedule) }}" class="ui-button ui-button-secondary">Edit</a>
+                <x-button icon="edit" variant="secondary" href="{{ route('salary-schedules.edit', $schedule) }}">Edit</x-button>
                 <form method="POST" action="{{ route('salary-schedules.destroy', $schedule) }}" onsubmit="return confirm('Delete this schedule and its grade steps?')" data-submit-feedback>
                     @csrf
                     @method('DELETE')
-                    <button class="ui-button ui-button-danger">Delete</button>
+                    <x-button icon="delete" variant="danger" type="submit">Delete</x-button>
                 </form>
             </div>
         @endcan
@@ -60,7 +60,7 @@
                         <td class="px-4 py-3 text-right font-mono">₱{{ number_format((float) $step->monthly_salary, 2) }}</td>
                         <td class="px-4 py-3 text-right">
                             @can('compensation.manage')
-                                <a href="{{ route('salary-grade-steps.edit', $step) }}" class="text-slate-600 hover:underline">Edit</a>
+                                <x-button icon="edit" variant="secondary" href="{{ route('salary-grade-steps.edit', $step) }}">Edit</x-button>
                             @endcan
                         </td>
                     </tr>

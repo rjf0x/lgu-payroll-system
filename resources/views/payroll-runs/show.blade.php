@@ -73,7 +73,7 @@
                                 <td>
                                     @can('payroll.prepare')
                                         @if ($run->isEditable())
-                                            <a href="{{ route('payroll-details.edit', [$run, $detail]) }}">Edit<span class="sr-only"> {{ $detail->employee_name_snapshot }}</span></a>
+                                            <x-button icon="edit" variant="secondary" href="{{ route('payroll-details.edit', [$run, $detail]) }}">Edit<span class="sr-only"> {{ $detail->employee_name_snapshot }}</span></x-button>
                                         @else
                                             <span class="text-muted">Read only</span>
                                         @endif
@@ -98,19 +98,19 @@
                     @if ($run->isEditable())
                         <form method="POST" action="{{ route('payroll-runs.compute', $run) }}" @if ($run->details->isNotEmpty()) data-confirm data-confirm-title="Recompute payroll?" data-confirm-description="Recomputation refreshes calculated totals using current compensation and statutory settings. Confirmed payable days and manual adjustments are retained. Review the totals afterwards." @endif data-confirm-context="{{ $confirmationContext }}" onsubmit="return window.payrollConfirmationReady || !this.hasAttribute('data-confirm') || confirm((event.submitter?.dataset.confirmDescription || this.dataset.confirmDescription) + '\n' + this.dataset.confirmContext)" data-submit-feedback>
                             @csrf
-                            <x-button type="submit" :variant="$canSubmit ? 'secondary' : 'primary'" data-submitting-label="Computing payroll…">{{ $run->details->isEmpty() ? 'Compute payroll' : 'Recompute' }}</x-button>
+                            <x-button icon="calculate" type="submit" :variant="$canSubmit ? 'secondary' : 'primary'" data-submitting-label="Computing payroll…">{{ $run->details->isEmpty() ? 'Compute payroll' : 'Recompute' }}</x-button>
                         </form>
                         <form method="POST" action="{{ route('payroll-runs.destroy', $run) }}" data-confirm data-confirm-title="Delete payroll run?" data-confirm-description="This deletes the editable run and its calculated details. This action cannot be undone." data-confirm-context="{{ $confirmationContext }}" onsubmit="return window.payrollConfirmationReady || !this.hasAttribute('data-confirm') || confirm((event.submitter?.dataset.confirmDescription || this.dataset.confirmDescription) + '\n' + this.dataset.confirmContext)" data-submit-feedback>
                             @csrf
                             @method('DELETE')
-                            <x-button type="submit" variant="danger">Delete</x-button>
+                            <x-button icon="delete" type="submit" variant="danger">Delete</x-button>
                         </form>
                     @endif
                 @endcan
                 @if ($canSubmit)
                     <form method="POST" action="{{ route('payroll-runs.submit', $run) }}" data-confirm data-confirm-title="Submit for approval?" data-confirm-description="The run will be sent for independent review and will no longer be editable until returned or rejected." data-confirm-context="{{ $confirmationContext }}" onsubmit="return window.payrollConfirmationReady || confirm(this.dataset.confirmDescription + '\n' + this.dataset.confirmContext)" data-submit-feedback>
                         @csrf
-                        <x-button type="submit" variant="primary">Submit for approval</x-button>
+                        <x-button icon="send" type="submit" variant="primary">Submit for approval</x-button>
                     </form>
                 @endif
                 @if ($canReview)
@@ -119,13 +119,13 @@
                         <x-form.textarea name="remarks" label="Review remarks" id="approval-remarks" maxlength="2000" hint="Approval remarks (optional). A reason is required to return or reject this payroll." />
                         <div class="flex flex-wrap gap-3">
                             @if ($canApprove)
-                                <x-button type="submit" variant="primary" :formaction="route('payroll-runs.approve', $run)" data-confirm-title="Approve payroll?" data-confirm-description="This records your approval. Finalization remains a separate action.">Approve</x-button>
+                                <x-button icon="approve" type="submit" variant="primary" :formaction="route('payroll-runs.approve', $run)" data-confirm-title="Approve payroll?" data-confirm-description="This records your approval. Finalization remains a separate action.">Approve</x-button>
                             @endif
                             @if ($canReturn)
-                                <x-button type="submit" variant="warning" :formaction="route('payroll-runs.return', $run)" data-requires-remarks data-confirm-title="Return for correction?" data-confirm-description="This returns the run to preparation. Your remarks explain what must be corrected.">Return</x-button>
+                                <x-button icon="return" type="submit" variant="warning" :formaction="route('payroll-runs.return', $run)" data-requires-remarks data-confirm-title="Return for correction?" data-confirm-description="This returns the run to preparation. Your remarks explain what must be corrected.">Return</x-button>
                             @endif
                             @if ($canReject)
-                                <x-button type="submit" variant="danger" :formaction="route('payroll-runs.reject', $run)" data-requires-remarks data-confirm-title="Reject payroll?" data-confirm-description="This records a rejection and reopens the run for correction. Your reason will be saved in the approval history.">Reject</x-button>
+                                <x-button icon="reject" type="submit" variant="danger" :formaction="route('payroll-runs.reject', $run)" data-requires-remarks data-confirm-title="Reject payroll?" data-confirm-description="This records a rejection and reopens the run for correction. Your reason will be saved in the approval history.">Reject</x-button>
                             @endif
                         </div>
                     </form>
@@ -133,7 +133,7 @@
                 @if ($canFinalize)
                     <form method="POST" action="{{ route('payroll-runs.finalize', $run) }}" data-confirm data-confirm-title="Finalize payroll?" data-confirm-description="Finalization locks this run against editing and recomputation. Confirm that the period and totals are correct." data-confirm-context="{{ $confirmationContext }}" onsubmit="return window.payrollConfirmationReady || !this.hasAttribute('data-confirm') || confirm((event.submitter?.dataset.confirmDescription || this.dataset.confirmDescription) + '\n' + this.dataset.confirmContext)" data-submit-feedback>
                         @csrf
-                        <x-button type="submit" variant="primary">Finalize</x-button>
+                        <x-button icon="lock" type="submit" variant="primary">Finalize</x-button>
                     </form>
                 @endif
                 @if (! (auth()->user()->can('payroll.prepare') && $run->isEditable()) && ! $canSubmit && ! $canReview && ! $canFinalize)
@@ -145,9 +145,9 @@
         @if ($run->details->isNotEmpty())
             <x-card heading="Reports and documents">
                 <div class="flex flex-wrap gap-3">
-                    <x-button :href="route('payroll-runs.register', $run)">Register</x-button>
-                    <x-button :href="route('payroll-runs.payslips', $run)">Payslips</x-button>
-                    <x-button :href="route('reports.payroll-summary', $run)">Summary</x-button>
+                    <x-button icon="document" :href="route('payroll-runs.register', $run)">Register</x-button>
+                    <x-button icon="document" :href="route('payroll-runs.payslips', $run)">Payslips</x-button>
+                    <x-button icon="document" :href="route('reports.payroll-summary', $run)">Summary</x-button>
                 </div>
             </x-card>
         @endif
@@ -182,7 +182,7 @@
                         @else
                             <p class="text-muted">No integrity check has been recorded yet.</p>
                         @endif
-                        <x-button :href="route('payroll-registrations.show', $run->registration)">View registration &amp; verify</x-button>
+                        <x-button icon="view" :href="route('payroll-registrations.show', $run->registration)">View registration &amp; verify</x-button>
                     </div>
                 @elseif ($run->status === 'FINALIZED')
                     @if ($run->anchor)
@@ -190,13 +190,13 @@
                             <p class="break-words">Network: {{ $run->anchor->network_name }} · <x-status :value="$run->anchor->anchor_status" /></p>
                             <p class="text-muted">Anchored: {{ $run->anchor->anchored_at?->format('M d, Y g:i A') }}</p>
                             <p class="break-all rounded-lg bg-slate-50 p-3 font-mono">{{ $run->anchor->payload_hash }}</p>
-                            <x-button :href="route('blockchain-anchors.show', $run->anchor)">View &amp; verify anchor</x-button>
+                            <x-button icon="view" :href="route('blockchain-anchors.show', $run->anchor)">View &amp; verify anchor</x-button>
                         </div>
                     @else
                         <p class="mb-3 text-muted">This finalized run has not been anchored yet.</p>
                         <form method="POST" action="{{ route('payroll-runs.anchor', $run) }}" data-confirm-context="{{ $confirmationContext }}" onsubmit="return window.payrollConfirmationReady || !this.hasAttribute('data-confirm') || confirm((event.submitter?.dataset.confirmDescription || this.dataset.confirmDescription) + '\n' + this.dataset.confirmContext)" data-submit-feedback>
                             @csrf
-                            <x-button type="submit" variant="primary">Anchor finalized payroll</x-button>
+                            <x-button icon="verify" type="submit" variant="primary">Anchor finalized payroll</x-button>
                         </form>
                     @endif
                 @else

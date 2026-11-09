@@ -20,7 +20,7 @@
                 @endforeach
             </dl>
             <p class="mt-4 text-sm text-muted">These controls follow the application configuration and workflow rules. Display settings do not change payroll calculations or historical reports.</p>
-            @can('audit.view')<x-button :href="route('audit-logs.index', ['module' => 'System Settings'])" class="mt-4">View settings activity</x-button>@endcan
+            @can('audit.view')<x-button icon="list" :href="route('audit-logs.index', ['module' => 'System Settings'])" class="mt-4">View settings activity</x-button>@endcan
         </x-card>
     </div>
 @endsection

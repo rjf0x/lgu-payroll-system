@@ -8,17 +8,17 @@
         <x-card class="mb-5">
             <p class="mb-3 text-sm text-muted">Showing records for <strong>{{ $filterEmployee->full_name }}</strong> · {{ $filterEmployee->employee_number }}</p>
             <div class="flex flex-wrap gap-3">
-                <x-button :href="route('employees.show', $filterEmployee)">Back to employee workspace</x-button>
-                <x-button :href="route('compensation-profiles.index')">Show all employees</x-button>
+                <x-button icon="back" :href="route('employees.show', $filterEmployee)">Back to employee workspace</x-button>
+                <x-button icon="list" :href="route('compensation-profiles.index')">Show all employees</x-button>
             </div>
         </x-card>
     @endif
     <div class="mb-6 flex flex-wrap items-center justify-between gap-4">
         <p class="text-sm text-slate-500">Grade-and-step or direct-rate compensation attached to an employment record.</p>
         @can('compensation.manage')
-            <a href="{{ route('compensation-profiles.create') }}" class="ui-button ui-button-primary">
+            <x-button icon="add" variant="primary" href="{{ route('compensation-profiles.create') }}">
                 + Add Compensation Profile
-            </a>
+            </x-button>
         @endcan
     </div>
 
@@ -53,9 +53,9 @@
                             {{ $profile->effective_from?->format('M d, Y') }} – {{ $profile->effective_to?->format('M d, Y') ?? 'present' }}
                         </td>
                         <td class="px-4 py-3 text-right">
-                            <a href="{{ route('compensation-profiles.show', $profile) }}" class="text-brand hover:underline">View</a>
+                            <x-button icon="view" variant="secondary" href="{{ route('compensation-profiles.show', $profile) }}">View</x-button>
                             @can('compensation.manage')
-                                <a href="{{ route('compensation-profiles.edit', $profile) }}" class="ml-3 text-slate-600 hover:underline">Edit</a>
+                                <x-button icon="edit" variant="secondary" href="{{ route('compensation-profiles.edit', $profile) }}">Edit</x-button>
                             @endcan
                         </td>
                     </tr>

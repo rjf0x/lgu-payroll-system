@@ -7,7 +7,7 @@
     <div class="mb-6 flex flex-wrap items-center justify-between gap-4">
         <p class="text-sm text-slate-500">Loan, contribution, GABE, and other deduction definitions.</p>
         @can('compensation.manage')
-            <a href="{{ route('deduction-types.create') }}" class="ui-button ui-button-primary">+ Add Deduction Type</a>
+            <x-button icon="add" variant="primary" href="{{ route('deduction-types.create') }}">+ Add Deduction Type</x-button>
         @endcan
     </div>
 
@@ -36,7 +36,7 @@
                         <td class="px-4 py-3"><x-status :value="$deductionType->status" /></td>
                         <td class="px-4 py-3 text-right">
                             @can('compensation.manage')
-                                <a href="{{ route('deduction-types.edit', $deductionType) }}" class="text-slate-600 hover:underline">Edit</a>
+                                <x-button icon="edit" variant="secondary" href="{{ route('deduction-types.edit', $deductionType) }}">Edit</x-button>
                             @endcan
                         </td>
                     </tr>

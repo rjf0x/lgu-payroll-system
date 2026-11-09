@@ -33,7 +33,7 @@
                                 Not checked
                             @endif
                         </td>
-                        <td><x-button :href="route('payroll-registrations.show', $registration)">View &amp; verify</x-button></td>
+                        <td><x-button icon="view" :href="route('payroll-registrations.show', $registration)">View &amp; verify</x-button></td>
                     </tr>
                 @empty
                     <tr><td colspan="5" class="py-8 text-center text-muted">No versioned payroll registrations yet.</td></tr>
@@ -70,7 +70,7 @@
                         <td class="px-4 py-3 text-slate-600">{{ $anchor->anchoredBy?->username }}</td>
                         <td class="px-4 py-3 text-slate-500">{{ $anchor->anchored_at?->format('M d, Y g:i A') }}</td>
                         <td class="px-4 py-3 font-mono text-xs">{{ substr($anchor->payload_hash, 0, 16) }}…</td>
-                        <td class="px-4 py-3 text-right"><a href="{{ route('blockchain-anchors.show', $anchor) }}" class="text-brand hover:underline">View</a></td>
+                        <td class="px-4 py-3 text-right"><x-button icon="view" variant="secondary" href="{{ route('blockchain-anchors.show', $anchor) }}">View</x-button></td>
                     </tr>
                 @empty
                     <tr><td colspan="7" class="px-4 py-8 text-center text-slate-500">No anchored payroll yet.</td></tr>

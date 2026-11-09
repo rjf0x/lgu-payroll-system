@@ -46,11 +46,11 @@
 
             @can('employees.manage')
                 <div class="mt-6 flex gap-3">
-                    <a href="{{ route('employment-records.edit', $employmentRecord) }}" class="ui-button ui-button-secondary">Edit</a>
+                    <x-button icon="edit" variant="secondary" href="{{ route('employment-records.edit', $employmentRecord) }}">Edit</x-button>
                     <form method="POST" action="{{ route('employment-records.destroy', $employmentRecord) }}" onsubmit="return confirm('Delete this employment record?')" data-submit-feedback>
                         @csrf
                         @method('DELETE')
-                        <button class="ui-button ui-button-danger">Delete</button>
+                        <x-button icon="delete" variant="danger" type="submit">Delete</x-button>
                     </form>
                 </div>
             @endcan

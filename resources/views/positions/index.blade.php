@@ -7,9 +7,9 @@
     <div class="mb-6 flex flex-wrap items-center justify-between gap-4">
         <p class="text-sm text-slate-500">Positions and the salary grade assigned to each.</p>
         @can('employees.manage')
-            <a href="{{ route('positions.create') }}" class="ui-button ui-button-primary">
+            <x-button icon="add" variant="primary" href="{{ route('positions.create') }}">
                 + Add Position
-            </a>
+            </x-button>
         @endcan
     </div>
 
@@ -35,9 +35,9 @@
                         <td class="px-4 py-3 text-center">{{ $position->salary_grade ?? '—' }}</td>
                         <td class="px-4 py-3"><x-status :value="$position->status" /></td>
                         <td class="px-4 py-3 text-right">
-                            <a href="{{ route('positions.show', $position) }}" class="text-brand hover:underline">View</a>
+                            <x-button icon="view" variant="secondary" href="{{ route('positions.show', $position) }}">View</x-button>
                             @can('employees.manage')
-                                <a href="{{ route('positions.edit', $position) }}" class="ml-3 text-slate-600 hover:underline">Edit</a>
+                                <x-button icon="edit" variant="secondary" href="{{ route('positions.edit', $position) }}">Edit</x-button>
                             @endcan
                         </td>
                     </tr>

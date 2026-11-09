@@ -7,9 +7,9 @@
     <div class="mb-6 flex flex-wrap items-center justify-between gap-4">
         <p class="text-sm text-slate-500">Organizational units used by positions and employment records.</p>
         @can('employees.manage')
-            <a href="{{ route('departments.create') }}" class="ui-button ui-button-primary">
+            <x-button icon="add" variant="primary" href="{{ route('departments.create') }}">
                 + Add Department
-            </a>
+            </x-button>
         @endcan
     </div>
 
@@ -33,9 +33,9 @@
                         <td class="px-4 py-3"><x-status :value="$department->status" /></td>
                         <td class="px-4 py-3 text-right">{{ $department->positions_count }}</td>
                         <td class="px-4 py-3 text-right">
-                            <a href="{{ route('departments.show', $department) }}" class="text-brand hover:underline">View</a>
+                            <x-button icon="view" variant="secondary" href="{{ route('departments.show', $department) }}">View</x-button>
                             @can('employees.manage')
-                                <a href="{{ route('departments.edit', $department) }}" class="ml-3 text-slate-600 hover:underline">Edit</a>
+                                <x-button icon="edit" variant="secondary" href="{{ route('departments.edit', $department) }}">Edit</x-button>
                             @endcan
                         </td>
                     </tr>

@@ -8,12 +8,12 @@
     <div class="no-print mb-4 flex flex-wrap items-center justify-between gap-3">
         <p class="text-sm text-slate-500">{{ $run->details->count() }} employee(s) · monthly payroll register.</p>
         <div class="flex flex-wrap gap-3">
-            <a href="{{ route('payroll-runs.show', $run) }}" class="ui-button ui-button-secondary">Back to run</a>
-            <a href="{{ route('payroll-runs.payslips', $run) }}" class="ui-button ui-button-secondary">Payslips</a>
+            <x-button icon="back" variant="secondary" href="{{ route('payroll-runs.show', $run) }}">Back to run</x-button>
+            <x-button icon="document" variant="secondary" href="{{ route('payroll-runs.payslips', $run) }}">Payslips</x-button>
             @can('reports.generate')
-                <a href="{{ route('payroll-runs.register.export', $run) }}" class="ui-button ui-button-primary">Export spreadsheet</a>
+                <x-button icon="download" variant="primary" href="{{ route('payroll-runs.register.export', $run) }}">Export spreadsheet</x-button>
             @endcan
-            <x-button onclick="window.print()">Print register</x-button>
+            <x-button icon="print" onclick="window.print()">Print register</x-button>
         </div>
     </div>
 

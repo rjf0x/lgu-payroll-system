@@ -5,7 +5,7 @@
 
 @section('content')
     <x-page-header description="Review this schedule and the individual status of each associated payroll run.">
-        <a href="{{ route('payroll-periods.index') }}" class="ui-button ui-button-secondary">Back to Payroll Periods</a>
+        <x-button icon="back" variant="secondary" href="{{ route('payroll-periods.index') }}">Back to Payroll Periods</x-button>
     </x-page-header>
     <section class="mb-6 rounded-xl border border-slate-200 bg-white p-5 shadow-sm" aria-labelledby="period-heading">
         <h2 id="period-heading" class="mb-4 text-xl font-semibold">{{ $period->period_name }}</h2>
@@ -24,7 +24,7 @@
         <thead><tr><th scope="col">Run</th><th scope="col">Type</th><th scope="col">Run status</th><th scope="col">Actions</th></tr></thead>
         <tbody>
             @forelse ($runs as $run)
-                <tr><td>#{{ $run->run_number }}</td><td>{{ ucfirst(strtolower($run->run_type)) }}</td><td><x-status :value="$run->status" /></td><td><a href="{{ route('payroll-runs.show', $run) }}">View run #{{ $run->run_number }}</a></td></tr>
+                <tr><td>#{{ $run->run_number }}</td><td>{{ ucfirst(strtolower($run->run_type)) }}</td><td><x-status :value="$run->status" /></td><td><x-button icon="view" :href="route('payroll-runs.show', $run)">View run #{{ $run->run_number }}</x-button></td></tr>
             @empty
                 <tr><td colspan="4" class="text-center text-slate-500">No payroll runs have been created for this period.</td></tr>
             @endforelse

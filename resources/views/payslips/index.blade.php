@@ -7,13 +7,13 @@
     <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
         <p class="text-sm text-slate-500">Payslips can be generated once the run is approved or finalized.</p>
         <div class="flex flex-wrap gap-3">
-            <a href="{{ route('payroll-runs.show', $run) }}" class="ui-button ui-button-secondary">Back to run</a>
+            <x-button icon="back" variant="secondary" href="{{ route('payroll-runs.show', $run) }}">Back to run</x-button>
             @can('reports.generate')
                 <form method="POST" action="{{ route('payroll-runs.payslips.generate', $run) }}" data-submit-feedback>
                     @csrf
-                    <button @disabled(! $canGenerate) class="ui-button ui-button-primary">
+                    <x-button icon="document" type="submit" :disabled="! $canGenerate" variant="primary">
                         Generate payslips
-                    </button>
+                    </x-button>
                 </form>
             @endcan
         </div>
@@ -47,12 +47,12 @@
                         </td>
                         <td class="px-4 py-3 text-right">
                             @if ($detail->payslip)
-                                <a href="{{ route('payslips.show', $detail->payslip) }}" class="text-brand hover:underline">View</a>
+                                <x-button icon="view" variant="secondary" href="{{ route('payslips.show', $detail->payslip) }}">View</x-button>
                                 @can('reports.generate')
                                     @if ($detail->payslip->publication_status !== 'PUBLISHED')
                                         <form method="POST" action="{{ route('payslips.publish', $detail->payslip) }}" class="ml-3 inline" data-submit-feedback>
                                             @csrf
-                                            <button class="text-slate-600 hover:underline">Publish</button>
+                                            <x-button icon="send" variant="secondary" type="submit">Publish</x-button>
                                         </form>
                                     @endif
                                 @endcan

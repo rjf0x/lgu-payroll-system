@@ -7,9 +7,9 @@
     <div class="mb-6 flex flex-wrap items-center justify-between gap-4">
         <p class="text-sm text-slate-500">The LGU-adopted salary schedules and their effective periods.</p>
         @can('compensation.manage')
-            <a href="{{ route('salary-schedules.create') }}" class="ui-button ui-button-primary">
+            <x-button icon="add" variant="primary" href="{{ route('salary-schedules.create') }}">
                 + Add Schedule
-            </a>
+            </x-button>
         @endcan
     </div>
 
@@ -40,9 +40,9 @@
                         <td class="px-4 py-3 text-right">{{ $schedule->grade_steps_count }}</td>
                         <td class="px-4 py-3"><x-status :value="$schedule->status" /></td>
                         <td class="px-4 py-3 text-right">
-                            <a href="{{ route('salary-schedules.show', $schedule) }}" class="text-brand hover:underline">View</a>
+                            <x-button icon="view" variant="secondary" href="{{ route('salary-schedules.show', $schedule) }}">View</x-button>
                             @can('compensation.manage')
-                                <a href="{{ route('salary-schedules.edit', $schedule) }}" class="ml-3 text-slate-600 hover:underline">Edit</a>
+                                <x-button icon="edit" variant="secondary" href="{{ route('salary-schedules.edit', $schedule) }}">Edit</x-button>
                             @endcan
                         </td>
                     </tr>

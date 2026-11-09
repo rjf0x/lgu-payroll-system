@@ -48,11 +48,11 @@
 
         @can('compensation.manage')
             <div class="mt-6 flex gap-3">
-                <a href="{{ route('compensation-profiles.edit', $profile) }}" class="ui-button ui-button-secondary">Edit</a>
+                <x-button icon="edit" variant="secondary" href="{{ route('compensation-profiles.edit', $profile) }}">Edit</x-button>
                 <form method="POST" action="{{ route('compensation-profiles.destroy', $profile) }}" onsubmit="return confirm('Delete this compensation profile?')" data-submit-feedback>
                     @csrf
                     @method('DELETE')
-                    <button class="ui-button ui-button-danger">Delete</button>
+                    <x-button icon="delete" variant="danger" type="submit">Delete</x-button>
                 </form>
             </div>
         @endcan

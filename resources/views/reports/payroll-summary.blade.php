@@ -8,11 +8,11 @@
     <div class="no-print mb-6 flex flex-wrap items-center justify-between gap-4">
         <p class="text-sm text-slate-500">Totals by department for this payroll run.</p>
         <div class="flex flex-wrap gap-3">
-            <a href="{{ route('payroll-runs.register', $run) }}" class="ui-button ui-button-secondary">Register</a>
+            <x-button icon="document" variant="secondary" href="{{ route('payroll-runs.register', $run) }}">Register</x-button>
             @can('reports.generate')
-                <a href="{{ route('payroll-runs.register.export', $run) }}" class="ui-button ui-button-primary">Export spreadsheet</a>
+                <x-button icon="download" variant="primary" href="{{ route('payroll-runs.register.export', $run) }}">Export spreadsheet</x-button>
             @endcan
-            <x-button onclick="window.print()">Print summary</x-button>
+            <x-button icon="print" onclick="window.print()">Print summary</x-button>
         </div>
     </div>
 

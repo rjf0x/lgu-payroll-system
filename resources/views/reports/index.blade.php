@@ -8,8 +8,8 @@
     <form method="GET" action="{{ route('reports.index') }}" class="no-print mb-6 flex flex-wrap items-end gap-3">
         <x-form.input name="q" label="Payroll period" :value="$filters['q'] ?? ''" placeholder="Search period name" />
         <x-form.select name="status" label="Run status" :selected="$filters['status'] ?? ''" :options="['' => 'All statuses', 'DRAFT' => 'Draft', 'PENDING_APPROVAL' => 'Pending approval', 'RETURNED' => 'Returned', 'REJECTED' => 'Rejected', 'APPROVED' => 'Approved', 'FINALIZED' => 'Finalized']" />
-            <x-button type="submit">Apply filters</x-button>
-            <x-button :href="route('reports.index')">Reset</x-button>
+            <x-button icon="filter" type="submit">Apply filters</x-button>
+            <x-button icon="reset" :href="route('reports.index')">Reset</x-button>
         </form>
 
     <section aria-labelledby="payroll-reports-heading" class="mb-8 min-w-0">
@@ -25,10 +25,10 @@
                         <td><x-status :value="$run->status" /></td>
                         <td>{{ $run->details_count }}</td>
                         <td><div class="flex items-center gap-3">
-                            <a href="{{ route('payroll-runs.register', $run) }}" aria-label="Register for {{ $run->payrollPeriod->period_name }}, run {{ $run->run_number }}">Register</a>
-                            <a href="{{ route('reports.payroll-summary', $run) }}">Department summary</a>
-                            <a href="{{ route('payroll-runs.payslips', $run) }}">Payslips</a>
-                            @can('reports.generate')<a href="{{ route('payroll-runs.register.export', $run) }}">Export spreadsheet</a>@endcan
+                            <x-button icon="document" :href="route('payroll-runs.register', $run)" aria-label="Register for {{ $run->payrollPeriod->period_name }}, run {{ $run->run_number }}">Register</x-button>
+                            <x-button icon="list" :href="route('reports.payroll-summary', $run)">Department summary</x-button>
+                            <x-button icon="document" :href="route('payroll-runs.payslips', $run)">Payslips</x-button>
+                            @can('reports.generate')<x-button icon="download" variant="secondary" href="{{ route('payroll-runs.register.export', $run) }}">Export spreadsheet</x-button>@endcan
                         </div></td>
                     </tr>
                 @empty

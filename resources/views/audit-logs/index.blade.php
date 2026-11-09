@@ -6,7 +6,7 @@
 @section('content')
     <div class="mb-5 flex flex-wrap items-start justify-between gap-4">
         <p class="max-w-2xl text-sm text-slate-600">Review recorded activity by user, module, action, or date. This view and its CSV export contain event metadata; before/after payloads and browser identifiers are excluded.</p>
-        <a href="{{ route('audit-logs.export', $filters) }}" class="ui-button ui-button-primary">Export filtered CSV</a>
+        <x-button icon="download" variant="primary" href="{{ route('audit-logs.export', $filters) }}">Export filtered CSV</x-button>
     </div>
 
     @if ($errors->any())
@@ -27,8 +27,8 @@
         <x-form.input name="from" label="From date (inclusive)" type="date" :value="$filters['from'] ?? null" />
         <x-form.input name="to" label="To date (inclusive)" type="date" :value="$filters['to'] ?? null" />
         <div class="flex items-end gap-3">
-            <button class="ui-button ui-button-primary">Apply filters</button>
-            <a href="{{ route('audit-logs.index') }}" class="ui-button ui-button-secondary">Reset</a>
+            <x-button icon="filter" variant="primary" type="submit">Apply filters</x-button>
+            <x-button icon="reset" variant="secondary" href="{{ route('audit-logs.index') }}">Reset</x-button>
         </div>
         </form>
 

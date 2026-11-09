@@ -26,7 +26,7 @@
         <p class="mt-3 text-muted">A previous result describes that check only. Verify again to check the current payroll data.</p>
         <form method="POST" action="{{ route('blockchain-anchors.verify', $anchor) }}" class="mt-4" data-submit-feedback>
             @csrf
-            <x-button type="submit" variant="primary">{{ $anchor->anchor_status === 'PENDING' ? 'Check confirmation and verify' : 'Verify integrity' }}</x-button>
+            <x-button icon="verify" type="submit" variant="primary">{{ $anchor->anchor_status === 'PENDING' ? 'Check confirmation and verify' : 'Verify integrity' }}</x-button>
         </form>
     </x-card>
     <div class="mb-5 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">

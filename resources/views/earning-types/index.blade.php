@@ -7,7 +7,7 @@
     <div class="mb-6 flex flex-wrap items-center justify-between gap-4">
         <p class="text-sm text-slate-500">Allowance and earning definitions used by payroll.</p>
         @can('compensation.manage')
-            <a href="{{ route('earning-types.create') }}" class="ui-button ui-button-primary">+ Add Earning Type</a>
+            <x-button icon="add" variant="primary" href="{{ route('earning-types.create') }}">+ Add Earning Type</x-button>
         @endcan
     </div>
 
@@ -36,7 +36,7 @@
                         <td class="px-4 py-3"><x-status :value="$earningType->status" /></td>
                         <td class="px-4 py-3 text-right">
                             @can('compensation.manage')
-                                <a href="{{ route('earning-types.edit', $earningType) }}" class="text-slate-600 hover:underline">Edit</a>
+                                <x-button icon="edit" variant="secondary" href="{{ route('earning-types.edit', $earningType) }}">Edit</x-button>
                             @endcan
                         </td>
                     </tr>

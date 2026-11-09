@@ -7,7 +7,7 @@
     <div class="mb-6 flex flex-wrap items-center justify-between gap-4">
         <p class="text-sm text-slate-500">Effective-dated GSIS, PhilHealth, and Pag-IBIG rates.</p>
         @can('compensation.manage')
-            <a href="{{ route('contribution-rates.create') }}" class="ui-button ui-button-primary">+ Add Rate</a>
+            <x-button icon="add" variant="primary" href="{{ route('contribution-rates.create') }}">+ Add Rate</x-button>
         @endcan
     </div>
 
@@ -36,7 +36,7 @@
                         <td class="px-4 py-3 text-slate-600">{{ $rate->effective_from?->format('M d, Y') }} – {{ $rate->effective_to?->format('M d, Y') ?? 'present' }}</td>
                         <td class="px-4 py-3 text-right">
                             @can('compensation.manage')
-                                <a href="{{ route('contribution-rates.edit', $rate) }}" class="text-slate-600 hover:underline">Edit</a>
+                                <x-button icon="edit" variant="secondary" href="{{ route('contribution-rates.edit', $rate) }}">Edit</x-button>
                             @endcan
                         </td>
                     </tr>

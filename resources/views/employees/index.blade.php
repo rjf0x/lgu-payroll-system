@@ -6,7 +6,7 @@
 @section('content')
     <x-page-header description="Find an employee by name or employee number, then view their employment records.">
         @can('employees.manage')
-            <x-button :href="route('employees.create')" variant="primary">Add Employee</x-button>
+            <x-button icon="add" :href="route('employees.create')" variant="primary">Add Employee</x-button>
         @endcan
     </x-page-header>
 
@@ -16,8 +16,8 @@
                 <x-form.input name="q" label="Search employees" type="search" :value="$search" placeholder="Name or employee number" />
             </div>
             <div class="flex flex-wrap gap-3">
-                <x-button type="submit" variant="primary">Search</x-button>
-                <x-button :href="route('employees.index')">Reset</x-button>
+                <x-button icon="search" type="submit" variant="primary">Search</x-button>
+                <x-button icon="reset" :href="route('employees.index')">Reset</x-button>
             </div>
         </form>
     </x-card>
@@ -46,9 +46,9 @@
                         <td class="px-4 py-3 text-slate-600">{{ $employee->sex }}</td>
                         <td class="px-4 py-3 text-right">{{ $employee->employment_records_count }}</td>
                         <td class="px-4 py-3 text-right">
-                            <a href="{{ route('employees.show', ['employee' => $employee] + request()->only(['q', 'page'])) }}">View<span class="sr-only"> {{ $employee->full_name }}</span></a>
+                            <x-button icon="view" variant="secondary" href="{{ route('employees.show', ['employee' => $employee] + request()->only(['q', 'page'])) }}">View<span class="sr-only"> {{ $employee->full_name }}</span></x-button>
                             @can('employees.manage')
-                                <a href="{{ route('employees.edit', $employee) }}" class="ml-4">Edit<span class="sr-only"> {{ $employee->full_name }}</span></a>
+                                <x-button icon="edit" variant="secondary" href="{{ route('employees.edit', $employee) }}">Edit<span class="sr-only"> {{ $employee->full_name }}</span></x-button>
                             @endcan
                         </td>
                     </tr>

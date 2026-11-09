@@ -16,11 +16,11 @@
                     <option value="{{ $option }}" @selected($status === $option)>{{ str_replace('_', ' ', $option) }}</option>
                 @endforeach
             </select>
-            <x-button type="submit">Apply filters</x-button>
-            <x-button :href="route('payroll-runs.index')">Reset</x-button>
+            <x-button icon="filter" type="submit">Apply filters</x-button>
+            <x-button icon="reset" :href="route('payroll-runs.index')">Reset</x-button>
         </form>
         @can('payroll.prepare')
-            <a href="{{ route('payroll-runs.create') }}" class="ui-button ui-button-primary">+ New Payroll Run</a>
+            <x-button icon="add" variant="primary" href="{{ route('payroll-runs.create') }}">+ New Payroll Run</x-button>
         @endcan
     </div>
 
@@ -50,7 +50,7 @@
                         <td class="px-4 py-3 text-right">{{ $run->details_count }}</td>
                         <td class="px-4 py-3 text-slate-600">{{ $run->createdBy?->username }}</td>
                         <td class="px-4 py-3 text-right">
-                            <a href="{{ route('payroll-runs.show', $run) }}" class="text-brand hover:underline">Open</a>
+                            <x-button icon="view" variant="secondary" href="{{ route('payroll-runs.show', $run) }}">Open</x-button>
                         </td>
                     </tr>
                 @empty

@@ -8,9 +8,9 @@
 @section('content')
     @php($latestCheck = $registration->latestVerification)
     <div class="mb-5 flex flex-wrap gap-3">
-        <x-button :href="route('blockchain.index')">All integrity records</x-button>
+        <x-button icon="list" :href="route('blockchain.index')">All integrity records</x-button>
         @can('payroll.view')
-            <x-button :href="route('payroll-runs.show', $registration->payrollRun)">View payroll</x-button>
+            <x-button icon="view" :href="route('payroll-runs.show', $registration->payrollRun)">View payroll</x-button>
         @endcan
     </div>
 
@@ -28,7 +28,7 @@
         <p class="mt-3 text-sm text-muted">Each result describes that check only. Verify again to check the current payroll data against fresh blockchain evidence.</p>
         <form method="POST" action="{{ route('payroll-registrations.verify', $registration) }}" class="mt-4" data-submit-feedback>
             @csrf
-            <x-button type="submit" variant="primary">Verify current payroll</x-button>
+            <x-button icon="verify" type="submit" variant="primary">Verify current payroll</x-button>
         </form>
     </x-card>
 

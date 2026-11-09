@@ -6,7 +6,7 @@
 @section('content')
     <x-page-header description="Manage payroll schedules, review coverage and pay dates, and access associated payroll runs.">
         @can('payroll.prepare')
-            <a href="{{ route('payroll-periods.create') }}" class="ui-button ui-button-primary">Create Payroll Period</a>
+            <x-button icon="add" variant="primary" href="{{ route('payroll-periods.create') }}">Create Payroll Period</x-button>
         @endcan
     </x-page-header>
 
@@ -30,8 +30,8 @@
         </div>
         <p class="mt-3 text-sm text-slate-500">Coverage dates find periods overlapping the selected range. Year refers to the coverage start year. Statistics include all periods.</p>
         <div class="mt-4 flex flex-wrap gap-3">
-            <button type="submit" class="ui-button ui-button-primary">Apply filters</button>
-            <a href="{{ route('payroll-periods.index') }}" class="ui-button ui-button-secondary">Reset</a>
+            <x-button icon="filter" variant="primary" type="submit">Apply filters</x-button>
+            <x-button icon="reset" variant="secondary" href="{{ route('payroll-periods.index') }}">Reset</x-button>
         </div>
     </form>
 

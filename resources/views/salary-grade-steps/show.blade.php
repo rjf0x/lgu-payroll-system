@@ -30,11 +30,11 @@
 
         @can('compensation.manage')
             <div class="mt-6 flex gap-3">
-                <a href="{{ route('salary-grade-steps.edit', $gradeStep) }}" class="ui-button ui-button-secondary">Edit</a>
+                <x-button icon="edit" variant="secondary" href="{{ route('salary-grade-steps.edit', $gradeStep) }}">Edit</x-button>
                 <form method="POST" action="{{ route('salary-grade-steps.destroy', $gradeStep) }}" onsubmit="return confirm('Delete this grade step?')" data-submit-feedback>
                     @csrf
                     @method('DELETE')
-                    <button class="ui-button ui-button-danger">Delete</button>
+                    <x-button icon="delete" variant="danger" type="submit">Delete</x-button>
                 </form>
             </div>
         @endcan

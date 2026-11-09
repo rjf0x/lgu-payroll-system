@@ -42,7 +42,11 @@ const resetSubmission = () => {
         form.removeAttribute('aria-busy');
         form.querySelectorAll('[data-was-submitting]').forEach((button) => {
             button.disabled = false;
-            button.textContent = button.dataset.originalLabel;
+            if (button.hasAttribute('data-icon-action')) {
+                button.removeAttribute('aria-busy');
+            } else {
+                button.textContent = button.dataset.originalLabel;
+            }
             delete button.dataset.wasSubmitting;
             delete button.dataset.originalLabel;
         });
@@ -97,8 +101,12 @@ document.addEventListener('submit', (event) => {
         form.querySelectorAll('button[type="submit"], button:not([type])').forEach((button) => {
             if (button.disabled) { return; }
             button.dataset.wasSubmitting = 'true';
-            button.dataset.originalLabel = button.textContent;
-            button.textContent = button.dataset.submittingLabel || 'Submitting…';
+            if (button.hasAttribute('data-icon-action')) {
+                button.setAttribute('aria-busy', 'true');
+            } else {
+                button.dataset.originalLabel = button.textContent;
+                button.textContent = button.dataset.submittingLabel || 'Submitting…';
+            }
             button.disabled = true;
         });
     }, 0);

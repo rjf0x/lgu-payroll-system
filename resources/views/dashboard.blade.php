@@ -206,7 +206,7 @@
                                         <span>Not finalized</span>
                                     @endif
                                 </td>
-                                <td class="px-4 py-2 text-right"><x-button :href="route('payroll-runs.show', $run)" :aria-label="'View payroll records for run #'.$run->run_number.', '.$run->payrollPeriod->start_date->format('M d, Y').' to '.$run->payrollPeriod->end_date->format('M d, Y')">View records</x-button></td>
+                                <td class="px-4 py-2 text-right"><x-button icon="view" :href="route('payroll-runs.show', $run)" :aria-label="'View payroll records for run #'.$run->run_number.', '.$run->payrollPeriod->start_date->format('M d, Y').' to '.$run->payrollPeriod->end_date->format('M d, Y')">View records</x-button></td>
                             </tr>
                         @empty
                             <tr><td colspan="6" class="px-4 py-8 text-center text-muted">No payroll runs to display.</td></tr>

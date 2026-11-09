@@ -7,9 +7,9 @@
     <div class="mb-6 flex flex-wrap items-center justify-between gap-4">
         <p class="text-sm text-slate-500">Appointments linking employees to departments, positions, and employment types.</p>
         @can('employees.manage')
-            <a href="{{ route('employment-records.create') }}" class="ui-button ui-button-primary">
+            <x-button icon="add" variant="primary" href="{{ route('employment-records.create') }}">
                 + Add Employment Record
-            </a>
+            </x-button>
         @endcan
     </div>
 
@@ -42,7 +42,7 @@
                         <td class="px-4 py-3 text-slate-600">{{ $record->start_date?->format('M d, Y') }}</td>
                         <td class="px-4 py-3"><x-status :value="$record->employment_status" /></td>
                         <td class="px-4 py-3 text-right">
-                            <a href="{{ route('employment-records.show', $record) }}" class="text-brand hover:underline">View</a>
+                            <x-button icon="view" variant="secondary" href="{{ route('employment-records.show', $record) }}">View</x-button>
                         </td>
                     </tr>
                 @empty
