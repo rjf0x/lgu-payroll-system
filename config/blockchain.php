@@ -33,6 +33,15 @@ return [
         'code_hash' => env('PAYROLL_REGISTRY_CODE_HASH'),
         'signer_address' => env('PAYROLL_REGISTRY_SIGNER_ADDRESS'),
         'deployment_block' => env('PAYROLL_REGISTRY_DEPLOYMENT_BLOCK'),
+        'pilot_enabled' => (bool) env('BESU_REGISTRY_PILOT', false),
+        'restore_check' => (bool) env('BESU_REGISTRY_RESTORE_CHECK', false),
+        'operations' => [
+            'stale_after_seconds' => (int) env('PAYROLL_REGISTRY_STALE_AFTER_SECONDS', 600),
+            'max_block_age_seconds' => (int) env('PAYROLL_REGISTRY_MAX_BLOCK_AGE_SECONDS', 60),
+            'validator_owner' => env('PAYROLL_REGISTRY_VALIDATOR_OWNER'),
+            'signer_owner' => env('PAYROLL_REGISTRY_SIGNER_OWNER'),
+            'payroll_owner' => env('PAYROLL_REGISTRY_PAYROLL_OWNER'),
+        ],
     ],
 
     'besu' => [

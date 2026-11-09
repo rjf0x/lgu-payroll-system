@@ -40,6 +40,17 @@ function fixture() {
     return { gateway, receipt, transaction, stored, log };
 }
 
+test('node status reports syncing and latest block independently of signing', async () => {
+    const { gateway } = fixture();
+    gateway.rpc.getBlock = async () => ({ number: 9, timestamp: 1700 });
+    gateway.rpc.send = async method => { assert.equal(method, 'eth_syncing'); return false; };
+    assert.deepEqual(await gateway.nodeStatus(), { block_number: 9, block_timestamp: 1700, syncing: false });
+    gateway.rpc.send = async () => ({ currentBlock: '0x9' });
+    assert.equal((await gateway.nodeStatus()).syncing, true);
+    gateway.rpc.getBlock = async () => null;
+    await assert.rejects(gateway.nodeStatus(), { code: 'NODE_UNAVAILABLE' });
+});
+
 test('readiness rejects wrong chain, genesis or runtime bytecode', async () => {
     for (const change of [
         gateway => { gateway.rpc.send = async () => '0x1'; },
@@ -76,6 +87,14 @@ test('health requires the configured signing account to be available', async () 
         contract_address: address, code_hash: keccak256('0x6000'), signer_address: wallet.address.toLowerCase(), deployment_block: 1 });
     gateway.signer.send = async () => [];
     await assert.rejects(gateway.health(), { code: 'SIGNER_UNAVAILABLE' });
+});
+
+test('registrar readiness checks the namespace permission without signing', async () => {
+    const { gateway } = fixture();
+    assert.equal(await gateway.registrarAuthorized('lgu-example'), true);
+    gateway.contract.isRegistrar = async () => false;
+    assert.equal(await gateway.registrarAuthorized('other-lgu'), false);
+    await assert.rejects(gateway.registrarAuthorized('INVALID'), { code: 'INVALID_IDENTITY' });
 });
 
 test('validates every signed transaction field before accepting raw bytes', async () => {

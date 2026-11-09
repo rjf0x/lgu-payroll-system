@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -51,6 +52,16 @@ class PayrollRegistration extends Model
     public function latestVerification(): HasOne
     {
         return $this->hasOne(PayrollRegistrationVerification::class, 'registration_id', 'registration_id')->latestOfMany('verification_id');
+    }
+
+    /** A pending or unavailable attempt does not resolve an earlier integrity finding. */
+    public function latestIntegrityAssessment(): HasOne
+    {
+        return $this->hasOne(PayrollRegistrationVerification::class, 'registration_id', 'registration_id')
+            ->ofMany(['verification_id' => 'max'], function (Builder $query): void {
+                $query->whereIn('verification_result', [PayrollRegistrationVerification::MATCH, PayrollRegistrationVerification::MISMATCH,
+                    PayrollRegistrationVerification::INVALID_EVIDENCE, PayrollRegistrationVerification::NOT_REGISTERED]);
+            });
     }
 
     /** @return array{organization_id:string, payroll_reference:string, revision:int, payload_hash:string, hash_schema_version:int, idempotency_key:string} */

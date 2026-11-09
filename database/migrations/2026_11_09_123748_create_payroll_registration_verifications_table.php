@@ -22,7 +22,7 @@ return new class extends Migration
             $table->string('remarks');
             $table->json('evidence')->nullable();
             $table->timestamp('verified_at');
-            $table->index(['registration_id', 'verified_at']);
+            $table->index(['registration_id', 'verified_at'], 'payroll_registry_verification_time_index');
         });
     }
 

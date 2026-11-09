@@ -8,6 +8,31 @@ use RuntimeException;
 
 class PayrollRegistryClient
 {
+    /** @return array<string, mixed> */
+    public function health(): array
+    {
+        $target = $this->target();
+        $network = $target;
+        unset($network['bridge_url']);
+        $health = $this->request('GET', $target['bridge_url'].'/health');
+        $this->check(($health['status'] ?? null) === 'READY' && $this->sameFields($network, $health['network'] ?? null), 'BRIDGE_NETWORK_MISMATCH');
+
+        return $health;
+    }
+
+    public function registrarAuthorized(): bool
+    {
+        $target = $this->target();
+        $network = $target;
+        unset($network['bridge_url']);
+        $organization = (string) config('blockchain.registry.organization_id');
+        $this->check(preg_match('/^[a-z0-9][a-z0-9-]{0,62}$/D', $organization) === 1, 'INVALID_REGISTRY_CONFIG');
+        $response = $this->request('GET', $target['bridge_url'].'/registrars/'.$organization);
+        $this->check($this->sameFields($network, $response['network'] ?? null) && is_bool($response['authorized'] ?? null), 'INVALID_BRIDGE_RESPONSE');
+
+        return $response['authorized'];
+    }
+
     /** @return array{chain_id:string, genesis_hash:string, contract_address:string, code_hash:string, signer_address:string, deployment_block:int, bridge_url:string} */
     public function target(): array
     {

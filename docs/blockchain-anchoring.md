@@ -345,4 +345,57 @@ The registry detail page prioritizes the latest outcome, its timestamp, and a Ve
 
 ### Checks and remaining rollout
 
-Thirty new verification cases cover fresh matches, payroll/local-hash tampering, archived-copy tampering, missing required data, outages after a match, pending and absent registrations, invalid evidence, signer-independent reads, metadata races, service/route authorization, protected metadata rendering, history pagination, and heading escaping. Existing registration, legacy Besu, UI, and payroll-flow suites were also run. All 27 Node tests and the production asset build passed. These checks use isolated test databases and fake/mock RPC services; they do not migrate a live database or register real payrolls. Phase 6 still requires configured MySQL credentials, a deployed registry, permission grants, a real-network pilot/recovery drill, and operational ownership.
+Thirty new verification cases cover fresh matches, payroll/local-hash tampering, archived-copy tampering, missing required data, outages after a match, pending and absent registrations, invalid evidence, signer-independent reads, metadata races, service/route authorization, protected metadata rendering, history pagination, and heading escaping. Existing registration, legacy Besu, UI, and payroll-flow suites were also run. All 27 Node tests and the production asset build passed. These checks use isolated test databases and fake/mock RPC services; they do not migrate a live database or register real payrolls. The local Phase 6 pilot has now passed; operational ownership and production activation remain pending, as described below.
+## 13. Pilot and operations (Phase 6)
+
+The local pilot uses synthetic payrolls, four repository-owned Besu 26.10.2 QBFT containers, Web3Signer 26.10.2, and isolated MySQL 8.4 on loopback port 33316. It does not change the application's `.env`. Four containers on one host do not provide production fault separation.
+
+Run `npm run besu:pilot` with Docker, Node 26, PHP 8.5, and the installed project dependencies available. It starts the local stack, deploys or reuses the registry through `npm run besu:registry:setup`, grants the pilot namespace, and runs real integration tests. Bootstrap accepts only the configured local chain 1337 with zero fees and four validators. Its deployment journal retains signed operations before broadcasting, so reruns reuse deployment identity.
+
+The runner deliberately resets only the guarded source database `lgu_payroll_qa_registry_pilot`. MySQL uses a Docker named volume. Generated credentials, profiles, journals, SQL backups, and reports remain under ignored `storage/app/private/besu/`; protect these files as secrets. Do not copy their contents into logs or commits. Existing application database credentials are not repaired or replaced by the pilot.
+
+### Pilot evidence
+
+The real-network pilot passed these checks:
+
+- Laravel computation, independent approval/finalization, database queue dispatch, signed registration, and MATCH → MISMATCH after a synthetic data change → MATCH after restoring the original data: 1 test, 19 assertions.
+- A consistent MySQL dump restored into a new guarded QA database verifies against the original blockchain commitment: 1 test, 6 assertions.
+- A lost broadcast response followed by journal backup, restoration, and bridge-instance restart retains the original transaction bytes/hash and signs only once. This tests instance recovery, not sudden host power loss.
+- Existing MySQL concurrency tests pass: 2 tests, 18 assertions.
+
+`pilot-latest.json` identifies the successful run directory and restored database. `pilot-recovery-report.json` records the journal drill. `registry-deployment.json` contains public deployment identity. The successful run's `restore.env` targets the retained restored payroll; concurrency tests subsequently reset the source QA database. The bridge process is stopped when the runner exits. Normal test runs skip the opt-in pilot/restore tests.
+
+The live MySQL run exposed a verification-history index name exceeding MySQL's 64-character limit. The unapplied migration now uses the explicit short name `payroll_registry_verification_time_index`; fresh migration and backup restoration both passed on MySQL.
+
+### Monitoring and ownership
+
+Run `php artisan blockchain:readiness --json --no-interaction` under the intended application profile. Add `--production` to require configured validator, signer, and payroll incident owners. Exit code 0 means these checks passed at that instant; code 1 requires investigation. This command does not dispatch jobs or sign transactions.
+
+The report checks migrations, asynchronous queue configuration, namespace registrar permission, pinned chain/contract/signer health, node synchronization, recent block production, backlog age, overdue leases, failed/conflicting registrations, failed blockchain jobs, and unresolved integrity findings. Defaults are 600 seconds for backlog age and 60 seconds for latest-block age, configured through `PAYROLL_REGISTRY_STALE_AFTER_SECONDS` and `PAYROLL_REGISTRY_MAX_BLOCK_AGE_SECONDS`. An unavailable verification does not clear an earlier mismatch; a subsequent conclusive assessment is required.
+
+Configure `PAYROLL_REGISTRY_VALIDATOR_OWNER`, `PAYROLL_REGISTRY_SIGNER_OWNER`, and `PAYROLL_REGISTRY_PAYROLL_OWNER` with accountable teams before production activation. These are intentionally blank by default. Validator membership/backup administration, signing-key custody, and payroll incident investigation need explicit ownership. Contract administration must also have an assigned custodian. No owners are appointed by this implementation.
+
+Supervise the bridge, queue workers, scheduler, RPC, validators, and signer separately. An empty queue does not prove worker or scheduler liveness. Alert on process failure, stalled blocks, backlog age, expired leases, terminal failures, and integrity findings. `deployment:check` accepts versioned registry configuration but performs only a static transport check; readiness provides live checks. Neither command grants production approval.
+
+### Incident handling
+
+For pending or overdue requests, inspect worker/scheduler supervision and bridge/node/signer readiness, restore the original pinned target, and let the persisted lease/reconciliation path recover. A lost response may mean the transaction was accepted: retain the journal and reconcile the original hash before taking further action. Never reset nonce state or delete a journal to clear a queue.
+
+For MISMATCH, preserve payroll, audit history, captured payload, and chain evidence; assign investigation to the payroll owner. Do not reanchor modified data to conceal a finding. For INVALID_EVIDENCE or a missing previously confirmed registration, inspect the original chain, deployment identity, receipts, and RPC access. For FAILED/CONFLICT, retain terminal evidence and investigate with the signer/contract custodian. There is no force-retry endpoint or automatic replacement registration. Payment-release policy is unchanged; the business correction/revision workflow still needs approval and implementation.
+
+### Backup and restoration
+
+Use `node config/besu/backup-journal.mjs <source.sqlite> <new-backup.sqlite>` for online bridge journal backups. It uses the [SQLite backup API](https://sqlite.org/backup.html), preserving committed WAL-backed state, validates integrity and network identity, and refuses to overwrite an existing target. Copying only a live `.sqlite` file can omit WAL state. Signed bytes in journal backups are sensitive.
+
+To restore, preserve the original files, stop the current bridge writer, back up into a new destination, and point the bridge's journal configuration at that restored path. Keep chain/genesis/contract/code/signer identity unchanged, enforce a single writer, then reconcile against the chain before resuming submissions. Do not overwrite or discard historical journals. Restore MySQL using a consistent backup into a new guarded QA database first, then verify original commitments before any approved production recovery. The pilot performs this SQL restore drill automatically.
+
+Back up validator configuration/keys and chain data and the managed signer configuration/keys through their infrastructure owners' procedures. The journal and SQL drills do not substitute for validator or signing-key disaster recovery. Production needs separate validator failure domains, restricted RPC, private authenticated transport, managed signing custody, supervision, approved release/correction policy, and a scheduled recovery exercise.
+
+To stop only this repository's local pilot services while preserving histories and volumes:
+
+```powershell
+docker compose -f config/besu/compose.yaml stop
+docker compose -f config/besu/pilot.compose.yaml stop
+```
+
+Do not use volume deletion as a shutdown procedure.

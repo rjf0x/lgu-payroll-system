@@ -39,6 +39,22 @@ export class BesuRegistryGateway {
         return this.rpc.getTransactionCount(this.signerAddress, 'pending');
     }
 
+    async registrarAuthorized(organization) {
+        if (typeof organization !== 'string' || !/^[a-z0-9][a-z0-9-]{0,62}$/.test(organization)) {
+            throw new BridgeError('INVALID_IDENTITY', 422);
+        }
+        await this.ready();
+        return this.contract.isRegistrar(organization, this.signerAddress);
+    }
+
+    async nodeStatus() {
+        const [block, syncing] = await Promise.all([this.rpc.getBlock('latest'), this.rpc.send('eth_syncing', [])]);
+        if (!block) {
+            throw new BridgeError('NODE_UNAVAILABLE');
+        }
+        return { block_number: block.number, block_timestamp: block.timestamp, syncing: syncing !== false };
+    }
+
     async health() {
         await this.ready();
         const accounts = await this.signer.send('eth_accounts', []);

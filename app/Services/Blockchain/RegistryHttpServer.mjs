@@ -23,7 +23,8 @@ export function createRegistryServer(bridge, token) {
             }
             if (request.method === 'GET' && url.pathname === '/health') {
                 const network = await bridge.gateway.health();
-                return send(200, { status: 'READY', network });
+                const node = await bridge.gateway.nodeStatus();
+                return send(200, { status: 'READY', network, node });
             }
             if (request.method === 'POST' && url.pathname === '/registrations') {
                 if (!/^application\/json(?:\s*;.*)?$/i.test(request.headers['content-type'] ?? '')) {
@@ -47,6 +48,11 @@ export function createRegistryServer(bridge, token) {
                 return send(202, bridge.enqueue(input));
             }
             const registration = /^\/registrations\/([^/]+)\/([^/]+)\/([1-9][0-9]*)$/.exec(url.pathname);
+            const registrar = /^\/registrars\/([a-z0-9][a-z0-9-]{0,62})$/.exec(url.pathname);
+            if (request.method === 'GET' && registrar) {
+                const authorized = await bridge.gateway.registrarAuthorized(registrar[1]);
+                return send(200, { network: bridge.gateway.networkIdentity(), authorized });
+            }
             if (request.method === 'GET' && registration) {
                 const subject = identity(registration[1], registration[2], Number(registration[3]));
                 return send(200, await bridge.read(subject));

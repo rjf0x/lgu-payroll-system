@@ -192,4 +192,8 @@ Agree on:
 4. Production validator ownership and signing administration.
 5. Treatment of existing simulated and legacy on-chain anchors.
 
-No dependencies, infrastructure, contracts, or application behavior were changed as part of preparing this plan.
+### Implementation status after Phase 6
+
+Phases 1?5 are implemented. Phase 6 includes an isolated local pilot on four real Besu QBFT validators, Web3Signer, the versioned registry, and MySQL 8.4. Approval/finalization, asynchronous registration, MATCH/MISMATCH detection, recovery after a lost broadcast response, SQL backup restoration, and MySQL concurrency tests passed.
+
+Readiness monitoring, repeatable pilot commands, and recovery procedures are in [blockchain-anchoring.md](blockchain-anchoring.md#13-pilot-and-operations-phase-6). Production activation remains pending named owners, independent infrastructure and signing administration, payment-release policy, and approved correction/revision procedures. The normal application environment and payment-release behavior were not changed by the pilot.

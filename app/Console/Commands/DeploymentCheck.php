@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Models\Role;
 use App\Models\User;
+use App\Services\Blockchain\PayrollRegistryClient;
 use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
@@ -18,7 +19,7 @@ class DeploymentCheck extends Command
     /**
      * Execute the console command.
      */
-    public function handle(): int
+    public function handle(PayrollRegistryClient $registry): int
     {
         $checks = [
             'PHP 8.5 or later' => PHP_VERSION_ID >= 80500,
@@ -46,9 +47,7 @@ class DeploymentCheck extends Command
                 'Secure session cookies' => config('session.secure') === true,
                 'Persistent database, sessions, cache and queue' => config('database.default') === 'mysql'
                     && config('session.driver') === 'database' && config('cache.default') === 'database' && config('queue.default') === 'database',
-                'Besu driver and public addresses configured' => config('blockchain.driver') === 'besu'
-                    && preg_match('/^0x[0-9a-f]{40}$/i', (string) config('blockchain.contract_address'))
-                    && preg_match('/^0x[0-9a-f]{40}$/i', (string) config('blockchain.besu.from_address')),
+                'Payroll integrity transport configured' => $this->integrityConfigured($registry),
                 'Bootstrap password removed from runtime config' => blank(config('deployment.bootstrap_admin.password')),
             ];
 
@@ -68,5 +67,22 @@ class DeploymentCheck extends Command
         $this->comment('Manual acceptance remains: HTTPS smoke test, backup restore drill, worker/scheduler monitoring, Besu connectivity and approved payroll policies.');
 
         return in_array(false, $checks, true) ? self::FAILURE : self::SUCCESS;
+    }
+
+    private function integrityConfigured(PayrollRegistryClient $registry): bool
+    {
+        if (! config('blockchain.registry.enabled')) {
+            return config('blockchain.driver') === 'besu'
+                && preg_match('/^0x[0-9a-f]{40}$/i', (string) config('blockchain.contract_address'))
+                && preg_match('/^0x[0-9a-f]{40}$/i', (string) config('blockchain.besu.from_address'));
+        }
+        try {
+            $registry->target();
+
+            return strlen((string) config('blockchain.registry.bridge_token')) >= 32
+                && preg_match('/^[a-z0-9][a-z0-9-]{0,62}$/D', (string) config('blockchain.registry.organization_id')) === 1;
+        } catch (Throwable) {
+            return false;
+        }
     }
 }

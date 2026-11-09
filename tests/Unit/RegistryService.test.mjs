@@ -51,6 +51,7 @@ test('runnable service signs, journals, confirms and reads a registration throug
                     }
                     result = [wallet.address];
                     break;
+                case 'eth_syncing': result = false; break;
                 case 'eth_getCode': result = '0x6000'; break;
                 case 'eth_blockNumber': result = registered ? '0x1' : '0x0'; break;
                 case 'eth_getBlockByNumber': result = message.params[0] === '0x0' ? block('0x0', genesisHash) : block('0x1', blockHash); break;

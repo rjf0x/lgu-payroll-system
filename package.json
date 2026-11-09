@@ -6,7 +6,9 @@
         "build": "vite build",
         "dev": "vite",
         "besu:bridge": "node config/besu/bridge.mjs",
-        "test:besu-bridge": "node --test tests/Unit/RegistryBridge.test.mjs tests/Unit/BesuRegistryGateway.test.mjs tests/Unit/RegistryService.test.mjs"
+        "test:besu-bridge": "node --test tests/Unit/RegistryBridge.test.mjs tests/Unit/BesuRegistryGateway.test.mjs tests/Unit/RegistryService.test.mjs tests/Unit/RegistryJournalBackup.test.mjs",
+        "besu:registry:setup": "node config/besu/setup-registry.mjs",
+        "besu:pilot": "node config/besu/pilot.mjs"
     },
     "devDependencies": {
         "@tailwindcss/vite": "^4.0.0",

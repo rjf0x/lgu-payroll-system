@@ -1,0 +1,24 @@
+name: lgu-payroll-registry-pilot
+
+services:
+  mysql:
+    image: mysql:8.4
+    restart: unless-stopped
+    env_file:
+      - ../../storage/app/private/besu/pilot-mysql.env
+    environment:
+      MYSQL_DATABASE: lgu_payroll_qa_registry_pilot
+      MYSQL_ROOT_HOST: '%'
+      MYSQL_USER: payroll_pilot
+    ports:
+      - 127.0.0.1:33316:3306
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: [CMD, mysqladmin, ping, -h, localhost, --silent]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+volumes:
+  mysql-data:

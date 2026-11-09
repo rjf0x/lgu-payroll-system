@@ -21,6 +21,8 @@ function fixture(t) {
     const calls = { signs: 0, broadcasts: [] };
     const gateway = {
         networkIdentity: () => ({ chain_id: '1337' }),
+        registrarAuthorized: async organization => organization === 'lgu-example',
+        nodeStatus: async () => ({ block_number: 1, block_timestamp: 1700, syncing: false }),
         health: async () => gateway.ready(),
         ready: async () => {}, registration: async () => null, pendingNonce: async () => 4,
         prepare: async (record, nonce) => ({ nonce, data: record.payload_hash }),
@@ -290,4 +292,14 @@ test('HTTP distinguishes unknown transactions, rejects invalid routes and weak c
     assert.deepEqual(await pending.json(), { status: 'PENDING_OR_UNKNOWN' });
     assert.equal((await f.call('/transactions/invalid')).status, 404);
     assert.equal((await f.call('/health?unexpected=1')).status, 422);
+});
+
+test('HTTP registrar checks return only permission and network metadata', async t => {
+    const f = await httpFixture(t);
+    const allowed = await f.call('/registrars/lgu-example');
+    assert.equal(allowed.status, 200);
+    assert.deepEqual(await allowed.json(), { network: { chain_id: '1337' }, authorized: true });
+    const denied = await f.call('/registrars/other-lgu');
+    assert.equal((await denied.json()).authorized, false);
+    assert.equal(f.store.all().length, 0);
 });

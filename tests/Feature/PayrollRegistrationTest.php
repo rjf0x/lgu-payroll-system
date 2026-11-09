@@ -21,6 +21,7 @@ use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Validation\ValidationException;
 use PHPUnit\Framework\Attributes\DataProvider;
 use RuntimeException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
@@ -355,6 +356,68 @@ class PayrollRegistrationTest extends TestCase
             }
         }
         $this->assertSame('45000.00', $detail->fresh()->net_pay);
+    }
+
+    public function test_retrospective_registration_is_idempotent_and_preserves_finalization(): void
+    {
+        [$run, $user] = $this->approvedRun();
+        config(['blockchain.registry.enabled' => false]);
+        app(PayrollApprovalService::class)->finalize($run, $user);
+        $original = $run->fresh()->getAttributes();
+        $approvalCount = $run->approvals()->count();
+        config(['blockchain.registry.enabled' => true]);
+        $this->travel(1)->days();
+
+        $this->artisan('blockchain:register-finalized', ['payroll' => $run->getKey()])->assertSuccessful();
+        $first = $run->registration()->firstOrFail();
+        $this->artisan('blockchain:register-finalized', ['payroll' => $run->getKey()])->assertSuccessful();
+
+        $this->assertDatabaseCount('payroll_registrations', 1);
+        $this->assertSame($original, $run->fresh()->getAttributes());
+        $this->assertSame($approvalCount, $run->approvals()->count());
+        $this->assertSame(PayrollRegistration::QUEUED, $first->status);
+        $this->assertDatabaseHas('audit_logs', ['action' => 'PAYROLL_REGISTRATION_RETROSPECTIVE', 'user_id' => null]);
+        Http::assertNothingSent();
+    }
+
+    public function test_retrospective_registration_rejects_unfinalized_payroll(): void
+    {
+        [$run] = $this->approvedRun();
+        $this->expectException(HttpException::class);
+        try {
+            app(PayrollRegistrationService::class)->registerExisting($run->getKey());
+        } finally {
+            $this->assertDatabaseCount('payroll_registrations', 0);
+        }
+    }
+
+    public function test_retrospective_registration_requires_an_enabled_registry(): void
+    {
+        [$run, $user] = $this->approvedRun();
+        config(['blockchain.registry.enabled' => false]);
+        app(PayrollApprovalService::class)->finalize($run, $user);
+        $this->expectException(HttpException::class);
+        try {
+            app(PayrollRegistrationService::class)->registerExisting($run->getKey());
+        } finally {
+            $this->assertDatabaseCount('payroll_registrations', 0);
+        }
+    }
+
+    public function test_retrospective_registration_rejects_missing_approval_evidence(): void
+    {
+        [$run, $user] = $this->approvedRun();
+        config(['blockchain.registry.enabled' => false]);
+        app(PayrollApprovalService::class)->finalize($run, $user);
+        $run->approvals()->where('action', PayrollApproval::ACTION_APPROVED)->delete();
+        config(['blockchain.registry.enabled' => true]);
+        $this->expectException(ValidationException::class);
+        try {
+            app(PayrollRegistrationService::class)->registerExisting($run->getKey());
+        } finally {
+            $this->assertDatabaseCount('payroll_registrations', 0);
+            $this->assertDatabaseMissing('audit_logs', ['action' => 'PAYROLL_REGISTRATION_RETROSPECTIVE']);
+        }
     }
 
     /** @return array{PayrollRun, User} */

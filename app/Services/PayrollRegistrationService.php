@@ -24,7 +24,32 @@ class PayrollRegistrationService
         private readonly AuditLogger $auditLogger,
     ) {}
 
-    /** Capture is called only while finalization holds the payroll run's transaction lock. */
+    /** Register the current baseline of an older finalized run without changing its approval history. */
+    public function registerExisting(int $runId): PayrollRegistration
+    {
+        abort_unless(config('blockchain.registry.enabled'), 422, 'Payroll registry is disabled.');
+
+        return DB::transaction(function () use ($runId): PayrollRegistration {
+            $run = PayrollRun::query()->lockForUpdate()->findOrFail($runId);
+            abort_unless($run->status === PayrollRun::STATUS_FINALIZED && $run->finalized_at !== null && $run->finalized_by !== null,
+                422, 'Only a finalized payroll with finalization evidence can be registered.');
+            $existing = $run->registration()->first();
+            if ($existing !== null) {
+                return $existing;
+            }
+            $registration = $this->capture($run);
+            $this->auditLogger->log('PAYROLL_REGISTRATION_RETROSPECTIVE', 'Blockchain', null,
+                'payroll_registrations', (string) $registration->getKey(), newValues: [
+                    'baseline_captured_at' => now()->toIso8601String(),
+                    'original_finalized_at' => $run->finalized_at->toIso8601String(),
+                    'note' => 'Current baseline captured after finalization by an authorized console operator.',
+                ]);
+
+            return $registration;
+        });
+    }
+
+    /** Capture requires the payroll run's transaction lock, during finalization or explicit retrospective registration. */
     public function capture(PayrollRun $run): PayrollRegistration
     {
         abort_unless(DB::transactionLevel() > 0 && $run->status === PayrollRun::STATUS_FINALIZED, 422, 'Registry capture requires atomic payroll finalization.');
