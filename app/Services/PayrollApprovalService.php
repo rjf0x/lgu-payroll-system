@@ -74,7 +74,7 @@ class PayrollApprovalService
         DB::transaction(function () use ($run, $user, $remarks): void {
             $locked = PayrollRun::whereKey($run->getKey())->lockForUpdate()->firstOrFail();
             $run->setRawAttributes($locked->getAttributes(), true);
-            $this->assertIndependentReviewer($run, $user);
+            $this->assertIndependentReviewer($run, $user, allowApproved: true);
             $run->update(['status' => PayrollRun::STATUS_RETURNED]);
 
             $this->record($run, PayrollApproval::ACTION_RETURNED, $user, $remarks);
@@ -110,9 +110,9 @@ class PayrollApprovalService
             && (int) $user->user_id !== (int) $run->submitted_by;
     }
 
-    private function assertIndependentReviewer(PayrollRun $run, User $user): void
+    private function assertIndependentReviewer(PayrollRun $run, User $user, bool $allowApproved = false): void
     {
-        if ($run->status !== PayrollRun::STATUS_PENDING_APPROVAL) {
+        if ($run->status !== PayrollRun::STATUS_PENDING_APPROVAL && ! ($allowApproved && $run->status === PayrollRun::STATUS_APPROVED)) {
             abort(422, 'This payroll run is not awaiting approval.');
         }
 

@@ -81,6 +81,8 @@ class PayrollRunController extends Controller
         $user = auth()->user();
         $independent = $approval->isIndependentReviewer($payrollRun, $user);
         $pendingReview = $payrollRun->status === PayrollRun::STATUS_PENDING_APPROVAL && $independent;
+        $canReturn = $independent && $user->can('payroll.review')
+            && in_array($payrollRun->status, [PayrollRun::STATUS_PENDING_APPROVAL, PayrollRun::STATUS_APPROVED], true);
 
         return view('payroll-runs.show', [
             'run' => $payrollRun,
@@ -93,8 +95,8 @@ class PayrollRunController extends Controller
             'isIndependentReviewer' => $independent,
             'canApprove' => $pendingReview && $user->can('payroll.approve'),
             'canReject' => $pendingReview && $user->can('payroll.reject'),
-            'canReturn' => $pendingReview && $user->can('payroll.review'),
-            'canReview' => $pendingReview && ($user->can('payroll.approve') || $user->can('payroll.reject') || $user->can('payroll.review')),
+            'canReturn' => $canReturn,
+            'canReview' => $canReturn || ($pendingReview && ($user->can('payroll.approve') || $user->can('payroll.reject'))),
             'canFinalize' => $user->can('payroll.finalize') && $payrollRun->status === PayrollRun::STATUS_APPROVED,
         ]);
     }

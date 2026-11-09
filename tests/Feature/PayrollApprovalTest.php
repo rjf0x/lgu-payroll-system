@@ -198,6 +198,67 @@ class PayrollApprovalTest extends TestCase
         $this->assertDatabaseCount('payroll_approvals', 3); // SUBMITTED, RETURNED, SUBMITTED
     }
 
+    public function test_an_approved_run_can_be_returned_corrected_and_approved_again(): void
+    {
+        $officer = $this->userWithRoles(Role::PAYROLL_OFFICER);
+        $approver = $this->userWithRoles(Role::APPROVER);
+        $run = $this->computedRun($officer);
+        $this->actingAs($officer)->post(route('payroll-runs.submit', $run))->assertRedirect();
+        $this->actingAs($approver)->post(route('payroll-runs.approve', $run))->assertRedirect();
+
+        $this->get(route('payroll-runs.show', $run))->assertOk()
+            ->assertViewHas('canReturn', true)
+            ->assertViewHas('canReview', true)
+            ->assertViewHas('canApprove', false)
+            ->assertViewHas('canReject', false)
+            ->assertSee('Return for correction?');
+        $this->post(route('payroll-runs.return', $run), ['remarks' => 'Correct the allowances.'])->assertRedirect();
+
+        $this->assertSame(PayrollRun::STATUS_RETURNED, $run->fresh()->status);
+        $this->assertDatabaseHas('payroll_approvals', [
+            'payroll_run_id' => $run->getKey(), 'action' => 'RETURNED',
+            'acted_by' => $approver->getKey(), 'remarks' => 'Correct the allowances.',
+        ]);
+        $this->assertDatabaseHas('payroll_approvals', ['payroll_run_id' => $run->getKey(), 'action' => 'APPROVED']);
+        $this->post(route('payroll-runs.finalize', $run))->assertStatus(422);
+        $this->actingAs($officer)->post(route('payroll-runs.compute', $run))->assertRedirect();
+        $this->post(route('payroll-runs.submit', $run))->assertRedirect();
+        $this->assertSame(PayrollRun::STATUS_PENDING_APPROVAL, $run->fresh()->status);
+        $this->actingAs($approver)->post(route('payroll-runs.approve', $run))->assertRedirect();
+        $this->assertSame(PayrollRun::STATUS_APPROVED, $run->fresh()->status);
+    }
+
+    public function test_returning_an_approved_run_requires_a_reason_and_an_independent_reviewer(): void
+    {
+        $officer = $this->userWithRoles(Role::PAYROLL_OFFICER, Role::APPROVER);
+        $approver = $this->userWithRoles(Role::APPROVER);
+        $run = $this->computedRun($officer);
+        $this->actingAs($officer)->post(route('payroll-runs.submit', $run))->assertRedirect();
+        $this->actingAs($approver)->post(route('payroll-runs.approve', $run))->assertRedirect();
+
+        $this->post(route('payroll-runs.return', $run))->assertSessionHasErrors('remarks');
+        $this->actingAs($officer)->post(route('payroll-runs.return', $run), ['remarks' => 'Change inputs.'])->assertForbidden();
+
+        $this->assertSame(PayrollRun::STATUS_APPROVED, $run->fresh()->status);
+        $this->assertDatabaseMissing('payroll_approvals', ['payroll_run_id' => $run->getKey(), 'action' => 'RETURNED']);
+    }
+
+    public function test_a_finalized_run_cannot_be_returned(): void
+    {
+        $officer = $this->userWithRoles(Role::PAYROLL_OFFICER);
+        $approver = $this->userWithRoles(Role::APPROVER);
+        $run = $this->computedRun($officer);
+        $this->actingAs($officer)->post(route('payroll-runs.submit', $run))->assertRedirect();
+        $this->actingAs($approver)->post(route('payroll-runs.approve', $run))->assertRedirect();
+        $this->post(route('payroll-runs.finalize', $run))->assertRedirect();
+
+        $this->get(route('payroll-runs.show', $run))->assertOk()->assertViewHas('canReturn', false);
+        $this->post(route('payroll-runs.return', $run), ['remarks' => 'Change inputs.'])->assertStatus(422);
+
+        $this->assertSame(PayrollRun::STATUS_FINALIZED, $run->fresh()->status);
+        $this->assertDatabaseMissing('payroll_approvals', ['payroll_run_id' => $run->getKey(), 'action' => 'RETURNED']);
+    }
+
     public function test_a_rejected_run_is_recorded(): void
     {
         $officer = $this->userWithRoles(Role::PAYROLL_OFFICER);
