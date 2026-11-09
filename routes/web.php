@@ -3,6 +3,7 @@
 use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\BlockchainAnchorController;
+use App\Http\Controllers\BlockchainStatusController;
 use App\Http\Controllers\CompensationProfileController;
 use App\Http\Controllers\ContributionRateController;
 use App\Http\Controllers\DashboardController;
@@ -176,3 +177,8 @@ Route::middleware(['auth', EnsureAccountIsActive::class, PreventSensitiveRespons
     });
 
 });
+
+Route::middleware(['auth'])->get(
+    '/blockchain/status',
+    [BlockchainStatusController::class, 'show']
+)->name('blockchain.status');

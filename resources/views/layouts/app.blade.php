@@ -57,6 +57,10 @@
                 <span>Menu</span>
             </button>
             <h1 class="min-w-0 flex-1 break-words text-lg font-semibold tracking-tight sm:text-2xl">@yield('heading', 'Dashboard')</h1>
+            <div id="besu-status" data-status-url="{{ route('blockchain.status') }}" role="status" aria-live="polite" aria-atomic="true" class="no-print flex shrink-0 items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium text-slate-700">
+                <span data-besu-dot aria-hidden="true" class="h-2 w-2 shrink-0 rounded-full bg-slate-400"></span>
+                <span><span class="hidden sm:inline">Hyperledger </span>Besu: <span data-besu-label>Status unavailable</span></span>
+            </div>
             <div class="no-print flex w-full min-w-0 items-center justify-end gap-3 border-t border-slate-100 pt-3 md:w-auto md:border-0 md:pt-0">
                 <details id="header-activity" class="relative shrink-0">
                     <summary aria-label="Activity and requests" title="Activity and requests" class="flex h-11 w-11 list-none items-center justify-center rounded-lg text-brand hover:bg-brand-soft [&::-webkit-details-marker]:hidden">
