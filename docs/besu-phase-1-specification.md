@@ -98,3 +98,52 @@ Phase 1 supplies an exact field contract, serialization rules, fixed synthetic v
 Implementation tests in later phases must prove row-order independence, duplicate-line preservation, field mutation detection, excluded-master-edit stability, decimal edge cases, invalid UTF-8 rejection, missing-field rejection, timezone conversion, legacy dispatch, and ambiguous-submission recovery. Fixed vectors must remain unchanged once schema version 1 is released.
 
 Phase 2 may implement the reference-bound contract against this protocol. Runtime canonicalization, persistence, finalization locking, outbox processing, and verification dispatch belong to Phase 4/5. Production validator ownership, organization namespace assignment, and payment-release policy remain deployment/business decisions.
+
+## Phase 2 contract implementation
+
+Implemented in `app/Services/Blockchain/PayrollIntegrityRegistry.sol`, compiled with Solidity **0.8.30**, optimization enabled, targeting the **London** EVM used by the local genesis. The existing `PayrollAnchor.sol`, deployment script, driver, and configured addresses remain unchanged. The new registry is a separate deployment; it is not a replacement at an existing address and has not been deployed by this phase.
+
+Exact ABI surface:
+
+```text
+administrator() -> address
+setRegistrar(string organizationId, address registrar, bool authorized)
+isRegistrar(string organizationId, address registrar) -> bool
+registrationKey(string organizationId, string payrollReference, uint32 revision) -> bytes32
+registerPayroll(string organizationId, string payrollReference, uint32 revision,
+                bytes32 payloadHash, uint32 schemaVersion) -> bool created
+getPayroll(string organizationId, string payrollReference, uint32 revision)
+    -> (bytes32 payloadHash, uint32 schemaVersion, uint256 registeredAt, address registrar)
+```
+
+The registration key is `keccak256(abi.encode(organizationId, payrollReference, uint32(revision)))`. This uses standard ABI tuple encoding, not packed encoding. The key's Keccak hash is independent of the SHA-256 payroll digest. A future ethers client must use ABI types `string,string,uint32` for key reproduction. See [Solidity 0.8.30 ABI specification](https://docs.soliditylang.org/en/v0.8.30/abi-spec.html).
+
+The deployer becomes the immutable administrator. No account, including the administrator, is automatically a registrar. The administrator explicitly grants/revokes registration permissions per organization. This supports registrar rotation while preserving historical signer evidence. The administrator cannot update or delete registrations. Administrator transfer, upgrade proxies, and governance recovery are outside this implementation: choose a durable managed administrator or governance contract at deployment. Loss of its authority prevents future permission changes; it does not prevent reads.
+
+The contract validates organization namespaces, lowercase UUID v4 references (including the RFC variant), positive uint32 revisions, nonzero digests, and schema version `1`. Future hash schemas require an explicitly reviewed contract change/deployment. Revision sequencing and successful payroll approval are enforced by Laravel in later phases; the registry accepts any positive uint32 revision and cannot validate off-chain approval or digest contents.
+
+First registration returns `true` and emits:
+
+```text
+PayrollRegistered(bytes32 indexed registrationKey, string organizationId,
+                  string payrollReference, uint32 revision, bytes32 payloadHash,
+                  uint32 schemaVersion, uint256 registeredAt, address indexed registrar)
+```
+
+An identical authorized retry returns `false`, emits no second registration event, and preserves the original signer and timestamp. Different hashes for an existing key revert with `RegistrationConflict`. Invalid schema versions revert before lookup. Unauthorized retries are rejected even if the original registration exists. Missing reads return a zero registrar/hash tuple; callers must check the registrar rather than treating the zero hash as a registration. Permission changes emit `RegistrarUpdated`.
+
+Transaction/block hashes and block numbers remain receipt metadata. `registeredAt` is the block timestamp, not the payroll finalization time. All network participants can inspect registration metadata; neither Solidity visibility nor permissioned networking makes submitted data confidential.
+
+### Repeatable contract tests
+
+Run with Docker and a local Besu RPC node supporting contract-creation `eth_call`:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File config/besu/test-registry.ps1
+# For the repository setup.ps1 network instead of the default local RPC:
+powershell -NoProfile -ExecutionPolicy Bypass -File config/besu/test-registry.ps1 -RpcUrl http://127.0.0.1:28545
+```
+
+The runner compiles the registry and `tests/PayrollIntegrityRegistryTest.sol` using the existing pinned compiler container. Seven isolated constructor scenarios execute registry calls in the EVM and revert on failed assertions. Each call uses simulated state only: no signing keys, transactions, application configuration changes, or persisted chain writes. ABI and bytecode are generated under ignored `storage/app/private/besu/registry-tests/`.
+
+Covered behavior: stored evidence and absent reads; unauthorized writes/grants and organization isolation; idempotency and hash conflicts; reference/revision separation and ABI encoding; signer rotation and historical signer preservation; invalid revision/hash/schema/registrar and maximum revision; organization/UUID boundaries. Event receipt decoding and actual persisted transaction confirmation remain integration tests for the Node bridge phase.

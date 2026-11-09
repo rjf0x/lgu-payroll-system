@@ -6,6 +6,8 @@ Status: Proposed implementation plan.
 
 Phase 1 deliverables (2026-11-09): [payroll integrity specification](besu-phase-1-specification.md) and [fixed SHA-256 vectors](besu-phase-1-hash-vectors.json). All three vectors were independently reproduced using Python and PHP. Runtime integration remains unchanged. Payment-release policy and production ownership remain business/deployment decisions.
 
+Phase 2 deliverables (2026-11-09): separate `PayrollIntegrityRegistry.sol` contract, organization-scoped registrar permissions, immutable reference/revision registrations, and seven passing EVM test scenarios. ABI, governance limits, and test instructions are recorded in the [contract implementation section](besu-phase-1-specification.md#phase-2-contract-implementation). The registry is compiled and tested but not deployed or selected by Laravel; legacy anchors retain their current contract and driver.
+
 ## Objective and scope
 
 Extend the existing Laravel application with blockchain evidence of finalized payroll integrity. MySQL remains the payroll system of record and stores confidential employee and payroll details. Hyperledger Besu stores only a payroll reference, revision, SHA-256 digest, and necessary verification metadata.
