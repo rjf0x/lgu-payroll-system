@@ -28,6 +28,7 @@ test('runnable service signs, journals, confirms and reads a registration throug
     let event;
     let registered;
     let broadcasts = 0;
+    let signerAvailable = true;
     let child;
     let output = '';
     const block = (number, hash) => ({ number, hash, parentHash: zeroHash, nonce: '0x0000000000000000',
@@ -44,7 +45,12 @@ test('runnable service signs, journals, confirms and reads a registration throug
             let result;
             switch (message.method) {
                 case 'eth_chainId': result = '0x539'; break;
-                case 'eth_accounts': result = [wallet.address]; break;
+                case 'eth_accounts':
+                    if (!signerAvailable) {
+                        throw new Error('Synthetic signer outage');
+                    }
+                    result = [wallet.address];
+                    break;
                 case 'eth_getCode': result = '0x6000'; break;
                 case 'eth_blockNumber': result = registered ? '0x1' : '0x0'; break;
                 case 'eth_getBlockByNumber': result = message.params[0] === '0x0' ? block('0x0', genesisHash) : block('0x1', blockHash); break;
@@ -157,5 +163,13 @@ test('runnable service signs, journals, confirms and reads a registration throug
     assert.equal(result.registration.payload_hash, body.payload_hash);
     assert.equal(result.registration.transaction_hash, transaction.hash);
     assert.equal(Object.hasOwn(result.submission, 'raw_transaction'), false);
+    assert.equal(broadcasts, 1);
+    signerAvailable = false;
+    assert.equal((await fetch(`${url}/health`, { headers })).status, 503);
+    const readOnly = await fetch(path, { headers });
+    assert.equal(readOnly.status, 200);
+    const proof = await readOnly.json();
+    assert.equal(proof.registration.payload_hash, body.payload_hash);
+    assert.equal(proof.network.contract_address, address);
     assert.equal(broadcasts, 1);
 });

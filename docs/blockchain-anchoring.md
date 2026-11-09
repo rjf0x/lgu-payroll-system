@@ -244,7 +244,7 @@ Run the complete Phase 3 suite:
 npm run test:besu-bridge
 ```
 
-The core tests exercise real SQLite persistence and HTTP handlers with a fake upstream gateway. Gateway tests exercise ethers ABI/signature handling and evidence validation with offline synthetic signatures and fake RPC responses. The runnable-service test starts the actual entry point in a child process and uses ethers HTTP transport against a local mock RPC server to verify authenticated startup, signing, journaling, receipt/event decoding, and confirmation. It submits only to the mock server; no real network transactions are broadcast. A real deployed-registry/Web3Signer end-to-end pilot remains required before production rollout. Registry deployment, permission grants, Laravel finalization/outbox integration, payment policy, monitoring thresholds, and incident ownership remain later-phase work.
+The core tests exercise real SQLite persistence and HTTP handlers with a fake upstream gateway. Gateway tests exercise ethers ABI/signature handling and evidence validation with offline synthetic signatures and fake RPC responses. The runnable-service test starts the actual entry point in a child process and uses ethers HTTP transport against a local mock RPC server to verify authenticated startup, signing, journaling, receipt/event decoding, confirmation, and read-only verification during a signer outage. It submits only to the mock server; no real network transactions are broadcast. A real deployed-registry/Web3Signer end-to-end pilot remains required before production rollout. Registry deployment, permission grants, payment policy, monitoring thresholds, and incident ownership remain rollout work. Laravel integration is documented in the following sections.
 
 References: [ethers providers](https://docs.ethers.org/v6/api/providers/), [Web3Signer sign-only transaction API](https://docs.web3signer.consensys.com/reference/api/json-rpc/), and [Node SQLite](https://nodejs.org/download/release/v26.8.2/docs/api/sqlite.html).
 
@@ -291,10 +291,58 @@ The dispatcher passes only registration IDs to jobs, and the bridge receives onl
 - Changing chain, contract, signer, deployment block, or bridge endpoint configuration does not retarget outstanding requests: processing fails closed with `REGISTRY_TARGET_CHANGED`. Restore the original configuration and reconcile before migrating operations to another identity. The bridge journal independently pins its own identity.
 - Current record edits and recomputation still use the existing payroll parent-lock convention. Public single-detail and totals recomputation now recheck editability under that lock. Privileged direct database writes can still change MySQL records; detecting those changes is the purpose of subsequent integrity verification.
 
-Version 1 registrations are separate from legacy `blockchain_anchors`. The legacy manual anchor endpoint rejects a run with a versioned registration, avoiding a second proof under the old hashing algorithm. The current legacy verification UI is not a version 1 verification interface; that integration is Phase 5. Payment-release policy remains unchanged.
+Version 1 registrations are separate from legacy `blockchain_anchors`. The legacy manual anchor endpoint rejects a run with a versioned registration, avoiding a second proof under the old hashing algorithm. Legacy verification retains its original algorithm; the separate version 1 interface is described in Phase 5 below. Payment-release policy remains unchanged.
 
 ### Verification performed
 
 The new PHPUnit tests cover all fixed vectors, individual covered-field mutations, malformed inputs, normalization and ordering, atomic capture/rollback, authorized finalization, disabled capture, snapshot independence, UTC conversion, stale computation guards, outage recovery, duplicate-worker leases, scheduler redispatch, target pinning, confirmation evidence, conflicts, and failed receipts. The Node transport tests also validate the new network handshake. All HTTP calls are faked or use a local mock RPC server; no live chain transactions or production migrations are part of these checks.
 
 Phase 4 validation: 161 selected PHPUnit cases, with 158 passed and 3 skipped (two require an isolated MySQL concurrency database; one requires opt-in live Besu access), plus 27 passing Node bridge cases. Pint and whitespace checks passed. The minute-based schedule definition was checked using a temporary in-memory cache. The configured local MySQL login was rejected during the default scheduler inspection; correct those runtime credentials before migration/activation. MySQL concurrency and real-chain confirmation remain pilot checks.
+
+## 12. Versioned payroll verification and pages (Phase 5)
+
+Deploy the updated bridge and apply the additional `create_payroll_registration_verifications_table` migration before serving the new verification pages. The authenticated read endpoint now returns a `network` descriptor alongside `registration` and `submission`; the signer-dependent health endpoint is not called during verification. Existing submission/outbox behavior is preserved.
+
+The existing `blockchain.verify` permission controls both new routes, inside the application's authentication and active-account middleware:
+
+```text
+GET  /payroll-registrations/{payroll_registration}
+POST /payroll-registrations/{payroll_registration}/verify
+```
+
+The service also checks active-user eligibility and this permission, so an internal caller cannot bypass the endpoint authorization. Viewer and unauthenticated requests cannot access the records or create verification attempts.
+
+### Evidence and snapshot rules
+
+Each attempt makes a fresh authenticated GET to the bridge. It validates the original saved chain ID, genesis hash, registry address, runtime-code hash, and deployment block against the bridge's read response. Read-only verification ignores the current signing account, so signer rotation or downtime does not prevent reading historical registrations. Capture may also be disabled while verification remains available.
+
+The bridge must serve the original saved contract deployment. A replacement contract is never substituted automatically. Operators can point Laravel's current bridge URL/token at a service configured for the original deployment, including after endpoint migration; the saved network/code identity must still match. This implementation does not automatically route among multiple historical registry services.
+
+Remote reads run outside payroll database locks. After evidence is retrieved, a short transaction locks the payroll run and registration, confirms that registration metadata did not change during the request, reconstructs the covered current payroll payload using the saved period/approval snapshots, and appends the verification and audit records atomically. Results describe the data read at that check, not a continuing guarantee about future edits.
+
+The authoritative hash comes from fresh blockchain evidence. The service compares it with the current calculated hash and validates the locally captured digest, archived payload bytes, and idempotency metadata. Replacing both the payroll data and its local saved hash cannot create a match against the original blockchain commitment. Verification never trusts the archived payload as a substitute for reconstructing current data and never falls back to a previous successful log during an outage.
+
+### Results
+
+| Result | Meaning |
+| --- | --- |
+| `MATCH` | Covered current payroll data and saved registration metadata match the registered version |
+| `MISMATCH` | Covered current data or saved registration data differs; required current data that no longer satisfies the registered schema is also a mismatch |
+| `PENDING` | The outbox or bridge submission is awaiting a successful registration; no integrity conclusion is made |
+| `NOT_REGISTERED` | No successful on-chain registration was found, including an absent previously reported confirmation |
+| `UNAVAILABLE` | Fresh evidence could not be obtained; no integrity conclusion is made |
+| `INVALID_EVIDENCE` | Evidence identity, schema, receipt metadata, or request context is inconsistent or unsupported; no integrity conclusion is made |
+
+Mismatches prompt investigation rather than automatic resubmission. Unsupported hash schemas do not silently use the legacy algorithm. Bridge errors are classified without exposing raw exception details or credentials. A local bridge status of `CONFIRMED` with no corresponding registration is invalid evidence.
+
+`payroll_registration_verifications` records the acting user, result, checked time, blockchain hash, current calculated hash when available, captured hash, sanitized evidence, and a readable finding. Unsuccessful attempts are retained alongside successful ones. The separate legacy log table and its original verification behavior remain intact. Verification does not mutate payroll data, reset the outbox, create replacement anchors, or change payment-release policy.
+
+### User interface
+
+The blockchain index lists versioned registrations separately from legacy anchors and labels simulated local proofs explicitly. Submission status and last integrity result are separate columns. The finalized payroll page links to its registry verification page instead of offering the legacy anchor action.
+
+The registry detail page prioritizes the latest outcome, its timestamp, and a Verify current payroll action. Technical hashes and transaction/block evidence use expandable details. History is paginated at 15 attempts per page; registration listings use a separate pagination parameter from legacy anchors. Loading feedback, semantic alerts, labelled tables, focusable native disclosure controls, and wrapping hashes reuse the existing design components. Snapshot text is escaped, including both registry and legacy proof page headings.
+
+### Checks and remaining rollout
+
+Thirty new verification cases cover fresh matches, payroll/local-hash tampering, archived-copy tampering, missing required data, outages after a match, pending and absent registrations, invalid evidence, signer-independent reads, metadata races, service/route authorization, protected metadata rendering, history pagination, and heading escaping. Existing registration, legacy Besu, UI, and payroll-flow suites were also run. All 27 Node tests and the production asset build passed. These checks use isolated test databases and fake/mock RPC services; they do not migrate a live database or register real payrolls. Phase 6 still requires configured MySQL credentials, a deployed registry, permission grants, a real-network pilot/recovery drill, and operational ownership.

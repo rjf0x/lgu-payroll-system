@@ -20,6 +20,7 @@ function fixture(t) {
     let clock = 100000;
     const calls = { signs: 0, broadcasts: [] };
     const gateway = {
+        networkIdentity: () => ({ chain_id: '1337' }),
         health: async () => gateway.ready(),
         ready: async () => {}, registration: async () => null, pendingNonce: async () => 4,
         prepare: async (record, nonce) => ({ nonce, data: record.payload_hash }),

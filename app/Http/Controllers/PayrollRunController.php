@@ -75,6 +75,7 @@ class PayrollRunController extends Controller
             'approvals.actedBy',
             'anchor.anchoredBy',
             'anchor.verificationLogs',
+            'registration.latestVerification',
         ]);
 
         $detailIds = $payrollRun->details->pluck('payroll_detail_id');

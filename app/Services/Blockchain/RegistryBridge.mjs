@@ -114,6 +114,6 @@ export class RegistryBridge {
         await this.gateway.ready();
         const evidence = await this.gateway.registration(identity);
         const local = this.store.get(idempotencyKey(identity));
-        return { registration: evidence, submission: local ? publicRecord(local) : null };
+        return { network: this.gateway.networkIdentity(), registration: evidence, submission: local ? publicRecord(local) : null };
     }
 }

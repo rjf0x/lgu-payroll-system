@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\BlockchainAnchor;
+use App\Models\PayrollRegistration;
 use App\Models\PayrollRun;
 use App\Services\BlockchainAnchorService;
 use Illuminate\Http\RedirectResponse;
@@ -15,9 +16,14 @@ class BlockchainAnchorController extends Controller
         $anchors = BlockchainAnchor::query()
             ->with(['payrollRun.payrollPeriod', 'anchoredBy'])
             ->orderByDesc('anchor_id')
-            ->paginate(20);
+            ->paginate(20)->withQueryString();
 
-        return view('blockchain.index', compact('anchors'));
+        $registrations = PayrollRegistration::query()
+            ->select(['registration_id', 'payroll_run_id', 'organization_id', 'payroll_reference', 'revision', 'status', 'hash_schema_version', 'period_snapshot'])
+            ->with(['payrollRun', 'latestVerification'])->orderByDesc('registration_id')
+            ->paginate(20, ['*'], 'registrations_page')->withQueryString();
+
+        return view('blockchain.index', compact('anchors', 'registrations'));
     }
 
     public function anchor(PayrollRun $payrollRun, BlockchainAnchorService $service): RedirectResponse

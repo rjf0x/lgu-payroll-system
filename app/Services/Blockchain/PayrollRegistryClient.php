@@ -45,21 +45,7 @@ class PayrollRegistryClient
         $read = $this->request('GET', $path);
         $evidence = $read['registration'] ?? null;
         if ($evidence !== null) {
-            $this->check(is_array($evidence), 'INVALID_BRIDGE_EVIDENCE');
-            foreach (['organization_id', 'payroll_reference', 'revision'] as $key) {
-                $this->check(($evidence[$key] ?? null) === $registration->{$key}, 'INVALID_BRIDGE_EVIDENCE');
-            }
-            foreach (['chain_id', 'genesis_hash', 'contract_address'] as $key) {
-                $this->check(($evidence[$key] ?? null) === $network[$key], 'INVALID_BRIDGE_EVIDENCE');
-            }
-            foreach (['transaction_hash', 'block_hash', 'payload_hash', 'registrar'] as $key) {
-                $length = $key === 'registrar' ? 40 : 64;
-                $prefix = $key === 'payload_hash' ? '' : '0x';
-                $this->check(is_string($evidence[$key] ?? null) && preg_match('/^'.$prefix.'[a-fA-F0-9]{'.$length.'}$/D', $evidence[$key]) === 1, 'INVALID_BRIDGE_EVIDENCE');
-            }
-            $this->check(is_int($evidence['block_number'] ?? null) && $evidence['block_number'] >= $target['deployment_block']
-                && is_string($evidence['registered_at'] ?? null) && preg_match('/^[0-9]+$/D', $evidence['registered_at']) === 1
-                && is_int($evidence['hash_schema_version'] ?? null), 'INVALID_BRIDGE_EVIDENCE');
+            $evidence = $this->validateEvidence($registration, $evidence, $network);
             $matches = hash_equals($registration->payload_hash, strtolower($evidence['payload_hash']))
                 && $evidence['hash_schema_version'] === $registration->hash_schema_version;
 
@@ -91,6 +77,69 @@ class PayrollRegistryClient
         return ['status' => $status, 'transaction_hash' => $transaction, 'evidence' => $failure];
     }
 
+    /** Read-only verification deliberately does not require capture to be enabled or a signer to be available.
+     * @return array{registration:?array<string, mixed>, submission:?array<string, mixed>}
+     */
+    public function read(PayrollRegistration $registration): array
+    {
+        $this->check(preg_match('/^[a-z0-9][a-z0-9-]{0,62}$/D', $registration->organization_id) === 1
+            && preg_match('/^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/D', $registration->payroll_reference) === 1
+            && $registration->revision > 0 && $registration->revision <= 4294967295, 'INVALID_BRIDGE_EVIDENCE');
+        $url = rtrim((string) config('blockchain.registry.bridge_url'), '/');
+        $this->check(filter_var($url, FILTER_VALIDATE_URL) !== false && in_array(parse_url($url, PHP_URL_SCHEME), ['http', 'https'], true)
+            && parse_url($url, PHP_URL_USER) === null && parse_url($url, PHP_URL_PASS) === null
+            && parse_url($url, PHP_URL_QUERY) === null && parse_url($url, PHP_URL_FRAGMENT) === null, 'INVALID_REGISTRY_CONFIG');
+        $read = $this->request('GET', $url.'/registrations/'.$registration->organization_id.'/'.$registration->payroll_reference.'/'.$registration->revision);
+        $expected = $registration->target_network;
+        $this->check(is_array($expected), 'INVALID_BRIDGE_EVIDENCE');
+        unset($expected['bridge_url'], $expected['signer_address']);
+        $network = $read['network'] ?? null;
+        $this->check(is_array($network), 'INVALID_BRIDGE_EVIDENCE');
+        unset($network['signer_address']);
+        $this->check($this->sameFields($expected, $network), 'BRIDGE_NETWORK_MISMATCH');
+        $this->check(array_key_exists('registration', $read) && array_key_exists('submission', $read), 'INVALID_BRIDGE_RESPONSE');
+        $evidence = $read['registration'] === null ? null : $this->validateEvidence($registration, $read['registration'], $expected);
+        $submission = $read['submission'];
+        if ($submission !== null) {
+            $this->check(is_array($submission), 'INVALID_BRIDGE_RESPONSE');
+            foreach (['organization_id', 'payroll_reference', 'revision'] as $key) {
+                $this->check(($submission[$key] ?? null) === $registration->{$key}, 'INVALID_BRIDGE_RESPONSE');
+            }
+            $this->check(in_array($submission['status'] ?? null, [...PayrollRegistration::ACTIVE, PayrollRegistration::CONFIRMED, PayrollRegistration::FAILED, PayrollRegistration::CONFLICT], true), 'INVALID_BRIDGE_RESPONSE');
+        }
+
+        return ['registration' => $evidence, 'submission' => $submission === null ? null : ['status' => $submission['status']]];
+    }
+
+    /** @param array<string, mixed> $network
+     * @return array<string, mixed>
+     */
+    private function validateEvidence(PayrollRegistration $registration, mixed $evidence, array $network): array
+    {
+        $this->check(is_array($evidence), 'INVALID_BRIDGE_EVIDENCE');
+        foreach (['organization_id', 'payroll_reference', 'revision'] as $key) {
+            $this->check(($evidence[$key] ?? null) === $registration->{$key}, 'INVALID_BRIDGE_EVIDENCE');
+        }
+        foreach (['chain_id', 'genesis_hash', 'contract_address'] as $key) {
+            $this->check(($evidence[$key] ?? null) === ($network[$key] ?? null), 'INVALID_BRIDGE_EVIDENCE');
+        }
+        foreach (['transaction_hash', 'block_hash', 'payload_hash', 'registrar'] as $key) {
+            $length = $key === 'registrar' ? 40 : 64;
+            $prefix = $key === 'payload_hash' ? '' : '0x';
+            $this->check(is_string($evidence[$key] ?? null) && preg_match('/^'.$prefix.'[a-fA-F0-9]{'.$length.'}$/D', $evidence[$key]) === 1, 'INVALID_BRIDGE_EVIDENCE');
+            if (in_array($key, ['payload_hash', 'registrar'], true)) {
+                $this->check(trim(substr($evidence[$key], strlen($prefix)), '0') !== '', 'INVALID_BRIDGE_EVIDENCE');
+            }
+        }
+        $this->check(is_int($evidence['block_number'] ?? null) && $evidence['block_number'] >= ($network['deployment_block'] ?? PHP_INT_MAX)
+            && is_string($evidence['registered_at'] ?? null) && preg_match('/^[0-9]+$/D', $evidence['registered_at']) === 1
+            && is_int($evidence['hash_schema_version'] ?? null), 'INVALID_BRIDGE_EVIDENCE');
+        $evidence['payload_hash'] = strtolower($evidence['payload_hash']);
+
+        return array_intersect_key($evidence, array_flip(['organization_id', 'payroll_reference', 'revision', 'payload_hash', 'hash_schema_version',
+            'chain_id', 'genesis_hash', 'contract_address', 'transaction_hash', 'block_hash', 'block_number', 'registered_at', 'registrar']));
+    }
+
     /** @param array<string, mixed> $data
      * @return array<string, mixed>
      */
@@ -100,6 +149,9 @@ class PayrollRegistryClient
         $this->check(strlen($token) >= 32, 'INVALID_BRIDGE_CREDENTIALS');
         $response = Http::withToken($token)->acceptJson()->connectTimeout(3)->timeout(10)->withoutRedirecting()
             ->send($method, $url, $method === 'POST' ? ['json' => $data] : []);
+        if (! $response->successful() && in_array($response->json('error'), ['INVALID_EVIDENCE', 'NETWORK_OR_CONTRACT_MISMATCH'], true)) {
+            throw new RuntimeException('INVALID_BRIDGE_EVIDENCE');
+        }
         $this->check($response->successful(), 'BRIDGE_REQUEST_FAILED');
         $body = $response->json();
         $this->check(is_array($body), 'INVALID_BRIDGE_RESPONSE');

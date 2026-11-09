@@ -18,6 +18,7 @@ use App\Http\Controllers\PayrollApprovalController;
 use App\Http\Controllers\PayrollDetailController;
 use App\Http\Controllers\PayrollPeriodController;
 use App\Http\Controllers\PayrollRegisterController;
+use App\Http\Controllers\PayrollRegistrationController;
 use App\Http\Controllers\PayrollRunController;
 use App\Http\Controllers\PayslipController;
 use App\Http\Controllers\PositionController;
@@ -167,6 +168,10 @@ Route::middleware(['auth', EnsureAccountIsActive::class, PreventSensitiveRespons
 
     // Blockchain anchoring & verification (only a hash and metadata leave the app).
     Route::middleware('can:blockchain.verify')->group(function () {
+        Route::get('payroll-registrations/{payroll_registration}', [PayrollRegistrationController::class, 'show'])
+            ->whereNumber('payroll_registration')->name('payroll-registrations.show');
+        Route::post('payroll-registrations/{payroll_registration}/verify', [PayrollRegistrationController::class, 'verify'])
+            ->whereNumber('payroll_registration')->name('payroll-registrations.verify');
         Route::get('blockchain', [BlockchainAnchorController::class, 'index'])->name('blockchain.index');
         Route::post('payroll-runs/{payroll_run}/anchor', [BlockchainAnchorController::class, 'anchor'])
             ->whereNumber('payroll_run')->name('payroll-runs.anchor');

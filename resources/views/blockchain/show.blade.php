@@ -1,7 +1,9 @@
 @extends('layouts.app')
 
 @section('title', 'Anchor Detail')
-@section('heading', 'Blockchain Anchor · '.$anchor->payrollRun->payrollPeriod->period_name.' #'.$anchor->payrollRun->run_number)
+@section('heading')
+    Blockchain Anchor · {{ $anchor->payrollRun->payrollPeriod->period_name }} #{{ $anchor->payrollRun->run_number }}
+@endsection
 
 @section('content')
     @php($latestCheck = $anchor->verificationLogs->first())

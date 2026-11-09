@@ -172,8 +172,19 @@
         </section>
 
         @can('blockchain.verify')
-            <x-card heading="Blockchain Anchoring">
-                @if ($run->status === 'FINALIZED')
+            <x-card heading="Payroll integrity">
+                @if ($run->registration)
+                    <div class="space-y-3 text-sm">
+                        <p>Registration: <x-status :value="$run->registration->status" /></p>
+                        @if ($run->registration->latestVerification)
+                            <p>Last integrity check: <x-status :value="$run->registration->latestVerification->verification_result" /></p>
+                            <p class="text-muted">Checked {{ $run->registration->latestVerification->verified_at->format('M d, Y g:i A') }} {{ config('app.timezone') }}. Verify again to check current data.</p>
+                        @else
+                            <p class="text-muted">No integrity check has been recorded yet.</p>
+                        @endif
+                        <x-button :href="route('payroll-registrations.show', $run->registration)">View registration &amp; verify</x-button>
+                    </div>
+                @elseif ($run->status === 'FINALIZED')
                     @if ($run->anchor)
                         <div class="space-y-3 text-sm">
                             <p class="break-words">Network: {{ $run->anchor->network_name }} · <x-status :value="$run->anchor->anchor_status" /></p>
