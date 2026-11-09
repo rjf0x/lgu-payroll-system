@@ -109,4 +109,9 @@ class PayrollRun extends Model
     {
         return $this->hasOne(BlockchainAnchor::class, 'payroll_run_id', 'payroll_run_id');
     }
+
+    public function registration(): HasOne
+    {
+        return $this->hasOne(PayrollRegistration::class, 'payroll_run_id', 'payroll_run_id');
+    }
 }

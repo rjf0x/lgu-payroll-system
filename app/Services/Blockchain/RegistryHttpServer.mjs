@@ -22,8 +22,8 @@ export function createRegistryServer(bridge, token) {
                 throw new BridgeError('UNEXPECTED_QUERY', 422);
             }
             if (request.method === 'GET' && url.pathname === '/health') {
-                await bridge.gateway.health();
-                return send(200, { status: 'READY' });
+                const network = await bridge.gateway.health();
+                return send(200, { status: 'READY', network });
             }
             if (request.method === 'POST' && url.pathname === '/registrations') {
                 if (!/^application\/json(?:\s*;.*)?$/i.test(request.headers['content-type'] ?? '')) {

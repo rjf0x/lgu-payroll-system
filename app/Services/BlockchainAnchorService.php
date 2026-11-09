@@ -72,6 +72,7 @@ class BlockchainAnchorService
 
     private function submitAnchor(PayrollRun $run, User $user): BlockchainAnchor
     {
+        abort_if($run->registration()->exists(), 422, 'This payroll uses versioned registry registration.');
         if ($run->status !== PayrollRun::STATUS_FINALIZED) {
             abort(422, 'Only a finalized payroll run can be anchored.');
         }

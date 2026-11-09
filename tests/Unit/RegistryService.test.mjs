@@ -132,7 +132,11 @@ test('runnable service signs, journals, confirms and reads a registration throug
     const url = `http://127.0.0.1:${port}`;
     const headers = { authorization: `Bearer ${token}`, 'content-type': 'application/json' };
     const health = await fetch(`${url}/health`, { headers });
-    assert.equal(health.status, 200, await health.text());
+    const healthBody = await health.json();
+    assert.equal(health.status, 200, JSON.stringify(healthBody));
+    assert.equal(healthBody.network.chain_id, '1337');
+    assert.equal(healthBody.network.contract_address, address);
+    assert.equal(healthBody.network.signer_address, wallet.address.toLowerCase());
     const subject = { organization_id: 'lgu-example', payroll_reference: '123e4567-e89b-42d3-a456-426614174000', revision: 1 };
     const body = { ...subject, payload_hash: 'd084d482d01003c66c28e2e7331c1933217001e5b717861dba0eab4ad9535836',
         hash_schema_version: 1, idempotency_key: idempotencyKey(subject) };

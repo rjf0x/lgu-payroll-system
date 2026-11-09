@@ -72,7 +72,8 @@ test('prepares a legacy zero-value transaction only for an authorized registrar'
 
 test('health requires the configured signing account to be available', async () => {
     const { gateway } = fixture();
-    await gateway.health();
+    assert.deepEqual(await gateway.health(), { chain_id: '1337', genesis_hash: genesisHash,
+        contract_address: address, code_hash: keccak256('0x6000'), signer_address: wallet.address.toLowerCase(), deployment_block: 1 });
     gateway.signer.send = async () => [];
     await assert.rejects(gateway.health(), { code: 'SIGNER_UNAVAILABLE' });
 });

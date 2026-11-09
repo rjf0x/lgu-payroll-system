@@ -10,6 +10,8 @@ Phase 2 deliverables (2026-11-09): separate `PayrollIntegrityRegistry.sol` contr
 
 Phase 3 deliverables (2026-11-09): implemented the private Node HTTP bridge, SQLite transaction journal, Web3Signer/ethers gateway, and recovery tests. Ethers.js 6.17.0 was approved and installed as an exact runtime dependency. All 27 core, gateway, and runnable-service tests passed, including signing/confirmation over actual ethers HTTP transport against a mock RPC server. See [bridge implementation notes](blockchain-anchoring.md#10-nodejs-registry-bridge-phase-3). A real network deployment/pilot and Laravel integration remain later-phase work.
 
+Phase 4 deliverables (2026-11-09): implemented opt-in atomic finalization/capture, the version 1 canonical serializer and fixed-vector validation, a durable MySQL registration outbox, a scheduled bounded dispatcher, leased queue processing, authenticated bridge synchronization, and confirmation/failure reconciliation. Initial registrations receive an opaque reference and revision 1. Legacy anchors keep their original algorithm and contract. Registry verification pages and the correction/revision user workflow remain subsequent work; no production configuration, registry deployment, or live database migration was performed. See [Laravel integration instructions](blockchain-anchoring.md#11-laravel-finalization-and-registration-outbox-phase-4).
+
 ## Objective and scope
 
 Extend the existing Laravel application with blockchain evidence of finalized payroll integrity. MySQL remains the payroll system of record and stores confidential employee and payroll details. Hyperledger Besu stores only a payroll reference, revision, SHA-256 digest, and necessary verification metadata.

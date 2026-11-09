@@ -247,3 +247,54 @@ npm run test:besu-bridge
 The core tests exercise real SQLite persistence and HTTP handlers with a fake upstream gateway. Gateway tests exercise ethers ABI/signature handling and evidence validation with offline synthetic signatures and fake RPC responses. The runnable-service test starts the actual entry point in a child process and uses ethers HTTP transport against a local mock RPC server to verify authenticated startup, signing, journaling, receipt/event decoding, and confirmation. It submits only to the mock server; no real network transactions are broadcast. A real deployed-registry/Web3Signer end-to-end pilot remains required before production rollout. Registry deployment, permission grants, Laravel finalization/outbox integration, payment policy, monitoring thresholds, and incident ownership remain later-phase work.
 
 References: [ethers providers](https://docs.ethers.org/v6/api/providers/), [Web3Signer sign-only transaction API](https://docs.web3signer.consensys.com/reference/api/json-rpc/), and [Node SQLite](https://nodejs.org/download/release/v26.8.2/docs/api/sqlite.html).
+
+## 11. Laravel finalization and registration outbox (Phase 4)
+
+`PAYROLL_REGISTRY_ENABLED=false` is the default. Setting it to true makes authorized finalization capture a version 1 payload and a `payroll_registrations` outbox row in the same MySQL transaction as the finalized status and approval/audit entries. Invalid covered data or capture persistence failure rolls the transaction back. No bridge or blockchain call runs during finalization. Existing finalized records are not backfilled automatically.
+
+`PayrollCanonicalizer` implements the published Phase 1 byte rules and reproduces all three fixed SHA-256 vectors. It validates exact object keys, required snapshots, identifier types, UTF-8, decimals, dates, booleans, UUID references, and schema versions. It sorts numeric employment identifiers without integer overflow, sorts line objects by canonical JSON bytes, and preserves duplicate lines. Monetary normalization uses decimal strings. It accepts structured arrays built inside Laravel, not external raw JSON; duplicate object keys cannot be produced by the builder. A future external JSON import must reject duplicate keys before decoding into arrays.
+
+`PayrollPayloadBuilder` reconstructs covered current run/detail/line data using the frozen period and successful-approval snapshots stored in the registration. Canonical payload bytes, digest, organization namespace, reference, revision, and target network are persisted. These snapshot fields and the full archived payload are hidden from default model serialization. The namespace and network are read from configuration only at capture and never silently substituted during retries.
+
+Initial runs receive a fresh UUID v4 payroll reference and revision 1. The schema has uniqueness constraints on run, idempotency key, and organization/reference/revision. A user workflow for linking a newly approved correction run to the same family and allocating later revisions is not part of Phase 4. Do not alter a finalized row to make a correction. Payroll registration rows are operational outbox records created by finalization; they are not populated with synthetic proofs by production seeders.
+
+### Configuration and activation
+
+Deploy the Phase 2 registry separately, grant the bridge account registrar permission for the organization's namespace, populate the Phase 3 private bridge environment, and run the bridge. Apply Laravel migrations using the usual release process before enabling capture. This implementation does not apply migrations to a live database or change a populated `.env` file automatically.
+
+The `.env.example` contains `PAYROLL_REGISTRY_*` settings. Set the organization namespace, bridge URL/token, chain ID, genesis hash, registry address, deployed runtime-code hash, signer address, and registry deployment block. Network settings must describe the same deployment as the bridge's `BESU_BRIDGE_*` values. The token must match the bridge token and have at least 32 bytes. Set `PAYROLL_REGISTRY_ENABLED=true` only after these values and the schema are ready, then refresh the application's configuration cache using the deployment's normal process.
+
+The bridge's authenticated `/health` now returns the configured `network` identity alongside readiness. Laravel compares its saved identity with current configuration and with this handshake before submitting. Network/code identity is checked by the bridge against the actual node. JSON object key order does not affect identity matching, including with MySQL's JSON storage. Contract addresses in bridge evidence are normalized to lowercase.
+
+Run an asynchronous worker for the `blockchain` queue and the Laravel scheduler. For the default database queue:
+
+```powershell
+php artisan queue:work database --queue=blockchain --timeout=60 --tries=3 --no-interaction
+php artisan schedule:work --no-interaction
+```
+
+For production, supervise the worker and use the normal scheduler cron or hosting integration. Queue reservation/visibility timeout must exceed the 60-second job timeout; the default database queue reserves for 90 seconds. The dispatcher runs every minute and dispatches at most 100 due rows by default. A manual bounded pass is available:
+
+```powershell
+php artisan blockchain:dispatch-registrations --limit=100 --no-interaction
+```
+
+The dispatcher passes only registration IDs to jobs, and the bridge receives only the six metadata fields defined in Phase 3. The complete payroll payload and credentials are never put into queue job arguments. Credentials are read from Laravel configuration at request time, not copied into the outbox.
+
+### Failure and recovery behavior
+
+- A worker claims a due row under a short database lock, increments its attempt count, and reserves a two-minute lease. HTTP runs after that transaction commits. A unique queue job reduces duplicate dispatches; the persisted lease is the processing boundary. An expired lease can be recovered by a later scheduled pass. Stale workers cannot overwrite a newer lease's result.
+- A restart or dispatch failure after payroll finalization leaves the durable outbox available to the next scheduler pass. There is deliberately no dependency on a successful immediate after-commit dispatch from the user's finalization request.
+- Workers validate the archived canonical bytes, digest, schema, identity, and idempotency key before contacting the bridge. They submit the captured digest even if current payroll data has since been altered; the original approved commitment is preserved for subsequent verification. Invalid local capture becomes terminal `FAILED` without sending it.
+- The client reads existing authoritative registration evidence or a known bridge submission before enqueueing an idempotent POST. It never marks a payroll confirmed solely because a local bridge status says `CONFIRMED` without corresponding registration evidence.
+- Matching evidence becomes `CONFIRMED`; a different registered hash becomes `CONFLICT`. Reverted receipt evidence becomes `FAILED` and retains transaction/block evidence. These terminal states are not automatically resubmitted. Operational retries retain the original request and target, with polling/backoff up to five minutes. Bridge failures do not reverse finalization or report an integrity mismatch.
+- Changing chain, contract, signer, deployment block, or bridge endpoint configuration does not retarget outstanding requests: processing fails closed with `REGISTRY_TARGET_CHANGED`. Restore the original configuration and reconcile before migrating operations to another identity. The bridge journal independently pins its own identity.
+- Current record edits and recomputation still use the existing payroll parent-lock convention. Public single-detail and totals recomputation now recheck editability under that lock. Privileged direct database writes can still change MySQL records; detecting those changes is the purpose of subsequent integrity verification.
+
+Version 1 registrations are separate from legacy `blockchain_anchors`. The legacy manual anchor endpoint rejects a run with a versioned registration, avoiding a second proof under the old hashing algorithm. The current legacy verification UI is not a version 1 verification interface; that integration is Phase 5. Payment-release policy remains unchanged.
+
+### Verification performed
+
+The new PHPUnit tests cover all fixed vectors, individual covered-field mutations, malformed inputs, normalization and ordering, atomic capture/rollback, authorized finalization, disabled capture, snapshot independence, UTC conversion, stale computation guards, outage recovery, duplicate-worker leases, scheduler redispatch, target pinning, confirmation evidence, conflicts, and failed receipts. The Node transport tests also validate the new network handshake. All HTTP calls are faked or use a local mock RPC server; no live chain transactions or production migrations are part of these checks.
+
+Phase 4 validation: 161 selected PHPUnit cases, with 158 passed and 3 skipped (two require an isolated MySQL concurrency database; one requires opt-in live Besu access), plus 27 passing Node bridge cases. Pint and whitespace checks passed. The minute-based schedule definition was checked using a temporary in-memory cache. The configured local MySQL login was rejected during the default scheduler inspection; correct those runtime credentials before migration/activation. MySQL concurrency and real-chain confirmation remain pilot checks.

@@ -45,6 +45,13 @@ export class BesuRegistryGateway {
         if (!Array.isArray(accounts) || !accounts.some(account => typeof account === 'string' && account.toLowerCase() === this.signerAddress.toLowerCase())) {
             throw new BridgeError('SIGNER_UNAVAILABLE');
         }
+        return this.networkIdentity();
+    }
+
+    networkIdentity() {
+        return { chain_id: String(this.config.chainId), genesis_hash: this.config.genesisHash,
+            contract_address: this.address.toLowerCase(), code_hash: this.config.codeHash,
+            signer_address: this.signerAddress.toLowerCase(), deployment_block: this.config.deploymentBlock };
     }
 
     async prepare(record, nonce) {
@@ -147,7 +154,7 @@ export class BesuRegistryGateway {
         return { ...recordIdentity(record), payload_hash: stored.payloadHash.slice(2), hash_schema_version: Number(stored.schemaVersion),
             registered_at: stored.registeredAt.toString(), registrar: stored.registrar, transaction_hash: evidence.transaction_hash,
             block_number: evidence.block_number, block_hash: evidence.block_hash, chain_id: this.config.chainId,
-            genesis_hash: this.config.genesisHash, contract_address: this.address };
+            genesis_hash: this.config.genesisHash, contract_address: this.address.toLowerCase() };
     }
 
     close() {

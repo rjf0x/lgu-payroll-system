@@ -64,6 +64,16 @@ class PayrollComputationService
      */
     public function computeDetail(PayrollRun $run, EmploymentRecord $employment, PayrollPeriod $period): PayrollDetail
     {
+        return DB::transaction(function () use ($run, $employment, $period): PayrollDetail {
+            $locked = PayrollRun::query()->lockForUpdate()->findOrFail($run->getKey());
+            abort_unless($locked->isEditable(), 422, 'This payroll run can no longer be recomputed.');
+
+            return $this->computeEditableDetail($locked, $employment, $period);
+        });
+    }
+
+    private function computeEditableDetail(PayrollRun $run, EmploymentRecord $employment, PayrollPeriod $period): PayrollDetail
+    {
         $periodEnd = $period->end_date->toDateString();
         $profile = $this->effectiveCompensation($employment, $periodEnd);
 
@@ -111,6 +121,16 @@ class PayrollComputationService
      * basic pay, earnings, and manual deductions in place. Used after manual edits.
      */
     public function recomputeTotals(PayrollDetail $detail, PayrollPeriod $period): void
+    {
+        DB::transaction(function () use ($detail, $period): void {
+            $run = PayrollRun::query()->lockForUpdate()->findOrFail($detail->payroll_run_id);
+            abort_unless($run->isEditable(), 422, 'This payroll run can no longer be recomputed.');
+            $detail->refresh();
+            $this->recomputeEditableTotals($detail, $period);
+        });
+    }
+
+    private function recomputeEditableTotals(PayrollDetail $detail, PayrollPeriod $period): void
     {
         $detail->load(['earnings', 'deductions', 'deductions.deductionType']);
 

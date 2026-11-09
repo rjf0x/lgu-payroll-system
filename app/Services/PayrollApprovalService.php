@@ -15,7 +15,10 @@ use Illuminate\Support\Facades\DB;
  */
 class PayrollApprovalService
 {
-    public function __construct(private readonly AuditLogger $auditLogger) {}
+    public function __construct(
+        private readonly AuditLogger $auditLogger,
+        private readonly PayrollRegistrationService $registrations,
+    ) {}
 
     public function submit(PayrollRun $run, User $user): void
     {
@@ -97,6 +100,9 @@ class PayrollApprovalService
             ]);
 
             $this->record($run, PayrollApproval::ACTION_FINALIZED, $user, 'Payroll finalized');
+            if (config('blockchain.registry.enabled')) {
+                $this->registrations->capture($run);
+            }
             $this->auditLogger->log('PAYROLL_FINALIZED', 'Payroll', $user->user_id, 'payroll_runs', (string) $run->payroll_run_id);
         });
     }
