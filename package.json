@@ -4,7 +4,9 @@
     "type": "module",
     "scripts": {
         "build": "vite build",
-        "dev": "vite"
+        "dev": "vite",
+        "besu:bridge": "node config/besu/bridge.mjs",
+        "test:besu-bridge": "node --test tests/Unit/RegistryBridge.test.mjs tests/Unit/BesuRegistryGateway.test.mjs tests/Unit/RegistryService.test.mjs"
     },
     "devDependencies": {
         "@tailwindcss/vite": "^4.0.0",
@@ -15,5 +17,8 @@
     },
     "optionalDependencies": {
         "@laravel/multiplex": "^0.4.1"
+    },
+    "dependencies": {
+        "ethers": "6.17.0"
     }
 }

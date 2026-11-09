@@ -190,3 +190,60 @@ configuration for verification. This is not a production outbox/recovery system.
 
 References: [Besu private networks](https://docs.besu-eth.org/private-networks),
 [Web3Signer transaction signing](https://docs.web3signer.consensys.com/development/reference/api/json-rpc).
+
+## 10. Node.js registry bridge (Phase 3)
+
+Implementation status: Phase 3 implemented and tested. Ethers.js 6.17.0 was explicitly approved and installed. All 27 core, gateway, and runnable-service tests passed. Existing Laravel registration routes and legacy deployment settings are unchanged. This service targets the separate `PayrollIntegrityRegistry` contract from Phase 2; do not point it at `PayrollAnchor`.
+
+The bridge uses Node's built-in HTTP server and SQLite journal. The project environment was checked with Node 26.13.0. It requires a Node release supporting `node:sqlite` and global `fetch`; the complete service's intended runtime is Node 26.13.0 or later. No Express, SQLite npm package, test framework, or private-key dependency is introduced. Ethers.js is pinned to runtime version 6.17.0.
+
+### Configuration and startup
+
+Copy `config/besu/bridge.env.example` to an ignored private location such as `storage/app/private/besu/bridge.env`. Fill in a random service token of at least 32 bytes, the chain ID and genesis hash, registry contract address, deployment block, deployed runtime-code Keccak hash, and the dedicated Web3Signer account. The code hash is calculated over `eth_getCode` output at the deployed registry address; its immutable administrator makes it deployment-specific. Chain ID alone is not accepted as network identity.
+
+After populating the private configuration, start explicitly:
+
+```powershell
+node --env-file=storage/app/private/besu/bridge.env config/besu/bridge.mjs
+```
+
+The server binds to loopback port 3100 by default. Every endpoint, including health, requires `Authorization: Bearer <token>`. Cross-host access requires an authenticated TLS transport/proxy managed by the deployment; no public listener is enabled by this change. Health validates chain/code identity and the signer's available accounts. Read-only verification does not require the signer service to be up.
+
+| Endpoint | Behavior |
+| --- | --- |
+| `POST /registrations` | Validate metadata, save durably, return `202` with current local status; no synchronous broadcast |
+| `GET /registrations/{organization_id}/{payroll_reference}/{revision}` | Return authoritative registration evidence and local submission state separately |
+| `GET /transactions/{transaction_hash}` | Return canonical receipt summary or `PENDING_OR_UNKNOWN` |
+| `GET /health` | Return `READY` only when the network, contract, and configured signing account are available |
+
+POST accepts exactly these JSON keys: `organization_id`, `payroll_reference`, `revision`, `payload_hash`, `hash_schema_version`, and `idempotency_key`. The reference, digest, version, and idempotency rules are specified in [Phase 1](besu-phase-1-specification.md#protocol-identity). Requests are limited to 4096 bytes. Extra payroll fields are rejected. Invalid payloads return `422`, conflicting hashes return `409`, bad credentials return `401`, and unavailable upstreams return `503`. Upstream exceptions, signed bytes, and signing envelopes are never returned in HTTP responses.
+
+### Durability, nonce ownership, and recovery
+
+The journal defaults to ignored `storage/app/private/besu/bridge.sqlite`. `BESU_BRIDGE_JOURNAL_FILE` can select a different persistent journal for another signer/contract identity. SQLite is bridge operational storage only; payroll data remains in MySQL. Back up and protect the journal and its WAL alongside signing operations. A signed raw transaction is not a private key, but it is an authorization that can be broadcast; keep journal access private.
+
+A lifetime SQLite exclusive lock on a companion `.lock` database permits one active writer process per journal and is released by process exit/crash. The service also serializes all in-process drains. Use one dedicated account and one journal per signer/network/contract, on a persistent local filesystem. Independent journals, external users of the same account, multiple hosts, shared network filesystems, and automatic active-active failover are not supported. Changing journal identity fails closed. Do not delete the journal to clear an error or rotate a key; preserve unresolved transactions and use a separate identity/journal with operator reconciliation.
+
+The bridge reserves a nonce and envelope durably, asks Web3Signer to `eth_signTransaction` without broadcasting, validates all signed transaction fields using ethers, saves the signed bytes and derived transaction hash, then broadcasts. A failed journal write prevents broadcasting. After a lost response/restart it queries chain evidence and may replay exactly the same signed bytes; it never creates a fresh transaction merely because a response timed out. Nonce allocation considers the node's pending nonce and persisted reservations.
+
+Signing/broadcast failures retain `QUEUED`/`RECONCILING` state with exponential backoff capped at five minutes. Drains run every five seconds. Retries preserve the original envelope and bytes; there is no automatic fee replacement or nonce cancellation. A pending transaction can remain pending indefinitely and needs operational age monitoring. Failed on-chain receipts become terminal `FAILED` evidence; an operator recovery/retry interface is deferred. Conflicting registrations become terminal `CONFLICT`, except when an already-signed nonce remains unresolved, which pauses later allocations and requires reconciliation. Failed signing before any durable raw bytes is safe to retry because the configured signing method does not broadcast.
+
+Registration reads cross-check storage, the unique registration event, canonical block hash, successful receipt, receipt log membership, calldata, original registrar, and block timestamp. Registration timestamps are returned as Unix-second strings, with transaction and block metadata separately. They are never represented as payroll approval timestamps. Historical registrars do not have to equal the bridge's current signing account.
+
+### Tests and remaining rollout
+
+Dependency-free core tests:
+
+```powershell
+node --test tests/Unit/RegistryBridge.test.mjs
+```
+
+Run the complete Phase 3 suite:
+
+```powershell
+npm run test:besu-bridge
+```
+
+The core tests exercise real SQLite persistence and HTTP handlers with a fake upstream gateway. Gateway tests exercise ethers ABI/signature handling and evidence validation with offline synthetic signatures and fake RPC responses. The runnable-service test starts the actual entry point in a child process and uses ethers HTTP transport against a local mock RPC server to verify authenticated startup, signing, journaling, receipt/event decoding, and confirmation. It submits only to the mock server; no real network transactions are broadcast. A real deployed-registry/Web3Signer end-to-end pilot remains required before production rollout. Registry deployment, permission grants, Laravel finalization/outbox integration, payment policy, monitoring thresholds, and incident ownership remain later-phase work.
+
+References: [ethers providers](https://docs.ethers.org/v6/api/providers/), [Web3Signer sign-only transaction API](https://docs.web3signer.consensys.com/reference/api/json-rpc/), and [Node SQLite](https://nodejs.org/download/release/v26.8.2/docs/api/sqlite.html).
