@@ -1,0 +1,272 @@
+{
+  "hash_schema_version": 1,
+  "vectors": [
+    {
+      "name": "baseline",
+      "payload": {
+        "hash_schema_version": 1,
+        "organization_id": "lgu-example",
+        "payroll_reference": "123e4567-e89b-42d3-a456-426614174000",
+        "revision": 1,
+        "currency": "PHP",
+        "period": {
+          "period_name": "November 2026",
+          "payroll_type": "MONTHLY",
+          "start_date": "2026-11-01",
+          "end_date": "2026-11-30",
+          "pay_date": "2026-11-30"
+        },
+        "run": {
+          "run_number": "1",
+          "run_type": "REGULAR",
+          "status": "FINALIZED",
+          "created_by": "10",
+          "submitted_by": "10",
+          "submitted_at": "2026-11-09T01:00:00Z",
+          "finalized_by": "30",
+          "finalized_at": "2026-11-09T03:00:00Z",
+          "approval": {
+            "acted_by": "20",
+            "acted_at": "2026-11-09T02:00:00Z",
+            "remarks": null
+          }
+        },
+        "details": [
+          {
+            "employment_id": "100",
+            "employee_number_snapshot": "EMP-001",
+            "employee_name_snapshot": "Alex Example",
+            "department_snapshot": "Finance",
+            "position_snapshot": "Payroll Clerk",
+            "salary_grade_snapshot": "8",
+            "salary_step_snapshot": "1",
+            "salary_rate_snapshot": "20000.00",
+            "pay_basis_snapshot": "MONTHLY",
+            "basic_pay": "20000.00",
+            "total_earnings": "1000.00",
+            "gross_pay": "21000.00",
+            "total_deductions": "2000.00",
+            "nthp_before_lbp": "19000.00",
+            "lbp_loan_deduction": "0.00",
+            "net_pay": "19000.00",
+            "payable_days": "22.00",
+            "input_reference": "INPUT-2026-11-001",
+            "input_recorded_by": "10",
+            "input_confirmed_at": "2026-11-09T00:00:00Z",
+            "manual_adjustments": false,
+            "payroll_status": "COMPUTED",
+            "earnings": [
+              {
+                "earning_type_id": "1",
+                "earning_name_snapshot": "Allowance",
+                "quantity": null,
+                "rate": null,
+                "amount": "1000.00",
+                "is_taxable": false,
+                "remarks": null
+              }
+            ],
+            "deductions": [
+              {
+                "deduction_type_id": "1",
+                "deduction_name_snapshot": "Contribution",
+                "amount": "2000.00",
+                "remarks": null
+              }
+            ],
+            "employer_contributions": [
+              {
+                "contribution_rate_id": "1",
+                "contribution_type_snapshot": "Employer share",
+                "amount": "2400.00"
+              }
+            ]
+          }
+        ]
+      },
+      "expected_sha256": "d084d482d01003c66c28e2e7331c1933217001e5b717861dba0eab4ad9535836",
+      "canonical_byte_length": 1622
+    },
+    {
+      "name": "one-cent-net-pay-tamper",
+      "payload": {
+        "hash_schema_version": 1,
+        "organization_id": "lgu-example",
+        "payroll_reference": "123e4567-e89b-42d3-a456-426614174000",
+        "revision": 1,
+        "currency": "PHP",
+        "period": {
+          "period_name": "November 2026",
+          "payroll_type": "MONTHLY",
+          "start_date": "2026-11-01",
+          "end_date": "2026-11-30",
+          "pay_date": "2026-11-30"
+        },
+        "run": {
+          "run_number": "1",
+          "run_type": "REGULAR",
+          "status": "FINALIZED",
+          "created_by": "10",
+          "submitted_by": "10",
+          "submitted_at": "2026-11-09T01:00:00Z",
+          "finalized_by": "30",
+          "finalized_at": "2026-11-09T03:00:00Z",
+          "approval": {
+            "acted_by": "20",
+            "acted_at": "2026-11-09T02:00:00Z",
+            "remarks": null
+          }
+        },
+        "details": [
+          {
+            "employment_id": "100",
+            "employee_number_snapshot": "EMP-001",
+            "employee_name_snapshot": "Alex Example",
+            "department_snapshot": "Finance",
+            "position_snapshot": "Payroll Clerk",
+            "salary_grade_snapshot": "8",
+            "salary_step_snapshot": "1",
+            "salary_rate_snapshot": "20000.00",
+            "pay_basis_snapshot": "MONTHLY",
+            "basic_pay": "20000.00",
+            "total_earnings": "1000.00",
+            "gross_pay": "21000.00",
+            "total_deductions": "2000.00",
+            "nthp_before_lbp": "19000.00",
+            "lbp_loan_deduction": "0.00",
+            "net_pay": "19000.01",
+            "payable_days": "22.00",
+            "input_reference": "INPUT-2026-11-001",
+            "input_recorded_by": "10",
+            "input_confirmed_at": "2026-11-09T00:00:00Z",
+            "manual_adjustments": false,
+            "payroll_status": "COMPUTED",
+            "earnings": [
+              {
+                "earning_type_id": "1",
+                "earning_name_snapshot": "Allowance",
+                "quantity": null,
+                "rate": null,
+                "amount": "1000.00",
+                "is_taxable": false,
+                "remarks": null
+              }
+            ],
+            "deductions": [
+              {
+                "deduction_type_id": "1",
+                "deduction_name_snapshot": "Contribution",
+                "amount": "2000.00",
+                "remarks": null
+              }
+            ],
+            "employer_contributions": [
+              {
+                "contribution_rate_id": "1",
+                "contribution_type_snapshot": "Employer share",
+                "amount": "2400.00"
+              }
+            ]
+          }
+        ]
+      },
+      "expected_sha256": "5abdeee4d44f99da9069912efc8a252887e93c57cb291294777b85f2606503cf",
+      "canonical_byte_length": 1622
+    },
+    {
+      "name": "unicode-and-delimiters",
+      "payload": {
+        "hash_schema_version": 1,
+        "organization_id": "lgu-example",
+        "payroll_reference": "123e4567-e89b-42d3-a456-426614174000",
+        "revision": 1,
+        "currency": "PHP",
+        "period": {
+          "period_name": "November 2026",
+          "payroll_type": "MONTHLY",
+          "start_date": "2026-11-01",
+          "end_date": "2026-11-30",
+          "pay_date": "2026-11-30"
+        },
+        "run": {
+          "run_number": "1",
+          "run_type": "REGULAR",
+          "status": "FINALIZED",
+          "created_by": "10",
+          "submitted_by": "10",
+          "submitted_at": "2026-11-09T01:00:00Z",
+          "finalized_by": "30",
+          "finalized_at": "2026-11-09T03:00:00Z",
+          "approval": {
+            "acted_by": "20",
+            "acted_at": "2026-11-09T02:00:00Z",
+            "remarks": null
+          }
+        },
+        "details": [
+          {
+            "employment_id": "100",
+            "employee_number_snapshot": "EMP-001",
+            "employee_name_snapshot": "José Example | A:B",
+            "department_snapshot": "Finance",
+            "position_snapshot": "Payroll Clerk",
+            "salary_grade_snapshot": "8",
+            "salary_step_snapshot": "1",
+            "salary_rate_snapshot": "20000.00",
+            "pay_basis_snapshot": "MONTHLY",
+            "basic_pay": "20000.00",
+            "total_earnings": "1000.00",
+            "gross_pay": "21000.00",
+            "total_deductions": "2000.00",
+            "nthp_before_lbp": "19000.00",
+            "lbp_loan_deduction": "0.00",
+            "net_pay": "19000.00",
+            "payable_days": "22.00",
+            "input_reference": "INPUT-2026-11-001",
+            "input_recorded_by": "10",
+            "input_confirmed_at": "2026-11-09T00:00:00Z",
+            "manual_adjustments": false,
+            "payroll_status": "COMPUTED",
+            "earnings": [
+              {
+                "earning_type_id": "2",
+                "earning_name_snapshot": "Allowance | special: bonus",
+                "quantity": "1.00",
+                "rate": "500.00",
+                "amount": "500.00",
+                "is_taxable": true,
+                "remarks": ""
+              },
+              {
+                "earning_type_id": "1",
+                "earning_name_snapshot": "Allowance",
+                "quantity": null,
+                "rate": null,
+                "amount": "500.00",
+                "is_taxable": false,
+                "remarks": "Line 1\nLine 2 / reference"
+              }
+            ],
+            "deductions": [
+              {
+                "deduction_type_id": "1",
+                "deduction_name_snapshot": "Contribution",
+                "amount": "2000.00",
+                "remarks": null
+              }
+            ],
+            "employer_contributions": [
+              {
+                "contribution_rate_id": "1",
+                "contribution_type_snapshot": "Employer share",
+                "amount": "2400.00"
+              }
+            ]
+          }
+        ]
+      },
+      "expected_sha256": "b1dcf16c6bfbfcf420635504c0535e2ee160a936cf33b0c53061f86ec00b5dc9",
+      "canonical_byte_length": 1812
+    }
+  ]
+}
