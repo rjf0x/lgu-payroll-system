@@ -140,8 +140,12 @@ export class BesuRegistryGateway {
         }
         const key = keccak256(AbiCoder.defaultAbiCoder().encode(['string', 'string', 'uint32'],
             [record.organization_id, record.payroll_reference, record.revision]));
-        const logs = await this.rpc.getLogs({ address: this.address, fromBlock: this.config.deploymentBlock, toBlock: 'latest',
-            topics: [this.interface.getEvent('PayrollRegistered').topicHash, key] });
+        const latestBlock = await this.rpc.getBlockNumber();
+        const logs = [];
+        for (let fromBlock = this.config.deploymentBlock; fromBlock <= latestBlock; fromBlock += 1000) {
+            logs.push(...await this.rpc.getLogs({ address: this.address, fromBlock, toBlock: Math.min(fromBlock + 999, latestBlock),
+                topics: [this.interface.getEvent('PayrollRegistered').topicHash, key] }));
+        }
         if (logs.length !== 1 || logs[0].removed) {
             throw new BridgeError('INVALID_EVIDENCE');
         }

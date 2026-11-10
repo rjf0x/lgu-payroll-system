@@ -32,7 +32,7 @@ function fixture() {
         send: async method => { assert.equal(method, 'eth_chainId'); return '0x539'; },
         getBlock: async number => number === 0 ? { hash: genesisHash } : { hash: blockHash, timestamp: 1700 },
         getCode: async () => '0x6000', getTransactionCount: async () => 7,
-        estimateGas: async () => 100000n, getLogs: async () => [log],
+        estimateGas: async () => 100000n, getLogs: async () => [log], getBlockNumber: async () => 9,
         getTransactionReceipt: async () => receipt, getTransaction: async () => transaction,
     };
     gateway.contract = { isRegistrar: async () => true, getPayroll: async () => stored };
@@ -137,6 +137,30 @@ test('reads registered hash from consistent storage, event, receipt, block and t
     assert.equal(evidence.registered_at, '1700');
     assert.equal(evidence.registrar, wallet.address);
     assert.equal(evidence.block_number, 9);
+});
+
+test('verifies registrations on long-running chains within the RPC log range limit', async () => {
+    const { gateway, log } = fixture();
+    gateway.rpc.getBlockNumber = async () => 2501;
+    const ranges = [];
+    gateway.rpc.getLogs = async ({ fromBlock, toBlock }) => {
+        assert.ok(Number.isInteger(toBlock) && toBlock - fromBlock < 1000, 'Requested range exceeds maximum RPC range limit');
+        ranges.push([fromBlock, toBlock]);
+        return fromBlock === 2001 ? [log] : [];
+    };
+
+    const evidence = await gateway.registration(subject);
+
+    assert.equal(evidence.payload_hash, subject.payload_hash);
+    assert.deepEqual(ranges, [[1, 1000], [1001, 2000], [2001, 2501]]);
+});
+
+test('rejects duplicate registration evidence across separate log ranges', async () => {
+    const { gateway, log } = fixture();
+    gateway.rpc.getBlockNumber = async () => 1001;
+    gateway.rpc.getLogs = async () => [log];
+
+    await assert.rejects(gateway.registration(subject), { code: 'INVALID_EVIDENCE' });
 });
 
 test('rejects inconsistent event, receipt, signer, block, calldata and storage evidence', async () => {
