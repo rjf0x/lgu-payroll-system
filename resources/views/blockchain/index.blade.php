@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
-@section('title', 'Blockchain Verification')
-@section('heading', 'Blockchain Verification')
+@section('title', 'Payroll Verification')
+@section('heading', 'Payroll Verification')
 
 @section('content')
     <p class="mb-4 text-sm text-slate-500">
@@ -47,7 +47,7 @@
 
     <div class="min-w-0">
         <x-results :items="$anchors" />
-        <x-table label="Blockchain Verification records">
+        <x-table label="Payroll Verification records">
             <thead class="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
                 <tr>
                     <th scope="col" class="px-4 py-3 text-left">Period / Run</th>

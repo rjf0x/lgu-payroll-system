@@ -155,6 +155,8 @@ Route::middleware(['auth', EnsureAccountIsActive::class, PreventSensitiveRespons
         Route::get('payslips/{payslip}', [PayslipController::class, 'show'])->name('payslips.show');
         Route::get('payroll-runs/{payroll_run}/summary', [ReportController::class, 'summary'])
             ->whereNumber('payroll_run')->name('reports.payroll-summary');
+        Route::get('payroll-runs/{payroll_run}/deductions', [ReportController::class, 'deductions'])
+            ->whereNumber('payroll_run')->name('reports.deductions');
         Route::get('reports', [ReportController::class, 'index'])->name('reports.index');
     });
 

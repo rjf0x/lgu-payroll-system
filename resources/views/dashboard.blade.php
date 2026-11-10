@@ -147,7 +147,7 @@
             @can('payroll.prepare') <x-dashboard-action :href="route('payroll-runs.create')" icon="Payroll">Prepare payroll</x-dashboard-action> @endcan
             @can('payroll.approve') <x-dashboard-action :href="route('payroll-runs.index', ['status' => 'PENDING_APPROVAL'])" icon="Statutory">Pending approvals</x-dashboard-action> @endcan
             @can('payroll.view') <x-dashboard-action :href="route('reports.index')" icon="Statutory">View reports</x-dashboard-action> @endcan
-            @can('blockchain.verify') <x-dashboard-action :href="route('blockchain.index')" icon="Administration">Blockchain verification</x-dashboard-action> @endcan
+            @can('blockchain.verify') <x-dashboard-action :href="route('blockchain.index')" icon="Administration">Payroll verification</x-dashboard-action> @endcan
         </div>
     </section>
     @if ($roles->isNotEmpty())

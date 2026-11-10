@@ -46,7 +46,7 @@ class AppServiceProvider extends ServiceProvider
         $this->registerPermissionGates();
         $this->registerAuthenticationAuditing();
         $this->registerRateLimiters();
-        View::composer(['auth.login', 'layouts.app', 'layouts.print', 'payroll-runs.register', 'reports.payroll-summary'], function (\Illuminate\View\View $view): void {
+        View::composer(['auth.login', 'layouts.app', 'layouts.print', 'payroll-runs.register', 'reports.payroll-summary', 'reports.deductions'], function (\Illuminate\View\View $view): void {
             $view->with('systemSettings', SystemSetting::currentValues());
         });
     }

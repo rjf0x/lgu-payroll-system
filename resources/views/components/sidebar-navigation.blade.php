@@ -19,7 +19,7 @@
             @endcan
             <x-nav-link :href="route('reports.index')" :active="request()->routeIs('reports.*')">Reports</x-nav-link>
             @can('blockchain.verify')
-                <x-nav-link :href="route('blockchain.index')" :active="request()->routeIs('blockchain.*') || request()->routeIs('blockchain-anchors.*')">Blockchain Verification</x-nav-link>
+                <x-nav-link :href="route('blockchain.index')" :active="request()->routeIs('blockchain.*') || request()->routeIs('blockchain-anchors.*')">Payroll Verification</x-nav-link>
             @endcan
         </x-nav-group>
     @endcan

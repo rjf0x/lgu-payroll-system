@@ -11,7 +11,7 @@
     $parentLabel = match ($parentResource) {
         'payroll-runs' => 'Monthly Payroll',
         'audit-logs' => 'Audit trail',
-        'blockchain' => 'Blockchain Verification',
+        'blockchain' => 'Payroll Verification',
         default => \Illuminate\Support\Str::headline($parentResource),
     };
 @endphp

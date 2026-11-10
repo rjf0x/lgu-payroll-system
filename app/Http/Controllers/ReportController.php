@@ -3,8 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\GeneratedReport;
+use App\Models\PayrollDeduction;
+use App\Models\PayrollDetail;
 use App\Models\PayrollRun;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
@@ -58,6 +61,42 @@ class ReportController extends Controller
         return view('reports.payroll-summary', [
             'run' => $payrollRun,
             'byDepartment' => $byDepartment,
+        ]);
+    }
+
+    public function deductions(Request $request, PayrollRun $payrollRun): View
+    {
+        $payrollRun->load(['payrollPeriod', 'details.deductions']);
+        $deductions = $payrollRun->details->flatMap(fn (PayrollDetail $detail) => $detail->deductions->map(fn (PayrollDeduction $deduction): array => [
+            'deduction_type_id' => $deduction->deduction_type_id,
+            'name' => $deduction->deduction_name_snapshot,
+            'payroll_detail_id' => $detail->getKey(),
+            'employee_number' => $detail->employee_number_snapshot,
+            'employee_name' => $detail->employee_name_snapshot,
+            'department' => $detail->department_snapshot,
+            'amount' => (float) $deduction->amount,
+        ]));
+        $groups = $deductions->groupBy('deduction_type_id')->map(function (Collection $deductions): array {
+            $employees = $deductions->groupBy('payroll_detail_id')->map(fn (Collection $rows): array => [
+                ...$rows->first(), 'amount' => round((float) $rows->sum('amount'), 2),
+            ])->sortBy('employee_name')->values();
+
+            return [
+                'name' => $deductions->first()['name'],
+                'employees' => $employees,
+                'total' => round((float) $employees->sum('amount'), 2),
+            ];
+        })->sortBy('name');
+        $filters = $request->validate([
+            'deduction_type_id' => ['nullable', 'integer', Rule::in($groups->keys()->all())],
+        ]);
+        $selectedType = $filters['deduction_type_id'] ?? null;
+
+        return view('reports.deductions', [
+            'run' => $payrollRun,
+            'groups' => $groups,
+            'selectedType' => $selectedType,
+            'visibleGroups' => $selectedType === null ? $groups : $groups->only($selectedType),
         ]);
     }
 }

@@ -148,6 +148,7 @@
                     <x-button icon="document" :href="route('payroll-runs.register', $run)">Register</x-button>
                     <x-button icon="document" :href="route('payroll-runs.payslips', $run)">Payslips</x-button>
                     <x-button icon="document" :href="route('reports.payroll-summary', $run)">Summary</x-button>
+                    <x-button icon="list" :href="route('reports.deductions', $run)">Deductions report</x-button>
                 </div>
             </x-card>
         @endif
