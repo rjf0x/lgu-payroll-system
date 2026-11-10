@@ -30,7 +30,7 @@ class DemoEmployeeSeeder extends Seeder
 
         $permanent = EmploymentType::where('employment_type_name', EmploymentType::PERMANENT)->firstOrFail();
         $coterminous = EmploymentType::where('employment_type_name', EmploymentType::COTERMINOUS)->firstOrFail();
-        $partTime = EmploymentType::where('employment_type_name', EmploymentType::PART_TIME)->firstOrFail();
+        $elective = EmploymentType::where('employment_type_name', EmploymentType::ELECTIVE)->firstOrFail();
 
         $gradeBased = [
             ['EMP-00001', 'Maria', 'Santos', 'Dela Cruz', 'FEMALE', 'MARRIED', 'TREASURER'],
@@ -97,11 +97,11 @@ class DemoEmployeeSeeder extends Seeder
             1.0000,
         );
 
-        // Part-time employee on an approved daily rate.
+        // Illustrative elective employee using a configured direct rate.
         $this->seedDirectRateEmployee(
             ['EMP-00008', 'Nico', null, 'Salazar', 'MALE', 'SINGLE'],
             $positions['ACCT-CLERK'],
-            $partTime,
+            $elective,
             CompensationProfile::BASIS_DAILY,
             800.00,
             0.5000,

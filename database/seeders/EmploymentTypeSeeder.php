@@ -15,7 +15,7 @@ class EmploymentTypeSeeder extends Seeder
         $types = [
             EmploymentType::PERMANENT => 'Permanent appointment with salary grade and step.',
             EmploymentType::COTERMINOUS => 'Coterminous appointment tied to the appointing authority.',
-            EmploymentType::PART_TIME => 'Part-time appointment using an approved daily or proportionate rate.',
+            EmploymentType::ELECTIVE => 'Elective position filled through election.',
         ];
 
         foreach ($types as $name => $description) {

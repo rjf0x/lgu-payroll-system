@@ -20,7 +20,7 @@ class EmploymentType extends Model
 
     public const COTERMINOUS = 'Coterminous';
 
-    public const PART_TIME = 'Part-time';
+    public const ELECTIVE = 'Elective';
 
     public function employmentRecords(): HasMany
     {
