@@ -54,6 +54,36 @@ class PayrollRunController extends Controller
                 'payroll_period_id' => $periodId, 'run_number' => $nextNumber,
                 'run_type' => $request->validated('run_type'), 'status' => PayrollRun::STATUS_DRAFT, 'created_by' => auth()->id(),
             ]);
+            $previous = PayrollRun::query()
+                ->where('status', PayrollRun::STATUS_FINALIZED)
+                ->where('run_type', $run->run_type)
+                ->whereHas('payrollPeriod', fn ($query) => $query
+                    ->where('payroll_type', $period->payroll_type)
+                    ->where('start_date', '<=', $period->start_date))
+                ->orderByDesc('finalized_at')
+                ->orderByDesc('payroll_run_id')
+                ->with(['details.earnings', 'details.deductions', 'details.employerContributions'])
+                ->first();
+
+            foreach ($previous?->details ?? [] as $detail) {
+                $copy = $detail->replicate();
+                $copy->setRelations([]);
+                $copy->fill([
+                    'payroll_run_id' => $run->getKey(),
+                    'input_reference' => null,
+                    'input_recorded_by' => null,
+                    'input_confirmed_at' => null,
+                    'manual_adjustments' => true,
+                    'payroll_status' => 'INPUT_REQUIRED',
+                ]);
+                $copy->save();
+
+                foreach (['earnings', 'deductions', 'employerContributions'] as $relation) {
+                    foreach ($detail->{$relation} as $row) {
+                        $copy->{$relation}()->save($row->replicate());
+                    }
+                }
+            }
             app(AuditLogger::class)->log('PAYROLL_CREATED', 'Payroll', (int) auth()->id(), 'payroll_runs', (string) $run->getKey());
 
             return $run;
@@ -61,7 +91,9 @@ class PayrollRunController extends Controller
 
         return redirect()
             ->route('payroll-runs.show', $run)
-            ->with('status', 'Payroll run created. Compute it to generate payroll details.');
+            ->with('status', $run->details()->exists()
+                ? 'Payroll run created from the previous finalized run. Review and confirm inputs for this period.'
+                : 'Payroll run created. Compute it to generate payroll details.');
     }
 
     public function show(PayrollRun $payrollRun, PayrollApprovalService $approval): View
