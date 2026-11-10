@@ -42,7 +42,7 @@ const resetSubmission = () => {
         form.removeAttribute('aria-busy');
         form.querySelectorAll('[data-was-submitting]').forEach((button) => {
             button.disabled = false;
-            if (button.hasAttribute('data-icon-action')) {
+            if (button.hasAttribute('data-action-button')) {
                 button.removeAttribute('aria-busy');
             } else {
                 button.textContent = button.dataset.originalLabel;
@@ -101,7 +101,7 @@ document.addEventListener('submit', (event) => {
         form.querySelectorAll('button[type="submit"], button:not([type])').forEach((button) => {
             if (button.disabled) { return; }
             button.dataset.wasSubmitting = 'true';
-            if (button.hasAttribute('data-icon-action')) {
+            if (button.hasAttribute('data-action-button')) {
                 button.setAttribute('aria-busy', 'true');
             } else {
                 button.dataset.originalLabel = button.textContent;

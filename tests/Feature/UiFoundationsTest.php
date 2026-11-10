@@ -18,13 +18,13 @@ class UiFoundationsTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_icon_actions_keep_accessible_labels_links_and_submission_attributes(): void
+    public function test_action_buttons_show_text_and_keep_accessible_labels_links_and_submission_attributes(): void
     {
         $html = Blade::render('<x-button icon="edit" href="/example" aria-label="Edit employee">Edit</x-button><x-button icon="delete" type="submit" formaction="/delete" disabled>Delete</x-button><x-button type="submit">Save changes</x-button>');
         $document = $this->document($html);
         $this->assertSame(1, $document->query('//a[@href="/example" and @title="Edit" and @aria-label="Edit employee"]')->length);
-        $this->assertSame(1, $document->query('//a/svg[@aria-hidden="true"]')->length);
-        $this->assertSame(1, $document->query('//a/span[@class="sr-only" and text()="Edit"]')->length);
+        $this->assertSame(0, $document->query('//a/svg | //a/span[@class="sr-only"]')->length);
+        $this->assertSame(1, $document->query('//a[@data-action-button and text()="Edit"]')->length);
         $this->assertSame(1, $document->query('//button[@type="submit" and @formaction="/delete" and @disabled and @title="Delete"]')->length);
         $this->assertSame(1, $document->query('//button[not(@data-icon-action) and text()="Save changes"]')->length);
     }

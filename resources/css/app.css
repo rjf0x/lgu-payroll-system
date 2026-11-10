@@ -52,7 +52,7 @@
 
 @layer components {
     .ui-button {
-        @apply inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-lg border px-4 py-2 text-sm font-semibold leading-6;
+        @apply inline-flex min-h-8 shrink-0 items-center justify-center gap-1.5 rounded-md border px-2.5 py-1 text-xs font-semibold leading-5 pointer-coarse:min-h-11;
     }
     .ui-button-primary { @apply border-brand bg-brand text-white hover:border-brand-strong hover:bg-brand-strong; }
     .ui-button-secondary { @apply border-brand-border bg-surface text-brand hover:border-brand hover:bg-brand-soft; }
