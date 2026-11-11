@@ -1,691 +1,1033 @@
-# LGU Payroll Management System – Updated Database Schema
+# LGU Payroll Management System - Database Schema
 
-**Version:** Updated working design for mock-defense preparation  
-**Database:** MySQL  
-**Application backend:** Laravel  
-**Total tables:** 39
+Verified on November 11, 2026 against the connected MySQL database and the applied Laravel migrations.
 
-## 1. Confirmed design requirements
+**Database:** MySQL. **Application tables:** 36. **Framework tables:** 8. **Total physical tables:** 44.
 
-- Four system roles: **Admin, Payroll Officer, Approver, and Viewer**.
-- Payroll preparation/submission and payroll approval are separate duties. The user who prepares or submits a payroll run must not approve that same run.
-- Attendance is recorded by **days**, not by time-in/time-out or hours.
-- Salary grade and step determine the monthly basic salary using the applicable LGU-adopted salary schedule.
-- Example only: if the adopted schedule stores **SG 15, Step 1 = ₱45,000**, the employee’s monthly basic salary is ₱45,000 before applicable earnings and deductions.
-- Permanent, coterminous, and part-time appointment arrangements are supported, subject to their applicable compensation basis.
-- The following tables are intentionally excluded: `employee_documents`, `employee_emergency_contacts`, and `employee_government_ids`.
-- MySQL stores payroll and employee records. Blockchain stores cryptographic proof and transaction references, not confidential payroll details.
+This document describes the implemented schema. [The ERD](erd.md) illustrates the same tables and foreign-key relationships. The table count includes framework infrastructure separately from payroll business records.
 
-## 2. Salary grade and step design
+## Current design and changes
 
-### How the salary is determined
-1. `positions.salary_grade` stores the salary grade assigned to the position (NULL when the position is not salary-grade based).
-2. `salary_schedules` stores each adopted schedule and its effective period/reference.
-3. `salary_grade_steps` stores the monthly peso amount for each schedule, grade, and step.
-4. `compensation_profiles.grade_step_id` identifies the employee’s applicable grade-and-step row. The selected row’s `monthly_salary` supplies the basic monthly rate.
-5. Laravel must validate that the selected `salary_grade_steps.grade_number` matches the `positions.salary_grade` for the employee’s employment record and that the schedule is effective for the payroll date.
-6. For a direct-rate arrangement without a grade-step record, `grade_step_id` is NULL and `basic_rate` stores the approved rate. `pay_basis` determines whether that rate is monthly, daily, hourly, or another approved basis.
-7. For an authorized proportional monthly appointment, `service_fraction` stores the approved fraction of full-time service. Apply it only where the appointment/payroll rules require it.
+- Employment types are **Permanent**, **Coterminous** and **Elective**. The Part-time row was renamed in place, preserving its ID and existing employment relationships.
+- Separate attendance and leave tables were removed by the manual-input migration. Payroll uses `payable_days`, `input_reference`, `input_recorded_by`, `input_confirmed_at` and `manual_adjustments` on `payroll_details`.
+- Positions optionally hold a salary grade. Compensation profiles reference a salary-grade/step row or store an approved direct rate. Grade, step, rate and pay basis are copied into payroll snapshots.
+- Versioned Payroll Verification uses `payroll_registrations` and `payroll_registration_verifications`. Legacy anchors and their logs remain separate for existing proofs.
+- Deduction reports read `payroll_deductions` joined through `payroll_details` to the selected payroll run. They require no additional report table.
+- System display and organization settings are stored in `system_settings`.
 
-### Compensation fields and rules
-- `salary_grade_steps.monthly_salary` is the source of the salary amount for grade-and-step appointments.
-- `compensation_profiles.basic_rate` is used for direct-rate arrangements; it is NULL when the rate is retrieved through `grade_step_id`.
-- `payroll_details` stores salary grade, step, rate, and pay-basis snapshots so historical payroll can be understood even after a schedule changes.
-- Illustrative amounts must never be inserted as official LGU salary data unless they match the adopted schedule supplied or approved by the client.
+## Table inventory
 
-## 3. Table definitions
-
-**Notation:** PK = Primary Key; FK = Foreign Key; UQ = Unique; NULL = Nullable. Unless stated otherwise, columns are NOT NULL.
-
-### 1. `users`
-
-| Column | Data type | Key / constraint |
-|---|---|---|
-| `user_id` | `BIGINT UNSIGNED` | PK |
-| `employee_id` | `BIGINT UNSIGNED` | FK → employees.employee_id, NULL, UNIQUE |
-| `username` | `VARCHAR(100)` | NOT NULL, UNIQUE |
-| `email` | `VARCHAR(150)` | NULL |
-| `password_hash` | `VARCHAR(255)` | NOT NULL |
-| `account_status` | `VARCHAR(20)` | NOT NULL, DEFAULT ACTIVE |
-| `last_login_at` | `DATETIME` | NULL |
-| `created_at` | `TIMESTAMP` | NOT NULL |
-| `updated_at` | `TIMESTAMP` | NOT NULL |
-
-### 2. `roles`
-
-| Column | Data type | Key / constraint |
-|---|---|---|
-| `role_id` | `BIGINT UNSIGNED` | PK |
-| `role_name` | `VARCHAR(100)` | NOT NULL, UNIQUE |
-| `description` | `TEXT` | NULL |
-| `created_at` | `TIMESTAMP` | NOT NULL |
-| `updated_at` | `TIMESTAMP` | NOT NULL |
-
-### 3. `permissions`
-
-| Column | Data type | Key / constraint |
-|---|---|---|
-| `permission_id` | `BIGINT UNSIGNED` | PK |
-| `permission_name` | `VARCHAR(100)` | NOT NULL, UNIQUE |
-| `description` | `TEXT` | NULL |
-| `created_at` | `TIMESTAMP` | NOT NULL |
-| `updated_at` | `TIMESTAMP` | NOT NULL |
-
-### 4. `user_roles`
-
-| Column | Data type | Key / constraint |
-|---|---|---|
-| `user_role_id` | `BIGINT UNSIGNED` | PK |
-| `user_id` | `BIGINT UNSIGNED` | FK → users.user_id |
-| `role_id` | `BIGINT UNSIGNED` | FK → roles.role_id |
-| `assigned_by` | `BIGINT UNSIGNED` | FK → users.user_id, NULL |
-| `assigned_at` | `DATETIME` | NOT NULL |
-
-### 5. `role_permissions`
-
-| Column | Data type | Key / constraint |
-|---|---|---|
-| `role_permission_id` | `BIGINT UNSIGNED` | PK |
-| `role_id` | `BIGINT UNSIGNED` | FK → roles.role_id |
-| `permission_id` | `BIGINT UNSIGNED` | FK → permissions.permission_id |
-| `created_at` | `TIMESTAMP` | NOT NULL |
-
-### 6. `employees`
-
-| Column | Data type | Key / constraint |
-|---|---|---|
-| `employee_id` | `BIGINT UNSIGNED` | PK |
-| `employee_number` | `VARCHAR(50)` | NOT NULL, UNIQUE |
-| `first_name` | `VARCHAR(100)` | NOT NULL |
-| `middle_name` | `VARCHAR(100)` | NULL |
-| `last_name` | `VARCHAR(100)` | NOT NULL |
-| `suffix` | `VARCHAR(20)` | NULL |
-| `birth_date` | `DATE` | NOT NULL |
-| `sex` | `VARCHAR(20)` | NOT NULL |
-| `civil_status` | `VARCHAR(30)` | NULL |
-| `email` | `VARCHAR(150)` | NULL |
-| `contact_number` | `VARCHAR(30)` | NULL |
-| `address` | `TEXT` | NOT NULL |
-| `created_at` | `TIMESTAMP` | NOT NULL |
-| `updated_at` | `TIMESTAMP` | NOT NULL |
-| `deleted_at` | `TIMESTAMP` | NULL |
-
-### 7. `departments`
-
-| Column | Data type | Key / constraint |
-|---|---|---|
-| `department_id` | `BIGINT UNSIGNED` | PK |
-| `department_code` | `VARCHAR(50)` | NOT NULL, UNIQUE |
-| `department_name` | `VARCHAR(150)` | NOT NULL |
-| `description` | `TEXT` | NULL |
-| `status` | `VARCHAR(20)` | NOT NULL |
-| `created_at` | `TIMESTAMP` | NOT NULL |
-| `updated_at` | `TIMESTAMP` | NOT NULL |
-
-### 8. `positions`
-
-| Column | Data type | Key / constraint |
-|---|---|---|
-| `position_id` | `BIGINT UNSIGNED` | PK |
-| `department_id` | `BIGINT UNSIGNED` | FK → departments.department_id |
-| `position_code` | `VARCHAR(50)` | NOT NULL, UNIQUE |
-| `position_title` | `VARCHAR(150)` | NOT NULL |
-| `salary_grade` | `INT UNSIGNED` | NULL for positions without a salary grade |
-| `description` | `TEXT` | NULL |
-| `status` | `VARCHAR(20)` | NOT NULL |
-| `created_at` | `TIMESTAMP` | NOT NULL |
-| `updated_at` | `TIMESTAMP` | NOT NULL |
-
-### 9. `employment_types`
-
-| Column | Data type | Key / constraint |
-|---|---|---|
-| `employment_type_id` | `BIGINT UNSIGNED` | PK |
-| `employment_type_name` | `VARCHAR(100)` | NOT NULL, UNIQUE |
-| `description` | `TEXT` | NULL |
-| `status` | `VARCHAR(20)` | NOT NULL |
-
-### 10. `employment_records`
-
-| Column | Data type | Key / constraint |
-|---|---|---|
-| `employment_id` | `BIGINT UNSIGNED` | PK |
-| `employee_id` | `BIGINT UNSIGNED` | FK → employees.employee_id |
-| `department_id` | `BIGINT UNSIGNED` | FK → departments.department_id |
-| `position_id` | `BIGINT UNSIGNED` | FK → positions.position_id |
-| `employment_type_id` | `BIGINT UNSIGNED` | FK → employment_types.employment_type_id |
-| `appointment_number` | `VARCHAR(100)` | NULL |
-| `start_date` | `DATE` | NOT NULL |
-| `end_date` | `DATE` | NULL |
-| `employment_status` | `VARCHAR(30)` | NOT NULL |
-| `created_at` | `TIMESTAMP` | NOT NULL |
-| `updated_at` | `TIMESTAMP` | NOT NULL |
-
-### 11. `employment_history`
-
-| Column | Data type | Key / constraint |
-|---|---|---|
-| `history_id` | `BIGINT UNSIGNED` | PK |
-| `employment_id` | `BIGINT UNSIGNED` | FK → employment_records.employment_id |
-| `from_department_id` | `BIGINT UNSIGNED` | FK → departments.department_id, NULL |
-| `to_department_id` | `BIGINT UNSIGNED` | FK → departments.department_id, NULL |
-| `from_position_id` | `BIGINT UNSIGNED` | FK → positions.position_id, NULL |
-| `to_position_id` | `BIGINT UNSIGNED` | FK → positions.position_id, NULL |
-| `change_type` | `VARCHAR(50)` | NOT NULL |
-| `effective_date` | `DATE` | NOT NULL |
-| `remarks` | `TEXT` | NULL |
-| `recorded_by` | `BIGINT UNSIGNED` | FK → users.user_id |
-| `created_at` | `TIMESTAMP` | NOT NULL |
-
-### 12. `salary_schedules`
-
-| Column | Data type | Key / constraint |
-|---|---|---|
-| `salary_schedule_id` | `BIGINT UNSIGNED` | PK |
-| `schedule_name` | `VARCHAR(150)` | NOT NULL |
-| `effective_from` | `DATE` | NOT NULL |
-| `effective_to` | `DATE` | NULL |
-| `reference_document` | `VARCHAR(255)` | NULL |
-| `status` | `VARCHAR(20)` | NOT NULL |
-| `created_at` | `TIMESTAMP` | NOT NULL |
-
-### 13. `salary_grade_steps`
-
-| Column | Data type | Key / constraint |
-|---|---|---|
-| `grade_step_id` | `BIGINT UNSIGNED` | PK |
-| `salary_schedule_id` | `BIGINT UNSIGNED` | FK → salary_schedules.salary_schedule_id |
-| `grade_number` | `INT UNSIGNED` | NOT NULL |
-| `step_number` | `INT UNSIGNED` | NOT NULL |
-| `monthly_salary` | `DECIMAL(15,2)` | NOT NULL |
-| `created_at` | `TIMESTAMP` | NOT NULL |
-
-### 14. `compensation_profiles`
-
-| Column | Data type | Key / constraint |
-|---|---|---|
-| `compensation_id` | `BIGINT UNSIGNED` | PK |
-| `employment_id` | `BIGINT UNSIGNED` | FK → employment_records.employment_id |
-| `grade_step_id` | `BIGINT UNSIGNED` | FK → salary_grade_steps.grade_step_id, NULL for a direct-rate arrangement |
-| `pay_basis` | `VARCHAR(30)` | NOT NULL; e.g., MONTHLY, DAILY, HOURLY, PROPORTIONAL_MONTHLY |
-| `basic_rate` | `DECIMAL(15,2)` | NULL when rate is retrieved from salary_grade_steps; required for direct-rate arrangements |
-| `service_fraction` | `DECIMAL(5,4)` | NOT NULL, DEFAULT 1.0000; used for approved proportional appointments |
-| `effective_from` | `DATE` | NOT NULL |
-| `effective_to` | `DATE` | NULL |
-| `created_at` | `TIMESTAMP` | NOT NULL |
-| `updated_at` | `TIMESTAMP` | NOT NULL |
-
-### 15. `earning_types`
-
-| Column | Data type | Key / constraint |
-|---|---|---|
-| `earning_type_id` | `BIGINT UNSIGNED` | PK |
-| `earning_name` | `VARCHAR(150)` | NOT NULL |
-| `earning_category` | `VARCHAR(100)` | NOT NULL |
-| `computation_type` | `VARCHAR(50)` | NOT NULL |
-| `is_taxable` | `BOOLEAN` | NOT NULL |
-| `is_recurring` | `BOOLEAN` | NOT NULL |
-| `status` | `VARCHAR(20)` | NOT NULL |
-| `created_at` | `TIMESTAMP` | NOT NULL |
-
-### 16. `employee_earning_assignments`
-
-| Column | Data type | Key / constraint |
-|---|---|---|
-| `assignment_id` | `BIGINT UNSIGNED` | PK |
-| `employment_id` | `BIGINT UNSIGNED` | FK → employment_records.employment_id |
-| `earning_type_id` | `BIGINT UNSIGNED` | FK → earning_types.earning_type_id |
-| `amount` | `DECIMAL(15,2)` | NULL |
-| `percentage` | `DECIMAL(8,4)` | NULL |
-| `frequency` | `VARCHAR(30)` | NOT NULL |
-| `effective_from` | `DATE` | NOT NULL |
-| `effective_to` | `DATE` | NULL |
-| `created_at` | `TIMESTAMP` | NOT NULL |
-
-### 17. `attendance_records`
-
-| Column | Data type | Key / constraint |
-|---|---|---|
-| `attendance_id` | `BIGINT UNSIGNED` | PK |
-| `employee_id` | `BIGINT UNSIGNED` | FK → employees.employee_id |
-| `attendance_date` | `DATE` | NOT NULL |
-| `attendance_status` | `VARCHAR(30)` | NOT NULL |
-| `credited_days` | `DECIMAL(4,2)` | NOT NULL, DEFAULT 0.00 |
-| `source` | `VARCHAR(30)` | NULL |
-| `remarks` | `TEXT` | NULL |
-| `created_at` | `TIMESTAMP` | NOT NULL |
-| `updated_at` | `TIMESTAMP` | NOT NULL |
-
-### 18. `attendance_adjustments`
-
-| Column | Data type | Key / constraint |
-|---|---|---|
-| `adjustment_id` | `BIGINT UNSIGNED` | PK |
-| `attendance_id` | `BIGINT UNSIGNED` | FK → attendance_records.attendance_id |
-| `requested_by` | `BIGINT UNSIGNED` | FK → users.user_id |
-| `reviewed_by` | `BIGINT UNSIGNED` | FK → users.user_id, NULL |
-| `old_attendance_status` | `VARCHAR(30)` | NOT NULL |
-| `requested_attendance_status` | `VARCHAR(30)` | NOT NULL |
-| `old_credited_days` | `DECIMAL(4,2)` | NOT NULL |
-| `requested_credited_days` | `DECIMAL(4,2)` | NOT NULL |
-| `adjustment_reason` | `TEXT` | NOT NULL |
-| `approval_status` | `VARCHAR(30)` | NOT NULL |
-| `requested_at` | `DATETIME` | NOT NULL |
-| `reviewed_at` | `DATETIME` | NULL |
-
-### 19. `leave_types`
-
-| Column | Data type | Key / constraint |
-|---|---|---|
-| `leave_type_id` | `BIGINT UNSIGNED` | PK |
-| `leave_name` | `VARCHAR(100)` | NOT NULL |
-| `description` | `TEXT` | NULL |
-| `default_credit` | `DECIMAL(8,2)` | NOT NULL |
-| `is_paid` | `BOOLEAN` | NOT NULL |
-| `status` | `VARCHAR(20)` | NOT NULL |
-
-### 20. `leave_balances`
-
-| Column | Data type | Key / constraint |
-|---|---|---|
-| `leave_balance_id` | `BIGINT UNSIGNED` | PK |
-| `employee_id` | `BIGINT UNSIGNED` | FK → employees.employee_id |
-| `leave_type_id` | `BIGINT UNSIGNED` | FK → leave_types.leave_type_id |
-| `leave_year` | `YEAR` | NOT NULL |
-| `opening_balance` | `DECIMAL(8,2)` | NOT NULL, DEFAULT 0.00 |
-| `total_credits` | `DECIMAL(8,2)` | NOT NULL, DEFAULT 0.00 |
-| `total_used` | `DECIMAL(8,2)` | NOT NULL, DEFAULT 0.00 |
-| `available_balance` | `DECIMAL(8,2)` | NOT NULL, DEFAULT 0.00 |
-| `updated_at` | `TIMESTAMP` | NOT NULL |
-
-### 21. `leave_applications`
-
-| Column | Data type | Key / constraint |
-|---|---|---|
-| `leave_application_id` | `BIGINT UNSIGNED` | PK |
-| `employee_id` | `BIGINT UNSIGNED` | FK → employees.employee_id |
-| `leave_type_id` | `BIGINT UNSIGNED` | FK → leave_types.leave_type_id |
-| `start_date` | `DATE` | NOT NULL |
-| `end_date` | `DATE` | NOT NULL |
-| `total_days` | `DECIMAL(8,2)` | NOT NULL |
-| `reason` | `TEXT` | NULL |
-| `approval_status` | `VARCHAR(30)` | NOT NULL |
-| `approved_by` | `BIGINT UNSIGNED` | FK → users.user_id, NULL |
-| `approved_at` | `DATETIME` | NULL |
-| `created_at` | `TIMESTAMP` | NOT NULL |
-| `updated_at` | `TIMESTAMP` | NOT NULL |
-
-### 22. `leave_transactions`
-
-| Column | Data type | Key / constraint |
-|---|---|---|
-| `leave_transaction_id` | `BIGINT UNSIGNED` | PK |
-| `leave_balance_id` | `BIGINT UNSIGNED` | FK → leave_balances.leave_balance_id |
-| `leave_application_id` | `BIGINT UNSIGNED` | FK → leave_applications.leave_application_id, NULL |
-| `transaction_type` | `VARCHAR(30)` | NOT NULL |
-| `days` | `DECIMAL(8,2)` | NOT NULL |
-| `balance_after` | `DECIMAL(8,2)` | NOT NULL |
-| `transaction_date` | `DATE` | NOT NULL |
-| `created_by` | `BIGINT UNSIGNED` | FK → users.user_id |
-| `remarks` | `TEXT` | NULL |
-
-### 23. `deduction_types`
-
-| Column | Data type | Key / constraint |
-|---|---|---|
-| `deduction_type_id` | `BIGINT UNSIGNED` | PK |
-| `deduction_name` | `VARCHAR(150)` | NOT NULL |
-| `deduction_category` | `VARCHAR(100)` | NOT NULL |
-| `computation_type` | `VARCHAR(50)` | NOT NULL |
-| `is_statutory` | `BOOLEAN` | NOT NULL |
-| `is_pre_tax` | `BOOLEAN` | NOT NULL |
-| `status` | `VARCHAR(20)` | NOT NULL |
-| `created_at` | `TIMESTAMP` | NOT NULL |
-
-### 24. `employee_deduction_assignments`
-
-| Column | Data type | Key / constraint |
-|---|---|---|
-| `assignment_id` | `BIGINT UNSIGNED` | PK |
-| `employment_id` | `BIGINT UNSIGNED` | FK → employment_records.employment_id |
-| `deduction_type_id` | `BIGINT UNSIGNED` | FK → deduction_types.deduction_type_id |
-| `amount` | `DECIMAL(15,2)` | NULL |
-| `percentage` | `DECIMAL(8,4)` | NULL |
-| `reference_number` | `VARCHAR(100)` | NULL |
-| `effective_from` | `DATE` | NOT NULL |
-| `effective_to` | `DATE` | NULL |
-| `status` | `VARCHAR(20)` | NOT NULL |
-| `created_at` | `TIMESTAMP` | NOT NULL |
-
-### 25. `tax_brackets`
-
-| Column | Data type | Key / constraint |
-|---|---|---|
-| `tax_bracket_id` | `BIGINT UNSIGNED` | PK |
-| `tax_type` | `VARCHAR(50)` | NOT NULL |
-| `pay_frequency` | `VARCHAR(30)` | NOT NULL |
-| `minimum_income` | `DECIMAL(15,2)` | NOT NULL |
-| `maximum_income` | `DECIMAL(15,2)` | NULL |
-| `base_tax` | `DECIMAL(15,2)` | NOT NULL |
-| `marginal_tax_rate` | `DECIMAL(8,4)` | NOT NULL |
-| `effective_from` | `DATE` | NOT NULL |
-| `effective_to` | `DATE` | NULL |
-| `created_at` | `TIMESTAMP` | NOT NULL |
-
-### 26. `contribution_rates`
-
-| Column | Data type | Key / constraint |
-|---|---|---|
-| `contribution_rate_id` | `BIGINT UNSIGNED` | PK |
-| `contribution_type` | `VARCHAR(100)` | NOT NULL |
-| `minimum_compensation` | `DECIMAL(15,2)` | NOT NULL |
-| `maximum_compensation` | `DECIMAL(15,2)` | NULL |
-| `employee_rate` | `DECIMAL(8,4)` | NOT NULL |
-| `employer_rate` | `DECIMAL(8,4)` | NOT NULL |
-| `employee_fixed_amount` | `DECIMAL(15,2)` | NULL |
-| `employer_fixed_amount` | `DECIMAL(15,2)` | NULL |
-| `effective_from` | `DATE` | NOT NULL |
-| `effective_to` | `DATE` | NULL |
-| `created_at` | `TIMESTAMP` | NOT NULL |
-
-### 27. `payroll_periods`
-
-| Column | Data type | Key / constraint |
-|---|---|---|
-| `payroll_period_id` | `BIGINT UNSIGNED` | PK |
-| `period_name` | `VARCHAR(100)` | NOT NULL |
-| `payroll_type` | `VARCHAR(30)` | NOT NULL |
-| `start_date` | `DATE` | NOT NULL |
-| `end_date` | `DATE` | NOT NULL |
-| `pay_date` | `DATE` | NOT NULL |
-| `status` | `VARCHAR(30)` | NOT NULL |
-| `created_at` | `TIMESTAMP` | NOT NULL |
-| `updated_at` | `TIMESTAMP` | NOT NULL |
-
-### 28. `payroll_runs`
-
-| Column | Data type | Key / constraint |
-|---|---|---|
-| `payroll_run_id` | `BIGINT UNSIGNED` | PK |
-| `payroll_period_id` | `BIGINT UNSIGNED` | FK → payroll_periods.payroll_period_id |
-| `run_number` | `INT UNSIGNED` | NOT NULL |
-| `run_type` | `VARCHAR(30)` | NOT NULL |
-| `status` | `VARCHAR(30)` | NOT NULL |
-| `created_by` | `BIGINT UNSIGNED` | FK → users.user_id |
-| `processed_at` | `DATETIME` | NULL |
-| `submitted_by` | `BIGINT UNSIGNED` | FK → users.user_id, NULL |
-| `submitted_at` | `DATETIME` | NULL |
-| `finalized_by` | `BIGINT UNSIGNED` | FK → users.user_id, NULL |
-| `finalized_at` | `DATETIME` | NULL |
-| `created_at` | `TIMESTAMP` | NOT NULL |
-| `updated_at` | `TIMESTAMP` | NOT NULL |
-
-### 29. `payroll_approvals`
-
-| Column | Data type | Key / constraint |
-|---|---|---|
-| `approval_id` | `BIGINT UNSIGNED` | PK |
-| `payroll_run_id` | `BIGINT UNSIGNED` | FK → payroll_runs.payroll_run_id |
-| `approval_step` | `VARCHAR(50)` | NOT NULL |
-| `action` | `VARCHAR(30)` | NOT NULL |
-| `acted_by` | `BIGINT UNSIGNED` | FK → users.user_id |
-| `remarks` | `TEXT` | NULL |
-| `acted_at` | `DATETIME` | NOT NULL |
-
-### 30. `payroll_details`
-
-| Column | Data type | Key / constraint |
-|---|---|---|
-| `payroll_detail_id` | `BIGINT UNSIGNED` | PK |
-| `payroll_run_id` | `BIGINT UNSIGNED` | FK → payroll_runs.payroll_run_id |
-| `employee_id` | `BIGINT UNSIGNED` | FK → employees.employee_id |
-| `employment_id` | `BIGINT UNSIGNED` | FK → employment_records.employment_id |
-| `employee_number_snapshot` | `VARCHAR(50)` | NOT NULL |
-| `employee_name_snapshot` | `VARCHAR(255)` | NOT NULL |
-| `department_snapshot` | `VARCHAR(150)` | NULL |
-| `position_snapshot` | `VARCHAR(150)` | NULL |
-| `salary_grade_snapshot` | `INT UNSIGNED` | NULL |
-| `salary_step_snapshot` | `INT UNSIGNED` | NULL |
-| `salary_rate_snapshot` | `DECIMAL(15,2)` | NULL |
-| `pay_basis_snapshot` | `VARCHAR(30)` | NULL |
-| `basic_pay` | `DECIMAL(15,2)` | NOT NULL |
-| `total_earnings` | `DECIMAL(15,2)` | NOT NULL |
-| `gross_pay` | `DECIMAL(15,2)` | NOT NULL |
-| `total_deductions` | `DECIMAL(15,2)` | NOT NULL |
-| `net_pay` | `DECIMAL(15,2)` | NOT NULL |
-| `days_worked` | `DECIMAL(8,2)` | NOT NULL |
-| `days_present` | `DECIMAL(8,2)` | NOT NULL |
-| `days_absent` | `DECIMAL(8,2)` | NOT NULL |
-| `days_on_leave` | `DECIMAL(8,2)` | NOT NULL |
-| `payroll_status` | `VARCHAR(30)` | NOT NULL |
-| `created_at` | `TIMESTAMP` | NOT NULL |
-| `updated_at` | `TIMESTAMP` | NOT NULL |
-
-### 31. `payroll_earnings`
-
-| Column | Data type | Key / constraint |
-|---|---|---|
-| `payroll_earning_id` | `BIGINT UNSIGNED` | PK |
-| `payroll_detail_id` | `BIGINT UNSIGNED` | FK → payroll_details.payroll_detail_id |
-| `earning_type_id` | `BIGINT UNSIGNED` | FK → earning_types.earning_type_id |
-| `earning_name_snapshot` | `VARCHAR(150)` | NOT NULL |
-| `quantity` | `DECIMAL(10,2)` | NULL |
-| `rate` | `DECIMAL(15,2)` | NULL |
-| `amount` | `DECIMAL(15,2)` | NOT NULL |
-| `is_taxable` | `BOOLEAN` | NOT NULL |
-| `remarks` | `TEXT` | NULL |
-| `created_at` | `TIMESTAMP` | NOT NULL |
-
-### 32. `payroll_deductions`
-
-| Column | Data type | Key / constraint |
-|---|---|---|
-| `payroll_deduction_id` | `BIGINT UNSIGNED` | PK |
-| `payroll_detail_id` | `BIGINT UNSIGNED` | FK → payroll_details.payroll_detail_id |
-| `deduction_type_id` | `BIGINT UNSIGNED` | FK → deduction_types.deduction_type_id |
-| `deduction_name_snapshot` | `VARCHAR(150)` | NOT NULL |
-| `amount` | `DECIMAL(15,2)` | NOT NULL |
-| `remarks` | `TEXT` | NULL |
-| `created_at` | `TIMESTAMP` | NOT NULL |
-
-### 33. `payroll_employer_contributions`
-
-| Column | Data type | Key / constraint |
-|---|---|---|
-| `employer_contribution_id` | `BIGINT UNSIGNED` | PK |
-| `payroll_detail_id` | `BIGINT UNSIGNED` | FK → payroll_details.payroll_detail_id |
-| `contribution_rate_id` | `BIGINT UNSIGNED` | FK → contribution_rates.contribution_rate_id |
-| `contribution_type_snapshot` | `VARCHAR(100)` | NOT NULL |
-| `amount` | `DECIMAL(15,2)` | NOT NULL |
-| `created_at` | `TIMESTAMP` | NOT NULL |
-
-### 34. `payroll_adjustments`
-
-| Column | Data type | Key / constraint |
-|---|---|---|
-| `adjustment_id` | `BIGINT UNSIGNED` | PK |
-| `payroll_detail_id` | `BIGINT UNSIGNED` | FK → payroll_details.payroll_detail_id |
-| `adjustment_type` | `VARCHAR(30)` | NOT NULL |
-| `amount` | `DECIMAL(15,2)` | NOT NULL |
-| `reason` | `TEXT` | NOT NULL |
-| `requested_by` | `BIGINT UNSIGNED` | FK → users.user_id |
-| `approved_by` | `BIGINT UNSIGNED` | FK → users.user_id, NULL |
-| `approval_status` | `VARCHAR(30)` | NOT NULL |
-| `created_at` | `TIMESTAMP` | NOT NULL |
-| `updated_at` | `TIMESTAMP` | NOT NULL |
-
-### 35. `payslips`
-
-| Column | Data type | Key / constraint |
-|---|---|---|
-| `payslip_id` | `BIGINT UNSIGNED` | PK |
-| `payroll_detail_id` | `BIGINT UNSIGNED` | FK → payroll_details.payroll_detail_id, UNIQUE |
-| `payslip_number` | `VARCHAR(100)` | NOT NULL, UNIQUE |
-| `file_path` | `VARCHAR(500)` | NULL |
-| `generated_at` | `DATETIME` | NOT NULL |
-| `published_at` | `DATETIME` | NULL |
-| `publication_status` | `VARCHAR(30)` | NOT NULL |
-
-### 36. `generated_reports`
-
-| Column | Data type | Key / constraint |
-|---|---|---|
-| `report_id` | `BIGINT UNSIGNED` | PK |
-| `report_type` | `VARCHAR(100)` | NOT NULL |
-| `generated_by` | `BIGINT UNSIGNED` | FK → users.user_id |
-| `filters` | `JSON` | NULL |
-| `file_path` | `VARCHAR(500)` | NULL |
-| `generated_at` | `DATETIME` | NOT NULL |
-
-### 37. `audit_logs`
-
-| Column | Data type | Key / constraint |
-|---|---|---|
-| `audit_id` | `BIGINT UNSIGNED` | PK |
-| `user_id` | `BIGINT UNSIGNED` | FK → users.user_id, NULL |
-| `action` | `VARCHAR(100)` | NOT NULL |
-| `module` | `VARCHAR(100)` | NOT NULL |
-| `record_table` | `VARCHAR(100)` | NULL |
-| `record_id` | `VARCHAR(100)` | NULL |
-| `old_values` | `JSON` | NULL |
-| `new_values` | `JSON` | NULL |
-| `ip_address` | `VARCHAR(45)` | NULL |
-| `user_agent` | `TEXT` | NULL |
-| `created_at` | `DATETIME` | NOT NULL |
-
-### 38. `blockchain_anchors`
-
-| Column | Data type | Key / constraint |
-|---|---|---|
-| `anchor_id` | `BIGINT UNSIGNED` | PK |
-| `payroll_run_id` | `BIGINT UNSIGNED` | FK → payroll_runs.payroll_run_id, UNIQUE |
-| `payload_hash` | `CHAR(64)` | NOT NULL |
-| `hash_algorithm` | `VARCHAR(30)` | NOT NULL |
-| `transaction_id` | `VARCHAR(255)` | NULL |
-| `block_number` | `BIGINT UNSIGNED` | NULL |
-| `network_name` | `VARCHAR(100)` | NOT NULL |
-| `contract_address` | `VARCHAR(255)` | NULL |
-| `anchor_status` | `VARCHAR(30)` | NOT NULL |
-| `anchored_by` | `BIGINT UNSIGNED` | FK → users.user_id, NULL |
-| `anchored_at` | `DATETIME` | NULL |
-| `created_at` | `TIMESTAMP` | NOT NULL |
-
-### 39. `blockchain_verification_logs`
-
-| Column | Data type | Key / constraint |
-|---|---|---|
-| `verification_id` | `BIGINT UNSIGNED` | PK |
-| `anchor_id` | `BIGINT UNSIGNED` | FK → blockchain_anchors.anchor_id |
-| `verified_by` | `BIGINT UNSIGNED` | FK → users.user_id |
-| `stored_hash` | `CHAR(64)` | NOT NULL |
-| `calculated_hash` | `CHAR(64)` | NOT NULL |
-| `verification_result` | `VARCHAR(30)` | NOT NULL |
-| `remarks` | `TEXT` | NULL |
-| `verified_at` | `DATETIME` | NOT NULL |
-
-## 4. Initial role records
-
-Insert these four records into `roles` through a database seeder. These are role names, not four separate tables.
-
-| role_id | role_name | Description |
-|---:|---|---|
-| 1 | Admin | Manages system configuration, user accounts, and access settings. |
-| 2 | Payroll Officer | Maintains payroll inputs, prepares payroll computations, and submits payroll for approval. |
-| 3 | Approver | Independently reviews, approves, rejects, or returns payroll. |
-| 4 | Viewer | Has read-only access to authorized records and reports. |
-
-### Suggested permission names
-
-`users.manage`, `roles.manage`, `employees.view`, `employees.manage`, `attendance.manage`, `leave.manage`, `compensation.manage`, `payroll.prepare`, `payroll.submit`, `payroll.review`, `payroll.approve`, `payroll.reject`, `payroll.finalize`, `payroll.view`, `reports.generate`, `audit.view`, and `blockchain.verify`.
-
-Assign permissions through `role_permissions` and users through `user_roles`. Enforce authorization in Laravel policies/middleware as well as the interface.
-
-## 5. Payroll processing and separation of duties
-
-### Suggested payroll run statuses
-
-| Status | Meaning |
+| Area | Tables |
 |---|---|
-| `DRAFT` | Payroll run is being prepared. |
-| `PROCESSING` | Payroll computations are being processed. |
-| `PENDING_APPROVAL` | Payroll was submitted for independent review. |
-| `RETURNED` | Payroll was returned for correction. |
-| `REJECTED` | Payroll was rejected. |
-| `APPROVED` | Payroll was approved by an authorized Approver. |
-| `FINALIZED` | Approved payroll was finalized. |
-| `CANCELLED` | Payroll run was cancelled through an authorized process. |
+| Access, organization and employment | `users`, `roles`, `permissions`, `user_roles`, `role_permissions`, `employees`, `departments`, `positions`, `employment_types`, `employment_records`, `employment_history` |
+| Compensation, earnings, deductions and statutory configuration | `salary_schedules`, `salary_grade_steps`, `compensation_profiles`, `earning_types`, `employee_earning_assignments`, `deduction_types`, `employee_deduction_assignments`, `tax_brackets`, `contribution_rates` |
+| Payroll processing and outputs | `payroll_periods`, `payroll_runs`, `payroll_approvals`, `payroll_details`, `payroll_earnings`, `payroll_deductions`, `payroll_employer_contributions`, `payroll_adjustments`, `payslips`, `generated_reports` |
+| Payroll Verification, auditing and settings | `payroll_registrations`, `payroll_registration_verifications`, `blockchain_anchors`, `blockchain_verification_logs`, `audit_logs`, `system_settings` |
+| Laravel framework infrastructure | `sessions`, `password_reset_tokens`, `cache`, `cache_locks`, `jobs`, `job_batches`, `failed_jobs`, `migrations` |
 
-### Required workflow rules
+## Column and constraint reference
 
-1. The Payroll Officer prepares and submits the payroll run.
-2. Only a user assigned the Approver role and the required permission may approve or reject it.
-3. The approving user must be different from both `payroll_runs.created_by` and `payroll_runs.submitted_by` for that payroll run.
-4. Admin access must not bypass this separation-of-duties rule.
-5. Returned or rejected payroll must be corrected and resubmitted; prior approval actions remain in `payroll_approvals` as history.
-6. Only an approved payroll run may be finalized.
-7. Record submissions, decisions, and finalization in `payroll_approvals` and/or `audit_logs` as appropriate.
-8. Create the blockchain anchor only after the payroll reaches the client-approved finalization stage.
+Types, nullability, defaults, indexes and referential actions below are taken from the inspected schema. `NULL` means nullable; a dash in the default column means no non-null default was reported. Timestamp columns follow the actual database definition, including nullable Laravel timestamps. Composite uniqueness is documented in each table's index list, not as independent uniqueness of each member column.
 
-**Implementation note:** The different-user rule is a cross-table business rule and must be enforced in Laravel (and optionally reinforced with database triggers). A conventional foreign key alone cannot enforce it.
+## Access, organization and employment
 
-## 6. Attendance design
+### `users`
 
-- `attendance_records` stores one day-based attendance record per employee per date, if that matches the client’s practice.
-- Suggested statuses include `PRESENT`, `HALF_DAY`, `ABSENT`, `ON_LEAVE`, `HOLIDAY`, and `REST_DAY`; actual categories and credited-day treatment must be confirmed by the client.
-- `credited_days` stores the attendance credit for the date (for example, 1.00 for a full day and 0.50 for a half day when applicable). Do not infer that leave, holiday, or rest-day statuses always produce a particular credit without the client’s rules.
-- No time-in, time-out, total-hours, overtime-hours, or `hours_worked` fields are included in this day-based design.
-- `payroll_details` includes `days_worked`, `days_present`, `days_absent`, and `days_on_leave` as payroll-period summary values.
+| Column | MySQL type | Nullable | Default | Key / attribute |
+|---|---|---|---|---|
+| `user_id` | `bigint unsigned` | No | — | PK; AUTO_INCREMENT |
+| `employee_id` | `bigint unsigned` | Yes | — | UNIQUE; FK → `employees.employee_id` |
+| `username` | `varchar(100)` | No | — | UNIQUE |
+| `email` | `varchar(150)` | Yes | — | — |
+| `password_hash` | `varchar(255)` | No | — | — |
+| `account_status` | `varchar(20)` | No | `ACTIVE` | — |
+| `last_login_at` | `datetime` | Yes | — | — |
+| `remember_token` | `varchar(100)` | Yes | — | — |
+| `created_at` | `timestamp` | Yes | — | — |
+| `updated_at` | `timestamp` | Yes | — | — |
 
-## 7. Key constraints and indexes
+**Indexes:**
 
-| Table | Recommended constraint/index |
-|---|---|
-| `users` | UNIQUE `username`; UNIQUE nullable `employee_id` if one employee may have at most one account |
-| `employees` | UNIQUE `employee_number` |
-| `departments` | UNIQUE `department_code` |
-| `positions` | UNIQUE `position_code`; index `department_id` and `salary_grade` |
-| `employment_records` | Index `employee_id`, `department_id`, `position_id`, and `employment_type_id` |
-| `salary_grade_steps` | UNIQUE (`salary_schedule_id`, `grade_number`, `step_number`) |
-| `compensation_profiles` | Index `employment_id`, `grade_step_id`, and effective dates; prevent overlapping active compensation periods per employment |
-| `attendance_records` | UNIQUE (`employee_id`, `attendance_date`) if one record per employee per day; index `attendance_date` |
-| `leave_balances` | UNIQUE (`employee_id`, `leave_type_id`, `leave_year`) |
-| `payroll_runs` | UNIQUE (`payroll_period_id`, `run_number`) |
-| `payroll_details` | UNIQUE (`payroll_run_id`, `employment_id`) |
-| `payslips` | UNIQUE `payroll_detail_id`; UNIQUE `payslip_number` |
-| `blockchain_anchors` | UNIQUE `payroll_run_id` for one anchor per payroll run in this design |
-| `user_roles` | UNIQUE (`user_id`, `role_id`) |
-| `role_permissions` | UNIQUE (`role_id`, `permission_id`) |
+- `primary`: PRIMARY KEY (`user_id`).
+- `users_employee_id_unique`: UNIQUE (`employee_id`).
+- `users_username_unique`: UNIQUE (`username`).
 
-Use `DECIMAL(15,2)` for monetary fields. Use restrictive deletion rules for finalized payroll and other historical records. Consider cascading deletes only for appropriate junction/child records. Validate date ranges, non-negative amounts, and credited-day limits. If the client requires more than one attendance entry per employee per date, revise the unique attendance constraint.
+**Foreign-key actions:**
 
-## 8. Module and table count
+- `employee_id` → `employees(employee_id)`: ON DELETE SET NULL; ON UPDATE NO ACTION.
 
-| Module | Tables |
-|---|---:|
-| User and Access Management | 5 |
-| Employee Management | 1 |
-| Organizational Management | 3 |
-| Employment Management | 2 |
-| Compensation Management | 5 |
-| Attendance Management | 2 |
-| Leave Management | 4 |
-| Deduction Management | 4 |
-| Payroll Processing | 8 |
-| Payslip Management | 1 |
-| Reports Management | 1 |
-| Audit Trail Management | 1 |
-| Blockchain Integration | 2 |
-| **TOTAL** | **39** |
+### `roles`
 
-## 9. Implementation caveats
+| Column | MySQL type | Nullable | Default | Key / attribute |
+|---|---|---|---|---|
+| `role_id` | `bigint unsigned` | No | — | PK; AUTO_INCREMENT |
+| `role_name` | `varchar(100)` | No | — | UNIQUE |
+| `description` | `text` | Yes | — | — |
+| `created_at` | `timestamp` | Yes | — | — |
+| `updated_at` | `timestamp` | Yes | — | — |
 
-- This is a proposed working schema for the capstone and mock-defense preparation, not a certified statement of the client’s official payroll rules.
-- Load actual salary amounts only from the LGU’s approved/adopted salary schedule. A value such as SG 15, Step 1 = ₱45,000 is an example unless confirmed in that schedule.
-- Configure tax and contribution rates by effective date and applicable compensation/pay frequency. Confirm eligibility and bases for each employment category before production use.
-- Preserve payroll snapshots and finalized results. Changes to salary schedules, tax tables, or contribution rates must not silently recalculate historical payroll.
-- Keep confidential employee and payroll data off-chain. Anchor a deterministic hash of the finalized payroll data and retain transaction evidence in `blockchain_anchors`.
-- Validate the schema, payroll formulas, contribution treatment, appointment categories, approval routing, and reporting requirements with the Municipal Accounting Office before production implementation.
+**Indexes:**
 
-## 10. Companion ERD
+- `primary`: PRIMARY KEY (`role_id`).
+- `roles_role_name_unique`: UNIQUE (`role_name`).
 
-See the separate file `LGU_Payroll_Management_System_ERD_UPDATED.md` for the three Mermaid ERD diagrams and the relationship notes.
+### `permissions`
+
+| Column | MySQL type | Nullable | Default | Key / attribute |
+|---|---|---|---|---|
+| `permission_id` | `bigint unsigned` | No | — | PK; AUTO_INCREMENT |
+| `permission_name` | `varchar(100)` | No | — | UNIQUE |
+| `description` | `text` | Yes | — | — |
+| `created_at` | `timestamp` | Yes | — | — |
+| `updated_at` | `timestamp` | Yes | — | — |
+
+**Indexes:**
+
+- `permissions_permission_name_unique`: UNIQUE (`permission_name`).
+- `primary`: PRIMARY KEY (`permission_id`).
+
+### `user_roles`
+
+| Column | MySQL type | Nullable | Default | Key / attribute |
+|---|---|---|---|---|
+| `user_role_id` | `bigint unsigned` | No | — | PK; AUTO_INCREMENT |
+| `user_id` | `bigint unsigned` | No | — | FK → `users.user_id` |
+| `role_id` | `bigint unsigned` | No | — | FK → `roles.role_id` |
+| `assigned_by` | `bigint unsigned` | Yes | — | FK → `users.user_id` |
+| `assigned_at` | `datetime` | No | — | — |
+
+**Indexes:**
+
+- `primary`: PRIMARY KEY (`user_role_id`).
+- `user_roles_assigned_by_foreign`: INDEX (`assigned_by`).
+- `user_roles_role_id_foreign`: INDEX (`role_id`).
+- `user_roles_user_id_role_id_unique`: UNIQUE (`user_id`, `role_id`).
+
+**Foreign-key actions:**
+
+- `assigned_by` → `users(user_id)`: ON DELETE SET NULL; ON UPDATE NO ACTION.
+- `role_id` → `roles(role_id)`: ON DELETE CASCADE; ON UPDATE NO ACTION.
+- `user_id` → `users(user_id)`: ON DELETE CASCADE; ON UPDATE NO ACTION.
+
+### `role_permissions`
+
+| Column | MySQL type | Nullable | Default | Key / attribute |
+|---|---|---|---|---|
+| `role_permission_id` | `bigint unsigned` | No | — | PK; AUTO_INCREMENT |
+| `role_id` | `bigint unsigned` | No | — | FK → `roles.role_id` |
+| `permission_id` | `bigint unsigned` | No | — | FK → `permissions.permission_id` |
+| `created_at` | `timestamp` | No | `CURRENT_TIMESTAMP` | — |
+
+**Indexes:**
+
+- `primary`: PRIMARY KEY (`role_permission_id`).
+- `role_permissions_permission_id_foreign`: INDEX (`permission_id`).
+- `role_permissions_role_id_permission_id_unique`: UNIQUE (`role_id`, `permission_id`).
+
+**Foreign-key actions:**
+
+- `permission_id` → `permissions(permission_id)`: ON DELETE CASCADE; ON UPDATE NO ACTION.
+- `role_id` → `roles(role_id)`: ON DELETE CASCADE; ON UPDATE NO ACTION.
+
+### `employees`
+
+| Column | MySQL type | Nullable | Default | Key / attribute |
+|---|---|---|---|---|
+| `employee_id` | `bigint unsigned` | No | — | PK; AUTO_INCREMENT |
+| `employee_number` | `varchar(50)` | No | — | UNIQUE |
+| `first_name` | `varchar(100)` | No | — | — |
+| `middle_name` | `varchar(100)` | Yes | — | — |
+| `last_name` | `varchar(100)` | No | — | — |
+| `suffix` | `varchar(20)` | Yes | — | — |
+| `birth_date` | `date` | No | — | — |
+| `sex` | `varchar(20)` | No | — | — |
+| `civil_status` | `varchar(30)` | Yes | — | — |
+| `email` | `varchar(150)` | Yes | — | — |
+| `contact_number` | `varchar(30)` | Yes | — | — |
+| `address` | `text` | No | — | — |
+| `created_at` | `timestamp` | Yes | — | — |
+| `updated_at` | `timestamp` | Yes | — | — |
+| `deleted_at` | `timestamp` | Yes | — | — |
+
+**Indexes:**
+
+- `employees_employee_number_unique`: UNIQUE (`employee_number`).
+- `primary`: PRIMARY KEY (`employee_id`).
+
+### `departments`
+
+| Column | MySQL type | Nullable | Default | Key / attribute |
+|---|---|---|---|---|
+| `department_id` | `bigint unsigned` | No | — | PK; AUTO_INCREMENT |
+| `department_code` | `varchar(50)` | No | — | UNIQUE |
+| `department_name` | `varchar(150)` | No | — | — |
+| `description` | `text` | Yes | — | — |
+| `status` | `varchar(20)` | No | — | — |
+| `created_at` | `timestamp` | Yes | — | — |
+| `updated_at` | `timestamp` | Yes | — | — |
+
+**Indexes:**
+
+- `departments_department_code_unique`: UNIQUE (`department_code`).
+- `primary`: PRIMARY KEY (`department_id`).
+
+### `positions`
+
+| Column | MySQL type | Nullable | Default | Key / attribute |
+|---|---|---|---|---|
+| `position_id` | `bigint unsigned` | No | — | PK; AUTO_INCREMENT |
+| `department_id` | `bigint unsigned` | No | — | FK → `departments.department_id` |
+| `position_code` | `varchar(50)` | No | — | UNIQUE |
+| `position_title` | `varchar(150)` | No | — | — |
+| `salary_grade` | `int unsigned` | Yes | — | — |
+| `description` | `text` | Yes | — | — |
+| `status` | `varchar(20)` | No | — | — |
+| `created_at` | `timestamp` | Yes | — | — |
+| `updated_at` | `timestamp` | Yes | — | — |
+
+**Indexes:**
+
+- `positions_department_id_foreign`: INDEX (`department_id`).
+- `positions_position_code_unique`: UNIQUE (`position_code`).
+- `positions_salary_grade_index`: INDEX (`salary_grade`).
+- `primary`: PRIMARY KEY (`position_id`).
+
+**Foreign-key actions:**
+
+- `department_id` → `departments(department_id)`: ON DELETE NO ACTION; ON UPDATE NO ACTION.
+
+### `employment_types`
+
+| Column | MySQL type | Nullable | Default | Key / attribute |
+|---|---|---|---|---|
+| `employment_type_id` | `bigint unsigned` | No | — | PK; AUTO_INCREMENT |
+| `employment_type_name` | `varchar(100)` | No | — | UNIQUE |
+| `description` | `text` | Yes | — | — |
+| `status` | `varchar(20)` | No | — | — |
+
+**Indexes:**
+
+- `employment_types_employment_type_name_unique`: UNIQUE (`employment_type_name`).
+- `primary`: PRIMARY KEY (`employment_type_id`).
+
+### `employment_records`
+
+| Column | MySQL type | Nullable | Default | Key / attribute |
+|---|---|---|---|---|
+| `employment_id` | `bigint unsigned` | No | — | PK; AUTO_INCREMENT |
+| `employee_id` | `bigint unsigned` | No | — | FK → `employees.employee_id` |
+| `department_id` | `bigint unsigned` | No | — | FK → `departments.department_id` |
+| `position_id` | `bigint unsigned` | No | — | FK → `positions.position_id` |
+| `employment_type_id` | `bigint unsigned` | No | — | FK → `employment_types.employment_type_id` |
+| `appointment_number` | `varchar(100)` | Yes | — | — |
+| `start_date` | `date` | No | — | — |
+| `end_date` | `date` | Yes | — | — |
+| `employment_status` | `varchar(30)` | No | — | — |
+| `created_at` | `timestamp` | Yes | — | — |
+| `updated_at` | `timestamp` | Yes | — | — |
+
+**Indexes:**
+
+- `employment_records_department_id_foreign`: INDEX (`department_id`).
+- `employment_records_employee_id_foreign`: INDEX (`employee_id`).
+- `employment_records_employment_type_id_foreign`: INDEX (`employment_type_id`).
+- `employment_records_position_id_foreign`: INDEX (`position_id`).
+- `primary`: PRIMARY KEY (`employment_id`).
+
+**Foreign-key actions:**
+
+- `department_id` → `departments(department_id)`: ON DELETE NO ACTION; ON UPDATE NO ACTION.
+- `employee_id` → `employees(employee_id)`: ON DELETE NO ACTION; ON UPDATE NO ACTION.
+- `employment_type_id` → `employment_types(employment_type_id)`: ON DELETE NO ACTION; ON UPDATE NO ACTION.
+- `position_id` → `positions(position_id)`: ON DELETE NO ACTION; ON UPDATE NO ACTION.
+
+### `employment_history`
+
+| Column | MySQL type | Nullable | Default | Key / attribute |
+|---|---|---|---|---|
+| `history_id` | `bigint unsigned` | No | — | PK; AUTO_INCREMENT |
+| `employment_id` | `bigint unsigned` | No | — | FK → `employment_records.employment_id` |
+| `from_department_id` | `bigint unsigned` | Yes | — | FK → `departments.department_id` |
+| `to_department_id` | `bigint unsigned` | Yes | — | FK → `departments.department_id` |
+| `from_position_id` | `bigint unsigned` | Yes | — | FK → `positions.position_id` |
+| `to_position_id` | `bigint unsigned` | Yes | — | FK → `positions.position_id` |
+| `change_type` | `varchar(50)` | No | — | — |
+| `effective_date` | `date` | No | — | — |
+| `remarks` | `text` | Yes | — | — |
+| `recorded_by` | `bigint unsigned` | No | — | FK → `users.user_id` |
+| `created_at` | `timestamp` | No | `CURRENT_TIMESTAMP` | — |
+
+**Indexes:**
+
+- `employment_history_employment_id_foreign`: INDEX (`employment_id`).
+- `employment_history_from_department_id_foreign`: INDEX (`from_department_id`).
+- `employment_history_from_position_id_foreign`: INDEX (`from_position_id`).
+- `employment_history_recorded_by_foreign`: INDEX (`recorded_by`).
+- `employment_history_to_department_id_foreign`: INDEX (`to_department_id`).
+- `employment_history_to_position_id_foreign`: INDEX (`to_position_id`).
+- `primary`: PRIMARY KEY (`history_id`).
+
+**Foreign-key actions:**
+
+- `employment_id` → `employment_records(employment_id)`: ON DELETE CASCADE; ON UPDATE NO ACTION.
+- `from_department_id` → `departments(department_id)`: ON DELETE SET NULL; ON UPDATE NO ACTION.
+- `from_position_id` → `positions(position_id)`: ON DELETE SET NULL; ON UPDATE NO ACTION.
+- `recorded_by` → `users(user_id)`: ON DELETE NO ACTION; ON UPDATE NO ACTION.
+- `to_department_id` → `departments(department_id)`: ON DELETE SET NULL; ON UPDATE NO ACTION.
+- `to_position_id` → `positions(position_id)`: ON DELETE SET NULL; ON UPDATE NO ACTION.
+
+## Compensation, earnings, deductions and statutory configuration
+
+### `salary_schedules`
+
+| Column | MySQL type | Nullable | Default | Key / attribute |
+|---|---|---|---|---|
+| `salary_schedule_id` | `bigint unsigned` | No | — | PK; AUTO_INCREMENT |
+| `schedule_name` | `varchar(150)` | No | — | — |
+| `effective_from` | `date` | No | — | — |
+| `effective_to` | `date` | Yes | — | — |
+| `reference_document` | `varchar(255)` | Yes | — | — |
+| `status` | `varchar(20)` | No | — | — |
+| `created_at` | `timestamp` | No | `CURRENT_TIMESTAMP` | — |
+
+**Indexes:**
+
+- `primary`: PRIMARY KEY (`salary_schedule_id`).
+
+### `salary_grade_steps`
+
+| Column | MySQL type | Nullable | Default | Key / attribute |
+|---|---|---|---|---|
+| `grade_step_id` | `bigint unsigned` | No | — | PK; AUTO_INCREMENT |
+| `salary_schedule_id` | `bigint unsigned` | No | — | FK → `salary_schedules.salary_schedule_id` |
+| `grade_number` | `int unsigned` | No | — | — |
+| `step_number` | `int unsigned` | No | — | — |
+| `monthly_salary` | `decimal(15,2)` | No | — | — |
+| `created_at` | `timestamp` | No | `CURRENT_TIMESTAMP` | — |
+
+**Indexes:**
+
+- `primary`: PRIMARY KEY (`grade_step_id`).
+- `salary_grade_steps_grade_step_unique`: UNIQUE (`salary_schedule_id`, `grade_number`, `step_number`).
+
+**Foreign-key actions:**
+
+- `salary_schedule_id` → `salary_schedules(salary_schedule_id)`: ON DELETE CASCADE; ON UPDATE NO ACTION.
+
+### `compensation_profiles`
+
+| Column | MySQL type | Nullable | Default | Key / attribute |
+|---|---|---|---|---|
+| `compensation_id` | `bigint unsigned` | No | — | PK; AUTO_INCREMENT |
+| `employment_id` | `bigint unsigned` | No | — | FK → `employment_records.employment_id` |
+| `grade_step_id` | `bigint unsigned` | Yes | — | FK → `salary_grade_steps.grade_step_id` |
+| `pay_basis` | `varchar(30)` | No | — | — |
+| `basic_rate` | `decimal(15,2)` | Yes | — | — |
+| `service_fraction` | `decimal(5,4)` | No | `1.0000` | — |
+| `effective_from` | `date` | No | — | — |
+| `effective_to` | `date` | Yes | — | — |
+| `created_at` | `timestamp` | Yes | — | — |
+| `updated_at` | `timestamp` | Yes | — | — |
+
+**Indexes:**
+
+- `compensation_profiles_employment_id_effective_from_index`: INDEX (`employment_id`, `effective_from`).
+- `compensation_profiles_grade_step_id_foreign`: INDEX (`grade_step_id`).
+- `primary`: PRIMARY KEY (`compensation_id`).
+
+**Foreign-key actions:**
+
+- `employment_id` → `employment_records(employment_id)`: ON DELETE CASCADE; ON UPDATE NO ACTION.
+- `grade_step_id` → `salary_grade_steps(grade_step_id)`: ON DELETE SET NULL; ON UPDATE NO ACTION.
+
+### `earning_types`
+
+| Column | MySQL type | Nullable | Default | Key / attribute |
+|---|---|---|---|---|
+| `earning_type_id` | `bigint unsigned` | No | — | PK; AUTO_INCREMENT |
+| `earning_name` | `varchar(150)` | No | — | — |
+| `earning_category` | `varchar(100)` | No | — | — |
+| `computation_type` | `varchar(50)` | No | — | — |
+| `is_taxable` | `tinyint(1)` | No | — | — |
+| `is_recurring` | `tinyint(1)` | No | — | — |
+| `status` | `varchar(20)` | No | — | — |
+| `created_at` | `timestamp` | No | `CURRENT_TIMESTAMP` | — |
+
+**Indexes:**
+
+- `primary`: PRIMARY KEY (`earning_type_id`).
+
+### `employee_earning_assignments`
+
+| Column | MySQL type | Nullable | Default | Key / attribute |
+|---|---|---|---|---|
+| `assignment_id` | `bigint unsigned` | No | — | PK; AUTO_INCREMENT |
+| `employment_id` | `bigint unsigned` | No | — | FK → `employment_records.employment_id` |
+| `earning_type_id` | `bigint unsigned` | No | — | FK → `earning_types.earning_type_id` |
+| `amount` | `decimal(15,2)` | Yes | — | — |
+| `percentage` | `decimal(8,4)` | Yes | — | — |
+| `frequency` | `varchar(30)` | No | — | — |
+| `effective_from` | `date` | No | — | — |
+| `effective_to` | `date` | Yes | — | — |
+| `created_at` | `timestamp` | No | `CURRENT_TIMESTAMP` | — |
+
+**Indexes:**
+
+- `employee_earning_assignments_earning_type_id_foreign`: INDEX (`earning_type_id`).
+- `employee_earning_assignments_employment_id_foreign`: INDEX (`employment_id`).
+- `primary`: PRIMARY KEY (`assignment_id`).
+
+**Foreign-key actions:**
+
+- `earning_type_id` → `earning_types(earning_type_id)`: ON DELETE NO ACTION; ON UPDATE NO ACTION.
+- `employment_id` → `employment_records(employment_id)`: ON DELETE CASCADE; ON UPDATE NO ACTION.
+
+### `deduction_types`
+
+| Column | MySQL type | Nullable | Default | Key / attribute |
+|---|---|---|---|---|
+| `deduction_type_id` | `bigint unsigned` | No | — | PK; AUTO_INCREMENT |
+| `deduction_name` | `varchar(150)` | No | — | — |
+| `deduction_category` | `varchar(100)` | No | — | — |
+| `computation_type` | `varchar(50)` | No | — | — |
+| `is_statutory` | `tinyint(1)` | No | — | — |
+| `is_pre_tax` | `tinyint(1)` | No | — | — |
+| `status` | `varchar(20)` | No | — | — |
+| `created_at` | `timestamp` | No | `CURRENT_TIMESTAMP` | — |
+
+**Indexes:**
+
+- `primary`: PRIMARY KEY (`deduction_type_id`).
+
+### `employee_deduction_assignments`
+
+| Column | MySQL type | Nullable | Default | Key / attribute |
+|---|---|---|---|---|
+| `assignment_id` | `bigint unsigned` | No | — | PK; AUTO_INCREMENT |
+| `employment_id` | `bigint unsigned` | No | — | FK → `employment_records.employment_id` |
+| `deduction_type_id` | `bigint unsigned` | No | — | FK → `deduction_types.deduction_type_id` |
+| `amount` | `decimal(15,2)` | Yes | — | — |
+| `percentage` | `decimal(8,4)` | Yes | — | — |
+| `reference_number` | `varchar(100)` | Yes | — | — |
+| `effective_from` | `date` | No | — | — |
+| `effective_to` | `date` | Yes | — | — |
+| `status` | `varchar(20)` | No | — | — |
+| `created_at` | `timestamp` | No | `CURRENT_TIMESTAMP` | — |
+
+**Indexes:**
+
+- `employee_deduction_assignments_deduction_type_id_foreign`: INDEX (`deduction_type_id`).
+- `employee_deduction_assignments_employment_id_foreign`: INDEX (`employment_id`).
+- `primary`: PRIMARY KEY (`assignment_id`).
+
+**Foreign-key actions:**
+
+- `deduction_type_id` → `deduction_types(deduction_type_id)`: ON DELETE NO ACTION; ON UPDATE NO ACTION.
+- `employment_id` → `employment_records(employment_id)`: ON DELETE CASCADE; ON UPDATE NO ACTION.
+
+### `tax_brackets`
+
+| Column | MySQL type | Nullable | Default | Key / attribute |
+|---|---|---|---|---|
+| `tax_bracket_id` | `bigint unsigned` | No | — | PK; AUTO_INCREMENT |
+| `tax_type` | `varchar(50)` | No | — | — |
+| `pay_frequency` | `varchar(30)` | No | — | — |
+| `minimum_income` | `decimal(15,2)` | No | — | — |
+| `maximum_income` | `decimal(15,2)` | Yes | — | — |
+| `base_tax` | `decimal(15,2)` | No | — | — |
+| `marginal_tax_rate` | `decimal(8,4)` | No | — | — |
+| `effective_from` | `date` | No | — | — |
+| `effective_to` | `date` | Yes | — | — |
+| `created_at` | `timestamp` | No | `CURRENT_TIMESTAMP` | — |
+
+**Indexes:**
+
+- `primary`: PRIMARY KEY (`tax_bracket_id`).
+
+### `contribution_rates`
+
+| Column | MySQL type | Nullable | Default | Key / attribute |
+|---|---|---|---|---|
+| `contribution_rate_id` | `bigint unsigned` | No | — | PK; AUTO_INCREMENT |
+| `contribution_type` | `varchar(100)` | No | — | — |
+| `minimum_compensation` | `decimal(15,2)` | No | — | — |
+| `maximum_compensation` | `decimal(15,2)` | Yes | — | — |
+| `employee_rate` | `decimal(8,4)` | No | — | — |
+| `employer_rate` | `decimal(8,4)` | No | — | — |
+| `employee_fixed_amount` | `decimal(15,2)` | Yes | — | — |
+| `employer_fixed_amount` | `decimal(15,2)` | Yes | — | — |
+| `effective_from` | `date` | No | — | — |
+| `effective_to` | `date` | Yes | — | — |
+| `created_at` | `timestamp` | No | `CURRENT_TIMESTAMP` | — |
+
+**Indexes:**
+
+- `primary`: PRIMARY KEY (`contribution_rate_id`).
+
+## Payroll processing and outputs
+
+### `payroll_periods`
+
+| Column | MySQL type | Nullable | Default | Key / attribute |
+|---|---|---|---|---|
+| `payroll_period_id` | `bigint unsigned` | No | — | PK; AUTO_INCREMENT |
+| `period_name` | `varchar(100)` | No | — | — |
+| `payroll_type` | `varchar(30)` | No | — | — |
+| `start_date` | `date` | No | — | — |
+| `end_date` | `date` | No | — | — |
+| `pay_date` | `date` | No | — | — |
+| `status` | `varchar(30)` | No | — | — |
+| `created_at` | `timestamp` | Yes | — | — |
+| `updated_at` | `timestamp` | Yes | — | — |
+
+**Indexes:**
+
+- `payroll_periods_coverage_unique`: UNIQUE (`payroll_type`, `start_date`, `end_date`).
+- `primary`: PRIMARY KEY (`payroll_period_id`).
+
+### `payroll_runs`
+
+| Column | MySQL type | Nullable | Default | Key / attribute |
+|---|---|---|---|---|
+| `payroll_run_id` | `bigint unsigned` | No | — | PK; AUTO_INCREMENT |
+| `payroll_period_id` | `bigint unsigned` | No | — | FK → `payroll_periods.payroll_period_id` |
+| `run_number` | `int unsigned` | No | — | — |
+| `run_type` | `varchar(30)` | No | — | — |
+| `status` | `varchar(30)` | No | — | — |
+| `created_by` | `bigint unsigned` | No | — | FK → `users.user_id` |
+| `processed_at` | `datetime` | Yes | — | — |
+| `submitted_by` | `bigint unsigned` | Yes | — | FK → `users.user_id` |
+| `submitted_at` | `datetime` | Yes | — | — |
+| `finalized_by` | `bigint unsigned` | Yes | — | FK → `users.user_id` |
+| `finalized_at` | `datetime` | Yes | — | — |
+| `created_at` | `timestamp` | Yes | — | — |
+| `updated_at` | `timestamp` | Yes | — | — |
+
+**Indexes:**
+
+- `payroll_runs_created_by_foreign`: INDEX (`created_by`).
+- `payroll_runs_finalized_by_foreign`: INDEX (`finalized_by`).
+- `payroll_runs_payroll_period_id_run_number_unique`: UNIQUE (`payroll_period_id`, `run_number`).
+- `payroll_runs_submitted_by_foreign`: INDEX (`submitted_by`).
+- `primary`: PRIMARY KEY (`payroll_run_id`).
+
+**Foreign-key actions:**
+
+- `created_by` → `users(user_id)`: ON DELETE NO ACTION; ON UPDATE NO ACTION.
+- `finalized_by` → `users(user_id)`: ON DELETE SET NULL; ON UPDATE NO ACTION.
+- `payroll_period_id` → `payroll_periods(payroll_period_id)`: ON DELETE RESTRICT; ON UPDATE NO ACTION.
+- `submitted_by` → `users(user_id)`: ON DELETE SET NULL; ON UPDATE NO ACTION.
+
+### `payroll_approvals`
+
+| Column | MySQL type | Nullable | Default | Key / attribute |
+|---|---|---|---|---|
+| `approval_id` | `bigint unsigned` | No | — | PK; AUTO_INCREMENT |
+| `payroll_run_id` | `bigint unsigned` | No | — | FK → `payroll_runs.payroll_run_id` |
+| `approval_step` | `varchar(50)` | No | — | — |
+| `action` | `varchar(30)` | No | — | — |
+| `acted_by` | `bigint unsigned` | No | — | FK → `users.user_id` |
+| `remarks` | `text` | Yes | — | — |
+| `acted_at` | `datetime` | No | — | — |
+
+**Indexes:**
+
+- `payroll_approvals_acted_by_foreign`: INDEX (`acted_by`).
+- `payroll_approvals_payroll_run_id_foreign`: INDEX (`payroll_run_id`).
+- `primary`: PRIMARY KEY (`approval_id`).
+
+**Foreign-key actions:**
+
+- `acted_by` → `users(user_id)`: ON DELETE NO ACTION; ON UPDATE NO ACTION.
+- `payroll_run_id` → `payroll_runs(payroll_run_id)`: ON DELETE CASCADE; ON UPDATE NO ACTION.
+
+### `payroll_details`
+
+| Column | MySQL type | Nullable | Default | Key / attribute |
+|---|---|---|---|---|
+| `payroll_detail_id` | `bigint unsigned` | No | — | PK; AUTO_INCREMENT |
+| `payroll_run_id` | `bigint unsigned` | No | — | FK → `payroll_runs.payroll_run_id` |
+| `employee_id` | `bigint unsigned` | No | — | FK → `employees.employee_id` |
+| `employment_id` | `bigint unsigned` | No | — | FK → `employment_records.employment_id` |
+| `employee_number_snapshot` | `varchar(50)` | No | — | — |
+| `employee_name_snapshot` | `varchar(255)` | No | — | — |
+| `department_snapshot` | `varchar(150)` | Yes | — | — |
+| `position_snapshot` | `varchar(150)` | Yes | — | — |
+| `salary_grade_snapshot` | `int unsigned` | Yes | — | — |
+| `salary_step_snapshot` | `int unsigned` | Yes | — | — |
+| `salary_rate_snapshot` | `decimal(15,2)` | Yes | — | — |
+| `pay_basis_snapshot` | `varchar(30)` | Yes | — | — |
+| `basic_pay` | `decimal(15,2)` | No | — | — |
+| `total_earnings` | `decimal(15,2)` | No | — | — |
+| `gross_pay` | `decimal(15,2)` | No | — | — |
+| `total_deductions` | `decimal(15,2)` | No | — | — |
+| `nthp_before_lbp` | `decimal(15,2)` | No | — | — |
+| `lbp_loan_deduction` | `decimal(15,2)` | No | `0.00` | — |
+| `net_pay` | `decimal(15,2)` | No | — | — |
+| `payroll_status` | `varchar(30)` | No | — | — |
+| `created_at` | `timestamp` | Yes | — | — |
+| `updated_at` | `timestamp` | Yes | — | — |
+| `payable_days` | `decimal(8,2)` | Yes | — | — |
+| `input_reference` | `varchar(255)` | Yes | — | — |
+| `input_recorded_by` | `bigint unsigned` | Yes | — | FK → `users.user_id` |
+| `input_confirmed_at` | `timestamp` | Yes | — | — |
+| `manual_adjustments` | `tinyint(1)` | No | `0` | — |
+
+**Indexes:**
+
+- `payroll_details_employee_id_foreign`: INDEX (`employee_id`).
+- `payroll_details_employment_id_foreign`: INDEX (`employment_id`).
+- `payroll_details_input_recorded_by_foreign`: INDEX (`input_recorded_by`).
+- `payroll_details_payroll_run_id_employment_id_unique`: UNIQUE (`payroll_run_id`, `employment_id`).
+- `primary`: PRIMARY KEY (`payroll_detail_id`).
+
+**Foreign-key actions:**
+
+- `employee_id` → `employees(employee_id)`: ON DELETE NO ACTION; ON UPDATE NO ACTION.
+- `employment_id` → `employment_records(employment_id)`: ON DELETE NO ACTION; ON UPDATE NO ACTION.
+- `input_recorded_by` → `users(user_id)`: ON DELETE SET NULL; ON UPDATE NO ACTION.
+- `payroll_run_id` → `payroll_runs(payroll_run_id)`: ON DELETE CASCADE; ON UPDATE NO ACTION.
+
+### `payroll_earnings`
+
+| Column | MySQL type | Nullable | Default | Key / attribute |
+|---|---|---|---|---|
+| `payroll_earning_id` | `bigint unsigned` | No | — | PK; AUTO_INCREMENT |
+| `payroll_detail_id` | `bigint unsigned` | No | — | FK → `payroll_details.payroll_detail_id` |
+| `earning_type_id` | `bigint unsigned` | No | — | FK → `earning_types.earning_type_id` |
+| `earning_name_snapshot` | `varchar(150)` | No | — | — |
+| `quantity` | `decimal(10,2)` | Yes | — | — |
+| `rate` | `decimal(15,2)` | Yes | — | — |
+| `amount` | `decimal(15,2)` | No | — | — |
+| `is_taxable` | `tinyint(1)` | No | — | — |
+| `remarks` | `text` | Yes | — | — |
+| `created_at` | `timestamp` | No | `CURRENT_TIMESTAMP` | — |
+
+**Indexes:**
+
+- `payroll_earnings_earning_type_id_foreign`: INDEX (`earning_type_id`).
+- `payroll_earnings_payroll_detail_id_foreign`: INDEX (`payroll_detail_id`).
+- `primary`: PRIMARY KEY (`payroll_earning_id`).
+
+**Foreign-key actions:**
+
+- `earning_type_id` → `earning_types(earning_type_id)`: ON DELETE NO ACTION; ON UPDATE NO ACTION.
+- `payroll_detail_id` → `payroll_details(payroll_detail_id)`: ON DELETE CASCADE; ON UPDATE NO ACTION.
+
+### `payroll_deductions`
+
+| Column | MySQL type | Nullable | Default | Key / attribute |
+|---|---|---|---|---|
+| `payroll_deduction_id` | `bigint unsigned` | No | — | PK; AUTO_INCREMENT |
+| `payroll_detail_id` | `bigint unsigned` | No | — | FK → `payroll_details.payroll_detail_id` |
+| `deduction_type_id` | `bigint unsigned` | No | — | FK → `deduction_types.deduction_type_id` |
+| `deduction_name_snapshot` | `varchar(150)` | No | — | — |
+| `amount` | `decimal(15,2)` | No | — | — |
+| `remarks` | `text` | Yes | — | — |
+| `created_at` | `timestamp` | No | `CURRENT_TIMESTAMP` | — |
+
+**Indexes:**
+
+- `payroll_deductions_deduction_type_id_foreign`: INDEX (`deduction_type_id`).
+- `payroll_deductions_payroll_detail_id_foreign`: INDEX (`payroll_detail_id`).
+- `primary`: PRIMARY KEY (`payroll_deduction_id`).
+
+**Foreign-key actions:**
+
+- `deduction_type_id` → `deduction_types(deduction_type_id)`: ON DELETE NO ACTION; ON UPDATE NO ACTION.
+- `payroll_detail_id` → `payroll_details(payroll_detail_id)`: ON DELETE CASCADE; ON UPDATE NO ACTION.
+
+### `payroll_employer_contributions`
+
+| Column | MySQL type | Nullable | Default | Key / attribute |
+|---|---|---|---|---|
+| `employer_contribution_id` | `bigint unsigned` | No | — | PK; AUTO_INCREMENT |
+| `payroll_detail_id` | `bigint unsigned` | No | — | FK → `payroll_details.payroll_detail_id` |
+| `contribution_rate_id` | `bigint unsigned` | No | — | FK → `contribution_rates.contribution_rate_id` |
+| `contribution_type_snapshot` | `varchar(100)` | No | — | — |
+| `amount` | `decimal(15,2)` | No | — | — |
+| `created_at` | `timestamp` | No | `CURRENT_TIMESTAMP` | — |
+
+**Indexes:**
+
+- `payroll_employer_contributions_contribution_rate_id_foreign`: INDEX (`contribution_rate_id`).
+- `payroll_employer_contributions_payroll_detail_id_foreign`: INDEX (`payroll_detail_id`).
+- `primary`: PRIMARY KEY (`employer_contribution_id`).
+
+**Foreign-key actions:**
+
+- `contribution_rate_id` → `contribution_rates(contribution_rate_id)`: ON DELETE NO ACTION; ON UPDATE NO ACTION.
+- `payroll_detail_id` → `payroll_details(payroll_detail_id)`: ON DELETE CASCADE; ON UPDATE NO ACTION.
+
+### `payroll_adjustments`
+
+| Column | MySQL type | Nullable | Default | Key / attribute |
+|---|---|---|---|---|
+| `adjustment_id` | `bigint unsigned` | No | — | PK; AUTO_INCREMENT |
+| `payroll_detail_id` | `bigint unsigned` | No | — | FK → `payroll_details.payroll_detail_id` |
+| `adjustment_type` | `varchar(30)` | No | — | — |
+| `amount` | `decimal(15,2)` | No | — | — |
+| `reason` | `text` | No | — | — |
+| `requested_by` | `bigint unsigned` | No | — | FK → `users.user_id` |
+| `approved_by` | `bigint unsigned` | Yes | — | FK → `users.user_id` |
+| `approval_status` | `varchar(30)` | No | — | — |
+| `created_at` | `timestamp` | Yes | — | — |
+| `updated_at` | `timestamp` | Yes | — | — |
+
+**Indexes:**
+
+- `payroll_adjustments_approved_by_foreign`: INDEX (`approved_by`).
+- `payroll_adjustments_payroll_detail_id_foreign`: INDEX (`payroll_detail_id`).
+- `payroll_adjustments_requested_by_foreign`: INDEX (`requested_by`).
+- `primary`: PRIMARY KEY (`adjustment_id`).
+
+**Foreign-key actions:**
+
+- `approved_by` → `users(user_id)`: ON DELETE SET NULL; ON UPDATE NO ACTION.
+- `payroll_detail_id` → `payroll_details(payroll_detail_id)`: ON DELETE CASCADE; ON UPDATE NO ACTION.
+- `requested_by` → `users(user_id)`: ON DELETE NO ACTION; ON UPDATE NO ACTION.
+
+### `payslips`
+
+| Column | MySQL type | Nullable | Default | Key / attribute |
+|---|---|---|---|---|
+| `payslip_id` | `bigint unsigned` | No | — | PK; AUTO_INCREMENT |
+| `payroll_detail_id` | `bigint unsigned` | No | — | UNIQUE; FK → `payroll_details.payroll_detail_id` |
+| `payslip_number` | `varchar(100)` | No | — | UNIQUE |
+| `file_path` | `varchar(500)` | Yes | — | — |
+| `generated_at` | `datetime` | No | — | — |
+| `published_at` | `datetime` | Yes | — | — |
+| `publication_status` | `varchar(30)` | No | — | — |
+
+**Indexes:**
+
+- `payslips_payroll_detail_id_unique`: UNIQUE (`payroll_detail_id`).
+- `payslips_payslip_number_unique`: UNIQUE (`payslip_number`).
+- `primary`: PRIMARY KEY (`payslip_id`).
+
+**Foreign-key actions:**
+
+- `payroll_detail_id` → `payroll_details(payroll_detail_id)`: ON DELETE CASCADE; ON UPDATE NO ACTION.
+
+### `generated_reports`
+
+| Column | MySQL type | Nullable | Default | Key / attribute |
+|---|---|---|---|---|
+| `report_id` | `bigint unsigned` | No | — | PK; AUTO_INCREMENT |
+| `report_type` | `varchar(100)` | No | — | — |
+| `generated_by` | `bigint unsigned` | No | — | FK → `users.user_id` |
+| `filters` | `json` | Yes | — | — |
+| `file_path` | `varchar(500)` | Yes | — | — |
+| `generated_at` | `datetime` | No | — | — |
+
+**Indexes:**
+
+- `generated_reports_generated_by_foreign`: INDEX (`generated_by`).
+- `primary`: PRIMARY KEY (`report_id`).
+
+**Foreign-key actions:**
+
+- `generated_by` → `users(user_id)`: ON DELETE NO ACTION; ON UPDATE NO ACTION.
+
+## Payroll Verification, auditing and settings
+
+### `payroll_registrations`
+
+| Column | MySQL type | Nullable | Default | Key / attribute |
+|---|---|---|---|---|
+| `registration_id` | `bigint unsigned` | No | — | PK; AUTO_INCREMENT |
+| `payroll_run_id` | `bigint unsigned` | No | — | UNIQUE; FK → `payroll_runs.payroll_run_id` |
+| `organization_id` | `varchar(63)` | No | — | — |
+| `payroll_reference` | `char(36)` | No | — | — |
+| `revision` | `int unsigned` | No | `1` | — |
+| `hash_schema_version` | `int unsigned` | No | — | — |
+| `payload_hash` | `char(64)` | No | — | — |
+| `idempotency_key` | `char(64)` | No | — | UNIQUE |
+| `canonical_payload` | `longtext` | No | — | — |
+| `period_snapshot` | `json` | No | — | — |
+| `approval_snapshot` | `json` | No | — | — |
+| `target_network` | `json` | No | — | — |
+| `status` | `varchar(30)` | No | `QUEUED` | — |
+| `transaction_hash` | `varchar(66)` | Yes | — | — |
+| `evidence` | `json` | Yes | — | — |
+| `attempts` | `int unsigned` | No | `0` | — |
+| `last_error` | `varchar(100)` | Yes | — | — |
+| `next_attempt_at` | `timestamp` | Yes | — | — |
+| `lease_token` | `char(36)` | Yes | — | — |
+| `created_at` | `timestamp` | Yes | — | — |
+| `updated_at` | `timestamp` | Yes | — | — |
+
+**Indexes:**
+
+- `payroll_registration_identity_unique`: UNIQUE (`organization_id`, `payroll_reference`, `revision`).
+- `payroll_registrations_idempotency_key_unique`: UNIQUE (`idempotency_key`).
+- `payroll_registrations_payroll_run_id_unique`: UNIQUE (`payroll_run_id`).
+- `payroll_registrations_status_next_attempt_at_index`: INDEX (`status`, `next_attempt_at`).
+- `primary`: PRIMARY KEY (`registration_id`).
+
+**Foreign-key actions:**
+
+- `payroll_run_id` → `payroll_runs(payroll_run_id)`: ON DELETE RESTRICT; ON UPDATE NO ACTION.
+
+### `payroll_registration_verifications`
+
+| Column | MySQL type | Nullable | Default | Key / attribute |
+|---|---|---|---|---|
+| `verification_id` | `bigint unsigned` | No | — | PK; AUTO_INCREMENT |
+| `registration_id` | `bigint unsigned` | No | — | FK → `payroll_registrations.registration_id` |
+| `verified_by` | `bigint unsigned` | Yes | — | FK → `users.user_id` |
+| `stored_hash` | `char(64)` | Yes | — | — |
+| `calculated_hash` | `char(64)` | Yes | — | — |
+| `captured_hash` | `char(64)` | No | — | — |
+| `verification_result` | `varchar(30)` | No | — | — |
+| `remarks` | `varchar(255)` | No | — | — |
+| `evidence` | `json` | Yes | — | — |
+| `verified_at` | `timestamp` | No | — | — |
+
+**Indexes:**
+
+- `payroll_registration_verifications_verified_by_foreign`: INDEX (`verified_by`).
+- `payroll_registry_verification_time_index`: INDEX (`registration_id`, `verified_at`).
+- `primary`: PRIMARY KEY (`verification_id`).
+
+**Foreign-key actions:**
+
+- `registration_id` → `payroll_registrations(registration_id)`: ON DELETE RESTRICT; ON UPDATE NO ACTION.
+- `verified_by` → `users(user_id)`: ON DELETE SET NULL; ON UPDATE NO ACTION.
+
+### `blockchain_anchors`
+
+| Column | MySQL type | Nullable | Default | Key / attribute |
+|---|---|---|---|---|
+| `anchor_id` | `bigint unsigned` | No | — | PK; AUTO_INCREMENT |
+| `payroll_run_id` | `bigint unsigned` | No | — | UNIQUE; FK → `payroll_runs.payroll_run_id` |
+| `payload_hash` | `char(64)` | No | — | — |
+| `hash_algorithm` | `varchar(30)` | No | — | — |
+| `transaction_id` | `varchar(255)` | Yes | — | — |
+| `block_number` | `bigint unsigned` | Yes | — | — |
+| `network_name` | `varchar(100)` | No | — | — |
+| `contract_address` | `varchar(255)` | Yes | — | — |
+| `anchor_status` | `varchar(30)` | No | — | — |
+| `anchored_by` | `bigint unsigned` | Yes | — | FK → `users.user_id` |
+| `anchored_at` | `datetime` | Yes | — | — |
+| `created_at` | `timestamp` | No | `CURRENT_TIMESTAMP` | — |
+
+**Indexes:**
+
+- `blockchain_anchors_anchored_by_foreign`: INDEX (`anchored_by`).
+- `blockchain_anchors_payroll_run_id_unique`: UNIQUE (`payroll_run_id`).
+- `primary`: PRIMARY KEY (`anchor_id`).
+
+**Foreign-key actions:**
+
+- `anchored_by` → `users(user_id)`: ON DELETE SET NULL; ON UPDATE NO ACTION.
+- `payroll_run_id` → `payroll_runs(payroll_run_id)`: ON DELETE CASCADE; ON UPDATE NO ACTION.
+
+### `blockchain_verification_logs`
+
+| Column | MySQL type | Nullable | Default | Key / attribute |
+|---|---|---|---|---|
+| `verification_id` | `bigint unsigned` | No | — | PK; AUTO_INCREMENT |
+| `anchor_id` | `bigint unsigned` | No | — | FK → `blockchain_anchors.anchor_id` |
+| `verified_by` | `bigint unsigned` | No | — | FK → `users.user_id` |
+| `stored_hash` | `char(64)` | No | — | — |
+| `calculated_hash` | `char(64)` | No | — | — |
+| `verification_result` | `varchar(30)` | No | — | — |
+| `remarks` | `text` | Yes | — | — |
+| `verified_at` | `datetime` | No | — | — |
+
+**Indexes:**
+
+- `blockchain_verification_logs_anchor_id_foreign`: INDEX (`anchor_id`).
+- `blockchain_verification_logs_verified_by_foreign`: INDEX (`verified_by`).
+- `primary`: PRIMARY KEY (`verification_id`).
+
+**Foreign-key actions:**
+
+- `anchor_id` → `blockchain_anchors(anchor_id)`: ON DELETE CASCADE; ON UPDATE NO ACTION.
+- `verified_by` → `users(user_id)`: ON DELETE NO ACTION; ON UPDATE NO ACTION.
+
+### `audit_logs`
+
+| Column | MySQL type | Nullable | Default | Key / attribute |
+|---|---|---|---|---|
+| `audit_id` | `bigint unsigned` | No | — | PK; AUTO_INCREMENT |
+| `user_id` | `bigint unsigned` | Yes | — | FK → `users.user_id` |
+| `action` | `varchar(100)` | No | — | — |
+| `module` | `varchar(100)` | No | — | — |
+| `record_table` | `varchar(100)` | Yes | — | — |
+| `record_id` | `varchar(100)` | Yes | — | — |
+| `old_values` | `json` | Yes | — | — |
+| `new_values` | `json` | Yes | — | — |
+| `ip_address` | `varchar(45)` | Yes | — | — |
+| `user_agent` | `text` | Yes | — | — |
+| `created_at` | `timestamp` | No | `CURRENT_TIMESTAMP` | — |
+
+**Indexes:**
+
+- `audit_logs_created_at_index`: INDEX (`created_at`).
+- `audit_logs_module_action_index`: INDEX (`module`, `action`).
+- `audit_logs_record_table_record_id_index`: INDEX (`record_table`, `record_id`).
+- `audit_logs_user_id_foreign`: INDEX (`user_id`).
+- `primary`: PRIMARY KEY (`audit_id`).
+
+**Foreign-key actions:**
+
+- `user_id` → `users(user_id)`: ON DELETE SET NULL; ON UPDATE NO ACTION.
+
+### `system_settings`
+
+| Column | MySQL type | Nullable | Default | Key / attribute |
+|---|---|---|---|---|
+| `id` | `bigint unsigned` | No | — | PK; AUTO_INCREMENT |
+| `setting_key` | `varchar(64)` | No | — | UNIQUE |
+| `value` | `varchar(255)` | Yes | — | — |
+| `created_at` | `timestamp` | Yes | — | — |
+| `updated_at` | `timestamp` | Yes | — | — |
+
+**Indexes:**
+
+- `primary`: PRIMARY KEY (`id`).
+- `system_settings_setting_key_unique`: UNIQUE (`setting_key`).
+
+## Laravel framework infrastructure
+
+### `sessions`
+
+| Column | MySQL type | Nullable | Default | Key / attribute |
+|---|---|---|---|---|
+| `id` | `varchar(255)` | No | — | PK |
+| `user_id` | `bigint unsigned` | Yes | — | — |
+| `ip_address` | `varchar(45)` | Yes | — | — |
+| `user_agent` | `text` | Yes | — | — |
+| `payload` | `longtext` | No | — | — |
+| `last_activity` | `int` | No | — | — |
+
+**Indexes:**
+
+- `primary`: PRIMARY KEY (`id`).
+- `sessions_last_activity_index`: INDEX (`last_activity`).
+- `sessions_user_id_index`: INDEX (`user_id`).
+
+### `password_reset_tokens`
+
+| Column | MySQL type | Nullable | Default | Key / attribute |
+|---|---|---|---|---|
+| `email` | `varchar(255)` | No | — | PK |
+| `token` | `varchar(255)` | No | — | — |
+| `created_at` | `timestamp` | Yes | — | — |
+
+**Indexes:**
+
+- `primary`: PRIMARY KEY (`email`).
+
+### `cache`
+
+| Column | MySQL type | Nullable | Default | Key / attribute |
+|---|---|---|---|---|
+| `key` | `varchar(255)` | No | — | PK |
+| `value` | `mediumtext` | No | — | — |
+| `expiration` | `bigint` | No | — | — |
+
+**Indexes:**
+
+- `cache_expiration_index`: INDEX (`expiration`).
+- `primary`: PRIMARY KEY (`key`).
+
+### `cache_locks`
+
+| Column | MySQL type | Nullable | Default | Key / attribute |
+|---|---|---|---|---|
+| `key` | `varchar(255)` | No | — | PK |
+| `owner` | `varchar(255)` | No | — | — |
+| `expiration` | `bigint` | No | — | — |
+
+**Indexes:**
+
+- `cache_locks_expiration_index`: INDEX (`expiration`).
+- `primary`: PRIMARY KEY (`key`).
+
+### `jobs`
+
+| Column | MySQL type | Nullable | Default | Key / attribute |
+|---|---|---|---|---|
+| `id` | `bigint unsigned` | No | — | PK; AUTO_INCREMENT |
+| `queue` | `varchar(255)` | No | — | — |
+| `payload` | `longtext` | No | — | — |
+| `attempts` | `smallint unsigned` | No | — | — |
+| `reserved_at` | `int unsigned` | Yes | — | — |
+| `available_at` | `int unsigned` | No | — | — |
+| `created_at` | `int unsigned` | No | — | — |
+
+**Indexes:**
+
+- `jobs_queue_index`: INDEX (`queue`).
+- `primary`: PRIMARY KEY (`id`).
+
+### `job_batches`
+
+| Column | MySQL type | Nullable | Default | Key / attribute |
+|---|---|---|---|---|
+| `id` | `varchar(255)` | No | — | PK |
+| `name` | `varchar(255)` | No | — | — |
+| `total_jobs` | `int` | No | — | — |
+| `pending_jobs` | `int` | No | — | — |
+| `failed_jobs` | `int` | No | — | — |
+| `failed_job_ids` | `longtext` | No | — | — |
+| `options` | `mediumtext` | Yes | — | — |
+| `cancelled_at` | `int` | Yes | — | — |
+| `created_at` | `int` | No | — | — |
+| `finished_at` | `int` | Yes | — | — |
+
+**Indexes:**
+
+- `primary`: PRIMARY KEY (`id`).
+
+### `failed_jobs`
+
+| Column | MySQL type | Nullable | Default | Key / attribute |
+|---|---|---|---|---|
+| `id` | `bigint unsigned` | No | — | PK; AUTO_INCREMENT |
+| `uuid` | `varchar(255)` | No | — | UNIQUE |
+| `connection` | `varchar(255)` | No | — | — |
+| `queue` | `varchar(255)` | No | — | — |
+| `payload` | `longtext` | No | — | — |
+| `exception` | `longtext` | No | — | — |
+| `failed_at` | `timestamp` | No | `CURRENT_TIMESTAMP` | — |
+
+**Indexes:**
+
+- `failed_jobs_connection_queue_failed_at_index`: INDEX (`connection`, `queue`, `failed_at`).
+- `failed_jobs_uuid_unique`: UNIQUE (`uuid`).
+- `primary`: PRIMARY KEY (`id`).
+
+### `migrations`
+
+| Column | MySQL type | Nullable | Default | Key / attribute |
+|---|---|---|---|---|
+| `id` | `int unsigned` | No | — | PK; AUTO_INCREMENT |
+| `migration` | `varchar(255)` | No | — | — |
+| `batch` | `int` | No | — | — |
+
+**Indexes:**
+
+- `primary`: PRIMARY KEY (`id`).
+
+## Workflow and integrity semantics
+
+- Default roles are Admin, Payroll Officer, Approver and Viewer; permissions are assigned through `role_permissions` and `user_roles`. The current permission list is maintained in `database/seeders/RolePermissionSeeder.php`.
+- Payroll statuses are DRAFT, PROCESSING, PENDING_APPROVAL, RETURNED, REJECTED, APPROVED, FINALIZED and CANCELLED. CANCELLED is defined in the model but has no dedicated cancellation action in the current interface. Their workflow and editability rules are enforced by Laravel, not SQL enum columns.
+- A preparer or submitter cannot approve, reject or return their own run. Only an approved run can be finalized. Foreign keys alone do not enforce these business rules.
+- When registry capture is enabled, finalization saves a canonical payroll snapshot and a registration request atomically. Queue workers submit and reconcile the blockchain transaction asynchronously.
+- Registration statuses are QUEUED, SUBMITTED, RECONCILING, CONFIRMED, FAILED and CONFLICT. The unique `payroll_run_id` currently permits at most one registration row per run, even though identity includes a revision.
+- Verification outcomes are MATCH, MISMATCH, PENDING, UNAVAILABLE, NOT_REGISTERED and INVALID_EVIDENCE. Each check appends a verification-history row. Confirmation and an integrity match are separate conclusions.
+- Confidential canonical payroll data remains in MySQL. The blockchain receives an opaque payroll reference, revision, hash and supporting metadata. A Node SQLite transaction journal exists outside this MySQL schema.
+- `period_snapshot`, `approval_snapshot`, `target_network` and `evidence` are JSON documents, not additional foreign-key relationships.
+- `generated_reports.filters` may identify a payroll run, but it is JSON and has no SQL foreign key to `payroll_runs`. Deduction report viewing/printing does not create an archived export file.
+- `sessions.user_id` has an index but no declared foreign key. Audit `record_table`/`record_id` identify heterogeneous records and are not SQL foreign keys.
+
+## Maintenance
+
+Apply schema changes through new Laravel migrations and update both this document and [the ERD](erd.md). Do not recreate removed attendance/leave tables or alter a live database merely to match an older design document.
+
+Sources: Laravel Boost database schema inspection; `database/migrations`; employment-type and role-permission seeders; payroll approval, registration and verification services; report controller.
