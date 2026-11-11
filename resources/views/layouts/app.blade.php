@@ -7,22 +7,22 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @stack('print-styles')
 </head>
-<body class="h-full font-sans antialiased">
+<body class="h-full bg-canvas font-sans antialiased">
 <a href="#main-content" class="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:bg-white focus:p-3 focus:text-brand">Skip to content</a>
-<div class="flex min-h-dvh flex-col lg:flex-row">
+<div class="flex min-h-dvh flex-col bg-canvas lg:flex-row">
     <div id="navigation-backdrop" hidden aria-hidden="true" class="no-print fixed inset-0 z-40 bg-slate-950/50 lg:hidden"></div>
     <details id="app-navigation" open data-navigation-user="{{ auth()->id() }}" class="w-full shrink-0 bg-brand-strong text-blue-50 lg:sticky lg:top-0 lg:z-30 lg:h-dvh lg:w-72">
-        <summary class="min-h-14 cursor-pointer px-5 py-4 text-sm font-semibold lg:hidden">Navigation &middot; Menu</summary>
+        <summary class="min-h-14 cursor-pointer px-5 py-4 text-sm font-semibold lg:hidden">Navigation <span class="text-blue-200">&middot; Menu</span></summary>
         <div id="navigation-panel" class="flex h-full min-h-0 flex-col" tabindex="-1">
-            <div class="flex min-h-20 shrink-0 items-center gap-3 border-b border-white/15 px-5 py-4">
-                <a href="{{ route('dashboard') }}" class="flex min-w-0 flex-1 items-center gap-3 rounded-lg">
-                    <span class="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-white text-sm font-bold text-brand">LGU</span>
+            <div class="flex min-h-20 shrink-0 items-center gap-3 border-b border-white/10 px-5 py-4">
+                <a href="{{ route('dashboard') }}" class="group flex min-w-0 flex-1 items-center gap-3 rounded-xl">
+                    <span class="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-white text-sm font-bold tracking-tight text-brand-strong shadow-lg shadow-slate-950/20 transition-transform duration-200 group-hover:scale-[1.03]">LGU</span>
                     <div class="min-w-0">
-                        <p id="navigation-title" class="break-words text-sm font-semibold">{{ $systemSettings['system_name'] }}</p>
-                        <p class="mt-0.5 break-words text-xs text-blue-200">{{ $systemSettings['organization_name'] }}</p>
+                        <p id="navigation-title" class="break-words text-sm font-semibold leading-5">{{ $systemSettings['system_name'] }}</p>
+                        <p class="mt-1 break-words text-[0.7rem] font-medium uppercase tracking-[0.12em] text-blue-200">{{ $systemSettings['organization_name'] }}</p>
                     </div>
                 </a>
-                <button id="navigation-close" type="button" hidden aria-label="Close navigation" class="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-white hover:bg-white/10 lg:hidden">
+                <button id="navigation-close" type="button" hidden aria-label="Close navigation" class="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-white transition hover:bg-white/10 lg:hidden">
                     <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" /></svg>
                 </button>
             </div>
@@ -38,10 +38,10 @@
                 <p id="navigation-search-status" role="status" aria-live="polite" class="sr-only"></p>
             </div>
             <x-sidebar-navigation />
-            <div class="flex shrink-0 items-start gap-3 border-t border-white/15 px-5 py-4 text-sm">
-                <span class="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-white/10 font-semibold text-white" aria-hidden="true">{{ \Illuminate\Support\Str::upper(\Illuminate\Support\Str::substr(auth()->user()->username, 0, 1)) }}</span>
+            <div class="flex shrink-0 items-start gap-3 border-t border-white/10 px-5 py-4 text-sm">
+                <span class="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-sky-100/10 font-semibold text-white ring-1 ring-inset ring-white/10" aria-hidden="true">{{ \Illuminate\Support\Str::upper(\Illuminate\Support\Str::substr(auth()->user()->username, 0, 1)) }}</span>
                 <div class="min-w-0">
-                    <p class="break-words font-semibold">{{ auth()->user()->username }}</p>
+                    <p class="break-words font-semibold leading-5">{{ auth()->user()->username }}</p>
                     <p class="mt-1 break-words text-xs leading-5 text-blue-200">{{ auth()->user()->roles->pluck('role_name')->implode(', ') ?: 'No role' }}</p>
                     @if ($systemSettings['support_email'])
                         <a href="mailto:{{ $systemSettings['support_email'] }}" class="mt-1 inline-flex min-h-11 items-center text-brand-on-dark underline underline-offset-4">Contact support</a>
@@ -51,19 +51,22 @@
         </div>
     </details>
     <div id="app-workspace" class="flex min-w-0 flex-1 flex-col">
-        <header class="app-header sticky top-0 z-20 flex min-h-20 flex-wrap items-center gap-3 border-b border-slate-200 bg-surface px-4 py-3 sm:gap-4 sm:px-6 lg:px-8">
+        <header class="app-header sticky top-0 z-20 flex min-h-20 flex-wrap items-center gap-3 border-b border-slate-200 bg-white/95 px-4 py-3 backdrop-blur sm:gap-4 sm:px-6 lg:px-8">
             <button id="navigation-open" type="button" hidden aria-label="Open navigation" aria-controls="navigation-panel" aria-expanded="false" class="ui-button ui-button-secondary no-print px-3 lg:hidden">
                 <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16" /></svg>
                 <span>Menu</span>
             </button>
-            <h1 class="min-w-0 flex-1 break-words text-lg font-semibold tracking-tight sm:text-2xl">@yield('heading', 'Dashboard')</h1>
-            <div id="besu-status" data-status-url="{{ route('blockchain.status') }}" role="status" aria-live="polite" aria-atomic="true" class="no-print flex shrink-0 items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium text-slate-700">
+            <div class="min-w-0 flex-1">
+                <p class="hidden text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-brand sm:block">LGU financial operations</p>
+                <h1 class="break-words text-lg font-semibold tracking-tight sm:text-2xl">@yield('heading', 'Dashboard')</h1>
+            </div>
+            <div id="besu-status" data-status-url="{{ route('blockchain.status') }}" role="status" aria-live="polite" aria-atomic="true" class="ui-status-chip no-print shrink-0">
                 <span data-besu-dot aria-hidden="true" class="h-2 w-2 shrink-0 rounded-full bg-slate-400"></span>
                 <span><span class="hidden sm:inline">Hyperledger </span>Besu: <span data-besu-label>Status unavailable</span></span>
             </div>
             <div class="no-print flex w-full min-w-0 items-center justify-end gap-3 border-t border-slate-100 pt-3 md:w-auto md:border-0 md:pt-0">
                 <details id="header-activity" class="relative shrink-0">
-                    <summary aria-label="Activity and requests" title="Activity and requests" class="flex h-11 w-11 list-none items-center justify-center rounded-lg text-brand hover:bg-brand-soft [&::-webkit-details-marker]:hidden">
+                    <summary aria-label="Activity and requests" title="Activity and requests" class="flex h-11 w-11 list-none items-center justify-center rounded-xl text-brand-ink transition hover:bg-brand-soft [&::-webkit-details-marker]:hidden">
                         <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4" /></svg>
                     </summary>
                     <div class="absolute left-0 top-full z-30 mt-2 w-64 max-w-[calc(100vw-2rem)] rounded-xl border border-slate-200 bg-surface p-4 shadow-lg md:left-auto md:right-0">
@@ -81,7 +84,7 @@
                     </div>
                 </details>
                 <div id="header-profile" class="flex min-w-0 flex-1 items-center gap-3 border-l border-slate-200 pl-3 md:flex-none">
-                    <span class="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-brand-soft text-sm font-semibold text-brand" aria-hidden="true">{{ \Illuminate\Support\Str::upper(\Illuminate\Support\Str::substr(auth()->user()->username, 0, 1)) }}</span>
+                    <span class="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-brand-soft text-sm font-semibold text-brand-ink ring-1 ring-inset ring-brand-border" aria-hidden="true">{{ \Illuminate\Support\Str::upper(\Illuminate\Support\Str::substr(auth()->user()->username, 0, 1)) }}</span>
                     <div class="min-w-0 md:max-w-48">
                         <p class="truncate text-sm font-semibold text-ink" title="{{ auth()->user()->username }}">{{ auth()->user()->username }}</p>
                         <p class="truncate text-xs text-muted" title="{{ auth()->user()->roles->pluck('role_name')->implode(', ') ?: 'No role assigned' }}">{{ auth()->user()->roles->pluck('role_name')->implode(', ') ?: 'No role assigned' }}</p>
@@ -96,7 +99,7 @@
                 </form>
             </div>
         </header>
-        <main id="main-content" tabindex="-1" class="mx-auto w-full min-w-0 max-w-7xl flex-1 px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+        <main id="main-content" tabindex="-1" class="mx-auto w-full min-w-0 max-w-[1600px] flex-1 px-4 py-6 sm:px-6 lg:px-8 lg:py-9">
             <x-breadcrumbs />
             @if (session('status'))
                 <x-alert class="mb-5">{{ session('status') }}</x-alert>

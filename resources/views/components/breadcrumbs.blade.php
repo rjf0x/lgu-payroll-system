@@ -17,14 +17,14 @@
 @endphp
 
 @if ($routeName !== 'dashboard')
-    <nav aria-label="Breadcrumb" class="mb-4 text-sm text-muted">
+    <nav aria-label="Breadcrumb" class="ui-breadcrumbs mb-5 text-sm text-muted">
         <ol class="flex flex-wrap items-center gap-x-2 gap-y-1">
-            <li><a href="{{ route('dashboard') }}" class="font-medium text-brand hover:underline">Dashboard</a></li>
+            <li><a href="{{ route('dashboard') }}" class="font-semibold text-brand hover:underline">Dashboard</a></li>
             @if ($hasParent)
-                <li aria-hidden="true">/</li>
-                <li><a href="{{ route($parentRoute) }}" class="font-medium text-brand hover:underline">{{ $parentLabel }}</a></li>
+                <li aria-hidden="true" class="text-slate-300">/</li>
+                <li><a href="{{ route($parentRoute) }}" class="font-semibold text-brand hover:underline">{{ $parentLabel }}</a></li>
             @endif
-            <li aria-hidden="true">/</li>
+            <li aria-hidden="true" class="text-slate-300">/</li>
             <li aria-current="page">@yield('title', 'Current page')</li>
         </ol>
     </nav>

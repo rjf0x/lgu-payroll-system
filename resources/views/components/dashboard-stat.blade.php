@@ -13,7 +13,7 @@
         default => ['Dashboard', null],
     };
 @endphp
-<div {{ $attributes->class(['ui-card']) }}>
+<div {{ $attributes->class(['ui-card ui-card-interactive']) }}>
     <dt class="flex items-center gap-3 text-sm font-semibold text-muted"><span class="ui-icon-tile"><x-nav-icon :name="$icon" /></span>{{ $label }}</dt>
     <dd class="ui-stat-value mt-4">{{ number_format($value) }}</dd>
     @if ($description)

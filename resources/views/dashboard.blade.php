@@ -2,10 +2,13 @@
 @section('title', ($dashboardRole ?? 'Account').' Dashboard')
 @section('heading', ($dashboardRole ?? 'Account').' Dashboard')
 @section('content')
-<div class="flex flex-col gap-6">
-    <section>
-        <h2 class="ui-section-heading">Welcome, {{ auth()->user()->username }}</h2>
-        <p class="mt-1 max-w-2xl text-sm text-muted">
+<div class="flex flex-col gap-8">
+    <section class="dashboard-hero" aria-labelledby="dashboard-welcome-heading">
+        <p class="ui-eyebrow">Operations overview</p>
+        <div class="mt-3 flex flex-wrap items-start justify-between gap-4">
+            <div>
+                <h2 id="dashboard-welcome-heading" class="text-2xl font-semibold tracking-tight text-ink sm:text-3xl">Welcome, {{ auth()->user()->username }}</h2>
+                <p class="mt-2 max-w-2xl text-base leading-7 text-muted">
             @switch($dashboardRole)
                 @case('Admin') Manage system access, configuration, and records oversight. @break
                 @case('Payroll Officer') Maintain payroll inputs, prepare computations, and submit payroll for independent approval. @break
@@ -13,13 +16,25 @@
                 @case('Viewer') Browse finalized payroll records, employee information, and authorized reports. @break
                 @default No role is assigned. Contact your administrator to request access.
             @endswitch
-        </p>
+                </p>
+            </div>
+            <span class="inline-flex items-center gap-2 rounded-full border border-sky-200 bg-sky-50 px-3 py-1.5 text-xs font-semibold text-sky-800">
+                <span class="h-2 w-2 rounded-full bg-emerald-500" aria-hidden="true"></span>
+                {{ $dashboardRole ?? 'Account' }} workspace
+            </span>
+        </div>
     </section>
     @can('users.manage')
         <section aria-labelledby="access-configuration-heading">
-            <h2 id="access-configuration-heading" class="ui-section-heading mb-4">Access and configuration</h2>
-            <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-                <x-card class="flex flex-col items-start gap-4">
+            <div class="mb-4 flex flex-wrap items-end justify-between gap-3">
+                <div>
+                    <p class="ui-eyebrow">Governance</p>
+                    <h2 id="access-configuration-heading" class="ui-section-heading mt-1">Access and configuration</h2>
+                </div>
+                <p class="ui-muted-label">Manage the control plane</p>
+            </div>
+            <div class="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+                <x-card class="ui-card-interactive flex flex-col items-start gap-4">
                     <span class="ui-icon-tile">
                         <x-nav-icon name="Administration" />
                     </span>
@@ -30,7 +45,7 @@
                     <div class="mt-auto pt-2"><x-button :href="route('users.index')" variant="primary">Manage user access</x-button></div>
                 </x-card>
                 @can('audit.view')
-                    <x-card class="flex flex-col items-start gap-4">
+                    <x-card class="ui-card-interactive flex flex-col items-start gap-4">
                         <span class="ui-icon-tile">
                             <x-nav-icon name="Statutory" />
                         </span>
@@ -42,7 +57,7 @@
                     </x-card>
                 @endcan
                 @can('compensation.manage')
-                    <x-card class="flex flex-col items-start gap-4">
+                    <x-card class="ui-card-interactive flex flex-col items-start gap-4">
                         <span class="ui-icon-tile">
                             <x-nav-icon name="Compensation" />
                         </span>
@@ -58,10 +73,16 @@
     @endcan
     @if ($nextActions)
         <section aria-labelledby="next-actions-heading">
-            <h2 id="next-actions-heading" class="ui-section-heading mb-4">Next actions</h2>
-            <div class="grid auto-rows-fr gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <div class="mb-4 flex flex-wrap items-end justify-between gap-3">
+                <div>
+                    <p class="ui-eyebrow">Workflow queue</p>
+                    <h2 id="next-actions-heading" class="ui-section-heading mt-1">Next actions</h2>
+                </div>
+                <p class="ui-muted-label">Prioritized by your permissions</p>
+            </div>
+            <div class="grid auto-rows-fr gap-5 md:grid-cols-2 lg:grid-cols-3">
                 @foreach ($nextActions as $action)
-                    <x-card :class="'flex h-full flex-col items-start border-t-4 '.($action['title'] === 'Payroll preparation' ? 'border-t-brand ring-1 ring-brand-border' : 'border-t-slate-200')">
+                    <x-card :class="'dashboard-action-card flex h-full flex-col items-start border-t-4 '.($action['title'] === 'Payroll preparation' ? 'border-t-brand ring-1 ring-brand-border' : 'border-t-slate-200')">
                         <div class="mb-4 flex items-center gap-3">
                             <span class="ui-icon-tile">
                                 <x-nav-icon :name="[
@@ -77,7 +98,7 @@
                         @if ($action['count'] > 0)
                             <div class="flex flex-wrap items-center gap-3">
                                 <p class="text-5xl font-bold tabular-nums text-brand">{{ number_format($action['count']) }}</p>
-                                <span class="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-900 ring-1 ring-inset ring-amber-200">Needs attention</span>
+                                <span class="ui-attention-badge">Needs attention</span>
                             </div>
                             <p class="mb-5 mt-3 text-sm text-muted">{{ $action['description'] }}</p>
                         @else
@@ -106,7 +127,7 @@
             <p class="mb-4 mt-1 text-sm text-muted">Access finalized payroll transactions, authorized employee information, and available payroll reports. Your access is read-only.</p>
             <div class="grid auto-rows-fr gap-4 md:grid-cols-2">
                 @can('payroll.view')
-                    <x-card class="flex h-full flex-col items-start gap-4">
+                    <x-card class="ui-card-interactive flex h-full flex-col items-start gap-4">
                         <span class="ui-icon-tile"><x-nav-icon name="Payroll" /></span>
                         <div>
                             <h3 class="ui-section-heading">Finalized Payroll</h3>
@@ -116,7 +137,7 @@
                     </x-card>
                 @endcan
                 @can('employees.view')
-                    <x-card class="flex h-full flex-col items-start gap-4">
+                    <x-card class="ui-card-interactive flex h-full flex-col items-start gap-4">
                         <span class="ui-icon-tile"><x-nav-icon name="Organization" /></span>
                         <div>
                             <h3 class="ui-section-heading">Employee Directory</h3>
@@ -130,17 +151,29 @@
     @endif
     @if ($metrics)
         <section aria-labelledby="dashboard-statistics-heading">
-        <h2 id="dashboard-statistics-heading" class="ui-section-heading mb-4">Dashboard statistics</h2>
-        <dl @class(['grid auto-rows-fr grid-cols-1 gap-4 sm:grid-cols-2', 'xl:grid-cols-5' => count($metrics) === 5, 'xl:grid-cols-4' => count($metrics) === 4, 'xl:grid-cols-3' => count($metrics) === 3])>
+        <div class="mb-4 flex flex-wrap items-end justify-between gap-3">
+            <div>
+                <p class="ui-eyebrow">At a glance</p>
+                <h2 id="dashboard-statistics-heading" class="ui-section-heading mt-1">Dashboard statistics</h2>
+            </div>
+            <p class="ui-muted-label">Current system totals</p>
+        </div>
+        <dl @class(['grid auto-rows-fr grid-cols-1 gap-5 sm:grid-cols-2', 'xl:grid-cols-5' => count($metrics) === 5, 'xl:grid-cols-4' => count($metrics) === 4, 'xl:grid-cols-3' => count($metrics) === 3])>
             @foreach ($metrics as $label => $value)
                 <x-dashboard-stat :label="$label" :value="$value" />
             @endforeach
         </dl>
         </section>
     @endif
-    <section class="ui-card">
-        <h2 class="ui-section-heading">Quick actions</h2>
-        <div class="mt-4 grid auto-rows-fr gap-4 sm:grid-cols-2 xl:grid-cols-3">
+    <section class="ui-card ui-card-quiet">
+        <div class="flex flex-wrap items-end justify-between gap-3">
+            <div>
+                <p class="ui-eyebrow">Shortcuts</p>
+                <h2 class="ui-section-heading mt-1">Quick actions</h2>
+            </div>
+            <p class="ui-muted-label">Common tasks</p>
+        </div>
+        <div class="dashboard-action-grid mt-5">
             @can('users.manage') <x-dashboard-action :href="route('users.create')" icon="Administration">Add user</x-dashboard-action> @endcan
             @can('employees.view') <x-dashboard-action :href="route('employees.index')" icon="Organization">Employee directory</x-dashboard-action> @endcan
             @can('compensation.manage') <x-dashboard-action :href="route('salary-schedules.index')" icon="Compensation">Salary schedules</x-dashboard-action> @endcan
@@ -154,7 +187,7 @@
         <section aria-labelledby="system-user-overview-heading">
             <h2 id="system-user-overview-heading" class="ui-section-heading">System user overview</h2>
             <p class="mt-1 text-sm text-muted">Accounts by assigned role. Accounts with multiple roles appear in each role.</p>
-            <dl class="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <dl class="mt-5 grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
                 <div class="ui-card border-t-4 border-t-brand sm:col-span-2 xl:col-span-4">
                     <dt class="flex items-center gap-3 text-sm font-semibold text-muted"><span class="ui-icon-tile"><x-nav-icon name="Organization" /></span>Total unique users</dt>
                     <dd class="ui-stat-value mt-4">{{ number_format($totalUniqueUsers) }}</dd>
@@ -173,9 +206,10 @@
         </section>
     @endif
     @can('payroll.view')
-        <section class="overflow-hidden rounded-xl border border-slate-200 bg-surface shadow-sm">
-            <div class="flex flex-wrap items-center justify-between gap-4 p-5 sm:p-6">
+        <section class="overflow-hidden rounded-2xl border border-slate-200 bg-surface shadow-sm">
+            <div class="flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 bg-slate-50/60 p-5 sm:p-6">
                 <div>
+                    <p class="ui-eyebrow">Recent activity</p>
                     <h2 class="ui-section-heading">{{ $dashboardRole === 'Approver' ? 'Payroll awaiting your review' : ($dashboardRole === 'Viewer' ? 'Finalized payroll records' : 'Recent payroll runs') }}</h2>
                     <p class="mt-1 text-sm text-muted">The five latest payroll transactions you can access, ordered by finalization or processing date, then creation date for unprocessed runs.</p>
                 </div>
