@@ -6,27 +6,51 @@ The current release is prepared for local review and mock defense. Production ho
 
 ## Local setup
 
-Requirements: PHP 8.5 with PDO MySQL/SQLite, intl, gd, mbstring and OpenSSL; Composer; Node.js/npm compatible with the locked Vite version; MySQL for development; Docker Desktop for the optional local Besu network.
+Requirements: PHP 8.5 with PDO MySQL/SQLite, intl, gd, mbstring and OpenSSL; Composer; Node.js/npm compatible with the locked Vite version; a configured local database; and Docker Desktop for the local Besu network.
+
+For a fresh local development environment, configure MySQL in `.env` first if you are not using the default SQLite connection, then run the single setup command:
 
 ```powershell
-composer install
-npm ci
-Copy-Item .env.example .env
-php artisan key:generate --no-interaction
+composer setup
 ```
 
-Configure the local database in `.env` before migrating. On a new local demonstration database only:
+`composer setup` installs PHP and frontend dependencies, creates `.env` when needed, preserves an existing application key, creates the SQLite file when configured, runs migrations and local seeders, builds the frontend assets, starts the four-validator Besu network, deploys the local anchor contract, merges the generated Besu settings into `.env`, and clears Laravel's configuration cache. It is for local development only and refuses production environments.
+
+For the optional demo payroll workflow after setup:
 
 ```powershell
-php artisan migrate --seed --no-interaction
 php artisan db:seed --class=DemoPayrollWorkflowSeeder --no-interaction
-npm run build
-php artisan serve --no-interaction
 ```
 
 Demo accounts are `admin`, `officer`, `approver`, and `viewer`, with development-only password `password`. Default seeding is blocked in production. The demo scenarios are opt-in, reuse fictional employees, and must never be used as adopted statutory or salary data.
 
 For real local blockchain anchoring, follow [Besu setup](docs/blockchain-anchoring.md). The setup generates ignored local keys and deploys the contract; existing simulated anchors remain simulated.
+
+### Start the blockchain worker
+
+When the versioned payroll registry is enabled and configured (`PAYROLL_REGISTRY_ENABLED=true`), start the long-running processes in separate terminals from the project root:
+
+```powershell
+php artisan queue:work database --queue=blockchain --timeout=60 --tries=3 --no-interaction
+```
+
+Start the scheduler in another terminal so pending registrations are dispatched every minute:
+
+```powershell
+php artisan schedule:work --no-interaction
+```
+
+If the registry bridge is configured, start it in a third terminal:
+
+```powershell
+node --env-file=storage/app/private/besu/bridge.env config/besu/bridge.mjs
+```
+
+To dispatch pending registrations immediately instead of waiting for the scheduler:
+
+```powershell
+php artisan blockchain:dispatch-registrations --limit=100 --no-interaction
+```
 
 ### Create your own initial administrator
 
