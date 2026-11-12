@@ -59,12 +59,12 @@
     </div>
 
     <div class="flex flex-wrap gap-3">
-        <button type="submit" class="ui-button ui-button-primary">
+        <x-button :icon="$isEdit ? 'save' : 'add'" type="submit" variant="primary">
             {{ $isEdit ? 'Save changes' : 'Create compensation profile' }}
-        </button>
-        <a href="{{ $workspaceEmployee ? route('employees.show', $workspaceEmployee).'#compensation' : route('compensation-profiles.index') }}" class="ui-button ui-button-secondary">
+        </x-button>
+        <x-button icon="back" href="{{ $workspaceEmployee ? route('employees.show', $workspaceEmployee).'#compensation' : route('compensation-profiles.index') }}">
             Cancel
-        </a>
+        </x-button>
     </div>
 </form>
 

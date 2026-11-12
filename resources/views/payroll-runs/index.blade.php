@@ -20,7 +20,7 @@
             <x-button icon="reset" :href="route('payroll-runs.index')">Reset</x-button>
         </form>
         @can('payroll.prepare')
-            <x-button icon="add" variant="primary" href="{{ route('payroll-runs.create') }}">+ New Payroll Run</x-button>
+            <x-button icon="add" variant="primary" href="{{ route('payroll-runs.create') }}">New Payroll Run</x-button>
         @endcan
     </div>
 
@@ -29,28 +29,30 @@
         <x-table label="Monthly Payroll records">
             <thead class="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
                 <tr>
-                    <th scope="col" class="px-4 py-3 text-left">Period</th>
-                    <th scope="col" class="px-4 py-3 text-center">Run</th>
+                    <th scope="col" class="px-4 py-3 text-left ui-table-primary">Period</th>
+                    <th scope="col" class="px-4 py-3 text-left">Run</th>
                     <th scope="col" class="px-4 py-3 text-left">Type</th>
-                    <th scope="col" class="px-4 py-3 text-left">Status</th>
-                    <th scope="col" class="px-4 py-3 text-right">Employees</th>
+                    <th scope="col" class="px-4 py-3 text-center">Status</th>
+                    <th scope="col" class="px-4 py-3 text-right tabular-nums">Employees</th>
                     <th scope="col" class="px-4 py-3 text-left">Created By</th>
-                    <th scope="col" class="px-4 py-3">Actions</th>
+                    <th scope="col" class="px-4 py-3 text-right ui-table-actions">Actions</th>
                 </tr>
             </thead>
-            <tbody class="divide-y divide-slate-100">
+            <tbody>
                 @forelse ($runs as $run)
-                    <tr class="hover:bg-slate-50">
-                        <td class="px-4 py-3 font-medium">{{ $run->payrollPeriod->period_name }}</td>
-                        <td class="px-4 py-3 text-center">#{{ $run->run_number }}</td>
+                    <tr>
+                        <td class="px-4 py-3 font-medium ui-table-primary">{{ $run->payrollPeriod->period_name }}</td>
+                        <td class="px-4 py-3 text-left">#{{ $run->run_number }}</td>
                         <td class="px-4 py-3 text-slate-600">{{ $run->run_type }}</td>
-                        <td class="px-4 py-3">
+                        <td class="px-4 py-3 text-center">
                             <x-status :value="$run->status" />
                         </td>
-                        <td class="px-4 py-3 text-right">{{ $run->details_count }}</td>
+                        <td class="px-4 py-3 text-right tabular-nums">{{ $run->details_count }}</td>
                         <td class="px-4 py-3 text-slate-600">{{ $run->createdBy?->username }}</td>
-                        <td class="px-4 py-3 text-right">
-                            <x-button icon="view" variant="secondary" href="{{ route('payroll-runs.show', $run) }}">Open</x-button>
+                        <td class="px-4 py-3 text-right ui-table-actions">
+                            <x-action-menu :label="'Actions for payroll run #'.$run->run_number">
+                                <x-button icon="view" variant="secondary" href="{{ route('payroll-runs.show', $run) }}">Open</x-button>
+                            </x-action-menu>
                         </td>
                     </tr>
                 @empty

@@ -42,34 +42,40 @@
         <x-table label="Payroll Periods records">
             <thead class="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
                 <tr>
-                    <th scope="col" class="px-4 py-3 text-left">Period</th>
+                    <th scope="col" class="px-4 py-3 text-left ui-table-primary">Period</th>
                     <th scope="col" class="px-4 py-3 text-left">Type</th>
                     <th scope="col" class="px-4 py-3 text-left">Coverage</th>
                     <th scope="col" class="px-4 py-3 text-left">Pay Date</th>
-                    <th scope="col" class="px-4 py-3 text-left">Period status</th>
-                    <th scope="col" class="px-4 py-3 text-right">Runs</th>
-                    <th scope="col" class="px-4 py-3 text-right">Actions</th>
+                    <th scope="col" class="px-4 py-3 text-center">Period status</th>
+                    <th scope="col" class="px-4 py-3 text-right tabular-nums">Runs</th>
+                    <th scope="col" class="px-4 py-3 text-right ui-table-actions">Actions</th>
                 </tr>
             </thead>
-            <tbody class="divide-y divide-slate-100">
+            <tbody>
                 @forelse ($periods as $period)
-                    <tr class="hover:bg-slate-50">
-                        <td class="px-4 py-3 font-medium">{{ $period->period_name }}</td>
+                    <tr>
+                        <td class="px-4 py-3 font-medium ui-table-primary">{{ $period->period_name }}</td>
                         <td class="px-4 py-3 text-slate-600">{{ ucfirst(strtolower($period->payroll_type)) }}</td>
                         <td class="px-4 py-3 text-slate-600">{{ $period->start_date?->format('M d, Y') }} – {{ $period->end_date?->format('M d, Y') }}</td>
                         <td class="px-4 py-3 text-slate-600">{{ $period->pay_date?->format('M d, Y') }}</td>
-                        <td class="px-4 py-3"><x-status :value="$period->status" /></td>
-                        <td class="px-4 py-3 text-right">
+                        <td class="px-4 py-3 text-center"><x-status :value="$period->status" /></td>
+                        <td class="px-4 py-3 text-right tabular-nums">
                             <span class="font-semibold tabular-nums">{{ $period->runs_count }}</span>
-                            @if ($period->processing_runs_count)
-                                <div class="mt-2"><x-status value="PROCESSING" /> <span class="text-xs">{{ $period->processing_runs_count }} runs</span></div>
-                            @endif
-                            @if ($period->finalized_runs_count)
-                                <div class="mt-2"><x-status value="FINALIZED" /> <span class="text-xs">{{ $period->finalized_runs_count }} runs</span></div>
+                            @if ($period->processing_runs_count || $period->finalized_runs_count)
+                                <div class="ui-table-secondary flex justify-end gap-3">
+                                    @if ($period->processing_runs_count)
+                                        <span class="text-sky-800">Processing: {{ $period->processing_runs_count }} runs</span>
+                                    @endif
+                                    @if ($period->finalized_runs_count)
+                                        <span class="text-emerald-800">Finalized: {{ $period->finalized_runs_count }} runs</span>
+                                    @endif
+                                </div>
                             @endif
                         </td>
-                        <td class="px-4 py-3 text-right">
-                            @include('payroll-periods._actions')
+                        <td class="px-4 py-3 text-right ui-table-actions">
+                            <x-action-menu :label="'Actions for '.$period->period_name">
+                                @include('payroll-periods._actions')
+                            </x-action-menu>
                         </td>
                     </tr>
                 @empty

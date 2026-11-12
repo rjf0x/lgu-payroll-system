@@ -6,6 +6,10 @@
         'edit' => 'm16 3 5 5L8 21H3v-5L16 3Zm-3 3 5 5',
         'delete' => 'M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7M14 10v7',
         'add' => 'M12 4v16M4 12h16',
+        'save' => 'M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h12l4 4v12a2 2 0 0 1-2 2ZM7 3v6h10V3M7 21v-8h10v8',
+        'login' => 'M15 4h5v16h-5M10 8l4 4-4 4M3 12h11',
+        'logout' => 'M9 4H4v16h5M14 8l4 4-4 4M8 12h13',
+        'users' => 'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M16 3a4 4 0 0 1 0 8M22 21v-2a4 4 0 0 0-3-3.87M13 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0Z',
         'back' => 'm10 5-7 7 7 7M3 12h18',
         'list' => 'M9 6h12M9 12h12M9 18h12M3 6h1M3 12h1M3 18h1',
         'lock' => 'M5 10h14v11H5V10Zm3 0V7a4 4 0 0 1 8 0v3M12 14v3',
@@ -26,4 +30,4 @@
     };
 @endphp
 
-<svg {{ $attributes->class(['size-5 shrink-0']) }} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{ $path }}" /></svg>
+<svg {{ $attributes->class(['size-5 shrink-0']) }} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="{{ $path }}" /></svg>

@@ -41,10 +41,10 @@
 
     <p class="text-sm text-muted">Fields marked with an asterisk (*) are required.</p>
     <div class="flex flex-wrap gap-3">
-        <x-button type="submit" variant="primary" data-submitting-label="Saving employee…">
+        <x-button :icon="$isEdit ? 'save' : 'add'" type="submit" variant="primary" data-submitting-label="Saving employee…">
             {{ $isEdit ? 'Save changes' : 'Create employee' }}
         </x-button>
-        <x-button :href="$isEdit ? route('employees.show', $employee) : route('employees.index')">
+        <x-button icon="back" :href="$isEdit ? route('employees.show', $employee) : route('employees.index')">
             Cancel
         </x-button>
     </div>

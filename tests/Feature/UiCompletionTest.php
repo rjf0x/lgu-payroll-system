@@ -65,6 +65,10 @@ class UiCompletionTest extends TestCase
         $this->assertSame(0, $xpath->query('//main//th[not(@scope)]')->length);
         $this->assertSame(0, $xpath->query('//main//form[@method="POST" and not(@data-submit-feedback)]')->length);
 
+        foreach ($xpath->query('//main//*[contains(concat(" ", normalize-space(@class), " "), " ui-button ")]') as $button) {
+            $this->assertSame(1, $xpath->query('svg[@aria-hidden="true"]', $button)->length, 'Missing or duplicate action icon on '.$routeName);
+        }
+
         foreach ($xpath->query('//main//input[not(@type="hidden")]|//main//select|//main//textarea') as $field) {
             $labelled = $field->hasAttribute('aria-label') || $xpath->query('ancestor::label', $field)->length > 0;
 

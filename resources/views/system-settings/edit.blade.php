@@ -11,7 +11,7 @@
             <x-form.input name="settings[system_name]" label="System name" :value="$settings['system_name']" maxlength="150" required />
             <x-form.input name="settings[organization_name]" label="Organization name" :value="$settings['organization_name']" maxlength="150" required />
             <x-form.input name="settings[support_email]" label="Support email" type="email" :value="$settings['support_email']" maxlength="150" hint="Contact address for system support. This does not change email delivery configuration." />
-            <x-button type="submit" variant="primary">Save settings</x-button>
+            <x-button icon="save" type="submit" variant="primary">Save settings</x-button>
         </form>
         <x-card heading="Enforced configuration">
             <dl class="space-y-4 text-sm">

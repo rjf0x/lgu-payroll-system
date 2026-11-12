@@ -22,15 +22,15 @@
             <thead class="bg-slate-50 uppercase tracking-wide text-slate-500">
                 <tr>
                     @foreach ($headers as $header)
-                        <th scope="col" class="whitespace-nowrap px-3 py-3 text-left">{{ $header }}</th>
+                        <th scope="col" class="px-3 py-3 {{ $loop->index < 4 ? 'text-left' : 'text-right tabular-nums' }} {{ $loop->index === 2 ? 'ui-table-primary' : '' }}">{{ $header }}</th>
                     @endforeach
                 </tr>
             </thead>
-            <tbody class="divide-y divide-slate-100">
+            <tbody>
                 @forelse ($rows as $row)
-                    <tr class="hover:bg-slate-50">
+                    <tr>
                         @foreach ($row as $cell)
-                            <td class="whitespace-nowrap px-3 py-2 {{ is_float($cell) ? 'text-right font-mono' : '' }}">
+                            <td class="px-3 py-2 {{ $loop->index < 4 ? 'text-left' : 'text-right font-mono tabular-nums' }} {{ $loop->index === 2 ? 'ui-table-primary' : '' }}">
                                 {{ is_float($cell) ? number_format($cell, 2) : $cell }}
                             </td>
                         @endforeach
@@ -43,7 +43,7 @@
                 <tfoot class="bg-slate-100 font-semibold">
                     <tr>
                         @foreach ($totals as $cell)
-                            <td class="whitespace-nowrap px-3 py-3 {{ is_float($cell) ? 'text-right font-mono' : '' }}">
+                            <td class="px-3 py-3 {{ $loop->index < 4 ? 'text-left' : 'text-right font-mono tabular-nums' }} {{ $loop->index === 2 ? 'ui-table-primary' : '' }}">
                                 {{ is_float($cell) ? number_format($cell, 2) : $cell }}
                             </td>
                         @endforeach

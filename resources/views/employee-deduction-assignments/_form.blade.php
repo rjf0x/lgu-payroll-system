@@ -45,7 +45,7 @@
     <p class="text-xs text-slate-500">Provide an amount, a percentage, or both.</p>
 
     <div class="flex flex-wrap gap-3">
-        <button type="submit" class="ui-button ui-button-primary">{{ $isEdit ? 'Save changes' : 'Create assignment' }}</button>
-        <a href="{{ $workspaceEmployee ? route('employees.show', $workspaceEmployee).'#deductions' : route('employee-deduction-assignments.index') }}" class="ui-button ui-button-secondary">Cancel</a>
+        <x-button :icon="$isEdit ? 'save' : 'add'" type="submit" variant="primary">{{ $isEdit ? 'Save changes' : 'Create assignment' }}</x-button>
+        <x-button icon="back" href="{{ $workspaceEmployee ? route('employees.show', $workspaceEmployee).'#deductions' : route('employee-deduction-assignments.index') }}">Cancel</x-button>
     </div>
 </form>

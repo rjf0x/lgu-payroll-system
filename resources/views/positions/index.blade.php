@@ -8,7 +8,7 @@
         <p class="text-sm text-slate-500">Positions and the salary grade assigned to each.</p>
         @can('employees.manage')
             <x-button icon="add" variant="primary" href="{{ route('positions.create') }}">
-                + Add Position
+                Add Position
             </x-button>
         @endcan
     </div>
@@ -19,26 +19,28 @@
             <thead class="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
                 <tr>
                     <th scope="col" class="px-4 py-3 text-left">Code</th>
-                    <th scope="col" class="px-4 py-3 text-left">Title</th>
+                    <th scope="col" class="px-4 py-3 text-left ui-table-primary">Title</th>
                     <th scope="col" class="px-4 py-3 text-left">Department</th>
-                    <th scope="col" class="px-4 py-3 text-center">SG</th>
-                    <th scope="col" class="px-4 py-3 text-left">Status</th>
-                    <th scope="col" class="px-4 py-3 text-right">Actions</th>
+                    <th scope="col" class="px-4 py-3 text-right tabular-nums">SG</th>
+                    <th scope="col" class="px-4 py-3 text-center">Status</th>
+                    <th scope="col" class="px-4 py-3 text-right ui-table-actions">Actions</th>
                 </tr>
             </thead>
-            <tbody class="divide-y divide-slate-100">
+            <tbody>
                 @forelse ($positions as $position)
-                    <tr class="hover:bg-slate-50">
+                    <tr>
                         <td class="px-4 py-3 font-mono text-xs">{{ $position->position_code }}</td>
-                        <td class="px-4 py-3">{{ $position->position_title }}</td>
+                        <td class="px-4 py-3 ui-table-primary">{{ $position->position_title }}</td>
                         <td class="px-4 py-3 text-slate-600">{{ $position->department->department_name }}</td>
-                        <td class="px-4 py-3 text-center">{{ $position->salary_grade ?? '—' }}</td>
-                        <td class="px-4 py-3"><x-status :value="$position->status" /></td>
-                        <td class="px-4 py-3 text-right">
-                            <x-button icon="view" variant="secondary" href="{{ route('positions.show', $position) }}">View</x-button>
-                            @can('employees.manage')
-                                <x-button icon="edit" variant="secondary" href="{{ route('positions.edit', $position) }}">Edit</x-button>
-                            @endcan
+                        <td class="px-4 py-3 text-right tabular-nums">{{ $position->salary_grade ?? '—' }}</td>
+                        <td class="px-4 py-3 text-center"><x-status :value="$position->status" /></td>
+                        <td class="px-4 py-3 text-right ui-table-actions">
+                            <x-action-menu :label="'Actions for '.$position->position_title">
+                                <x-button icon="view" variant="secondary" href="{{ route('positions.show', $position) }}">View</x-button>
+                                @can('employees.manage')
+                                    <x-button icon="edit" variant="secondary" href="{{ route('positions.edit', $position) }}">Edit</x-button>
+                                @endcan
+                            </x-action-menu>
                         </td>
                     </tr>
                 @empty

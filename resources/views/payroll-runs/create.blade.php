@@ -25,7 +25,7 @@
         <p class="text-xs text-slate-500">The run is created as a draft; compute it to generate payroll details.</p>
 
         <div class="flex flex-wrap gap-3">
-            <x-button variant="primary" type="submit">Create run</x-button>
+            <x-button icon="add" variant="primary" type="submit">Create run</x-button>
             <x-button icon="back" variant="secondary" href="{{ route('payroll-runs.index') }}">Cancel</x-button>
         </div>
     </form>

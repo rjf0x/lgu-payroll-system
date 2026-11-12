@@ -22,7 +22,7 @@
                         <p class="mt-1 break-words text-[0.7rem] font-medium uppercase tracking-[0.12em] text-blue-200">{{ $systemSettings['organization_name'] }}</p>
                     </div>
                 </a>
-                <button id="navigation-close" type="button" hidden aria-label="Close navigation" class="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-white transition hover:bg-white/10 lg:hidden">
+                <button id="navigation-close" type="button" hidden aria-label="Close navigation" class="ui-button ui-button-ghost w-10 px-0 text-white hover:bg-white/10 lg:hidden">
                     <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" /></svg>
                 </button>
             </div>
@@ -31,7 +31,7 @@
                 <div class="relative">
                     <svg class="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-blue-200" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="8.5" cy="8.5" r="5.5" /><path d="m13 13 4 4" /></svg>
                     <input id="navigation-search" type="search" autocomplete="off" spellcheck="false" placeholder="Search navigation" aria-controls="navigation-links" aria-keyshortcuts="/" class="h-11 w-full min-w-0 rounded-lg border border-blue-300/60 bg-white/5 py-1.5 pl-8 pr-11 text-sm text-white placeholder:text-blue-200 focus:border-white lg:h-9 lg:pr-9">
-                    <button id="navigation-search-clear" type="button" hidden aria-label="Clear navigation search" class="absolute right-0 top-0 inline-flex h-11 w-11 items-center justify-center rounded-lg text-white hover:bg-white/10 lg:h-9 lg:w-9">
+                    <button id="navigation-search-clear" type="button" hidden aria-label="Clear navigation search" class="ui-button ui-button-compact ui-button-ghost absolute right-0 top-1/2 w-9 -translate-y-1/2 px-0 text-white hover:bg-white/10">
                         <svg class="h-4 w-4" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="m6 6 8 8M14 6l-8 8" /></svg>
                     </button>
                 </div>
@@ -66,7 +66,7 @@
             </div>
             <div class="no-print flex w-full min-w-0 items-center justify-end gap-3 border-t border-slate-100 pt-3 md:w-auto md:border-0 md:pt-0">
                 <details id="header-activity" class="relative shrink-0">
-                    <summary aria-label="Activity and requests" title="Activity and requests" class="flex h-11 w-11 list-none items-center justify-center rounded-xl text-brand-ink transition hover:bg-brand-soft [&::-webkit-details-marker]:hidden">
+                    <summary aria-label="Activity and requests" title="Activity and requests" class="ui-button ui-button-ghost w-10 list-none px-0 [&::-webkit-details-marker]:hidden">
                         <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4" /></svg>
                     </summary>
                     <div class="absolute left-0 top-full z-30 mt-2 w-64 max-w-[calc(100vw-2rem)] rounded-xl border border-slate-200 bg-surface p-4 shadow-lg md:left-auto md:right-0">
@@ -92,8 +92,7 @@
                 </div>
                 <form method="POST" action="{{ route('logout') }}" class="shrink-0">
                     @csrf
-                    <x-button type="submit" aria-label="Logout" class="gap-2 px-3">
-                        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4H4v16h5M14 8l4 4-4 4M8 12h13" /></svg>
+                    <x-button icon="logout" type="submit" aria-label="Logout" class="gap-2 px-3">
                         <span class="hidden sm:inline">Logout</span>
                     </x-button>
                 </form>

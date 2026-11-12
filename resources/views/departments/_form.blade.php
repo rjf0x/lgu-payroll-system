@@ -28,11 +28,11 @@
     <x-form.textarea name="description" label="Description" :value="$department->description" />
 
     <div class="flex flex-wrap gap-3">
-        <button class="ui-button ui-button-primary">
+        <x-button :icon="$isEdit ? 'save' : 'add'" type="submit" variant="primary">
             {{ $isEdit ? 'Save changes' : 'Create department' }}
-        </button>
-        <a href="{{ route('departments.index') }}" class="ui-button ui-button-secondary">
+        </x-button>
+        <x-button icon="back" href="{{ route('departments.index') }}">
             Cancel
-        </a>
+        </x-button>
     </div>
 </form>

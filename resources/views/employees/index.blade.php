@@ -30,26 +30,28 @@
             <thead>
                 <tr>
                     <th scope="col">Employee No.</th>
-                    <th scope="col">Name</th>
+                    <th scope="col" class="ui-table-primary">Name</th>
                     <th scope="col">Sex</th>
-                    <th scope="col" class="ui-money">Employments</th>
-                    <th scope="col" class="text-right">Actions</th>
+                    <th scope="col" class="ui-money text-right tabular-nums">Employments</th>
+                    <th scope="col" class="text-right ui-table-actions">Actions</th>
                 </tr>
             </thead>
-            <tbody class="divide-y divide-slate-100">
+            <tbody>
                 @forelse ($employees as $employee)
-                    <tr class="hover:bg-slate-50">
+                    <tr>
                         <td class="font-mono">{{ $employee->employee_number }}</td>
-                        <td class="px-4 py-3">
+                        <td class="px-4 py-3 ui-table-primary">
                             <a href="{{ route('employees.show', ['employee' => $employee] + request()->only(['q', 'page'])) }}" class="font-medium text-brand hover:underline">{{ $employee->full_name }}</a>
                         </td>
                         <td class="px-4 py-3 text-slate-600">{{ $employee->sex }}</td>
-                        <td class="px-4 py-3 text-right">{{ $employee->employment_records_count }}</td>
-                        <td class="px-4 py-3 text-right">
-                            <x-button icon="view" variant="secondary" href="{{ route('employees.show', ['employee' => $employee] + request()->only(['q', 'page'])) }}">View<span class="sr-only"> {{ $employee->full_name }}</span></x-button>
-                            @can('employees.manage')
-                                <x-button icon="edit" variant="secondary" href="{{ route('employees.edit', $employee) }}">Edit<span class="sr-only"> {{ $employee->full_name }}</span></x-button>
-                            @endcan
+                        <td class="px-4 py-3 text-right tabular-nums">{{ $employee->employment_records_count }}</td>
+                        <td class="px-4 py-3 text-right ui-table-actions">
+                            <x-action-menu :label="'Actions for '.$employee->full_name">
+                                <x-button icon="view" variant="secondary" href="{{ route('employees.show', ['employee' => $employee] + request()->only(['q', 'page'])) }}">View<span class="sr-only"> {{ $employee->full_name }}</span></x-button>
+                                @can('employees.manage')
+                                    <x-button icon="edit" variant="secondary" href="{{ route('employees.edit', $employee) }}">Edit<span class="sr-only"> {{ $employee->full_name }}</span></x-button>
+                                @endcan
+                            </x-action-menu>
                         </td>
                     </tr>
                 @empty

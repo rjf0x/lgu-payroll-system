@@ -41,39 +41,42 @@
                 <x-table label="Employee payroll breakdown" :sticky-first="true">
                     <thead>
                         <tr>
-                            <th scope="col">Employee</th>
-                            <th scope="col" class="ui-money">Basic Pay</th>
-                            <th scope="col" class="ui-money">Earnings</th>
-                            <th scope="col" class="ui-money">Gross</th>
-                            <th scope="col" class="ui-money">Deductions</th>
-                            <th scope="col" class="ui-money">Net pay before LBP</th>
-                            <th scope="col" class="ui-money">LBP deduction</th>
-                            <th scope="col" class="ui-money">Net Pay</th>
-                            <th scope="col">Actions</th>
+                            <th scope="col" class="ui-table-primary">Employee</th>
+                            <th scope="col">Payroll inputs</th>
+                            <th scope="col" class="ui-money text-right tabular-nums">Basic Pay</th>
+                            <th scope="col" class="ui-money text-right tabular-nums">Earnings</th>
+                            <th scope="col" class="ui-money text-right tabular-nums">Gross</th>
+                            <th scope="col" class="ui-money text-right tabular-nums">Deductions</th>
+                            <th scope="col" class="ui-money text-right tabular-nums">Net pay before LBP</th>
+                            <th scope="col" class="ui-money text-right tabular-nums">LBP deduction</th>
+                            <th scope="col" class="ui-money text-right tabular-nums">Net Pay</th>
+                            <th scope="col" class="text-right ui-table-actions">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach ($run->details as $detail)
                             <tr>
-                                <td class="ui-wrap max-w-64">
+                                <td class="ui-wrap ui-table-primary">
                                     <div class="font-semibold">{{ $detail->employee_name_snapshot }}</div>
-                                    <div class="mt-1 text-sm text-muted">{{ $detail->position_snapshot }}</div>
-                                    <div class="mt-1 text-xs text-muted">Payable days: {{ $detail->payable_days ?? 'Input required' }}</div>
+                                    <div class="ui-table-secondary">{{ $detail->position_snapshot }}</div>
+                                </td>
+                                <td class="ui-wrap max-w-64">
+                                    <div>Payable days: {{ $detail->payable_days ?? 'Input required' }}</div>
                                     @if ($detail->input_reference)
-                                        <div class="mt-1 whitespace-normal break-words text-xs text-muted">Source: {{ $detail->input_reference }}</div>
+                                        <div class="ui-table-secondary">Source: {{ $detail->input_reference }}</div>
                                     @endif
                                 </td>
-                                <td class="ui-money">{{ number_format((float) $detail->basic_pay, 2) }}</td>
-                                <td class="ui-money">{{ number_format((float) $detail->total_earnings, 2) }}</td>
-                                <td class="ui-money">{{ number_format((float) $detail->gross_pay, 2) }}</td>
-                                <td class="ui-money">{{ number_format((float) $detail->total_deductions, 2) }}</td>
-                                <td class="ui-money">{{ number_format((float) $detail->nthp_before_lbp, 2) }}</td>
-                                <td class="ui-money">{{ number_format((float) $detail->lbp_loan_deduction, 2) }}</td>
-                                <td class="ui-money font-semibold">{{ number_format((float) $detail->net_pay, 2) }}</td>
-                                <td>
+                                <td class="ui-money text-right tabular-nums">{{ number_format((float) $detail->basic_pay, 2) }}</td>
+                                <td class="ui-money text-right tabular-nums">{{ number_format((float) $detail->total_earnings, 2) }}</td>
+                                <td class="ui-money text-right tabular-nums">{{ number_format((float) $detail->gross_pay, 2) }}</td>
+                                <td class="ui-money text-right tabular-nums">{{ number_format((float) $detail->total_deductions, 2) }}</td>
+                                <td class="ui-money text-right tabular-nums">{{ number_format((float) $detail->nthp_before_lbp, 2) }}</td>
+                                <td class="ui-money text-right tabular-nums">{{ number_format((float) $detail->lbp_loan_deduction, 2) }}</td>
+                                <td class="ui-money font-semibold text-right tabular-nums">{{ number_format((float) $detail->net_pay, 2) }}</td>
+                                <td class="text-right ui-table-actions">
                                     @can('payroll.prepare')
                                         @if ($run->isEditable())
-                                            <x-button icon="edit" variant="secondary" href="{{ route('payroll-details.edit', [$run, $detail]) }}">Edit<span class="sr-only"> {{ $detail->employee_name_snapshot }}</span></x-button>
+                                            <x-action-menu :label="'Actions for '.$detail->employee_name_snapshot"><x-button icon="edit" variant="secondary" href="{{ route('payroll-details.edit', [$run, $detail]) }}">Edit<span class="sr-only"> {{ $detail->employee_name_snapshot }}</span></x-button></x-action-menu>
                                         @else
                                             <span class="text-muted">Read only</span>
                                         @endif
@@ -156,11 +159,11 @@
         <section aria-labelledby="approval-history-heading" class="min-w-0">
             <h2 id="approval-history-heading" class="mb-3 text-lg font-semibold">Approval History</h2>
             <x-table label="Payroll approval history">
-                <thead><tr><th scope="col">Action</th><th scope="col">Acted By</th><th scope="col">When</th><th scope="col">Remarks</th></tr></thead>
+                <thead><tr><th scope="col" class="ui-table-primary">Action</th><th scope="col">Acted By</th><th scope="col">When</th><th scope="col">Remarks</th></tr></thead>
                 <tbody>
                     @forelse ($run->approvals as $approval)
                         <tr>
-                            <td class="font-semibold">{{ str_replace('_', ' ', ucfirst(strtolower($approval->action))) }}</td>
+                            <td class="font-semibold ui-table-primary">{{ str_replace('_', ' ', ucfirst(strtolower($approval->action))) }}</td>
                             <td>{{ $approval->actedBy?->username ?? 'Unavailable user' }}</td>
                             <td>{{ $approval->acted_at?->format('M d, Y g:i A') }}</td>
                             <td class="ui-wrap">{{ $approval->remarks ?: 'No remarks' }}</td>

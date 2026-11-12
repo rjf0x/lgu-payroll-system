@@ -59,7 +59,7 @@
         <x-results :items="$checks" />
         <x-table label="Payroll integrity verification history">
             <thead><tr>
-                <th scope="col">Result</th>
+                <th scope="col" class="text-center ui-table-primary">Result</th>
                 <th scope="col">Checked by</th>
                 <th scope="col">When</th>
                 <th scope="col">Finding</th>
@@ -67,13 +67,13 @@
             <tbody>
                 @forelse ($checks as $check)
                     <tr>
-                        <td><x-status :value="$check->verification_result" /></td>
+                        <td class="text-center ui-table-primary"><x-status :value="$check->verification_result" /></td>
                         <td>{{ $check->verifiedBy?->username ?? 'Unavailable user' }}</td>
                         <td>{{ $check->verified_at->format('M d, Y g:i A') }} {{ config('app.timezone') }}</td>
                         <td class="min-w-0">
                             <p>{{ $check->remarks }}</p>
-                            <details class="mt-2">
-                                <summary class="cursor-pointer rounded-md py-3 font-semibold focus-visible:outline-2 focus-visible:outline-offset-2">Compare recorded hashes</summary>
+                            <details class="ui-table-secondary">
+                                <summary class="cursor-pointer rounded-md py-1 font-semibold hover:bg-slate-100 focus-visible:outline-2 focus-visible:outline-offset-2">Compare recorded hashes</summary>
                                 <dl class="mt-2 space-y-2 text-xs">
                                     <div><dt class="font-semibold">Blockchain</dt><dd class="font-mono wrap-anywhere">{{ $check->stored_hash ?? 'Unavailable' }}</dd></div>
                                     <div><dt class="font-semibold">Current payroll</dt><dd class="font-mono wrap-anywhere">{{ $check->calculated_hash ?? 'Not calculated' }}</dd></div>

@@ -76,16 +76,16 @@
         <x-table label="Anchor Detail records">
             <thead class="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
                 <tr>
-                    <th scope="col" class="px-5 py-2 text-left">Result</th>
+                    <th scope="col" class="px-5 py-2 text-center ui-table-primary">Result</th>
                     <th scope="col" class="px-5 py-2 text-left">Verified By</th>
                     <th scope="col" class="px-5 py-2 text-left">When</th>
                     <th scope="col" class="px-5 py-2 text-left">Calculated Hash</th>
                 </tr>
             </thead>
-            <tbody class="divide-y divide-slate-100">
+            <tbody>
                 @forelse ($anchor->verificationLogs as $log)
                     <tr>
-                        <td class="px-5 py-2">
+                        <td class="px-5 py-2 text-center ui-table-primary">
                             <x-status :value="$log->verification_result" />
                         </td>
                         <td class="px-5 py-2 text-slate-600">{{ $log->verifiedBy?->username }}</td>

@@ -21,10 +21,10 @@
     <h2 class="mb-3 text-lg font-semibold">Associated payroll runs ({{ $period->runs_count }})</h2>
     <x-results :items="$runs" />
     <x-table label="Associated payroll runs">
-        <thead><tr><th scope="col">Run</th><th scope="col">Type</th><th scope="col">Run status</th><th scope="col">Actions</th></tr></thead>
+        <thead><tr><th scope="col" class="ui-table-primary">Run</th><th scope="col">Type</th><th scope="col" class="text-center">Run status</th><th scope="col" class="text-right ui-table-actions">Actions</th></tr></thead>
         <tbody>
             @forelse ($runs as $run)
-                <tr><td>#{{ $run->run_number }}</td><td>{{ ucfirst(strtolower($run->run_type)) }}</td><td><x-status :value="$run->status" /></td><td><x-button icon="view" :href="route('payroll-runs.show', $run)">View run #{{ $run->run_number }}</x-button></td></tr>
+                <tr><td class="ui-table-primary">#{{ $run->run_number }}</td><td>{{ ucfirst(strtolower($run->run_type)) }}</td><td class="text-center"><x-status :value="$run->status" /></td><td class="text-right ui-table-actions"><x-action-menu :label="'Actions for payroll run #'.$run->run_number"><x-button icon="view" :href="route('payroll-runs.show', $run)">View run #{{ $run->run_number }}</x-button></x-action-menu></td></tr>
             @empty
                 <tr><td colspan="4" class="text-center text-slate-500">No payroll runs have been created for this period.</td></tr>
             @endforelse

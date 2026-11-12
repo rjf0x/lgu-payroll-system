@@ -8,7 +8,7 @@
         <p class="text-sm text-slate-500">Appointments linking employees to departments, positions, and employment types.</p>
         @can('employees.manage')
             <x-button icon="add" variant="primary" href="{{ route('employment-records.create') }}">
-                + Add Employment Record
+                Add Employment Record
             </x-button>
         @endcan
     </div>
@@ -18,31 +18,33 @@
         <x-table label="Employment Records records">
             <thead class="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
                 <tr>
-                    <th scope="col" class="px-4 py-3 text-left">Employee</th>
+                    <th scope="col" class="px-4 py-3 text-left ui-table-primary">Employee</th>
                     <th scope="col" class="px-4 py-3 text-left">Position</th>
                     <th scope="col" class="px-4 py-3 text-left">Department</th>
                     <th scope="col" class="px-4 py-3 text-left">Type</th>
                     <th scope="col" class="px-4 py-3 text-left">Start</th>
-                    <th scope="col" class="px-4 py-3 text-left">Status</th>
-                    <th scope="col" class="px-4 py-3">Actions</th>
+                    <th scope="col" class="px-4 py-3 text-center">Status</th>
+                    <th scope="col" class="px-4 py-3 text-right ui-table-actions">Actions</th>
                 </tr>
             </thead>
-            <tbody class="divide-y divide-slate-100">
+            <tbody>
                 @forelse ($employmentRecords as $record)
-                    <tr class="hover:bg-slate-50">
-                        <td class="px-4 py-3">
+                    <tr>
+                        <td class="px-4 py-3 ui-table-primary">
                             <a href="{{ route('employment-records.show', $record) }}" class="font-medium text-brand hover:underline">
                                 {{ $record->employee->full_name }}
                             </a>
-                            <div class="font-mono text-[10px] text-slate-400">{{ $record->employee->employee_number }}</div>
+                            <div class="ui-table-secondary font-mono">{{ $record->employee->employee_number }}</div>
                         </td>
                         <td class="px-4 py-3">{{ $record->position->position_title }}</td>
                         <td class="px-4 py-3 text-slate-600">{{ $record->department->department_name }}</td>
                         <td class="px-4 py-3 text-slate-600">{{ $record->employmentType->employment_type_name }}</td>
                         <td class="px-4 py-3 text-slate-600">{{ $record->start_date?->format('M d, Y') }}</td>
-                        <td class="px-4 py-3"><x-status :value="$record->employment_status" /></td>
-                        <td class="px-4 py-3 text-right">
-                            <x-button icon="view" variant="secondary" href="{{ route('employment-records.show', $record) }}">View</x-button>
+                        <td class="px-4 py-3 text-center"><x-status :value="$record->employment_status" /></td>
+                        <td class="px-4 py-3 text-right ui-table-actions">
+                            <x-action-menu :label="'Actions for employment record #'.$record->getKey()">
+                                <x-button icon="view" variant="secondary" href="{{ route('employment-records.show', $record) }}">View</x-button>
+                            </x-action-menu>
                         </td>
                     </tr>
                 @empty

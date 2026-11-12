@@ -24,7 +24,7 @@
     </div>
 
     <div class="flex flex-wrap gap-3">
-        <button class="ui-button ui-button-primary">{{ $isEdit ? 'Save changes' : 'Create bracket' }}</button>
-        <a href="{{ route('tax-brackets.index') }}" class="ui-button ui-button-secondary">Cancel</a>
+        <x-button :icon="$isEdit ? 'save' : 'add'" type="submit" variant="primary">{{ $isEdit ? 'Save changes' : 'Create bracket' }}</x-button>
+        <x-button icon="back" href="{{ route('tax-brackets.index') }}">Cancel</x-button>
     </div>
 </form>

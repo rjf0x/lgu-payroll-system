@@ -40,28 +40,30 @@
         <div class="flex items-center justify-between border-b border-slate-100 px-6 py-4">
             <span class="text-sm font-semibold text-slate-700">Grade Steps</span>
             @can('compensation.manage')
-                <a href="{{ route('salary-grade-steps.create', ['salary_schedule_id' => $schedule->salary_schedule_id]) }}" class="text-xs font-semibold text-brand hover:underline">+ Add Grade Step</a>
+                <x-button icon="add" :href="route('salary-grade-steps.create', ['salary_schedule_id' => $schedule->salary_schedule_id])" class="ui-button-compact">Add Grade Step</x-button>
             @endcan
         </div>
         <x-table label="Salary Schedule records">
             <thead class="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
                 <tr>
-                    <th scope="col" class="px-4 py-3 text-left">Grade</th>
-                    <th scope="col" class="px-4 py-3 text-left">Step</th>
-                    <th scope="col" class="px-4 py-3 text-right">Monthly Salary</th>
-                    <th scope="col" class="px-4 py-3">Actions</th>
+                    <th scope="col" class="px-4 py-3 text-right tabular-nums ui-table-primary">Grade</th>
+                    <th scope="col" class="px-4 py-3 text-right tabular-nums">Step</th>
+                    <th scope="col" class="px-4 py-3 text-right tabular-nums">Monthly Salary</th>
+                    <th scope="col" class="px-4 py-3 text-right ui-table-actions">Actions</th>
                 </tr>
             </thead>
-            <tbody class="divide-y divide-slate-100">
+            <tbody>
                 @forelse ($schedule->gradeSteps as $step)
-                    <tr class="hover:bg-slate-50">
-                        <td class="px-4 py-3">SG {{ $step->grade_number }}</td>
-                        <td class="px-4 py-3">Step {{ $step->step_number }}</td>
-                        <td class="px-4 py-3 text-right font-mono">₱{{ number_format((float) $step->monthly_salary, 2) }}</td>
-                        <td class="px-4 py-3 text-right">
-                            @can('compensation.manage')
-                                <x-button icon="edit" variant="secondary" href="{{ route('salary-grade-steps.edit', $step) }}">Edit</x-button>
-                            @endcan
+                    <tr>
+                        <td class="px-4 py-3 text-right tabular-nums ui-table-primary">SG {{ $step->grade_number }}</td>
+                        <td class="px-4 py-3 text-right tabular-nums">Step {{ $step->step_number }}</td>
+                        <td class="px-4 py-3 font-mono text-right tabular-nums">₱{{ number_format((float) $step->monthly_salary, 2) }}</td>
+                        <td class="px-4 py-3 text-right ui-table-actions">
+                            <x-action-menu :label="'Actions for salary grade '.$step->grade_number.' step '.$step->step_number">
+                                @can('compensation.manage')
+                                    <x-button icon="edit" variant="secondary" href="{{ route('salary-grade-steps.edit', $step) }}">Edit</x-button>
+                                @endcan
+                            </x-action-menu>
                         </td>
                     </tr>
                 @empty

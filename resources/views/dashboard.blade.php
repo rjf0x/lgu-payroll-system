@@ -42,7 +42,7 @@
                         <h3 class="ui-section-heading">User access</h3>
                         <p class="mt-2 text-sm text-muted">Manage user accounts, assign roles, and control access to the system.</p>
                     </div>
-                    <div class="mt-auto pt-2"><x-button :href="route('users.index')" variant="primary">Manage user access</x-button></div>
+                    <div class="mt-auto pt-2"><x-button icon="users" :href="route('users.index')" variant="primary">Manage user access</x-button></div>
                 </x-card>
                 @can('audit.view')
                     <x-card class="ui-card-interactive flex flex-col items-start gap-4">
@@ -53,7 +53,7 @@
                             <h3 class="ui-section-heading">Audit trail</h3>
                             <p class="mt-2 text-sm text-muted">Review recorded activity and track changes across the system.</p>
                         </div>
-                        <div class="mt-auto pt-2"><x-button :href="route('audit-logs.index')">Review audit trail</x-button></div>
+                        <div class="mt-auto pt-2"><x-button icon="list" :href="route('audit-logs.index')">Review audit trail</x-button></div>
                     </x-card>
                 @endcan
                 @can('compensation.manage')
@@ -65,7 +65,7 @@
                             <h3 class="ui-section-heading">Salary schedules</h3>
                             <p class="mt-2 text-sm text-muted">Review salary grades, steps, and pay rates used in payroll calculations.</p>
                         </div>
-                        <div class="mt-auto pt-2"><x-button :href="route('salary-schedules.index')">Review salary schedules</x-button></div>
+                        <div class="mt-auto pt-2"><x-button icon="list" :href="route('salary-schedules.index')">Review salary schedules</x-button></div>
                     </x-card>
                 @endcan
             </div>
@@ -115,7 +115,7 @@
                                 @endswitch
                             </p>
                         @endif
-                        <x-button :href="$action['href']" :variant="$action['title'] === 'Payroll preparation' || $action['count'] > 0 ? 'primary' : 'secondary'" class="mt-auto w-full text-center">{{ $action['label'] }}</x-button>
+                        <x-button icon="list" :href="$action['href']" :variant="$action['title'] === 'Payroll preparation' || $action['count'] > 0 ? 'primary' : 'secondary'" class="mt-auto w-full text-center">{{ $action['label'] }}</x-button>
                     </x-card>
                 @endforeach
             </div>
@@ -133,7 +133,7 @@
                             <h3 class="ui-section-heading">Finalized Payroll</h3>
                             <p class="mt-2 text-sm text-muted">Browse completed payroll transactions and review their employee breakdowns and authorized payroll documents.</p>
                         </div>
-                        <div class="mt-auto pt-2"><x-button :href="route('payroll-runs.index', ['status' => 'FINALIZED'])" variant="primary">Browse finalized payroll</x-button></div>
+                        <div class="mt-auto pt-2"><x-button icon="list" :href="route('payroll-runs.index', ['status' => 'FINALIZED'])" variant="primary">Browse finalized payroll</x-button></div>
                     </x-card>
                 @endcan
                 @can('employees.view')
@@ -143,7 +143,7 @@
                             <h3 class="ui-section-heading">Employee Directory</h3>
                             <p class="mt-2 text-sm text-muted">Find authorized employee information, employment records, and related details without changing records.</p>
                         </div>
-                        <div class="mt-auto pt-2"><x-button :href="route('employees.index')" variant="primary">View employee directory</x-button></div>
+                        <div class="mt-auto pt-2"><x-button icon="view" :href="route('employees.index')" variant="primary">View employee directory</x-button></div>
                     </x-card>
                 @endcan
             </div>
@@ -206,33 +206,33 @@
         </section>
     @endif
     @can('payroll.view')
-        <section class="overflow-hidden rounded-2xl border border-slate-200 bg-surface shadow-sm">
+        <section class="overflow-hidden rounded-2xl border border-slate-200 bg-surface shadow-xs">
             <div class="flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 bg-slate-50/60 p-5 sm:p-6">
                 <div>
                     <p class="ui-eyebrow">Recent activity</p>
                     <h2 class="ui-section-heading">{{ $dashboardRole === 'Approver' ? 'Payroll awaiting your review' : ($dashboardRole === 'Viewer' ? 'Finalized payroll records' : 'Recent payroll runs') }}</h2>
                     <p class="mt-1 text-sm text-muted">The five latest payroll transactions you can access, ordered by finalization or processing date, then creation date for unprocessed runs.</p>
                 </div>
-                <a href="{{ route('payroll-runs.index') }}" class="inline-flex min-h-11 items-center text-sm font-semibold text-brand hover:underline">View All Payroll Runs</a>
+                <x-button icon="view" :href="route('payroll-runs.index')">View All Payroll Runs</x-button>
             </div>
             <x-table label="Dashboard payroll runs" class="rounded-none border-x-0 border-b-0 shadow-none">
                     <thead class="border-y border-slate-200 bg-slate-50 text-xs uppercase text-slate-500">
                         <tr>
-                            <th scope="col" class="px-4 py-3">Coverage period</th>
-                            <th scope="col" class="px-4 py-3 text-right">Run number</th>
-                            <th scope="col" class="px-4 py-3 text-right">Employees</th>
-                            <th scope="col" class="px-4 py-3">Processing status</th>
+                            <th scope="col" class="px-4 py-3 ui-table-primary">Coverage period</th>
+                            <th scope="col" class="px-4 py-3 text-left">Run number</th>
+                            <th scope="col" class="px-4 py-3 text-right tabular-nums">Employees</th>
+                            <th scope="col" class="px-4 py-3 text-center">Processing status</th>
                             <th scope="col" class="px-4 py-3">Date finalized</th>
-                            <th scope="col" class="px-4 py-3 text-right">Records</th>
+                            <th scope="col" class="px-4 py-3 text-right ui-table-actions">Records</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-slate-100">
+                    <tbody>
                         @forelse ($runs as $run)
                             <tr>
-                                <td class="px-4 py-2 font-medium"><time datetime="{{ $run->payrollPeriod->start_date->toDateString() }}">{{ $run->payrollPeriod->start_date->format('M d, Y') }}</time> &ndash; <time datetime="{{ $run->payrollPeriod->end_date->toDateString() }}">{{ $run->payrollPeriod->end_date->format('M d, Y') }}</time></td>
-                                <td class="px-4 py-2 text-right tabular-nums">#{{ $run->run_number }}</td>
-                                <td class="px-4 py-2 text-right tabular-nums">{{ number_format($run->details_count) }}</td>
-                                <td class="px-4 py-2"><x-status :value="$run->status" /></td>
+                                <td class="px-4 py-2 font-medium ui-table-primary"><time datetime="{{ $run->payrollPeriod->start_date->toDateString() }}">{{ $run->payrollPeriod->start_date->format('M d, Y') }}</time> &ndash; <time datetime="{{ $run->payrollPeriod->end_date->toDateString() }}">{{ $run->payrollPeriod->end_date->format('M d, Y') }}</time></td>
+                                <td class="px-4 py-2 tabular-nums text-left">#{{ $run->run_number }}</td>
+                                <td class="px-4 py-2 tabular-nums text-right">{{ number_format($run->details_count) }}</td>
+                                <td class="px-4 py-2 text-center"><x-status :value="$run->status" /></td>
                                 <td class="px-4 py-2 text-muted">
                                     @if ($run->finalized_at)
                                         <time datetime="{{ $run->finalized_at->toIso8601String() }}">{{ $run->finalized_at->format('M d, Y') }}</time>
@@ -240,7 +240,7 @@
                                         <span>Not finalized</span>
                                     @endif
                                 </td>
-                                <td class="px-4 py-2 text-right"><x-button icon="view" :href="route('payroll-runs.show', $run)" :aria-label="'View payroll records for run #'.$run->run_number.', '.$run->payrollPeriod->start_date->format('M d, Y').' to '.$run->payrollPeriod->end_date->format('M d, Y')">View records</x-button></td>
+                                <td class="px-4 py-2 text-right ui-table-actions"><x-action-menu :label="'Actions for payroll run #'.$run->run_number"><x-button icon="view" :href="route('payroll-runs.show', $run)" :aria-label="'View payroll records for run #'.$run->run_number.', '.$run->payrollPeriod->start_date->format('M d, Y').' to '.$run->payrollPeriod->end_date->format('M d, Y')">View records</x-button></x-action-menu></td>
                             </tr>
                         @empty
                             <tr><td colspan="6" class="px-4 py-8 text-center text-muted">No payroll runs to display.</td></tr>
@@ -250,7 +250,7 @@
             @if ($runs->isNotEmpty())
                 <div class="flex flex-wrap items-center justify-between gap-2 border-t border-slate-200 px-4 py-3 text-sm text-muted">
                     <p>Showing {{ $runs->count() }} latest {{ $runs->count() === 1 ? 'run' : 'runs' }}.</p>
-                    <a href="{{ route('payroll-runs.index') }}" class="inline-flex min-h-11 items-center font-semibold text-brand hover:underline">Browse older payroll records &rarr;</a>
+                    <x-button icon="list" :href="route('payroll-runs.index')" class="ui-button-compact">Browse older payroll records &rarr;</x-button>
                 </div>
             @endif
         </section>

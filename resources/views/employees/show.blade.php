@@ -10,7 +10,7 @@
     </x-page-header>
     <nav aria-label="Employee sections" class="mb-6 flex flex-wrap gap-3 text-sm">
         @foreach (['employment' => 'Employment', 'compensation' => 'Compensation', 'earnings' => 'Earnings', 'deductions' => 'Deductions'] as $anchor => $label)
-            <a href="#{{ $anchor }}" class="ui-button ui-button-secondary">{{ $label }}</a>
+            <x-button icon="list" :href="'#'.$anchor">{{ $label }}</x-button>
         @endforeach
     </nav>
     <div class="grid min-w-0 gap-6 xl:grid-cols-3">

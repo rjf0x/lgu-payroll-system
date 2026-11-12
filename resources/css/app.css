@@ -35,8 +35,9 @@
     header { padding: 0 0 4mm !important; border: 0 !important; }
     .app-header { position: static !important; }
     .ui-table-scroll { overflow: visible !important; max-height: none !important; border: 0; box-shadow: none; }
-    .ui-table { width: 100%; white-space: normal; font-size: 8pt; }
-    .ui-table th, .ui-table td { position: static !important; padding: 2mm; white-space: normal !important; overflow-wrap: anywhere; background: white !important; color: black !important; }
+    .ui-table { width: 100%; min-width: 0 !important; white-space: normal; font-size: 8pt; }
+    .ui-table th, .ui-table td { position: static !important; min-width: 0 !important; max-width: none !important; padding: 2mm; white-space: normal !important; overflow-wrap: anywhere; background: white !important; color: black !important; box-shadow: none !important; }
+    .ui-table tr { height: auto !important; }
     thead { display: table-header-group; }
     tfoot { display: table-row-group; }
     tr, .print-keep { break-inside: avoid; }
@@ -60,13 +61,28 @@
 
 @layer components {
     .ui-button {
-        @apply inline-flex min-h-10 shrink-0 items-center justify-center gap-2 rounded-lg border px-3 py-2 text-sm font-semibold leading-5 pointer-coarse:min-h-11;
+        @apply inline-flex h-10 min-h-10 shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-lg border px-3 py-2 text-sm font-semibold leading-5;
     }
-    .ui-button-primary { @apply border-brand bg-brand text-white shadow-sm hover:border-brand-ink hover:bg-brand-ink; }
-    .ui-button-secondary { @apply border-slate-300 bg-surface text-brand-ink shadow-sm hover:border-brand hover:bg-brand-soft; }
+    .ui-button:focus-visible {
+        outline: 2px solid var(--color-focus);
+        outline-offset: 2px;
+    }
+    .ui-button-compact, .ui-table .ui-button { @apply h-9 min-h-9 rounded-md py-1.5; }
+    .ui-button-primary { @apply border-brand bg-brand text-white shadow-sm hover:border-sky-800 hover:bg-sky-800; }
+    .ui-button-secondary { @apply border-slate-300 bg-surface text-brand-ink shadow-sm hover:border-slate-400 hover:bg-slate-50; }
+    .ui-button-ghost { @apply border-transparent bg-transparent text-brand-ink hover:bg-slate-100; }
     .ui-button-danger { @apply border-rose-700 bg-white text-rose-800 shadow-sm hover:bg-rose-50; }
     .ui-button-warning { @apply border-amber-700 bg-warning-soft text-amber-900 shadow-sm hover:bg-amber-100; }
     .ui-button:disabled, .ui-button[aria-disabled='true'] { @apply cursor-wait opacity-70; }
+    .ui-action-menu-panel {
+        @apply fixed inset-auto m-0 w-max min-w-48 max-w-[calc(100vw-1rem)] overflow-y-auto rounded-lg border border-slate-200 bg-surface p-1.5 text-left text-sm text-ink shadow-sm;
+    }
+    .ui-action-menu-panel:popover-open { @apply flex flex-col gap-1; }
+    .ui-action-menu-panel form { @apply m-0 w-full; }
+    .ui-action-menu-panel .ui-button {
+        @apply h-9 min-h-9 w-full justify-start rounded-md border-transparent bg-transparent px-3 py-1.5 shadow-none hover:bg-slate-100;
+    }
+    .ui-action-menu-panel .ui-button-danger { @apply hover:bg-rose-50; }
     .ui-card { @apply min-w-0 rounded-2xl border border-slate-200 bg-surface p-5 shadow-sm sm:p-6; }
     .ui-card-interactive { @apply transition duration-200 ease-out hover:-translate-y-0.5 hover:border-sky-200 hover:shadow-md; }
     .ui-card-quiet { @apply bg-slate-50/70; }
@@ -87,18 +103,38 @@
     }
     .ui-field:focus { @apply border-brand ring-2 ring-sky-100; }
     .ui-field[aria-invalid='true'] { @apply border-rose-700 ring-2 ring-rose-100; }
-    .ui-table-scroll { @apply relative max-h-[36rem] min-w-0 overflow-auto rounded-2xl border border-slate-200 bg-surface shadow-sm; }
-    .ui-table { @apply w-full border-collapse whitespace-nowrap text-left text-sm; }
-    .ui-table th { @apply sticky top-0 z-10 border-b border-slate-200 bg-slate-50 px-4 py-3 text-xs font-semibold uppercase tracking-[0.08em] text-slate-600; }
-    .ui-table td { @apply border-b border-slate-100 px-4 py-3.5; }
-    .ui-table tbody tr:last-child td { @apply border-b-0; }
-    .ui-table tbody tr { @apply transition-colors duration-150; }
-    .ui-table tbody tr:hover td { @apply bg-sky-50/50; }
+    .ui-table-scroll { @apply relative max-h-[36rem] w-full min-w-0 max-w-full overflow-auto overscroll-x-contain rounded-2xl border border-slate-200 bg-surface shadow-xs; }
+    .ui-table { @apply w-full min-w-[40rem] border-collapse whitespace-nowrap text-left text-sm leading-5; }
+    .ui-table :is(th, td) { @apply min-w-28; }
+    .ui-table .ui-table-primary { @apply min-w-48; }
+    .ui-table .ui-table-actions { @apply w-18 min-w-18; }
+    .ui-table th { @apply sticky top-0 z-10 border-b border-slate-200 bg-slate-50 px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.08em] text-slate-600; }
+    .ui-table td { @apply px-4 py-2.5 text-left align-middle; }
+    .ui-table tbody > tr > :is(td, th) { @apply border-b border-slate-200/70 bg-surface transition-colors duration-150; }
+    .ui-table tbody > tr:last-child > :is(td, th) { @apply border-b-0; }
+    .ui-table tfoot > tr > :is(td, th) { @apply border-t border-slate-200 bg-slate-50; }
+    .ui-table tbody tr { @apply h-15; }
+    .ui-table tbody tr:has(.ui-table-secondary:not(:empty)) { @apply h-18; }
+    .ui-table-secondary { @apply mt-1 block text-xs leading-4 text-muted; }
+    @media (hover: hover) {
+        .ui-table tbody > tr:hover > :is(td, th) { @apply bg-slate-100; }
+    }
     .ui-table-sticky-first th:first-child { @apply left-0 z-20; }
     .ui-table-sticky-first td:first-child { @apply sticky left-0 z-10 bg-white; }
     .ui-table .ui-money { @apply text-right tabular-nums; }
     .ui-table .ui-wrap { @apply min-w-48 whitespace-normal break-words; }
-    .ui-table a:not(.ui-button) { @apply relative inline-flex min-h-11 items-center font-semibold text-brand underline-offset-4 hover:underline; }
+    .ui-table a:not(.ui-button) { @apply relative inline-flex items-center font-semibold text-brand underline-offset-4 hover:underline; }
+    @media screen and (width < 48rem) {
+        .ui-table :is(th, td).ui-table-primary {
+            @apply sticky left-0 z-10 whitespace-normal wrap-anywhere;
+            width: clamp(9rem, 44vw, 12rem);
+            min-width: clamp(9rem, 44vw, 12rem);
+            max-width: clamp(9rem, 44vw, 12rem);
+            box-shadow: 1px 0 0 var(--color-slate-200);
+        }
+        .ui-table thead .ui-table-primary { @apply z-20; }
+        .ui-table :is(tbody, tfoot) th.ui-table-primary { @apply top-auto; }
+    }
     .ui-nav-group { @apply mt-1; }
     .ui-nav-group > summary { @apply flex min-h-11 list-none items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-brand-on-dark hover:bg-white/10 hover:text-white; }
     .ui-nav-group > summary::-webkit-details-marker { display: none; }

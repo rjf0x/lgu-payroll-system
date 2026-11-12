@@ -26,33 +26,37 @@
     </div>
 
     <div class="mt-6 grid grid-cols-1 gap-6 text-sm sm:grid-cols-2 print:grid-cols-2">
-        <div>
+        <div class="min-w-0">
             <h2 class="mb-2 border-b border-slate-200 pb-1 text-xs font-bold uppercase tracking-wide text-slate-600">Earnings</h2>
-            <table class="w-full">
-                <caption class="sr-only">Payslip earnings in PHP</caption>
-                <tbody>
-                    <tr><td class="py-1">Basic Pay</td><td class="py-1 text-right font-mono">{{ number_format((float) $detail->basic_pay, 2) }}</td></tr>
-                    @foreach ($detail->earnings as $earning)
-                        <tr><td class="py-1">{{ $earning->earning_name_snapshot }}</td><td class="py-1 text-right font-mono">{{ number_format((float) $earning->amount, 2) }}</td></tr>
-                    @endforeach
-                    <tr class="border-t border-slate-300 font-semibold"><td class="py-1">Gross / Total Compensation</td><td class="py-1 text-right font-mono">{{ number_format((float) $detail->gross_pay, 2) }}</td></tr>
-                </tbody>
-            </table>
+            <div role="region" aria-label="Payslip earnings" tabindex="0" class="min-w-0 max-w-full overflow-x-auto print:overflow-visible">
+                <table class="w-full min-w-80 print:min-w-0">
+                    <caption class="sr-only">Payslip earnings in PHP</caption>
+                    <tbody>
+                        <tr><td class="py-1">Basic Pay</td><td class="py-1 font-mono text-right tabular-nums">{{ number_format((float) $detail->basic_pay, 2) }}</td></tr>
+                        @foreach ($detail->earnings as $earning)
+                            <tr><td class="py-1">{{ $earning->earning_name_snapshot }}</td><td class="py-1 font-mono text-right tabular-nums">{{ number_format((float) $earning->amount, 2) }}</td></tr>
+                        @endforeach
+                        <tr class="border-t border-slate-300 font-semibold"><td class="py-1">Gross / Total Compensation</td><td class="py-1 font-mono text-right tabular-nums">{{ number_format((float) $detail->gross_pay, 2) }}</td></tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
 
-        <div>
+        <div class="min-w-0">
             <h2 class="mb-2 border-b border-slate-200 pb-1 text-xs font-bold uppercase tracking-wide text-slate-600">Deductions</h2>
-            <table class="w-full">
-                <caption class="sr-only">Payslip deductions in PHP</caption>
-                <tbody>
-                    @foreach ($detail->deductions as $deduction)
-                        <tr><td class="py-1">{{ $deduction->deduction_name_snapshot }}</td><td class="py-1 text-right font-mono">{{ number_format((float) $deduction->amount, 2) }}</td></tr>
-                    @endforeach
-                    <tr class="border-t border-slate-300 font-semibold"><td class="py-1">Total Deductions</td><td class="py-1 text-right font-mono">{{ number_format((float) $detail->total_deductions, 2) }}</td></tr>
-                    <tr><td class="py-1">NTHP Before LBP</td><td class="py-1 text-right font-mono">{{ number_format((float) $detail->nthp_before_lbp, 2) }}</td></tr>
-                    <tr><td class="py-1">LBP Loan Deduction</td><td class="py-1 text-right font-mono">{{ number_format((float) $detail->lbp_loan_deduction, 2) }}</td></tr>
-                </tbody>
-            </table>
+            <div role="region" aria-label="Payslip deductions" tabindex="0" class="min-w-0 max-w-full overflow-x-auto print:overflow-visible">
+                <table class="w-full min-w-80 print:min-w-0">
+                    <caption class="sr-only">Payslip deductions in PHP</caption>
+                    <tbody>
+                        @foreach ($detail->deductions as $deduction)
+                            <tr><td class="py-1">{{ $deduction->deduction_name_snapshot }}</td><td class="py-1 font-mono text-right tabular-nums">{{ number_format((float) $deduction->amount, 2) }}</td></tr>
+                        @endforeach
+                        <tr class="border-t border-slate-300 font-semibold"><td class="py-1">Total Deductions</td><td class="py-1 font-mono text-right tabular-nums">{{ number_format((float) $detail->total_deductions, 2) }}</td></tr>
+                        <tr><td class="py-1">NTHP Before LBP</td><td class="py-1 font-mono text-right tabular-nums">{{ number_format((float) $detail->nthp_before_lbp, 2) }}</td></tr>
+                        <tr><td class="py-1">LBP Loan Deduction</td><td class="py-1 font-mono text-right tabular-nums">{{ number_format((float) $detail->lbp_loan_deduction, 2) }}</td></tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 

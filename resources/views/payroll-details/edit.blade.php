@@ -39,8 +39,8 @@
             </x-card>
         </div>
         <div class="flex flex-wrap gap-3">
-            <x-button type="submit" variant="primary">Save &amp; recompute</x-button>
-            <x-button :href="route('payroll-runs.show', $run)">Cancel</x-button>
+            <x-button icon="save" type="submit" variant="primary">Save &amp; recompute</x-button>
+            <x-button icon="back" :href="route('payroll-runs.show', $run)">Cancel</x-button>
         </div>
     </form>
 @endsection

@@ -63,11 +63,11 @@
     </fieldset>
 
     <div class="flex flex-wrap gap-3">
-        <button class="ui-button ui-button-primary">
+        <x-button :icon="$isEdit ? 'save' : 'add'" type="submit" variant="primary">
             {{ $isEdit ? 'Save changes' : 'Create account' }}
-        </button>
-        <a href="{{ route('users.index') }}" class="ui-button ui-button-secondary">
+        </x-button>
+        <x-button icon="back" href="{{ route('users.index') }}">
             Cancel
-        </a>
+        </x-button>
     </div>
 </form>

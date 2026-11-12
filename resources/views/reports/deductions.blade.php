@@ -21,21 +21,21 @@
     <section class="mb-6" aria-labelledby="deduction-totals-heading">
         <h2 id="deduction-totals-heading" class="mb-3 text-lg font-semibold">Deduction totals</h2>
         <x-table label="Deduction totals for this payroll run">
-            <thead><tr><th scope="col">Deduction</th><th scope="col" class="text-right">Employees</th><th scope="col" class="text-right">Amount (PHP)</th><th scope="col" class="no-print">Report</th></tr></thead>
+            <thead><tr><th scope="col" class="ui-table-primary">Deduction</th><th scope="col" class="text-right tabular-nums">Employees</th><th scope="col" class="text-right tabular-nums">Amount (PHP)</th><th scope="col" class="no-print text-right ui-table-actions">Report</th></tr></thead>
             <tbody>
                 @forelse ($visibleGroups as $typeId => $group)
                     <tr>
-                        <th scope="row">{{ $group['name'] }}</th>
-                        <td class="text-right">{{ $group['employees']->count() }}</td>
-                        <td class="text-right font-mono">{{ number_format($group['total'], 2) }}</td>
-                        <td class="no-print"><x-button icon="view" :href="route('reports.deductions', [$run, 'deduction_type_id' => $typeId])">View report</x-button></td>
+                        <th scope="row" class="ui-table-primary">{{ $group['name'] }}</th>
+                        <td class="text-right tabular-nums">{{ $group['employees']->count() }}</td>
+                        <td class="font-mono text-right tabular-nums">{{ number_format($group['total'], 2) }}</td>
+                        <td class="no-print text-right ui-table-actions"><x-action-menu :label="'Actions for deduction report #'.$typeId"><x-button icon="view" :href="route('reports.deductions', [$run, 'deduction_type_id' => $typeId])">View report</x-button></x-action-menu></td>
                     </tr>
                 @empty
                     <tr><td colspan="4">No deductions have been recorded for this payroll run.</td></tr>
                 @endforelse
             </tbody>
             @if ($visibleGroups->isNotEmpty())
-                <tfoot><tr class="font-semibold"><th scope="row">Total deductions</th><td></td><td class="text-right font-mono">{{ number_format($visibleGroups->sum('total'), 2) }}</td><td class="no-print"></td></tr></tfoot>
+                <tfoot><tr class="font-semibold"><th scope="row" class="ui-table-primary">Total deductions</th><td></td><td class="font-mono text-right tabular-nums">{{ number_format($visibleGroups->sum('total'), 2) }}</td><td class="no-print ui-table-actions"></td></tr></tfoot>
             @endif
         </x-table>
     </section>
@@ -44,18 +44,18 @@
         <section class="mb-6" aria-labelledby="deduction-{{ $typeId }}-heading">
             <h2 id="deduction-{{ $typeId }}-heading" class="mb-3 text-lg font-semibold">{{ $group['name'] }} — Employee breakdown</h2>
             <x-table :label="$group['name'].' employee deductions'">
-                <thead><tr><th scope="col">Employee number</th><th scope="col">Employee</th><th scope="col">Department</th><th scope="col" class="text-right">Amount (PHP)</th></tr></thead>
+                <thead><tr><th scope="col">Employee number</th><th scope="col" class="ui-table-primary">Employee</th><th scope="col">Department</th><th scope="col" class="text-right tabular-nums">Amount (PHP)</th></tr></thead>
                 <tbody>
                     @foreach ($group['employees'] as $employee)
                         <tr>
                             <td>{{ $employee['employee_number'] }}</td>
-                            <th scope="row">{{ $employee['employee_name'] }}</th>
+                            <th scope="row" class="ui-table-primary">{{ $employee['employee_name'] }}</th>
                             <td>{{ $employee['department'] ?: 'Unassigned' }}</td>
-                            <td class="text-right font-mono">{{ number_format($employee['amount'], 2) }}</td>
+                            <td class="font-mono text-right tabular-nums">{{ number_format($employee['amount'], 2) }}</td>
                         </tr>
                     @endforeach
                 </tbody>
-                <tfoot><tr class="font-semibold"><th scope="row" colspan="3">Total {{ $group['name'] }}</th><td class="text-right font-mono">{{ number_format($group['total'], 2) }}</td></tr></tfoot>
+                <tfoot><tr class="font-semibold"><th scope="row" colspan="3">Total {{ $group['name'] }}</th><td class="font-mono text-right tabular-nums">{{ number_format($group['total'], 2) }}</td></tr></tfoot>
             </x-table>
         </section>
     @endforeach

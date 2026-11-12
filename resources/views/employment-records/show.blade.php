@@ -60,7 +60,7 @@
             <div class="flex items-center justify-between border-b border-slate-100 px-6 py-4">
                 <span class="text-sm font-semibold text-slate-700">Compensation Profiles</span>
                 @can('compensation.manage')
-                    <a href="{{ route('compensation-profiles.create', ['employment_id' => $employmentRecord->employment_id]) }}" class="text-xs font-semibold text-brand hover:underline">+ Add</a>
+                    <x-button icon="add" :href="route('compensation-profiles.create', ['employment_id' => $employmentRecord->employment_id])" class="ui-button-compact">Add</x-button>
                 @endcan
             </div>
             <ul class="divide-y divide-slate-100 text-sm">

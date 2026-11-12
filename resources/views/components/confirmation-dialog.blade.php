@@ -3,7 +3,7 @@
     <p id="confirmation-context" class="mt-3 rounded-lg bg-slate-50 p-3 text-sm font-semibold"></p>
     <p id="confirmation-description" class="mt-4 text-muted"></p>
     <div class="mt-6 flex flex-wrap justify-end gap-3">
-        <x-button id="confirmation-cancel" autofocus>Cancel</x-button>
-        <x-button id="confirmation-accept" variant="primary">Confirm</x-button>
+        <x-button icon="back" id="confirmation-cancel" autofocus>Cancel</x-button>
+        <x-button icon="approve" id="confirmation-accept" variant="primary">Confirm</x-button>
     </div>
 </dialog>

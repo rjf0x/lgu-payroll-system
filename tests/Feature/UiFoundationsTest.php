@@ -18,15 +18,43 @@ class UiFoundationsTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_action_buttons_show_text_and_keep_accessible_labels_links_and_submission_attributes(): void
+    public function test_action_buttons_show_decorative_icons_and_text_and_keep_accessible_labels_links_and_submission_attributes(): void
     {
         $html = Blade::render('<x-button icon="edit" href="/example" aria-label="Edit employee">Edit</x-button><x-button icon="delete" type="submit" formaction="/delete" disabled>Delete</x-button><x-button type="submit">Save changes</x-button>');
         $document = $this->document($html);
         $this->assertSame(1, $document->query('//a[@href="/example" and @title="Edit" and @aria-label="Edit employee"]')->length);
-        $this->assertSame(0, $document->query('//a/svg | //a/span[@class="sr-only"]')->length);
-        $this->assertSame(1, $document->query('//a[@data-action-button and text()="Edit"]')->length);
+        $this->assertSame(1, $document->query('//a/svg[@aria-hidden="true" and @focusable="false"]')->length);
+        $this->assertSame(0, $document->query('//a/span[@class="sr-only"]')->length);
+        $this->assertSame(1, $document->query('//a[@data-action-button]/span[@data-button-label and text()="Edit"]')->length);
         $this->assertSame(1, $document->query('//button[@type="submit" and @formaction="/delete" and @disabled and @title="Delete"]')->length);
-        $this->assertSame(1, $document->query('//button[not(@data-icon-action) and text()="Save changes"]')->length);
+        $this->assertSame(1, $document->query('//button[@formaction="/delete"]/svg[@aria-hidden="true"]')->length);
+        $this->assertSame(1, $document->query('//button[not(@data-icon-action)]/span[@data-button-label and text()="Save changes"]')->length);
+    }
+
+    public function test_row_actions_have_one_labeled_trigger_and_preserve_links_and_confirmation_forms(): void
+    {
+        $html = Blade::render('<x-action-menu label="Actions for Alex"><x-button icon="view" href="/employee">View employee</x-button><form method="POST" action="/close" data-confirm data-submit-feedback><x-button icon="lock" type="submit">Close period</x-button></form></x-action-menu><x-action-menu label="Other actions"><x-button icon="edit" href="/edit">Edit</x-button></x-action-menu>');
+
+        $document = $this->document($html);
+
+        $triggers = $document->query('//button[@data-action-menu-trigger]');
+        $this->assertSame(2, $triggers->length);
+        $trigger = $triggers->item(0);
+        $menuId = $trigger->getAttribute('popovertarget');
+        $this->assertSame('Actions for Alex', $trigger->getAttribute('aria-label'));
+        $this->assertSame('button', $trigger->getAttribute('type'));
+        $this->assertSame($menuId, $trigger->getAttribute('aria-controls'));
+        $this->assertNotSame($menuId, $triggers->item(1)->getAttribute('popovertarget'));
+        $this->assertSame(3, $document->query('svg[@aria-hidden="true"]/circle', $trigger)->length);
+        $this->assertSame(1, $document->query('//div[@id="'.$menuId.'" and @popover="auto" and @role="group"]//a[@href="/employee"]')->length);
+        $this->assertSame(1, $document->query('//div[@id="'.$menuId.'"]//form[@action="/close" and @method="POST" and @data-confirm and @data-submit-feedback]//button[@type="submit"]')->length);
+    }
+
+    public function test_row_actions_do_not_show_an_empty_dropdown(): void
+    {
+        $html = Blade::render('<x-action-menu> </x-action-menu>');
+
+        $this->assertSame('', trim($html));
     }
 
     private function userWithRole(string $roleName): User
@@ -76,7 +104,7 @@ class UiFoundationsTest extends TestCase
     public function test_employee_directory_has_labeled_search_results_and_keyboard_accessible_table(): void
     {
         $user = $this->userWithRole(Role::VIEWER);
-        Employee::factory()->create(['employee_number' => 'FIND-001', 'first_name' => 'Alex', 'last_name' => 'Santos']);
+        $employee = Employee::factory()->create(['employee_number' => 'FIND-001', 'first_name' => 'Alex', 'middle_name' => null, 'last_name' => 'Santos', 'suffix' => null]);
         Employee::factory()->create(['employee_number' => 'OTHER-001', 'first_name' => 'Jamie', 'last_name' => 'Reyes']);
 
         $response = $this->actingAs($user)->get(route('employees.index', ['q' => 'FIND-001']))
@@ -87,6 +115,9 @@ class UiFoundationsTest extends TestCase
         $this->assertSame(1, $document->query('//form[@role="search"]//label[@for="q"]')->length);
         $this->assertSame(1, $document->query('//div[@role="region" and @aria-label="Employee directory" and @tabindex="0"]//caption')->length);
         $this->assertSame(1, $document->query('//form[@role="search"]//a[@href="'.route('employees.index').'"]')->length);
+        $this->assertSame(1, $document->query('//button[@data-action-menu-trigger and @aria-label="Actions for Alex Santos"]')->length);
+        $this->assertSame(1, $document->query('//div[@data-action-menu-panel]//a[starts-with(@href, "'.route('employees.show', $employee).'")]')->length);
+        $this->assertSame(0, $document->query('//div[@data-action-menu-panel]//a[contains(@href, "/edit")]')->length);
     }
 
     public function test_failed_employee_submission_links_errors_to_input_select_and_textarea_and_keeps_values(): void

@@ -14,7 +14,17 @@
 @endphp
 
 @if ($href)
-    <a href="{{ $href }}" {{ $attributes->class(['ui-button', $variantClass]) }}>{{ $slot }}</a>
+    <a href="{{ $href }}" {{ $attributes->class(['ui-button', $variantClass]) }}>
+        @if ($icon)
+            <x-action-icon :name="$icon" />
+        @endif
+        <span data-button-label>{{ $slot }}</span>
+    </a>
 @else
-    <button type="{{ $type }}" {{ $attributes->class(['ui-button', $variantClass]) }}>{{ $slot }}</button>
+    <button type="{{ $type }}" {{ $attributes->class(['ui-button', $variantClass]) }}>
+        @if ($icon)
+            <x-action-icon :name="$icon" />
+        @endif
+        <span data-button-label>{{ $slot }}</span>
+    </button>
 @endif

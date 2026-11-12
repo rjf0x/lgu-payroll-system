@@ -17,7 +17,7 @@
         <p class="text-sm text-slate-500">Grade-and-step or direct-rate compensation attached to an employment record.</p>
         @can('compensation.manage')
             <x-button icon="add" variant="primary" href="{{ route('compensation-profiles.create') }}">
-                + Add Compensation Profile
+                Add Compensation Profile
             </x-button>
         @endcan
     </div>
@@ -27,36 +27,38 @@
         <x-table label="Compensation Profiles records">
             <thead class="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
                 <tr>
-                    <th scope="col" class="px-4 py-3 text-left">Employee</th>
+                    <th scope="col" class="px-4 py-3 text-left ui-table-primary">Employee</th>
                     <th scope="col" class="px-4 py-3 text-left">Basis</th>
-                    <th scope="col" class="px-4 py-3 text-right">Rate</th>
+                    <th scope="col" class="px-4 py-3 text-right tabular-nums">Rate</th>
                     <th scope="col" class="px-4 py-3 text-left">Effective</th>
-                    <th scope="col" class="px-4 py-3">Actions</th>
+                    <th scope="col" class="px-4 py-3 text-right ui-table-actions">Actions</th>
                 </tr>
             </thead>
-            <tbody class="divide-y divide-slate-100">
+            <tbody>
                 @forelse ($profiles as $profile)
-                    <tr class="hover:bg-slate-50">
-                        <td class="px-4 py-3">
+                    <tr>
+                        <td class="px-4 py-3 ui-table-primary">
                             <a href="{{ route('compensation-profiles.show', $profile) }}" class="font-medium text-brand hover:underline">
                                 {{ $profile->employmentRecord->employee->full_name }}
                             </a>
-                            <div class="text-xs text-slate-400">{{ $profile->employmentRecord->position->position_title }}</div>
+                            <div class="ui-table-secondary">{{ $profile->employmentRecord->position->position_title }}</div>
                         </td>
                         <td class="px-4 py-3 text-slate-600">
                             {{ $profile->gradeStep ? 'Grade & Step' : ucfirst(strtolower($profile->pay_basis)) }}
                         </td>
-                        <td class="px-4 py-3 text-right font-mono">
+                        <td class="px-4 py-3 font-mono text-right tabular-nums">
                             ₱{{ number_format((float) ($profile->gradeStep->monthly_salary ?? $profile->basic_rate), 2) }}
                         </td>
                         <td class="px-4 py-3 text-slate-600">
                             {{ $profile->effective_from?->format('M d, Y') }} – {{ $profile->effective_to?->format('M d, Y') ?? 'present' }}
                         </td>
-                        <td class="px-4 py-3 text-right">
-                            <x-button icon="view" variant="secondary" href="{{ route('compensation-profiles.show', $profile) }}">View</x-button>
-                            @can('compensation.manage')
-                                <x-button icon="edit" variant="secondary" href="{{ route('compensation-profiles.edit', $profile) }}">Edit</x-button>
-                            @endcan
+                        <td class="px-4 py-3 text-right ui-table-actions">
+                            <x-action-menu :label="'Actions for compensation profile #'.$profile->getKey()">
+                                <x-button icon="view" variant="secondary" href="{{ route('compensation-profiles.show', $profile) }}">View</x-button>
+                                @can('compensation.manage')
+                                    <x-button icon="edit" variant="secondary" href="{{ route('compensation-profiles.edit', $profile) }}">Edit</x-button>
+                                @endcan
+                            </x-action-menu>
                         </td>
                     </tr>
                 @empty

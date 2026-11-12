@@ -33,22 +33,22 @@
         </form>
 
     <p class="mb-3 text-sm text-slate-600">{{ number_format($logs->total()) }} matching events. Newest first. Dates use {{ config('app.timezone') }}.</p>
-    <div role="region" aria-label="Audit events" tabindex="0" class="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm focus-visible:outline-2 focus-visible:outline-focus">
+    <div role="region" aria-label="Audit events" tabindex="0" class="overflow-x-auto rounded-xl border border-slate-200 bg-white focus-visible:outline-2 focus-visible:outline-focus">
         <x-results :items="$logs" />
         <x-table label="Audit trail records">
             <caption class="sr-only">Recorded audit activity, newest first</caption>
             <thead class="bg-slate-50 text-slate-600">
                 <tr>
                     @foreach (['Event', 'When', 'User', 'Module', 'Action', 'Record', 'IP address'] as $heading)
-                        <th scope="col" class="whitespace-nowrap px-4 py-3 font-semibold">{{ $heading }}</th>
+                        <th scope="col" class="px-4 py-3 font-semibold {{ $heading === 'When' ? 'ui-table-primary' : '' }}">{{ $heading }}</th>
                     @endforeach
                 </tr>
             </thead>
-            <tbody class="divide-y divide-slate-100">
+            <tbody>
                 @forelse ($logs as $log)
-                    <tr class="hover:bg-slate-50">
+                    <tr>
                         <td class="px-4 py-3 tabular-nums">#{{ $log->audit_id }}</td>
-                        <td class="whitespace-nowrap px-4 py-3"><time datetime="{{ $log->created_at?->toIso8601String() }}">{{ $log->created_at?->format('M d, Y H:i:s') }}</time></td>
+                        <td class="ui-table-primary px-4 py-3"><time datetime="{{ $log->created_at?->toIso8601String() }}">{{ $log->created_at?->format('M d, Y H:i:s') }}</time></td>
                         <td class="px-4 py-3">{{ $log->user?->username ?? 'System / unavailable user' }}</td>
                         <td class="px-4 py-3">{{ $log->module }}</td>
                         <td class="px-4 py-3 font-medium">{{ $log->action }}</td>

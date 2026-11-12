@@ -46,7 +46,7 @@
     </div>
 
     <div class="flex flex-wrap gap-3">
-        <button class="ui-button ui-button-primary">{{ $isEdit ? 'Save changes' : 'Create earning type' }}</button>
-        <a href="{{ route('earning-types.index') }}" class="ui-button ui-button-secondary">Cancel</a>
+        <x-button :icon="$isEdit ? 'save' : 'add'" type="submit" variant="primary">{{ $isEdit ? 'Save changes' : 'Create earning type' }}</x-button>
+        <x-button icon="back" href="{{ route('earning-types.index') }}">Cancel</x-button>
     </div>
 </form>

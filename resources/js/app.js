@@ -1,7 +1,9 @@
 import './navigation.js';
 import './header.js';
+import './action-menus.js';
 const confirmation = document.getElementById('confirmation-dialog');
 let pendingConfirmation = null;
+const submissionLabels = new WeakMap();
 
 if (confirmation && typeof confirmation.showModal === 'function') {
     window.payrollConfirmationReady = true;
@@ -42,9 +44,12 @@ const resetSubmission = () => {
         form.removeAttribute('aria-busy');
         form.querySelectorAll('[data-was-submitting]').forEach((button) => {
             button.disabled = false;
-            if (button.hasAttribute('data-action-button')) {
-                button.removeAttribute('aria-busy');
-            } else {
+            button.removeAttribute('aria-busy');
+            const label = button.querySelector('[data-button-label]');
+            if (label && submissionLabels.has(button)) {
+                label.replaceChildren(...submissionLabels.get(button));
+                submissionLabels.delete(button);
+            } else if (button.dataset.originalLabel !== undefined) {
                 button.textContent = button.dataset.originalLabel;
             }
             delete button.dataset.wasSubmitting;
@@ -101,8 +106,11 @@ document.addEventListener('submit', (event) => {
         form.querySelectorAll('button[type="submit"], button:not([type])').forEach((button) => {
             if (button.disabled) { return; }
             button.dataset.wasSubmitting = 'true';
-            if (button.hasAttribute('data-action-button')) {
-                button.setAttribute('aria-busy', 'true');
+            button.setAttribute('aria-busy', 'true');
+            const label = button.querySelector('[data-button-label]');
+            if (label) {
+                submissionLabels.set(button, [...label.childNodes]);
+                label.textContent = button.dataset.submittingLabel || 'Submitting…';
             } else {
                 button.dataset.originalLabel = button.textContent;
                 button.textContent = button.dataset.submittingLabel || 'Submitting…';
@@ -120,7 +128,7 @@ const passwordField = document.getElementById('password');
 if (passwordToggle && passwordField) {
     const setPasswordVisibility = (visible) => {
         passwordField.type = visible ? 'text' : 'password';
-        passwordToggle.textContent = visible ? 'Hide' : 'Show';
+        passwordToggle.querySelector('[data-button-label]').textContent = visible ? 'Hide' : 'Show';
         passwordToggle.setAttribute('aria-label', visible ? 'Hide password' : 'Show password');
         passwordToggle.setAttribute('aria-pressed', String(visible));
     };

@@ -16,21 +16,23 @@
         <h2 id="payroll-reports-heading" class="mb-3 text-lg font-semibold">Payroll reports</h2>
         <x-results :items="$runs" />
         <x-table label="Payroll reports by period">
-            <thead><tr><th scope="col">Period / pay date</th><th scope="col">Run</th><th scope="col">Status</th><th scope="col">Employees</th><th scope="col">Available reports</th></tr></thead>
+            <thead><tr><th scope="col" class="ui-table-primary">Period / pay date</th><th scope="col">Run</th><th scope="col" class="text-center">Status</th><th scope="col" class="text-right tabular-nums">Employees</th><th scope="col" class="text-right ui-table-actions">Available reports</th></tr></thead>
             <tbody>
                 @forelse ($runs as $run)
                     <tr>
-                        <td>{{ $run->payrollPeriod->period_name }}<span class="block text-muted">Pay date {{ $run->payrollPeriod->pay_date?->format('M d, Y') }}</span></td>
+                        <td class="ui-table-primary">{{ $run->payrollPeriod->period_name }}<span class="ui-table-secondary">Pay date {{ $run->payrollPeriod->pay_date?->format('M d, Y') }}</span></td>
                         <td>#{{ $run->run_number }}</td>
-                        <td><x-status :value="$run->status" /></td>
-                        <td>{{ $run->details_count }}</td>
-                        <td><div class="flex flex-wrap items-center gap-3">
-                            <x-button icon="document" :href="route('payroll-runs.register', $run)" aria-label="Register for {{ $run->payrollPeriod->period_name }}, run {{ $run->run_number }}">Register</x-button>
-                            <x-button icon="list" :href="route('reports.payroll-summary', $run)">Department summary</x-button>
-                            <x-button icon="list" :href="route('reports.deductions', $run)">Deductions report</x-button>
-                            <x-button icon="document" :href="route('payroll-runs.payslips', $run)">Payslips</x-button>
-                            @can('reports.generate')<x-button icon="download" variant="secondary" href="{{ route('payroll-runs.register.export', $run) }}">Export spreadsheet</x-button>@endcan
-                        </div></td>
+                        <td class="text-center"><x-status :value="$run->status" /></td>
+                        <td class="text-right tabular-nums">{{ $run->details_count }}</td>
+                        <td class="text-right ui-table-actions">
+                            <x-action-menu :label="'Reports for payroll run #'.$run->run_number">
+                                <x-button icon="document" :href="route('payroll-runs.register', $run)" aria-label="Register for {{ $run->payrollPeriod->period_name }}, run {{ $run->run_number }}">Register</x-button>
+                                <x-button icon="list" :href="route('reports.payroll-summary', $run)">Department summary</x-button>
+                                <x-button icon="list" :href="route('reports.deductions', $run)">Deductions report</x-button>
+                                <x-button icon="document" :href="route('payroll-runs.payslips', $run)">Payslips</x-button>
+                                @can('reports.generate')<x-button icon="download" variant="secondary" href="{{ route('payroll-runs.register.export', $run) }}">Export spreadsheet</x-button>@endcan
+                            </x-action-menu>
+                        </td>
                     </tr>
                 @empty
                     <tr><td colspan="5">No payroll runs match these filters.</td></tr>
@@ -45,12 +47,12 @@
         <p class="mb-3 text-muted">History records when an export was requested. Reopening a register shows current data; an archived export file is not retained.</p>
         <x-results :items="$reports" />
         <x-table label="Generated report history">
-            <thead><tr><th scope="col">Report</th><th scope="col">Payroll scope</th><th scope="col">Requested by</th><th scope="col">Generated at</th></tr></thead>
+            <thead><tr><th scope="col" class="ui-table-primary">Report</th><th scope="col">Payroll scope</th><th scope="col">Requested by</th><th scope="col">Generated at</th></tr></thead>
             <tbody>
                 @forelse ($reports as $report)
                     @php($reportRun = $reportScopes->get($report->getKey()))
                     <tr>
-                        <td>{{ \Illuminate\Support\Str::headline(strtolower($report->report_type)) }}<span class="block text-muted">CSV export request</span></td>
+                        <td class="ui-table-primary">{{ \Illuminate\Support\Str::headline(strtolower($report->report_type)) }}<span class="ui-table-secondary">CSV export request</span></td>
                         <td class="ui-wrap">
                             @if ($reportRun)
                                 <a href="{{ route('payroll-runs.register', $reportRun) }}">{{ $reportRun->payrollPeriod->period_name }} ? Run #{{ $reportRun->run_number }}</a>

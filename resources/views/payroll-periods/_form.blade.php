@@ -22,7 +22,7 @@
     </div>
 
     <div class="flex flex-wrap gap-3">
-        <button class="ui-button ui-button-primary">{{ $isEdit ? 'Save changes' : 'Create period' }}</button>
-        <a href="{{ route('payroll-periods.index') }}" class="ui-button ui-button-secondary">Cancel</a>
+        <x-button :icon="$isEdit ? 'save' : 'add'" type="submit" variant="primary">{{ $isEdit ? 'Save changes' : 'Create period' }}</x-button>
+        <x-button icon="back" href="{{ route('payroll-periods.index') }}">Cancel</x-button>
     </div>
 </form>

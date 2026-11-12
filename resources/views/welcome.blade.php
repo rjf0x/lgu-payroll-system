@@ -18,9 +18,9 @@
                 <p class="mt-4 max-w-lg text-base leading-7 text-muted">Your workspace for employee records, payroll preparation, independent review, and reports.</p>
                 <div class="mt-8">
                     @auth
-                        <x-button :href="route('dashboard')" variant="primary">Continue to dashboard</x-button>
+                        <x-button icon="view" :href="route('dashboard')" variant="primary">Continue to dashboard</x-button>
                     @else
-                        <x-button :href="route('login')" variant="primary">Sign in to your account</x-button>
+                        <x-button icon="login" :href="route('login')" variant="primary">Sign in to your account</x-button>
                     @endauth
                 </div>
             </div>

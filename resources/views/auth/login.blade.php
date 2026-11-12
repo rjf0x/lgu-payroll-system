@@ -79,8 +79,11 @@
                             <div>
                                 <label for="password" class="mb-1.5 block text-sm font-semibold text-slate-700">Password <span class="text-rose-700" aria-hidden="true">*</span><span class="sr-only"> (required)</span></label>
                                 <div class="relative">
-                                    <input id="password" name="password" type="password" autocomplete="current-password" required placeholder="Enter your password" aria-invalid="{{ $errors->has('password') ? 'true' : 'false' }}" @if ($errors->has('password')) aria-describedby="password-error" @endif class="ui-field h-12 pr-20">
-                                    <button id="toggle-password" type="button" hidden aria-label="Show password" aria-controls="password" aria-pressed="false" class="absolute right-1 top-0.5 inline-flex min-h-11 min-w-16 items-center justify-center rounded-md px-3 text-sm font-semibold text-brand hover:bg-brand-soft">Show</button>
+                                    <input id="password" name="password" type="password" autocomplete="current-password" required placeholder="Enter your password" aria-invalid="{{ $errors->has('password') ? 'true' : 'false' }}" @if ($errors->has('password')) aria-describedby="password-error" @endif class="ui-field h-12 pr-24">
+                                    <button id="toggle-password" type="button" hidden aria-label="Show password" aria-controls="password" aria-pressed="false" class="ui-button ui-button-ghost absolute right-1 top-1 min-w-16">
+                                        <x-action-icon name="view" />
+                                        <span data-button-label>Show</span>
+                                    </button>
                                 </div>
                                 <x-form.feedback name="password" id="password" />
                             </div>
@@ -90,9 +93,8 @@
                                 Remember me on this device
                             </label>
 
-                            <x-button type="submit" variant="primary" class="h-12 w-full" data-submitting-label="Signing in...">
+                            <x-button icon="login" type="submit" variant="primary" class="w-full" data-submitting-label="Signing in...">
                                 Sign in
-                                <svg class="h-4 w-4" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 10h12m-5-5 5 5-5 5" /></svg>
                             </x-button>
                             <p id="submission-status" role="status" class="sr-only"></p>
                         </form>
