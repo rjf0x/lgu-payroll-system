@@ -6,33 +6,57 @@
 @section('content')
     <x-page-header description="Manage payroll schedules, review coverage and pay dates, and access associated payroll runs.">
         @can('payroll.prepare')
-            <x-button icon="add" variant="primary" href="{{ route('payroll-periods.create') }}">Create Payroll Period</x-button>
+            <x-button icon="add" variant="primary" href="{{ route('payroll-periods.create') }}" class="ui-button-compact">Create Payroll Period</x-button>
         @endcan
     </x-page-header>
 
-    <dl class="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3" aria-label="All payroll period statistics">
+    <dl class="mb-4 flex flex-wrap items-center gap-x-3 gap-y-2 text-sm" aria-label="All payroll period statistics">
         @foreach ($statistics as $label => $count)
-            <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-                <dt class="text-sm font-medium text-slate-600">{{ $label }}</dt>
-                <dd class="mt-2 text-3xl font-semibold tabular-nums text-blue-700">{{ number_format($count) }}</dd>
+            <div class="flex items-baseline gap-2">
+                <dt class="text-muted">{{ $label }}</dt>
+                <dd class="font-semibold tabular-nums text-ink">{{ number_format($count) }}</dd>
             </div>
         @endforeach
     </dl>
 
-    <form method="GET" action="{{ route('payroll-periods.index') }}" class="mb-6 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            <x-form.input name="q" label="Search payroll periods" :value="$filters['q'] ?? ''" placeholder="Search by period name" />
-            <x-form.input name="year" label="Coverage year" type="number" min="1900" max="9999" :value="$filters['year'] ?? ''" placeholder="All years" />
-            <x-form.select name="payroll_type" label="Payroll type" :selected="$filters['payroll_type'] ?? ''" :options="['' => 'All types', 'MONTHLY' => 'Monthly']" />
-            <x-form.select name="status" label="Period status" :selected="$filters['status'] ?? ''" :options="['' => 'All period statuses', 'OPEN' => 'Open', 'CLOSED' => 'Closed']" />
-            <x-form.input name="from" label="Coverage from" type="date" :value="$filters['from'] ?? ''" />
-            <x-form.input name="to" label="Coverage to" type="date" :value="$filters['to'] ?? ''" />
+    <form method="GET" action="{{ route('payroll-periods.index') }}" aria-label="Payroll period filters" class="ui-filter-toolbar mb-5 rounded-lg border border-slate-200 bg-surface p-3">
+        <div class="flex flex-wrap items-end gap-2">
+            <div class="w-full min-w-0 sm:min-w-40 sm:flex-1 sm:basis-40">
+                <x-form.input name="q" aria-label="Search payroll periods" type="search" :value="$filters['q'] ?? ''" placeholder="Search periods" />
+            </div>
+            <div class="w-20">
+                <x-form.input name="year" aria-label="Coverage year" aria-describedby="payroll-period-filter-help" type="number" min="1900" max="9999" :value="$filters['year'] ?? ''" placeholder="Year" />
+            </div>
+            <div class="min-w-28 flex-1 sm:w-32 sm:flex-none">
+                <x-form.select name="status" aria-label="Period status" :selected="$filters['status'] ?? ''" :options="['' => 'All statuses', 'OPEN' => 'Open', 'CLOSED' => 'Closed']" />
+            </div>
+            <div class="flex shrink-0 items-center gap-2">
+                <x-button icon="filter" variant="primary" type="submit" aria-label="Apply filters">Apply</x-button>
+                <x-button icon="reset" variant="secondary" href="{{ route('payroll-periods.index') }}">Reset</x-button>
+            </div>
         </div>
-        <p class="mt-3 text-sm text-slate-500">Coverage dates find periods overlapping the selected range. Year refers to the coverage start year. Statistics include all periods.</p>
-        <div class="mt-4 flex flex-wrap gap-3">
-            <x-button icon="filter" variant="primary" type="submit">Apply filters</x-button>
-            <x-button icon="reset" variant="secondary" href="{{ route('payroll-periods.index') }}">Reset</x-button>
-        </div>
+        @php($hasExtraFilters = ! empty($filters['payroll_type']) || ! empty($filters['from']) || ! empty($filters['to']))
+        <details id="payroll-period-extra-filters" class="group mt-2" @if ($hasExtraFilters) open @endif>
+            <summary class="ui-button ui-button-secondary list-none [&::-webkit-details-marker]:hidden">
+                <span>More filters</span>
+                @if ($hasExtraFilters)
+                    <span class="rounded bg-brand-soft px-1.5 text-xs font-semibold text-brand-ink">Active</span>
+                @endif
+                <svg class="size-4 transition-transform group-open:rotate-180" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="m5 7.5 5 5 5-5" /></svg>
+            </summary>
+            <div class="mt-3 grid grid-cols-1 items-end gap-3 border-t border-slate-200 pt-3 sm:grid-cols-3">
+                <x-form.select name="payroll_type" label="Type" aria-label="Payroll type" :selected="$filters['payroll_type'] ?? ''" :options="['' => 'All types', 'MONTHLY' => 'Monthly']" />
+                <x-form.input name="from" label="From" aria-label="Coverage from" aria-describedby="payroll-period-filter-help" type="date" :value="$filters['from'] ?? ''" />
+                <x-form.input name="to" label="To" aria-label="Coverage to" aria-describedby="payroll-period-filter-help" type="date" :value="$filters['to'] ?? ''" />
+            </div>
+            <details id="payroll-period-coverage-help" class="mt-2">
+                <summary class="ui-button ui-button-ghost list-none px-2 text-xs [&::-webkit-details-marker]:hidden">
+                    <svg class="size-4 shrink-0" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="10" cy="10" r="7.5" /><path stroke-linecap="round" d="M8 7.5a2 2 0 1 1 3.5 1.3c-.7.5-1.5 1-1.5 2.2M10 14h.01" /></svg>
+                    <span>How coverage works</span>
+                </summary>
+                <p id="payroll-period-filter-help" class="mt-2 max-w-2xl text-xs leading-5 text-muted">Dates match overlapping coverage; year uses the start date. Metrics include all periods.</p>
+            </details>
+        </details>
     </form>
 
     <div class="min-w-0">

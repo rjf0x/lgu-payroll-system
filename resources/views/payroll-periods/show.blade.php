@@ -5,11 +5,11 @@
 
 @section('content')
     <x-page-header description="Review this schedule and the individual status of each associated payroll run.">
-        <x-button icon="back" variant="secondary" href="{{ route('payroll-periods.index') }}">Back to Payroll Periods</x-button>
+        <x-button icon="back" variant="secondary" href="{{ route('payroll-periods.index') }}" class="ui-button-compact">Back to Payroll Periods</x-button>
     </x-page-header>
     <section class="mb-6 rounded-xl border border-slate-200 bg-white p-5 shadow-sm" aria-labelledby="period-heading">
         <h2 id="period-heading" class="mb-4 text-xl font-semibold">{{ $period->period_name }}</h2>
-        <dl class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        <dl class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <div><dt class="text-sm text-slate-500">Payroll type</dt><dd class="mt-1 font-medium">{{ ucfirst(strtolower($period->payroll_type)) }}</dd></div>
             <div><dt class="text-sm text-slate-500">Coverage period</dt><dd class="mt-1 font-medium">{{ $period->start_date->format('M d, Y') }} &ndash; {{ $period->end_date->format('M d, Y') }}</dd></div>
             <div><dt class="text-sm text-slate-500">Scheduled pay date</dt><dd class="mt-1 font-medium">{{ $period->pay_date->format('M d, Y') }}</dd></div>

@@ -57,6 +57,27 @@ class UiFoundationsTest extends TestCase
         $this->assertSame('', trim($html));
     }
 
+    public function test_payroll_period_filters_show_three_primary_fields_and_expand_active_extra_filters(): void
+    {
+        $user = $this->userWithRole(Role::VIEWER);
+
+        $response = $this->actingAs($user)->get(route('payroll-periods.index'))->assertOk();
+
+        $document = $this->document($response->getContent());
+        $this->assertSame(3, $document->query('//form[@aria-label="Payroll period filters"]//*[self::input or self::select][not(ancestor::details)][@name="q" or @name="year" or @name="status"]')->length);
+        $this->assertSame(3, $document->query('//details[@id="payroll-period-extra-filters"]//*[self::input or self::select]')->length);
+        $this->assertSame(0, $document->query('//details[@id="payroll-period-extra-filters" and @open]')->length);
+        $this->assertSame(0, $document->query('//details[@id="payroll-period-coverage-help" and @open]')->length);
+        $this->assertSame(1, $document->query('//details[@id="payroll-period-coverage-help"]/p[@id="payroll-period-filter-help"]')->length);
+
+        $response = $this->get(route('payroll-periods.index', ['payroll_type' => 'MONTHLY', 'from' => '2026-01-01']))->assertOk();
+
+        $document = $this->document($response->getContent());
+        $this->assertSame(1, $document->query('//details[@id="payroll-period-extra-filters" and @open]')->length);
+        $this->assertSame(1, $document->query('//details[@id="payroll-period-extra-filters"]//input[@name="from" and @value="2026-01-01"]')->length);
+        $this->assertSame(1, $document->query('//details[@id="payroll-period-extra-filters"]//select[@name="payroll_type"]/option[@value="MONTHLY" and @selected]')->length);
+    }
+
     private function userWithRole(string $roleName): User
     {
         $this->seed(RolePermissionSeeder::class);

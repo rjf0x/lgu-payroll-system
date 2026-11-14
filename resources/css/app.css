@@ -103,6 +103,11 @@
     }
     .ui-field:focus { @apply border-brand ring-2 ring-sky-100; }
     .ui-field[aria-invalid='true'] { @apply border-rose-700 ring-2 ring-rose-100; }
+    .ui-filter-toolbar .ui-field, .ui-compact-form .ui-field { @apply h-10 min-h-10 rounded-md px-3 py-2 text-base leading-5 shadow-none sm:h-9 sm:min-h-9 sm:py-1.5 sm:text-sm; }
+    .ui-filter-toolbar .ui-button, .ui-compact-form .ui-button { @apply h-9 min-h-9 py-1.5; }
+    .ui-filter-toolbar select { @apply px-2; }
+    .ui-filter-toolbar label { @apply mb-1 text-xs font-medium text-muted; }
+    .ui-compact-form label { @apply mb-1 text-sm font-medium text-muted; }
     .ui-table-scroll { @apply relative max-h-[36rem] w-full min-w-0 max-w-full overflow-auto overscroll-x-contain rounded-2xl border border-slate-200 bg-surface shadow-xs; }
     .ui-table { @apply w-full min-w-[40rem] border-collapse whitespace-nowrap text-left text-sm leading-5; }
     .ui-table :is(th, td) { @apply min-w-28; }

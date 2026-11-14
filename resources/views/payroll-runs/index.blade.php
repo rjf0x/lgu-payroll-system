@@ -10,13 +10,12 @@
                 <input type="hidden" name="payroll_period_id" value="{{ request()->integer('payroll_period_id') }}">
                 <span class="text-sm text-slate-600">Runs for selected payroll period</span>
             @endif
-            <select name="status" class="ui-field" aria-label="Status" id="filter-status">
+            <select name="status" class="ui-field" aria-label="Status" id="filter-status" onchange="this.form.requestSubmit()" style="width: auto; min-width: 180px; max-width: 240px; min-height: 36px; max-height: 40px;">
                 <option value="">All statuses</option>
                 @foreach (['DRAFT', 'PENDING_APPROVAL', 'RETURNED', 'REJECTED', 'APPROVED', 'FINALIZED'] as $option)
                     <option value="{{ $option }}" @selected($status === $option)>{{ str_replace('_', ' ', $option) }}</option>
                 @endforeach
             </select>
-            <x-button icon="filter" type="submit">Apply filters</x-button>
             <x-button icon="reset" :href="route('payroll-runs.index')">Reset</x-button>
         </form>
         @can('payroll.prepare')
