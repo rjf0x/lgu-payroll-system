@@ -147,6 +147,17 @@
         .ui-table thead .ui-table-primary { @apply z-20; }
         .ui-table :is(tbody, tfoot) th.ui-table-primary { @apply top-auto; }
     }
+    .ui-table-compact :is(th, td) { @apply min-w-24 px-3 py-2.5; }
+    .ui-table-compact th { @apply tracking-wider; }
+    .ui-table-compact tbody tr,
+    .ui-table-compact tbody tr:has(.ui-table-secondary:not(:empty)) { @apply h-14; }
+    .ui-table-compact .ui-table-secondary { @apply mt-0; }
+    .ui-table-compact :is(th, td).ui-table-primary { @apply w-56 min-w-48 max-w-none whitespace-nowrap break-normal; }
+    .ui-table-compact .ui-table-actions { @apply w-18 min-w-18; }
+    .ui-table-compact.ui-table-sticky-first :is(th, td):first-child { box-shadow: 1px 0 0 var(--color-slate-200); }
+    @media (hover: hover) {
+        .ui-table-compact tbody > tr:hover > :is(td, th) { @apply bg-slate-50; }
+    }
     .ui-nav-group { @apply mt-1; }
     .ui-nav-group > summary { @apply flex min-h-11 list-none items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-brand-on-dark hover:bg-white/10 hover:text-white; }
     .ui-nav-group > summary::-webkit-details-marker { display: none; }

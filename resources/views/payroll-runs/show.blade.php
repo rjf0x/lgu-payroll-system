@@ -38,7 +38,7 @@
                     <h2 id="breakdown-heading" class="text-lg font-semibold">Employee breakdown</h2>
                     <p class="text-sm text-muted">Amounts in Philippine pesos. Scroll within the table for all columns.</p>
                 </div>
-                <x-table label="Employee payroll breakdown" :sticky-first="true">
+                <x-table label="Employee payroll breakdown" :sticky-first="true" :compact="true">
                     <thead>
                         <tr>
                             <th scope="col" class="ui-table-primary">Employee</th>
@@ -56,14 +56,18 @@
                     <tbody>
                         @foreach ($run->details as $detail)
                             <tr>
-                                <td class="ui-wrap ui-table-primary">
-                                    <div class="font-semibold">{{ $detail->employee_name_snapshot }}</div>
-                                    <div class="ui-table-secondary">{{ $detail->position_snapshot }}</div>
+                                <td class="ui-table-primary">
+                                    <div class="text-sm font-semibold">{{ $detail->employee_name_snapshot }}</div>
+                                    <div class="ui-table-secondary max-w-56 truncate" title="{{ $detail->position_snapshot }}">{{ $detail->position_snapshot }}</div>
                                 </td>
-                                <td class="ui-wrap max-w-64">
-                                    <div>Payable days: {{ $detail->payable_days ?? 'Input required' }}</div>
+                                <td class="w-48">
+                                    @if ($detail->payable_days === null)
+                                        <span class="inline-flex items-center whitespace-nowrap rounded-md bg-warning-soft px-2 py-0.5 text-xs font-medium text-warning-ink ring-1 ring-inset ring-amber-200"><span class="sr-only">Payable days: </span>Needs input</span>
+                                    @else
+                                        <div class="text-sm tabular-nums"><span class="sr-only">Payable days: </span>{{ $detail->payable_days }} days</div>
+                                    @endif
                                     @if ($detail->input_reference)
-                                        <div class="ui-table-secondary">Source: {{ $detail->input_reference }}</div>
+                                        <div class="ui-table-secondary max-w-48 truncate" title="{{ $detail->input_reference }}">Source: {{ $detail->input_reference }}</div>
                                     @endif
                                 </td>
                                 <td class="ui-money text-right tabular-nums">{{ number_format((float) $detail->basic_pay, 2) }}</td>
@@ -78,10 +82,10 @@
                                         @if ($run->isEditable())
                                             <x-action-menu :label="'Actions for '.$detail->employee_name_snapshot"><x-button icon="edit" variant="secondary" href="{{ route('payroll-details.edit', [$run, $detail]) }}">Edit<span class="sr-only"> {{ $detail->employee_name_snapshot }}</span></x-button></x-action-menu>
                                         @else
-                                            <span class="text-muted">Read only</span>
+                                            <x-status value="READ_ONLY" class="whitespace-nowrap" />
                                         @endif
                                     @else
-                                        <span class="text-muted">Read only</span>
+                                        <x-status value="READ_ONLY" class="whitespace-nowrap" />
                                     @endcan
                                 </td>
                             </tr>
