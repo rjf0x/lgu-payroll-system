@@ -60,6 +60,7 @@
 }
 
 @layer components {
+    .ui-skeleton { @apply rounded-md bg-slate-200; }
     .ui-button {
         @apply inline-flex h-10 min-h-10 shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-lg border px-3 py-2 text-sm font-semibold leading-5;
     }

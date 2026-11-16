@@ -153,6 +153,8 @@ class PayrollOutputTest extends TestCase
         $this->actingAs($officer)
             ->get(route('payslips.show', $payslip))
             ->assertOk()
+            ->assertSee('data-page-loader data-current-kind="report"', false)
+            ->assertSee('data-page-content', false)
             ->assertSee('Net Take-Home Pay');
 
         $this->actingAs($officer)

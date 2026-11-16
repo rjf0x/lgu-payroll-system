@@ -7,7 +7,8 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="login-page min-h-dvh bg-slate-50 font-sans antialiased">
-    <main class="flex min-h-dvh items-center justify-center px-4 py-8 sm:px-8">
+    <x-page-loader class="mx-auto max-w-6xl px-4 pt-8 sm:px-8" />
+    <main data-page-content class="flex min-h-dvh items-center justify-center px-4 py-8 sm:px-8">
         <div class="w-full max-w-6xl">
             <div class="grid overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-xl shadow-slate-900/5 lg:grid-cols-[0.95fr_1.05fr]">
                 <aside aria-label="Payroll workspace" class="relative hidden flex-col justify-between overflow-hidden bg-brand-strong p-10 text-white lg:flex xl:p-12">

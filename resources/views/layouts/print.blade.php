@@ -13,7 +13,8 @@
         <x-button icon="print" onclick="window.print()" variant="primary">Print</x-button>
     </div>
 
-    <main class="print-document mx-auto my-4 min-w-0 max-w-3xl rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-8">
+    <x-page-loader class="mx-auto max-w-3xl px-4" />
+    <main data-page-content class="print-document mx-auto my-4 min-w-0 max-w-3xl rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-8">
         <p class="mb-3 break-words text-center text-lg font-semibold">{{ $systemSettings['organization_name'] }}</p>
         @yield('content')
     </main>

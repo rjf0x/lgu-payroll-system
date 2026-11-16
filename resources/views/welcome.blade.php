@@ -7,7 +7,8 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="min-h-dvh bg-canvas font-sans antialiased">
-    <main class="flex min-h-dvh items-center justify-center px-4 py-10 sm:px-8">
+    <x-page-loader class="mx-auto max-w-6xl px-4 pt-8 sm:px-8" />
+    <main data-page-content class="flex min-h-dvh items-center justify-center px-4 py-10 sm:px-8">
         <section class="w-full max-w-2xl overflow-hidden rounded-3xl border border-brand-border bg-white shadow-xl shadow-blue-950/5" aria-labelledby="welcome-heading">
             <div class="flex items-center gap-3 bg-brand-strong px-6 py-6 text-white sm:px-10">
                 <span class="grid h-12 w-12 shrink-0 place-items-center rounded-xl border border-white/25 bg-white/10 text-sm font-bold">LGU</span>

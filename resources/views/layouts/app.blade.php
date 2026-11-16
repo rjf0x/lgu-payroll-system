@@ -99,16 +99,19 @@
             </div>
         </header>
         <main id="main-content" tabindex="-1" class="mx-auto w-full min-w-0 max-w-[1600px] flex-1 px-4 py-6 sm:px-6 lg:px-8 lg:py-9">
-            <x-breadcrumbs />
-            @if (session('status'))
-                <x-alert class="mb-5">{{ session('status') }}</x-alert>
-            @endif
-            @if (session('error'))
-                <x-alert variant="error" class="mb-5">{{ session('error') }}</x-alert>
-            @endif
-            <x-form.error-summary />
-            <p id="submission-status" role="status" class="sr-only"></p>
-            @yield('content')
+            <x-page-loader />
+            <div data-page-content>
+                <x-breadcrumbs />
+                @if (session('status'))
+                    <x-alert class="mb-5">{{ session('status') }}</x-alert>
+                @endif
+                @if (session('error'))
+                    <x-alert variant="error" class="mb-5">{{ session('error') }}</x-alert>
+                @endif
+                <x-form.error-summary />
+                <p id="submission-status" role="status" class="sr-only"></p>
+                @yield('content')
+            </div>
         </main>
     </div>
 </div>
