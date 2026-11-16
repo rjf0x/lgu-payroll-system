@@ -6,6 +6,7 @@ use App\Models\GeneratedReport;
 use App\Models\PayrollDeduction;
 use App\Models\PayrollDetail;
 use App\Models\PayrollRun;
+use App\Services\PayrollRegisterService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Validation\Rule;
@@ -64,12 +65,12 @@ class ReportController extends Controller
         ]);
     }
 
-    public function deductions(Request $request, PayrollRun $payrollRun): View
+    public function deductions(Request $request, PayrollRun $payrollRun, PayrollRegisterService $register): View
     {
         $payrollRun->load(['payrollPeriod', 'details.deductions']);
         $deductions = $payrollRun->details->flatMap(fn (PayrollDetail $detail) => $detail->deductions->map(fn (PayrollDeduction $deduction): array => [
             'deduction_type_id' => $deduction->deduction_type_id,
-            'name' => $deduction->deduction_name_snapshot,
+            'name' => $register->label($deduction),
             'payroll_detail_id' => $detail->getKey(),
             'employee_number' => $detail->employee_number_snapshot,
             'employee_name' => $detail->employee_name_snapshot,
@@ -82,7 +83,7 @@ class ReportController extends Controller
             ])->sortBy('employee_name')->values();
 
             return [
-                'name' => $deductions->first()['name'],
+                'name' => $deductions->pluck('name')->unique()->sort()->implode(' / '),
                 'employees' => $employees,
                 'total' => round((float) $employees->sum('amount'), 2),
             ];

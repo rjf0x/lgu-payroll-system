@@ -6,6 +6,7 @@ use App\Models\DeductionType;
 use App\Models\EarningType;
 use App\Models\GeneratedReport;
 use App\Models\PayrollRun;
+use App\Services\PayrollRegisterService;
 use App\Services\PayrollSpreadsheetService;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
@@ -15,6 +16,8 @@ class PayrollRegisterController extends Controller
 {
     /** Number of leading text columns before the monetary columns. */
     private const TEXT_COLUMNS = 4;
+
+    public function __construct(private readonly PayrollRegisterService $register) {}
 
     public function show(PayrollRun $payrollRun): View
     {
@@ -41,10 +44,16 @@ class PayrollRegisterController extends Controller
     }
 
     /**
-     * @return array{headers: array<int, string>, rows: array<int, array<int, mixed>>, totals: array<int, mixed>}
+     * Editable previews retain configured columns; locked runs only use persisted lines.
+     *
+     * @return array{headers: array<int, string>, rows: array<int, array<int, mixed>>, totals: array<int, mixed>, column_keys?: list<string>, reportNotes?: string}
      */
     private function registerData(PayrollRun $run): array
     {
+        if (! $run->isEditable()) {
+            return $this->register->build($run);
+        }
+
         $run->load(['payrollPeriod', 'details.earnings', 'details.deductions']);
 
         $earningNames = EarningType::where('status', 'ACTIVE')->orderBy('earning_name')->pluck('earning_name')->all();

@@ -34,7 +34,7 @@
                     <tbody>
                         <tr><td class="py-1">Basic Pay</td><td class="py-1 font-mono text-right tabular-nums">{{ number_format((float) $detail->basic_pay, 2) }}</td></tr>
                         @foreach ($detail->earnings as $earning)
-                            <tr><td class="py-1">{{ $earning->earning_name_snapshot }}</td><td class="py-1 font-mono text-right tabular-nums">{{ number_format((float) $earning->amount, 2) }}</td></tr>
+                            <tr><td class="py-1">{{ $register->label($earning) }}</td><td class="py-1 font-mono text-right tabular-nums">{{ number_format((float) $earning->amount, 2) }}</td></tr>
                         @endforeach
                         <tr class="border-t border-slate-300 font-semibold"><td class="py-1">Gross / Total Compensation</td><td class="py-1 font-mono text-right tabular-nums">{{ number_format((float) $detail->gross_pay, 2) }}</td></tr>
                     </tbody>
@@ -49,7 +49,7 @@
                     <caption class="sr-only">Payslip deductions in PHP</caption>
                     <tbody>
                         @foreach ($detail->deductions as $deduction)
-                            <tr><td class="py-1">{{ $deduction->deduction_name_snapshot }}</td><td class="py-1 font-mono text-right tabular-nums">{{ number_format((float) $deduction->amount, 2) }}</td></tr>
+                            <tr><td class="py-1">{{ $register->label($deduction) }}</td><td class="py-1 font-mono text-right tabular-nums">{{ number_format((float) $deduction->amount, 2) }}</td></tr>
                         @endforeach
                         <tr class="border-t border-slate-300 font-semibold"><td class="py-1">Total Deductions</td><td class="py-1 font-mono text-right tabular-nums">{{ number_format((float) $detail->total_deductions, 2) }}</td></tr>
                         <tr><td class="py-1">NTHP Before LBP</td><td class="py-1 font-mono text-right tabular-nums">{{ number_format((float) $detail->nthp_before_lbp, 2) }}</td></tr>
@@ -69,7 +69,7 @@
         <div class="mt-6 text-xs text-slate-500">
             <span class="font-semibold uppercase tracking-wide">Employer contributions (not deducted):</span>
             @foreach ($detail->employerContributions as $contribution)
-                {{ $contribution->contribution_type_snapshot }} ₱{{ number_format((float) $contribution->amount, 2) }}@if (! $loop->last) · @endif
+                {{ $register->label($contribution) }} ₱{{ number_format((float) $contribution->amount, 2) }}@if (! $loop->last) · @endif
             @endforeach
         </div>
     @endif

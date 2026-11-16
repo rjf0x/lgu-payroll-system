@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Jobs\GeneratePayslips;
 use App\Models\PayrollRun;
 use App\Models\Payslip;
+use App\Services\PayrollRegisterService;
 use App\Services\PayslipGenerationService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
@@ -38,7 +39,7 @@ class PayslipController extends Controller
         return back()->with('status', "Generated {$generated} payslip(s).");
     }
 
-    public function show(Payslip $payslip): View
+    public function show(Payslip $payslip, PayrollRegisterService $register): View
     {
         $payslip->load([
             'payrollDetail.earnings',
@@ -47,7 +48,7 @@ class PayslipController extends Controller
             'payrollDetail.payrollRun.payrollPeriod',
         ]);
 
-        return view('payslips.show', compact('payslip'));
+        return view('payslips.show', compact('payslip', 'register'));
     }
 
     public function publish(Payslip $payslip): RedirectResponse

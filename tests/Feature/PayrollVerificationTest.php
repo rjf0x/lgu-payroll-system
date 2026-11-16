@@ -2,6 +2,9 @@
 
 namespace Tests\Feature;
 
+use App\Models\ContributionRate;
+use App\Models\DeductionType;
+use App\Models\EarningType;
 use App\Models\PayrollApproval;
 use App\Models\PayrollDetail;
 use App\Models\PayrollRegistration;
@@ -14,6 +17,7 @@ use App\Services\Blockchain\PayrollPayloadBuilder;
 use App\Services\BlockchainAnchorService;
 use App\Services\PayrollApprovalService;
 use App\Services\PayrollVerificationService;
+use Closure;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\ConnectionException;
@@ -75,6 +79,47 @@ class PayrollVerificationTest extends TestCase
         $this->assertSame(Verification::MATCH, $log->verification_result);
         $this->assertSame($registration->payload_hash, $log->calculated_hash);
         Http::assertSentCount(1);
+    }
+
+    #[DataProvider('historicalLabels')]
+    public function test_historical_reports_preserve_registered_payload_and_verification_after_configuration_changes(string $earningLabel, string $deductionLabel): void
+    {
+        $earning = EarningType::factory()->create();
+        $deduction = DeductionType::factory()->create();
+        $rate = ContributionRate::factory()->create();
+        [$registration, $user] = $this->registration(function (PayrollDetail $detail) use ($earning, $deduction, $rate, $earningLabel, $deductionLabel): void {
+            $detail->earnings()->create(['earning_type_id' => $earning->getKey(), 'earning_name_snapshot' => $earningLabel, 'amount' => 100, 'is_taxable' => false]);
+            $detail->deductions()->create(['deduction_type_id' => $deduction->getKey(), 'deduction_name_snapshot' => $deductionLabel, 'amount' => 50]);
+            $detail->employerContributions()->create(['contribution_rate_id' => $rate->getKey(), 'contribution_type_snapshot' => 'Saved employer share', 'amount' => 75]);
+            $detail->update(['total_earnings' => 100, 'gross_pay' => 45100, 'total_deductions' => 50, 'nthp_before_lbp' => 45050, 'lbp_loan_deduction' => 25, 'net_pay' => 45025]);
+        });
+        $this->fakeRead($registration, $this->evidence($registration));
+        $originalRegistration = $registration->fresh()->getAttributes();
+        $detail = $registration->payrollRun->details()->sole();
+        $originalDetail = $detail->getAttributes();
+        $originalLines = [$detail->earnings()->get()->toArray(), $detail->deductions()->get()->toArray(), $detail->employerContributions()->get()->toArray()];
+        $this->assertSame(Verification::MATCH, app(PayrollVerificationService::class)->verify($registration, $user)->verification_result);
+
+        $earning->update(['earning_name' => 'Renamed and archived', 'status' => 'ARCHIVED']);
+        $deduction->update(['deduction_name' => 'Renamed and inactive', 'deduction_category' => 'LBP', 'status' => 'INACTIVE']);
+        $rate->update(['contribution_type' => 'Renamed employer rate', 'employer_rate' => 0.5]);
+        $this->actingAs($user)->get(route('payroll-runs.register', $registration->payrollRun))->assertOk();
+        $this->get(route('payroll-runs.register.export', $registration->payrollRun))->assertOk()->streamedContent();
+        $this->get(route('reports.deductions', $registration->payrollRun))->assertOk();
+
+        $log = app(PayrollVerificationService::class)->verify($registration, $user);
+        $this->assertSame(Verification::MATCH, $log->verification_result);
+        $this->assertSame($registration->payload_hash, $log->calculated_hash);
+        $this->assertSame($originalRegistration, $registration->fresh()->getAttributes());
+        $this->assertSame($originalDetail, $detail->fresh()->getAttributes());
+        $this->assertSame($originalLines, [$detail->earnings()->get()->toArray(), $detail->deductions()->get()->toArray(), $detail->employerContributions()->get()->toArray()]);
+        Http::assertSentCount(2);
+    }
+
+    /** @return array<string, array{string, string}> */
+    public static function historicalLabels(): array
+    {
+        return ['saved labels' => ['Saved earning', 'Saved deduction'], 'legacy missing labels' => ['', '']];
     }
 
     public function test_verification_times_use_philippine_time_without_changing_stored_evidence(): void
@@ -387,7 +432,7 @@ class PayrollVerificationTest extends TestCase
     }
 
     /** @return array{PayrollRegistration, User} */
-    private function registration(): array
+    private function registration(?Closure $prepareDetail = null): array
     {
         $this->seed(RolePermissionSeeder::class);
         $creator = User::factory()->create();
@@ -395,9 +440,10 @@ class PayrollVerificationTest extends TestCase
         $user->roles()->attach(Role::where('role_name', Role::ADMIN)->value('role_id'), ['assigned_at' => now()]);
         $run = PayrollRun::factory()->create(['status' => PayrollRun::STATUS_APPROVED, 'created_by' => $creator->getKey(),
             'submitted_by' => $creator->getKey(), 'submitted_at' => now()->subMinutes(2)]);
-        PayrollDetail::factory()->create(['payroll_run_id' => $run->getKey(), 'employee_name_snapshot' => 'Confidential Employee Alpha',
+        $detail = PayrollDetail::factory()->create(['payroll_run_id' => $run->getKey(), 'employee_name_snapshot' => 'Confidential Employee Alpha',
             'department_snapshot' => 'Finance', 'position_snapshot' => 'Payroll Clerk', 'salary_rate_snapshot' => '45000.00',
             'pay_basis_snapshot' => 'MONTHLY', 'input_recorded_by' => $creator->getKey()]);
+        $prepareDetail?->__invoke($detail);
         PayrollApproval::create(['payroll_run_id' => $run->getKey(), 'approval_step' => 'APPROVED', 'action' => 'APPROVED',
             'acted_by' => $user->getKey(), 'acted_at' => now()->subMinute(), 'remarks' => null]);
         app(PayrollApprovalService::class)->finalize($run, $user);

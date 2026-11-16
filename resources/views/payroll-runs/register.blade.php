@@ -18,6 +18,9 @@
     </div>
 
     <div class="min-w-0">
+        @isset($reportNotes)
+            <p>{{ $reportNotes }}</p>
+        @endisset
         <x-table label="Payroll Register records">
             <thead class="bg-slate-50 uppercase tracking-wide text-slate-500">
                 <tr>

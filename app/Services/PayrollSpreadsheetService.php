@@ -24,7 +24,7 @@ class PayrollSpreadsheetService
     ];
 
     /**
-     * @param  array{headers: list<string>, rows: array<int, array<int, mixed>>, totals: array<int, mixed>}  $data
+     * @param  array{headers: list<string>, rows: array<int, array<int, mixed>>, totals: array<int, mixed>, column_keys?: list<string>, reportNotes?: string}  $data
      */
     public function generate(array $data, int $month, int $year): string
     {
@@ -47,11 +47,14 @@ class PayrollSpreadsheetService
             $headerRow = $xpath->query('s:row[@r="3"]', $sheetData)->item(0);
             $bodyStyles = $this->styles($xpath, $sheetData, 4);
             $totalStyles = $this->styles($xpath, $sheetData, 12);
-            $headers = [...self::TEMPLATE_HEADERS, ...array_values(array_diff($data['headers'], self::TEMPLATE_HEADERS))];
+            $historical = isset($data['column_keys']);
+            $headers = $historical ? $data['headers'] : [...self::TEMPLATE_HEADERS, ...array_values(array_diff($data['headers'], self::TEMPLATE_HEADERS))];
             $sourceColumns = array_flip($data['headers']);
             $lastColumn = $this->column(count($headers) + 1);
             $totalRowNumber = max(8, count($data['rows'])) + 4;
-            if (count($headers) > count(self::TEMPLATE_HEADERS)) {
+            if ($historical) {
+                $this->historicalHeaders($sheet, $xpath, $sheetData, $headers, $data['reportNotes']);
+            } elseif (count($headers) > count(self::TEMPLATE_HEADERS)) {
                 $columns = $xpath->query('//s:cols')->item(0);
                 $remainingColumns = $xpath->query('s:col[@max="16384"]', $columns)->item(0);
                 $remainingColumns->setAttribute('min', (string) (count($headers) + 2));
@@ -61,10 +64,12 @@ class PayrollSpreadsheetService
                 }
                 $columns->insertBefore($extraColumns, $remainingColumns);
             }
-            $duesCell = $xpath->query('s:c[@r="AE3"]', $headerRow)->item(0);
-            $headerRow->replaceChild($this->cell($sheet, 'AE3', sprintf('%02d/%d DUES', $month, $year), 32), $duesCell);
-            foreach (array_slice($headers, count(self::TEMPLATE_HEADERS), preserve_keys: true) as $index => $header) {
-                $headerRow->appendChild($this->cell($sheet, $this->column($index + 2).'3', $header, 5));
+            if (! $historical) {
+                $duesCell = $xpath->query('s:c[@r="AE3"]', $headerRow)->item(0);
+                $headerRow->replaceChild($this->cell($sheet, 'AE3', sprintf('%02d/%d DUES', $month, $year), 32), $duesCell);
+                foreach (array_slice($headers, count(self::TEMPLATE_HEADERS), preserve_keys: true) as $index => $header) {
+                    $headerRow->appendChild($this->cell($sheet, $this->column($index + 2).'3', $header, 5));
+                }
             }
             foreach (iterator_to_array($sheetData->childNodes) as $row) {
                 if ($row instanceof DOMElement && (int) $row->getAttribute('r') > 3) {
@@ -78,11 +83,12 @@ class PayrollSpreadsheetService
                 $row->setAttribute('r', (string) $rowNumber);
                 foreach ($headers as $index => $header) {
                     $column = $this->column($index + 2);
-                    $value = isset($sourceColumns[$header]) ? $values[$sourceColumns[$header]] : ($index < 4 ? '' : 0.0);
+                    $value = $historical ? $values[$index] : (isset($sourceColumns[$header]) ? $values[$sourceColumns[$header]] : ($index < 4 ? '' : 0.0));
                     if ($isTotal && $index < 4) {
                         $value = $index === 2 ? 'GRAND TOTAL' : '';
                     }
-                    $style = ($isTotal ? $totalStyles : $bodyStyles)[$column] ?? ($isTotal ? 18 : ($index < 4 ? 9 : 1));
+                    $styleColumn = $historical ? $this->historicalStyleColumn($data['column_keys'][$index], $index) : $column;
+                    $style = ($isTotal ? $totalStyles : $bodyStyles)[$styleColumn] ?? ($isTotal ? 18 : ($index < 4 ? 9 : 1));
                     $row->appendChild($this->cell($sheet, $column.$rowNumber, $value, $style));
                 }
                 $sheetData->appendChild($row);
@@ -124,6 +130,63 @@ class PayrollSpreadsheetService
             }
             unlink($path);
         }
+    }
+
+    /**
+     * Keep the template's typography, numeric formats and page setup, replacing category
+     * merges because legacy categories were never snapshotted and cannot be reconstructed.
+     *
+     * @param  list<string>  $headers
+     */
+    private function historicalHeaders(DOMDocument $sheet, DOMXPath $xpath, DOMElement $sheetData, array $headers, string $notes): void
+    {
+        foreach ([1 => 'Payroll Register', 2 => $notes, 3 => null] as $rowNumber => $title) {
+            $row = $xpath->query('s:row[@r="'.$rowNumber.'"]', $sheetData)->item(0);
+            while ($row->firstChild !== null) {
+                $row->removeChild($row->firstChild);
+            }
+            $row->removeAttribute('spans');
+            $row->setAttribute('ht', $rowNumber === 3 ? '75' : '32');
+            $row->setAttribute('customHeight', '1');
+            foreach ($rowNumber === 3 ? $headers : [$title] as $index => $text) {
+                $row->appendChild($this->cell($sheet, $this->column($index + 2).$rowNumber, $text, $rowNumber === 3 ? 5 : 29));
+            }
+        }
+        $lastColumn = $this->column(count($headers) + 1);
+        $merges = $xpath->query('//s:mergeCells')->item(0);
+        while ($merges->firstChild !== null) {
+            $merges->removeChild($merges->firstChild);
+        }
+        foreach ([1, 2] as $rowNumber) {
+            $merge = $sheet->createElementNS(self::XML_NAMESPACE, 'mergeCell');
+            $merge->setAttribute('ref', 'B'.$rowNumber.':'.$lastColumn.$rowNumber);
+            $merges->appendChild($merge);
+        }
+        $merges->setAttribute('count', '2');
+        $columns = $xpath->query('//s:cols')->item(0);
+        foreach (iterator_to_array($columns->childNodes) as $column) {
+            if ($column instanceof DOMElement && (int) $column->getAttribute('max') > 5) {
+                $columns->removeChild($column);
+            }
+        }
+        $amountColumns = $sheet->createElementNS(self::XML_NAMESPACE, 'col');
+        foreach (['min' => 6, 'max' => count($headers) + 1, 'width' => 18, 'customWidth' => 1, 'style' => 1] as $attribute => $value) {
+            $amountColumns->setAttribute($attribute, (string) $value);
+        }
+        $columns->appendChild($amountColumns);
+    }
+
+    private function historicalStyleColumn(string $key, int $index): string
+    {
+        if ($index < 4) {
+            return $this->column($index + 2);
+        }
+
+        return match ($key) {
+            'basic_pay' => 'F', 'gross_pay', 'total_earnings' => 'M', 'total_deductions' => 'AJ',
+            'nthp_before_lbp' => 'AK', 'lbp_loan_deduction' => 'AL', 'net_pay' => 'AM',
+            default => 'P',
+        };
     }
 
     /** @return array<string, int> */
