@@ -34,6 +34,10 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
     'input_confirmed_at',
     'manual_adjustments',
     'payroll_status',
+    'eligibility_reason',
+    'eligibility_resolved_by',
+    'eligibility_resolved_at',
+    'eligibility_context',
 ])]
 class PayrollDetail extends Model
 {
@@ -50,6 +54,8 @@ class PayrollDetail extends Model
             'payable_days' => 'decimal:2',
             'input_confirmed_at' => 'datetime',
             'manual_adjustments' => 'boolean',
+            'eligibility_context' => 'array',
+            'eligibility_resolved_at' => 'datetime',
             'salary_rate_snapshot' => 'decimal:2',
             'basic_pay' => 'decimal:2',
             'total_earnings' => 'decimal:2',
@@ -61,6 +67,13 @@ class PayrollDetail extends Model
         ];
     }
 
+    public function maximumPayableDays(PayrollPeriod $period): int
+    {
+        return $this->pay_basis_snapshot === CompensationProfile::BASIS_DAILY
+            ? (int) $period->start_date->diffInDays($period->end_date) + 1
+            : 22;
+    }
+
     public function payrollRun(): BelongsTo
     {
         return $this->belongsTo(PayrollRun::class, 'payroll_run_id', 'payroll_run_id');
@@ -68,7 +81,7 @@ class PayrollDetail extends Model
 
     public function employee(): BelongsTo
     {
-        return $this->belongsTo(Employee::class, 'employee_id', 'employee_id');
+        return $this->belongsTo(Employee::class, 'employee_id', 'employee_id')->withTrashed();
     }
 
     public function employmentRecord(): BelongsTo

@@ -132,6 +132,12 @@ Route::middleware(['auth', EnsureAccountIsActive::class, PreventSensitiveRespons
             ->scopeBindings()->name('payroll-details.edit');
         Route::put('payroll-runs/{payroll_run}/details/{payroll_detail}', [PayrollDetailController::class, 'update'])
             ->scopeBindings()->name('payroll-details.update');
+        Route::post('payroll-runs/{payroll_run}/details/{payroll_detail}/confirm', [PayrollDetailController::class, 'confirm'])
+            ->scopeBindings()->name('payroll-details.confirm');
+        Route::post('payroll-runs/{payroll_run}/details', [PayrollDetailController::class, 'store'])
+            ->whereNumber('payroll_run')->name('payroll-details.store');
+        Route::delete('payroll-runs/{payroll_run}/details/{payroll_detail}', [PayrollDetailController::class, 'destroy'])
+            ->scopeBindings()->name('payroll-details.destroy');
     });
 
     // Payroll approval workflow (permission + separation of duties enforced in the service).

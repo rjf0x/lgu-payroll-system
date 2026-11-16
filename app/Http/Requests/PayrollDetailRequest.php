@@ -2,7 +2,6 @@
 
 namespace App\Http\Requests;
 
-use App\Models\CompensationProfile;
 use App\Models\DeductionType;
 use App\Models\EarningType;
 use Illuminate\Foundation\Http\FormRequest;
@@ -21,14 +20,13 @@ class PayrollDetailRequest extends FormRequest
     public function rules(): array
     {
         $detail = $this->route('payroll_detail');
-        $maxDays = $detail->pay_basis_snapshot === CompensationProfile::BASIS_DAILY
-            ? $this->route('payroll_run')->payrollPeriod->start_date->diffInDays($this->route('payroll_run')->payrollPeriod->end_date) + 1
-            : 22;
+        $maxDays = $detail->maximumPayableDays($this->route('payroll_run')->payrollPeriod);
 
         return [
             'payable_days' => ['required', 'numeric', 'decimal:0,2', 'min:0', 'max:'.$maxDays],
             'input_reference' => ['nullable', 'string', 'max:255'],
             'inputs_confirmed' => ['required', 'accepted'],
+            'eligibility_reason' => ['nullable', 'string', 'max:2000'],
             'lbp_loan_deduction' => ['nullable', 'numeric', 'min:0'],
             'earnings' => ['array'],
             'earnings.*' => ['nullable', 'numeric', 'min:0'],

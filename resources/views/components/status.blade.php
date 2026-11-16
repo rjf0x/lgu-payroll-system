@@ -7,7 +7,7 @@
         'PROCESSING' => 'bg-sky-100 text-sky-900 ring-sky-200',
         'OPEN' => 'bg-blue-100 text-blue-900 ring-blue-200',
         'CLOSED' => 'bg-slate-200 text-slate-800 ring-slate-300',
-        'PENDING', 'PENDING_APPROVAL', 'RETURNED', 'QUEUED', 'SUBMITTED', 'RECONCILING', 'UNAVAILABLE', 'NOT_REGISTERED' => 'bg-amber-100 text-amber-900 ring-amber-200',
+        'PENDING', 'PENDING_APPROVAL', 'RETURNED', 'QUEUED', 'SUBMITTED', 'RECONCILING', 'UNAVAILABLE', 'NOT_REGISTERED', 'NEEDS_INPUT', 'NEEDS_CONFIRMATION', 'NEEDS_RECOMPUTATION' => 'bg-amber-100 text-amber-900 ring-amber-200',
         'REJECTED', 'MISMATCH', 'FAILED', 'CANCELLED', 'INVALID_EVIDENCE', 'CONFLICT' => 'bg-rose-100 text-rose-900 ring-rose-200',
         'DRAFT' => 'bg-slate-100 text-slate-700 ring-slate-200',
         default => 'bg-slate-100 text-slate-700 ring-slate-200',

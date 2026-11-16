@@ -10,8 +10,11 @@
     </x-page-header>
 
     <div class="space-y-6">
-        @if ($run->isEditable() && $run->details->contains(fn ($detail) => $detail->payable_days === null || $detail->input_confirmed_at === null))
-            <x-alert variant="warning">Payroll inputs are incomplete. Open each employee's payroll detail, enter approved payable days, and confirm the inputs before submitting. Totals are provisional until all inputs are complete.</x-alert>
+        @if ($eligibilityIssues->isNotEmpty())
+            <x-alert variant="warning">Employee eligibility needs resolution. Open each flagged payroll detail to retain payable compensation with justification or remove the employee before submission.</x-alert>
+        @endif
+        @if ($run->isEditable() && $run->details->contains(fn ($detail) => $detail->payable_days === null || $detail->input_confirmed_at === null || $detail->payroll_status !== 'COMPUTED'))
+            <x-alert variant="warning">Payroll inputs are incomplete. Check the status on each employee row. Enter missing payable days through Edit, or use Confirm &amp; Save to confirm and recompute existing inputs. Totals are provisional until all inputs are complete.</x-alert>
         @endif
         <x-payroll-progress :run="$run" :can-submit="$canSubmit" :can-review="$canReview" :can-finalize="$canFinalize" :independent="$isIndependentReviewer" />
         <x-card heading="Run overview">
@@ -58,12 +61,21 @@
                             <tr>
                                 <td class="ui-table-primary">
                                     <div class="text-sm font-semibold">{{ $detail->employee_name_snapshot }}</div>
+                                    @if ($eligibilityIssues->has($detail->getKey()))
+                                        <div class="text-sm text-warning-ink">Eligibility unresolved</div>
+                                    @endif
                                     <div class="ui-table-secondary max-w-56 truncate" title="{{ $detail->position_snapshot }}">{{ $detail->position_snapshot }}</div>
                                 </td>
                                 <td class="w-48">
-                                    @if ($detail->payable_days === null)
-                                        <span class="inline-flex items-center whitespace-nowrap rounded-md bg-warning-soft px-2 py-0.5 text-xs font-medium text-warning-ink ring-1 ring-inset ring-amber-200"><span class="sr-only">Payable days: </span>Needs input</span>
-                                    @else
+                                    @if ($run->isEditable())
+                                        <x-status :value="match (true) {
+                                            $detail->payable_days === null => 'NEEDS_INPUT',
+                                            $detail->input_confirmed_at === null => 'NEEDS_CONFIRMATION',
+                                            $detail->payroll_status !== 'COMPUTED' => 'NEEDS_RECOMPUTATION',
+                                            default => 'CONFIRMED',
+                                        }" class="mb-1 whitespace-nowrap px-2 py-0.5 text-xs" />
+                                    @endif
+                                    @if ($detail->payable_days !== null)
                                         <div class="text-sm tabular-nums"><span class="sr-only">Payable days: </span>{{ $detail->payable_days }} days</div>
                                     @endif
                                     @if ($detail->input_reference)
@@ -80,7 +92,16 @@
                                 <td class="text-right ui-table-actions">
                                     @can('payroll.prepare')
                                         @if ($run->isEditable())
-                                            <x-action-menu :label="'Actions for '.$detail->employee_name_snapshot"><x-button icon="edit" variant="secondary" href="{{ route('payroll-details.edit', [$run, $detail]) }}">Edit<span class="sr-only"> {{ $detail->employee_name_snapshot }}</span></x-button></x-action-menu>
+                                            <div class="flex flex-wrap items-center justify-end gap-2">
+                                                @if ($detail->payable_days !== null && ($detail->input_confirmed_at === null || $detail->payroll_status !== 'COMPUTED') && ! $eligibilityIssues->has($detail->getKey()))
+                                                    <form method="POST" action="{{ route('payroll-details.confirm', [$run, $detail]) }}" data-confirm data-confirm-title="Confirm employee payroll inputs?" data-confirm-description="I confirm the existing payable days, earnings, deductions, and loan inputs match the approved source for this payroll period. Save these inputs and recompute this employee's payroll." data-confirm-context="{{ $detail->employee_name_snapshot.' / '.$detail->payable_days.' payable days / '.$run->payrollPeriod->period_name }}" onsubmit="return window.payrollConfirmationReady || confirm(this.dataset.confirmDescription + '\n' + this.dataset.confirmContext)" data-submit-feedback>
+                                                        @csrf
+                                                        <input type="hidden" name="inputs_confirmed" value="1">
+                                                        <x-button type="submit" variant="primary" class="ui-button-compact" :aria-label="'Confirm and save payroll inputs for '.$detail->employee_name_snapshot" data-submitting-label="Saving…">Confirm &amp; Save</x-button>
+                                                    </form>
+                                                @endif
+                                                <x-action-menu :label="'Actions for '.$detail->employee_name_snapshot"><x-button icon="edit" variant="secondary" href="{{ route('payroll-details.edit', [$run, $detail]) }}">Edit<span class="sr-only"> {{ $detail->employee_name_snapshot }}</span></x-button></x-action-menu>
+                                            </div>
                                         @else
                                             <x-status value="READ_ONLY" class="whitespace-nowrap" />
                                         @endif
@@ -100,6 +121,17 @@
         @endif
 
         <x-card heading="Payroll actions">
+            @if ($exceptionEmployments->isNotEmpty())
+                <details class="mb-4">
+                    <summary class="cursor-pointer text-sm font-semibold">Include archived or inactive employee with payable compensation</summary>
+                    <form method="POST" action="{{ route('payroll-details.store', $run) }}" class="mt-3 space-y-3">
+                        @csrf
+                        <x-form.select name="employment_id" label="Employment eligible by coverage dates" required placeholder="Choose an employment record" :options="$exceptionEmployments->mapWithKeys(fn ($employment) => [$employment->getKey() => $employment->employee?->full_name.' / Employment #'.$employment->getKey()])" />
+                        <x-form.textarea name="reason" label="Eligibility justification" required maxlength="2000" hint="Document earned compensation and authorization for this payroll coverage. Current payroll inputs must then be confirmed and recomputed." />
+                        <x-button type="submit">Include employee</x-button>
+                    </form>
+                </details>
+            @endif
             <div class="flex flex-wrap items-start gap-3">
                 @can('payroll.prepare')
                     @if ($run->isEditable())

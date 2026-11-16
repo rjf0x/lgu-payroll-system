@@ -4,11 +4,19 @@
 @section('heading', 'Payroll Detail - '.$detail->employee_name_snapshot)
 
 @section('content')
+    @if ($eligibilityIssue)
+        <x-alert variant="warning">{{ $eligibilityIssue }}</x-alert>
+    @endif
     <form method="POST" action="{{ route('payroll-details.update', [$run, $detail]) }}" class="payroll-detail-form ui-compact-form flex flex-col gap-4" data-payroll-detail-form data-submit-feedback>
         @csrf
         @method('PUT')
         <section aria-labelledby="employee-inputs-heading" class="rounded-xl border border-slate-200 bg-surface p-4 shadow-sm">
             <h2 id="employee-inputs-heading" class="text-sm font-semibold text-ink">Employee &amp; approved inputs</h2>
+            @if ($requiresEligibilityException)
+                <div class="mt-3">
+                    <x-form.textarea name="eligibility_reason" label="Retain employee: eligibility justification" :value="$detail->eligibility_reason" maxlength="2000" required hint="Document the employment dates, earned compensation, and authorization supporting payment for this coverage period. Saving confirms eligibility and recomputes current inputs." />
+                </div>
+            @endif
             <dl class="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 border-b border-slate-200 pb-3 text-sm sm:grid-cols-4">
                 <div class="col-span-2 min-w-0"><dt class="text-xs text-muted">Position</dt><dd class="break-words font-semibold">{{ $detail->position_snapshot }}</dd></div>
                 <div><dt class="text-xs text-muted">Basic pay · PHP</dt><dd class="font-semibold tabular-nums">{{ number_format((float) $detail->basic_pay, 2) }}</dd></div>
@@ -16,7 +24,7 @@
             </dl>
             <div class="mt-3 grid items-start gap-3 md:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
                 <div>
-                    <x-form.input name="payable_days" label="Approved payable days" type="number" step="0.01" min="0" :max="$detail->pay_basis_snapshot === 'DAILY' ? $run->payrollPeriod->start_date->diffInDays($run->payrollPeriod->end_date) + 1 : 22" :value="$detail->payable_days" required inputmode="decimal" class="max-w-36 text-right tabular-nums" aria-describedby="approved-input-guidance" />
+                    <x-form.input name="payable_days" label="Approved payable days" type="number" step="0.01" min="0" :max="$detail->maximumPayableDays($run->payrollPeriod)" :value="$detail->payable_days" required inputmode="decimal" class="max-w-36 text-right tabular-nums" aria-describedby="approved-input-guidance" />
                 </div>
                 <x-form.input name="input_reference" label="Approval reference / reason (optional)" :value="$detail->input_reference" maxlength="255" aria-describedby="approved-input-guidance" />
             </div>
@@ -71,4 +79,14 @@
             </div>
         </div>
     </form>
+    <section class="mt-6 rounded-xl border border-slate-200 bg-surface p-4" aria-labelledby="remove-employee-heading">
+        <h2 id="remove-employee-heading" class="text-sm font-semibold">Remove employee from this run</h2>
+        <p class="mt-2 text-sm text-muted">Confirm that compensation is not payable in this run. Removal deletes this editable payroll detail and its financial rows.</p>
+        <form method="POST" action="{{ route('payroll-details.destroy', [$run, $detail]) }}" class="mt-3 space-y-3" onsubmit="return confirm('Remove this employee and their payroll detail from this run?')">
+            @csrf
+            @method('DELETE')
+            <x-form.textarea name="reason" label="Removal reason" required maxlength="2000" />
+            <x-button type="submit" variant="danger">Remove employee</x-button>
+        </form>
+    </section>
 @endsection

@@ -26,35 +26,42 @@ class PayrollComputationService
 {
     private const PAYROLL_DAYS_PER_MONTH = 22.0;
 
+    public function __construct(private readonly PayrollEligibilityService $eligibility) {}
+
     /**
      * Rebuild every detail for a run from the current source data.
      */
     public function computeRun(PayrollRun $run): void
     {
-        $period = $run->payrollPeriod;
-
-        $employments = EmploymentRecord::query()
-            ->with(['employee', 'department', 'position', 'employmentType'])
-            ->where('employment_status', EmploymentRecord::STATUS_ACTIVE)
-            ->whereDate('start_date', '<=', $period->end_date)
-            ->where(fn ($query) => $query
-                ->whereNull('end_date')
-                ->orWhereDate('end_date', '>=', $period->start_date))
-            ->get();
-
-        DB::transaction(function () use ($run, $employments, $period): void {
+        DB::transaction(function () use ($run): void {
             $locked = PayrollRun::whereKey($run->getKey())->lockForUpdate()->firstOrFail();
             $run->setRawAttributes($locked->getAttributes(), true);
             abort_unless($run->isEditable(), 422, 'This payroll run can no longer be recomputed.');
-            $run->details()->whereNotIn('employment_id', $employments->modelKeys())->delete();
+            $period = $locked->payrollPeriod;
+            $oldTotals = $this->eligibility->totals($locked);
+            $employments = EmploymentRecord::query()
+                ->with(['employee', 'department', 'position', 'employmentType'])
+                ->where(function ($query) use ($locked, $period): void {
+                    $query->where(function ($query) use ($period): void {
+                        $query->where('employment_status', EmploymentRecord::STATUS_ACTIVE)
+                            ->whereHas('employee', fn ($query) => $query->whereNull('employees.deleted_at'))
+                            ->whereDate('start_date', '<=', $period->end_date)
+                            ->where(fn ($query) => $query->whereNull('end_date')->orWhereDate('end_date', '>=', $period->start_date));
+                    })->orWhereIn('employment_id', $locked->details()->select('employment_id'));
+                })->get();
 
             foreach ($employments as $employment) {
-                $this->computeDetail($run, $employment, $period);
+                if ($employment->employee !== null && $this->eligibility->overlaps($employment, $period)) {
+                    $this->computeDetail($run, $employment, $period);
+                }
             }
 
             $run->update([
                 'status' => PayrollRun::STATUS_DRAFT,
                 'processed_at' => now(),
+            ]);
+            app(AuditLogger::class)->log('PAYROLL_RECALCULATED', 'Payroll', auth()->id(), 'payroll_runs', (string) $run->getKey(), $oldTotals, [
+                ...$this->eligibility->totals($locked), 'reason' => 'Recomputed from current compensation, statutory settings, and payroll inputs.',
             ]);
         });
     }
@@ -74,8 +81,12 @@ class PayrollComputationService
 
     private function computeEditableDetail(PayrollRun $run, EmploymentRecord $employment, PayrollPeriod $period): PayrollDetail
     {
-        $periodEnd = $period->end_date->toDateString();
-        $profile = $this->effectiveCompensation($employment, $periodEnd);
+        $employment->load('employee');
+        abort_unless($employment->employee !== null && $this->eligibility->overlaps($employment, $period), 422, 'Employment dates must overlap payroll coverage.');
+        $compensationDate = $employment->end_date !== null && $employment->end_date->lt($period->end_date)
+            ? $employment->end_date->toDateString()
+            : $period->end_date->toDateString();
+        $profile = $this->effectiveCompensation($employment, $compensationDate);
 
         $payBasis = $profile?->pay_basis ?? CompensationProfile::BASIS_MONTHLY;
         $serviceFraction = (float) ($profile?->service_fraction ?? 1.0);
@@ -108,8 +119,8 @@ class PayrollComputationService
         if (! $detail->manual_adjustments) {
             $detail->earnings()->delete();
             $detail->deductions()->delete();
-            $this->seedEarnings($detail, $employment, $periodEnd);
-            $this->seedDeductions($detail, $employment, $periodEnd);
+            $this->seedEarnings($detail, $employment, $compensationDate);
+            $this->seedDeductions($detail, $employment, $compensationDate);
         }
         $this->recomputeTotals($detail, $period);
 

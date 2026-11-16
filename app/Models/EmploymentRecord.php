@@ -41,7 +41,7 @@ class EmploymentRecord extends Model
 
     public function employee(): BelongsTo
     {
-        return $this->belongsTo(Employee::class, 'employee_id', 'employee_id');
+        return $this->belongsTo(Employee::class, 'employee_id', 'employee_id')->withTrashed();
     }
 
     public function department(): BelongsTo

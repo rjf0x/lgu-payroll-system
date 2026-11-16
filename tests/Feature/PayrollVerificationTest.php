@@ -58,6 +58,25 @@ class PayrollVerificationTest extends TestCase
         Http::assertSent(fn (Request $request): bool => $request->method() === 'GET' && $request->url() === $this->path($registration));
     }
 
+    public function test_archiving_employee_preserves_the_finalized_registry_payload_and_proof(): void
+    {
+        [$registration, $user] = $this->registration();
+        $run = $registration->payrollRun;
+        $detail = $run->details()->sole();
+        $before = $registration->fresh()->getAttributes();
+        $detailBefore = $detail->getAttributes();
+        $this->fakeRead($registration, $this->evidence($registration));
+
+        $this->actingAs($user)->delete(route('employees.destroy', $detail->employee), ['reason' => 'Employee separated after earned payroll.'])->assertRedirect();
+
+        $this->assertSame($before, $registration->fresh()->getAttributes());
+        $this->assertSame($detailBefore, $detail->fresh()->getAttributes());
+        $log = app(PayrollVerificationService::class)->verify($registration, $user);
+        $this->assertSame(Verification::MATCH, $log->verification_result);
+        $this->assertSame($registration->payload_hash, $log->calculated_hash);
+        Http::assertSentCount(1);
+    }
+
     public function test_verification_times_use_philippine_time_without_changing_stored_evidence(): void
     {
         $this->travelTo(now()->setDate(2026, 11, 16)->setTime(23, 40, 52));

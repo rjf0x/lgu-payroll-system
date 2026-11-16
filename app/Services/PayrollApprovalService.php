@@ -18,6 +18,7 @@ class PayrollApprovalService
     public function __construct(
         private readonly AuditLogger $auditLogger,
         private readonly PayrollRegistrationService $registrations,
+        private readonly PayrollEligibilityService $eligibility,
     ) {}
 
     public function submit(PayrollRun $run, User $user): void
@@ -32,7 +33,11 @@ class PayrollApprovalService
             if (! $run->details()->exists()) {
                 abort(422, 'Compute the payroll before submitting it for approval.');
             }
-            if ($run->details()->where(fn ($query) => $query->whereNull('payable_days')->orWhereNull('input_confirmed_at'))->exists()) {
+            foreach ($run->details()->with(['employmentRecord.employee'])->get() as $detail) {
+                $issue = $this->eligibility->issue($detail, $run->payrollPeriod);
+                abort_if($issue !== null, 422, $issue ?? 'Resolve payroll eligibility before submission.');
+            }
+            if ($run->details()->where(fn ($query) => $query->whereNull('payable_days')->orWhereNull('input_confirmed_at')->orWhere('payroll_status', '!=', 'COMPUTED'))->exists()) {
                 abort(422, 'Enter and confirm approved payroll inputs for every employee before submission.');
             }
             $run->update([
@@ -81,7 +86,11 @@ class PayrollApprovalService
             $run->update(['status' => PayrollRun::STATUS_RETURNED]);
 
             $this->record($run, PayrollApproval::ACTION_RETURNED, $user, $remarks);
-            $this->auditLogger->log('PAYROLL_RETURNED', 'Payroll', $user->user_id, 'payroll_runs', (string) $run->payroll_run_id);
+            $this->auditLogger->log('PAYROLL_RETURNED', 'Payroll', $user->user_id, 'payroll_runs', (string) $run->payroll_run_id, newValues: [
+                'reason' => $remarks,
+                'status' => PayrollRun::STATUS_RETURNED,
+                'approval_required' => true,
+            ]);
         });
     }
 

@@ -10,6 +10,7 @@ use App\Models\PayrollPeriod;
 use App\Models\PayrollRun;
 use App\Models\Role;
 use App\Models\User;
+use Database\Seeders\DeductionTypeSeeder;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -32,6 +33,7 @@ class PayrollRunCarryForwardTest extends TestCase
     public function test_creation_carries_forward_the_latest_matching_finalized_run_as_an_independent_draft(): void
     {
         $officer = $this->signInOfficer();
+        $this->seed(DeductionTypeSeeder::class);
         $period = PayrollPeriod::factory()->create(['start_date' => '2026-02-01', 'end_date' => '2026-02-28']);
         $previousPeriod = PayrollPeriod::factory()->create(['start_date' => '2026-01-01', 'end_date' => '2026-01-31']);
         $previous = PayrollRun::factory()->create(['payroll_period_id' => $previousPeriod->getKey(), 'status' => 'FINALIZED', 'finalized_at' => '2026-01-31 12:00:00']);
@@ -41,7 +43,7 @@ class PayrollRunCarryForwardTest extends TestCase
             'input_reference' => 'Approved summary HR-123', 'input_confirmed_at' => '2026-01-30 09:00:00',
         ]);
         $detail->earnings()->create(['earning_type_id' => EarningType::factory()->create()->getKey(), 'earning_name_snapshot' => 'Allowance', 'amount' => 500, 'is_taxable' => false]);
-        $detail->deductions()->create(['deduction_type_id' => DeductionType::factory()->create()->getKey(), 'deduction_name_snapshot' => 'Loan', 'amount' => 100]);
+        $detail->deductions()->create(['deduction_type_id' => DeductionType::factory()->create(['is_statutory' => false, 'deduction_category' => 'LOAN'])->getKey(), 'deduction_name_snapshot' => 'Loan', 'amount' => 100]);
         $detail->employerContributions()->create(['contribution_rate_id' => ContributionRate::factory()->create()->getKey(), 'contribution_type_snapshot' => 'Employer contribution', 'amount' => 200]);
         $older = PayrollRun::factory()->create(['payroll_period_id' => $previousPeriod->getKey(), 'run_number' => 4, 'status' => 'FINALIZED', 'finalized_at' => '2026-01-30']);
         PayrollDetail::factory()->create(['payroll_run_id' => $older->getKey(), 'net_pay' => 123]);
@@ -58,15 +60,21 @@ class PayrollRunCarryForwardTest extends TestCase
         $this->assertNull($run->finalized_at);
         $this->assertSame($detail->employee_id, $copy->employee_id);
         $this->assertSame('45000.00', $copy->net_pay);
-        $this->assertSame('2026-01-30 09:00:00', $copy->input_confirmed_at->format('Y-m-d H:i:s'));
+        $this->assertNull($copy->input_confirmed_at);
         $this->assertSame('Approved summary HR-123', $copy->input_reference);
-        $this->assertSame($inputRecorder->getKey(), $copy->input_recorded_by);
-        $this->assertSame('COMPUTED', $copy->payroll_status);
+        $this->assertNull($copy->input_recorded_by);
+        $this->assertSame('INPUT_REQUIRED', $copy->payroll_status);
         $this->assertTrue($copy->manual_adjustments);
         $this->assertSame('500.00', $copy->earnings()->sole()->amount);
         $this->assertSame('100.00', $copy->deductions()->sole()->amount);
         $this->assertSame('200.00', $copy->employerContributions()->sole()->amount);
-        $this->get(route('payroll-runs.show', $run))->assertOk()->assertViewHas('canSubmit', true);
+        $this->get(route('payroll-runs.show', $run))->assertOk()->assertViewHas('canSubmit', false);
+        $this->postJson(route('payroll-runs.submit', $run))->assertUnprocessable();
+        $this->put(route('payroll-details.update', [$run, $copy]), [
+            'payable_days' => 20, 'inputs_confirmed' => 1,
+            'earnings' => [$detail->earnings()->sole()->earning_type_id => 500],
+            'deductions' => [$detail->deductions()->sole()->deduction_type_id => 100],
+        ])->assertRedirect();
         $this->post(route('payroll-runs.submit', $run))->assertRedirect();
         $this->assertSame('PENDING_APPROVAL', $run->refresh()->status);
         $this->assertSame($officer->getKey(), $run->submitted_by);
@@ -86,7 +94,7 @@ class PayrollRunCarryForwardTest extends TestCase
         $this->assertSame(0, PayrollRun::where('payroll_period_id', $period->getKey())->sole()->details()->count());
     }
 
-    public function test_carried_forward_confirmed_inputs_without_a_reference_are_ready_for_submission(): void
+    public function test_carried_forward_inputs_without_a_reference_require_fresh_confirmation(): void
     {
         $this->signInOfficer();
         $previousPeriod = PayrollPeriod::factory()->create(['start_date' => '2026-01-01', 'end_date' => '2026-01-31']);
@@ -100,10 +108,12 @@ class PayrollRunCarryForwardTest extends TestCase
 
         $run = PayrollRun::where('payroll_period_id', $period->getKey())->sole();
         $this->assertNull($run->details()->sole()->input_reference);
-        $this->assertSame('COMPUTED', $run->details()->sole()->payroll_status);
-        $this->get(route('payroll-runs.show', $run))->assertOk()->assertViewHas('canSubmit', true);
-        $this->post(route('payroll-runs.submit', $run))->assertRedirect();
-        $this->assertSame('PENDING_APPROVAL', $run->fresh()->status);
+        $this->assertSame('INPUT_REQUIRED', $run->details()->sole()->payroll_status);
+        $this->get(route('payroll-runs.show', $run))->assertOk()->assertViewHas('canSubmit', false);
+        $this->post(route('payroll-runs.compute', $run))->assertRedirect();
+        $this->assertNull($run->details()->sole()->input_confirmed_at);
+        $this->postJson(route('payroll-runs.submit', $run))->assertUnprocessable();
+        $this->assertSame('DRAFT', $run->fresh()->status);
     }
 
     /** @return array<string, array{array<string, mixed>}> */

@@ -25,6 +25,7 @@
                     <form method="POST" action="{{ route('employees.destroy', $employee) }}" class="mt-5" onsubmit="return confirm('Archive this employee?')" data-submit-feedback>
                         @csrf
                         @method('DELETE')
+                        <x-form.textarea name="reason" label="Archival reason" maxlength="2000" required />
                         <x-button icon="archive" type="submit" variant="danger">Archive</x-button>
                     </form>
                 @endcan

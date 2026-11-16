@@ -7,8 +7,10 @@ use App\Models\CompensationProfile;
 use App\Models\Employee;
 use App\Models\EmployeeDeductionAssignment;
 use App\Models\EmployeeEarningAssignment;
+use App\Services\AuditLogger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class EmployeeController extends Controller
@@ -79,9 +81,17 @@ class EmployeeController extends Controller
             ->with('status', 'Employee updated.');
     }
 
-    public function destroy(Employee $employee): RedirectResponse
+    public function destroy(Request $request, Employee $employee): RedirectResponse
     {
-        $employee->delete();
+        $request->validate(['reason' => ['nullable', 'string', 'max:2000']]);
+        DB::transaction(function () use ($request, $employee): void {
+            $locked = Employee::whereKey($employee->getKey())->lockForUpdate()->firstOrFail();
+            $locked->delete();
+            app(AuditLogger::class)->log('EMPLOYEE_ARCHIVED', 'Employees', $request->user()->getKey(), 'employees', (string) $locked->getKey(), newValues: [
+                'reason' => $request->input('reason') ?: 'Employee archived by authorized personnel.',
+                'deleted_at' => $locked->deleted_at->toISOString(),
+            ]);
+        });
 
         return redirect()
             ->route('employees.index')
