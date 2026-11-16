@@ -75,6 +75,6 @@
     @endif
 
     <p class="mt-8 text-center text-xs text-muted">
-        Generated {{ $payslip->generated_at?->format('M d, Y g:i A') }} · Status: {{ $payslip->publication_status }}
+        Generated <x-local-time :value="$payslip->generated_at" /> · Status: {{ $payslip->publication_status }}
     </p>
 @endsection

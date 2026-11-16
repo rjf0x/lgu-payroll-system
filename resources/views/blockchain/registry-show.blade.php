@@ -21,7 +21,7 @@
                 <p class="mb-2 font-semibold"><x-status :value="$latestCheck->verification_result" /></p>
                 <p>{{ $latestCheck->remarks }}</p>
             </x-alert>
-            <p class="mt-3 text-sm text-muted">Last checked {{ $latestCheck->verified_at->format('M d, Y g:i A') }} {{ config('app.timezone') }} by {{ $latestCheck->verifiedBy?->username ?? 'Unavailable user' }}.</p>
+            <p class="mt-3 text-sm text-muted">Last checked <x-local-time :value="$latestCheck->verified_at" show-timezone /> by {{ $latestCheck->verifiedBy?->username ?? 'Unavailable user' }}.</p>
         @else
             <p>No integrity check has been recorded for this payroll registration.</p>
         @endif
@@ -69,7 +69,7 @@
                     <tr>
                         <td class="text-center ui-table-primary"><x-status :value="$check->verification_result" /></td>
                         <td>{{ $check->verifiedBy?->username ?? 'Unavailable user' }}</td>
-                        <td>{{ $check->verified_at->format('M d, Y g:i A') }} {{ config('app.timezone') }}</td>
+                        <td><x-local-time :value="$check->verified_at" show-timezone /></td>
                         <td class="min-w-0">
                             <p>{{ $check->remarks }}</p>
                             <details class="ui-table-secondary">

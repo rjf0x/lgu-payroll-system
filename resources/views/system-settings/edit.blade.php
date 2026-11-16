@@ -15,7 +15,7 @@
         </form>
         <x-card heading="Enforced configuration">
             <dl class="space-y-4 text-sm">
-                @foreach (['Payroll frequency' => 'Monthly', 'Currency' => 'PHP', 'Timezone' => config('app.timezone'), 'Role-based access' => 'Required', 'Audit logging' => 'Required', 'Independent payroll review' => 'Required', 'Return and rejection reasons' => 'Required', 'Blockchain driver' => config('blockchain.driver')] as $label => $value)
+                @foreach (['Payroll frequency' => 'Monthly', 'Currency' => 'PHP', 'Timezone' => config('app.display_timezone'), 'Role-based access' => 'Required', 'Audit logging' => 'Required', 'Independent payroll review' => 'Required', 'Return and rejection reasons' => 'Required', 'Blockchain driver' => config('blockchain.driver')] as $label => $value)
                     <div class="flex flex-wrap justify-between gap-2 border-b border-slate-100 pb-3"><dt class="text-muted">{{ $label }}</dt><dd class="font-semibold">{{ $value }}</dd></div>
                 @endforeach
             </dl>

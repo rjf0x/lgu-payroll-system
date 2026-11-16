@@ -24,7 +24,7 @@
             </div>
             <div>
                 <dt class="text-xs font-semibold uppercase tracking-wide text-slate-500">Last Login</dt>
-                <dd class="mt-1">{{ $user->last_login_at?->format('M d, Y g:i A') ?? 'Never' }}</dd>
+                <dd class="mt-1"><x-local-time :value="$user->last_login_at" fallback="Never" /></dd>
             </div>
         </dl>
 
@@ -35,7 +35,7 @@
                     <li class="flex items-center justify-between px-4 py-2">
                         <span>{{ $userRole->role->role_name }}</span>
                         <span class="text-xs text-slate-500">
-                            {{ $userRole->assigned_at?->format('M d, Y') }}
+                            <x-local-time :value="$userRole->assigned_at" format="M d, Y" />
                             @if ($userRole->assignedBy) · by {{ $userRole->assignedBy->username }} @endif
                         </span>
                     </li>

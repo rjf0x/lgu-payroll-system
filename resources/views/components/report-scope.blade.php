@@ -7,7 +7,7 @@
         <div><dt class="font-semibold">Coverage / pay date</dt><dd>{{ $run->payrollPeriod->start_date?->format('M d, Y') }}–{{ $run->payrollPeriod->end_date?->format('M d, Y') }}<br>Pay date {{ $run->payrollPeriod->pay_date?->format('M d, Y') }}</dd></div>
         <div><dt class="font-semibold">Run status</dt><dd><x-status :value="$run->status" /></dd></div>
     </dl>
-    <p class="mt-3 text-sm text-muted">Viewed {{ now()->format('M d, Y g:i A') }} {{ config('app.timezone') }} · {{ $run->details->count() }} employees · Amounts in PHP.</p>
+    <p class="mt-3 text-sm text-muted">Viewed <x-local-time :value="now()" show-timezone /> · {{ $run->details->count() }} employees · Amounts in PHP.</p>
     @if ($run->status !== 'FINALIZED')
         <p class="mt-2 font-semibold text-amber-900">Working copy. Figures may change until this payroll run is finalized.</p>
     @endif

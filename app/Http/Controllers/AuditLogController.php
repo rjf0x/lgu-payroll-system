@@ -6,6 +6,7 @@ use App\Http\Requests\AuditLogFilterRequest;
 use App\Models\AuditLog;
 use App\Models\User;
 use App\Services\AuditLogger;
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -32,12 +33,12 @@ class AuditLogController extends Controller
 
         return response()->streamDownload(function () use ($query): void {
             $output = fopen('php://output', 'w');
-            fputcsv($output, ['Audit ID', 'Timestamp', 'User', 'Module', 'Action', 'Record table', 'Record ID', 'IP address'], escape: '');
+            fputcsv($output, ['Audit ID', 'Timestamp ('.config('app.display_timezone').')', 'User', 'Module', 'Action', 'Record table', 'Record ID', 'IP address'], escape: '');
 
             foreach ($query->lazyByIdDesc(500, 'audit_id') as $log) {
                 $cells = [
                     (string) $log->audit_id,
-                    $log->created_at?->format('Y-m-d H:i:s') ?? '',
+                    $log->created_at?->copy()->setTimezone(config('app.display_timezone'))->format('Y-m-d H:i:s') ?? '',
                     $log->user?->username ?? 'System / unavailable user',
                     $log->module,
                     $log->action,
@@ -50,7 +51,7 @@ class AuditLogController extends Controller
             }
 
             fclose($output);
-        }, 'audit-log-'.now()->format('Y-m-d-His').'.csv', [
+        }, 'audit-log-'.now()->setTimezone(config('app.display_timezone'))->format('Y-m-d-His').'.csv', [
             'Content-Type' => 'text/csv; charset=UTF-8',
             'Cache-Control' => 'no-store, private',
         ]);
@@ -69,11 +70,11 @@ class AuditLogController extends Controller
         }
 
         if (isset($filters['from'])) {
-            $query->where('created_at', '>=', $filters['from'].' 00:00:00');
+            $query->where('created_at', '>=', CarbonImmutable::parse($filters['from'], config('app.display_timezone'))->startOfDay()->utc()->toDateTimeString());
         }
 
         if (isset($filters['to'])) {
-            $query->where('created_at', '<=', $filters['to'].' 23:59:59');
+            $query->where('created_at', '<', CarbonImmutable::parse($filters['to'], config('app.display_timezone'))->addDay()->startOfDay()->utc()->toDateTimeString());
         }
 
         return $query;

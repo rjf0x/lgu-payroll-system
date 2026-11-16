@@ -13,7 +13,7 @@
         @elseif ($anchor->anchor_status === 'FAILED')
             <x-alert variant="error">The anchoring transaction failed. Contact the administrator to reconcile it before resubmission.</x-alert>
         @elseif ($latestCheck)
-            <p class="mb-3"><x-status :value="$latestCheck->verification_result" /> ? Last checked {{ $latestCheck->verified_at?->format('M d, Y g:i A') }} {{ config('app.timezone') }}</p>
+            <p class="mb-3"><x-status :value="$latestCheck->verification_result" /> ? Last checked <x-local-time :value="$latestCheck->verified_at" show-timezone /></p>
             <p>{{ $latestCheck->verification_result === 'MATCH' ? 'At the last check, payroll data matched the anchored hash.' : 'At the last check, payroll data or the local anchor hash differed from the anchored evidence. Ask the administrator to investigate.' }}</p>
         @else
             <p>No integrity check has been recorded for this anchor.</p>
@@ -45,7 +45,7 @@
             </div>
             <div>
                 <dt class="text-xs font-semibold uppercase tracking-wide text-slate-500">Anchored By</dt>
-                <dd class="mt-1">{{ $anchor->anchoredBy?->username }} · {{ $anchor->anchored_at?->format('M d, Y g:i A') }}</dd>
+                <dd class="mt-1">{{ $anchor->anchoredBy?->username }} · <x-local-time :value="$anchor->anchored_at" /></dd>
             </div>
             <div>
                 <dt class="text-xs font-semibold uppercase tracking-wide text-slate-500">Block Number</dt>
@@ -89,7 +89,7 @@
                             <x-status :value="$log->verification_result" />
                         </td>
                         <td class="px-5 py-2 text-slate-600">{{ $log->verifiedBy?->username }}</td>
-                        <td class="px-5 py-2 text-slate-500">{{ $log->verified_at?->format('M d, Y g:i A') }}</td>
+                        <td class="px-5 py-2 text-slate-500"><x-local-time :value="$log->verified_at" /></td>
                         <td class="px-5 py-2 font-mono text-xs">{{ substr($log->calculated_hash, 0, 24) }}…</td>
                     </tr>
                 @empty

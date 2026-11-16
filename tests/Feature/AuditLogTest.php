@@ -58,17 +58,42 @@ class AuditLogTest extends TestCase
     {
         $admin = $this->userWithRole(Role::ADMIN);
         $event = AuditLog::factory()->create(['user_id' => $admin->user_id, 'module' => 'Payroll', 'action' => 'SUBMIT']);
-        $event->forceFill(['created_at' => '2026-11-07 23:59:59'])->save();
+        $event->forceFill(['created_at' => '2026-11-07 15:59:59'])->save();
         AuditLog::factory()->create(['module' => 'Payroll', 'action' => 'SUBMIT']);
         AuditLog::factory()->create(['user_id' => $admin->user_id, 'module' => 'Authentication', 'action' => 'LOGIN']);
         $older = AuditLog::factory()->create(['user_id' => $admin->user_id, 'module' => 'Payroll', 'action' => 'SUBMIT']);
-        $older->forceFill(['created_at' => '2026-11-06 23:59:59'])->save();
+        $older->forceFill(['created_at' => '2026-11-06 15:59:59'])->save();
 
         $this->actingAs($admin)->get(route('audit-logs.index', [
             'module' => 'Payroll', 'action' => 'SUBMIT', 'user_id' => $admin->user_id,
             'from' => '2026-11-07', 'to' => '2026-11-07',
         ]))->assertOk()->assertSee('Audit trail')
             ->assertViewHas('logs', fn ($logs): bool => $logs->modelKeys() === [$event->audit_id]);
+    }
+
+    public function test_audit_dates_and_exports_use_the_philippine_calendar_day(): void
+    {
+        $admin = $this->userWithRole(Role::ADMIN);
+        $before = AuditLog::factory()->create(['module' => 'Payroll', 'created_at' => '2026-11-15 15:59:59']);
+        $first = AuditLog::factory()->create(['module' => 'Payroll', 'created_at' => '2026-11-15 16:00:00']);
+        $last = AuditLog::factory()->create(['module' => 'Payroll', 'created_at' => '2026-11-16 15:59:59']);
+        $after = AuditLog::factory()->create(['module' => 'Payroll', 'created_at' => '2026-11-16 16:00:00']);
+        $filters = ['module' => 'Payroll', 'from' => '2026-11-16', 'to' => '2026-11-16'];
+
+        $this->actingAs($admin)->get(route('audit-logs.index', $filters))->assertOk()
+            ->assertSee('Dates use Asia/Manila')
+            ->assertSee('Nov 16, 2026 00:00:00')->assertSee('Nov 16, 2026 23:59:59')
+            ->assertViewHas('logs', fn ($logs): bool => $logs->modelKeys() === [$last->audit_id, $first->audit_id]);
+        $response = $this->get(route('audit-logs.export', $filters))->assertOk()->assertDownload();
+
+        $csv = $response->streamedContent();
+        $this->assertStringContainsString('Timestamp (Asia/Manila)', $csv);
+        $this->assertStringContainsString('2026-11-16 00:00:00', $csv);
+        $this->assertStringContainsString('2026-11-16 23:59:59', $csv);
+        $this->assertStringNotContainsString('2026-11-15 23:59:59', $csv);
+        $this->assertStringNotContainsString('2026-11-17 00:00:00', $csv);
+        $this->assertDatabaseHas('audit_logs', ['audit_id' => $before->audit_id, 'created_at' => '2026-11-15 15:59:59']);
+        $this->assertDatabaseHas('audit_logs', ['audit_id' => $after->audit_id, 'created_at' => '2026-11-16 16:00:00']);
     }
 
     public function test_event_metadata_is_escaped_and_payloads_are_not_disclosed(): void

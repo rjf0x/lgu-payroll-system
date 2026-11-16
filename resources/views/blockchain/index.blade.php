@@ -28,7 +28,7 @@
                         <td>
                             @if ($registration->latestVerification)
                                 <x-status :value="$registration->latestVerification->verification_result" />
-                                <p class="ui-table-secondary">{{ $registration->latestVerification->verified_at->format('M d, Y g:i A') }} {{ config('app.timezone') }}</p>
+                                <p class="ui-table-secondary"><x-local-time :value="$registration->latestVerification->verified_at" show-timezone /></p>
                             @else
                                 Not checked
                             @endif
@@ -68,7 +68,7 @@
                             <x-status :value="$anchor->anchor_status" />
                         </td>
                         <td class="px-4 py-3 text-slate-600">{{ $anchor->anchoredBy?->username }}</td>
-                        <td class="px-4 py-3 text-slate-500">{{ $anchor->anchored_at?->format('M d, Y g:i A') }}</td>
+                        <td class="px-4 py-3 text-slate-500"><x-local-time :value="$anchor->anchored_at" /></td>
                         <td class="px-4 py-3 font-mono text-xs">{{ substr($anchor->payload_hash, 0, 16) }}…</td>
                         <td class="px-4 py-3 text-right ui-table-actions"><x-action-menu :label="'Actions for payroll anchor #'.$anchor->getKey()"><x-button icon="view" variant="secondary" href="{{ route('blockchain-anchors.show', $anchor) }}">View</x-button></x-action-menu></td>
                     </tr>

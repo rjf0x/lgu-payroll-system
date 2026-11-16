@@ -235,7 +235,7 @@
                                 <td class="px-4 py-2 text-center"><x-status :value="$run->status" /></td>
                                 <td class="px-4 py-2 text-muted">
                                     @if ($run->finalized_at)
-                                        <time datetime="{{ $run->finalized_at->toIso8601String() }}">{{ $run->finalized_at->format('M d, Y') }}</time>
+                                        <x-local-time :value="$run->finalized_at" format="M d, Y" />
                                     @else
                                         <span>Not finalized</span>
                                     @endif

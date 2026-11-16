@@ -32,7 +32,7 @@
         </div>
         </form>
 
-    <p class="mb-3 text-sm text-slate-600">{{ number_format($logs->total()) }} matching events. Newest first. Dates use {{ config('app.timezone') }}.</p>
+    <p class="mb-3 text-sm text-slate-600">{{ number_format($logs->total()) }} matching events. Newest first. Dates use {{ config('app.display_timezone') }}.</p>
     <div role="region" aria-label="Audit events" tabindex="0" class="overflow-x-auto rounded-xl border border-slate-200 bg-white focus-visible:outline-2 focus-visible:outline-focus">
         <x-results :items="$logs" />
         <x-table label="Audit trail records">
@@ -48,7 +48,7 @@
                 @forelse ($logs as $log)
                     <tr>
                         <td class="px-4 py-3 tabular-nums">#{{ $log->audit_id }}</td>
-                        <td class="ui-table-primary px-4 py-3"><time datetime="{{ $log->created_at?->toIso8601String() }}">{{ $log->created_at?->format('M d, Y H:i:s') }}</time></td>
+                        <td class="ui-table-primary px-4 py-3"><x-local-time :value="$log->created_at" format="M d, Y H:i:s" /></td>
                         <td class="px-4 py-3">{{ $log->user?->username ?? 'System / unavailable user' }}</td>
                         <td class="px-4 py-3">{{ $log->module }}</td>
                         <td class="px-4 py-3 font-medium">{{ $log->action }}</td>

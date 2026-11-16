@@ -58,6 +58,31 @@ class PayrollVerificationTest extends TestCase
         Http::assertSent(fn (Request $request): bool => $request->method() === 'GET' && $request->url() === $this->path($registration));
     }
 
+    public function test_verification_times_use_philippine_time_without_changing_stored_evidence(): void
+    {
+        $this->travelTo(now()->setDate(2026, 11, 16)->setTime(23, 40, 52));
+        [$registration, $user] = $this->registration();
+        $this->fakeRead($registration, $this->evidence($registration));
+        $log = app(PayrollVerificationService::class)->verify($registration, $user);
+
+        $this->actingAs($user)->get(route('payroll-registrations.show', $registration))->assertOk()
+            ->assertSee('Nov 17, 2026 7:40 AM Asia/Manila')
+            ->assertSee('2026-11-17T07:40:52+08:00', false);
+        $this->get(route('blockchain.index'))->assertOk()
+            ->assertSee('Nov 17, 2026 7:40 AM Asia/Manila');
+        $this->get(route('payroll-runs.show', $registration->payroll_run_id))->assertOk()
+            ->assertSee('Nov 17, 2026 7:40 AM Asia/Manila');
+
+        $this->assertDatabaseHas('payroll_registration_verifications', [
+            'verification_id' => $log->getKey(), 'verified_at' => '2026-11-16 23:40:52',
+            'verification_result' => Verification::MATCH, 'stored_hash' => $registration->payload_hash,
+        ]);
+        $this->assertDatabaseHas('payroll_registrations', [
+            'registration_id' => $registration->getKey(), 'canonical_payload' => $registration->canonical_payload,
+            'payload_hash' => $registration->payload_hash,
+        ]);
+    }
+
     public function test_tampered_payroll_and_replaced_local_hash_cannot_hide_a_mismatch(): void
     {
         [$registration, $user] = $this->registration();

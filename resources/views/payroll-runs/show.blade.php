@@ -17,7 +17,7 @@
         <x-card heading="Run overview">
             <dl class="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
                 <div><dt class="text-sm text-muted">Employees</dt><dd class="mt-1 font-semibold tabular-nums">{{ $run->details->count() }}</dd></div>
-                <div><dt class="text-sm text-muted">Processed</dt><dd class="mt-1 text-sm">{{ $run->processed_at?->format('M d, Y g:i A') ?? 'Not yet processed' }}</dd></div>
+                <div><dt class="text-sm text-muted">Processed</dt><dd class="mt-1 text-sm"><x-local-time :value="$run->processed_at" fallback="Not yet processed" /></dd></div>
                 <div><dt class="text-sm text-muted">Submitted by</dt><dd class="mt-1 break-words text-sm">{{ $run->submittedBy?->username ?? ($run->submitted_at ? 'Unavailable user' : 'Not yet submitted') }}</dd></div>
                 <div><dt class="text-sm text-muted">Finalized by</dt><dd class="mt-1 break-words text-sm">{{ $run->finalizedBy?->username ?? ($run->finalized_at ? 'Unavailable user' : 'Not yet finalized') }}</dd></div>
             </dl>
@@ -169,7 +169,7 @@
                         <tr>
                             <td class="font-semibold ui-table-primary">{{ str_replace('_', ' ', ucfirst(strtolower($approval->action))) }}</td>
                             <td>{{ $approval->actedBy?->username ?? 'Unavailable user' }}</td>
-                            <td>{{ $approval->acted_at?->format('M d, Y g:i A') }}</td>
+                            <td><x-local-time :value="$approval->acted_at" /></td>
                             <td class="ui-wrap">{{ $approval->remarks ?: 'No remarks' }}</td>
                         </tr>
                     @empty
@@ -186,7 +186,7 @@
                         <p>Registration: <x-status :value="$run->registration->status" /></p>
                         @if ($run->registration->latestVerification)
                             <p>Last integrity check: <x-status :value="$run->registration->latestVerification->verification_result" /></p>
-                            <p class="text-muted">Checked {{ $run->registration->latestVerification->verified_at->format('M d, Y g:i A') }} {{ config('app.timezone') }}. Verify again to check current data.</p>
+                            <p class="text-muted">Checked <x-local-time :value="$run->registration->latestVerification->verified_at" show-timezone />. Verify again to check current data.</p>
                         @else
                             <p class="text-muted">No integrity check has been recorded yet.</p>
                         @endif
@@ -196,7 +196,7 @@
                     @if ($run->anchor)
                         <div class="space-y-3 text-sm">
                             <p class="break-words">Network: {{ $run->anchor->network_name }} · <x-status :value="$run->anchor->anchor_status" /></p>
-                            <p class="text-muted">Anchored: {{ $run->anchor->anchored_at?->format('M d, Y g:i A') }}</p>
+                            <p class="text-muted">Anchored: <x-local-time :value="$run->anchor->anchored_at" /></p>
                             <p class="break-all rounded-lg bg-slate-50 p-3 font-mono">{{ $run->anchor->payload_hash }}</p>
                             <x-button icon="view" :href="route('blockchain-anchors.show', $run->anchor)">View &amp; verify anchor</x-button>
                         </div>

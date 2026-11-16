@@ -61,7 +61,7 @@
                             @endif
                         </td>
                         <td>{{ $report->generatedBy?->username ?? 'Unavailable account' }}</td>
-                        <td>{{ $report->generated_at?->format('M d, Y g:i A') }} {{ config('app.timezone') }}</td>
+                        <td><x-local-time :value="$report->generated_at" show-timezone /></td>
                     </tr>
                 @empty
                     <tr><td colspan="4">No reports generated yet.</td></tr>
