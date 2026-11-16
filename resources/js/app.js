@@ -1,6 +1,7 @@
 import './navigation.js';
 import './header.js';
 import './action-menus.js';
+import './payroll-detail.js';
 const confirmation = document.getElementById('confirmation-dialog');
 let pendingConfirmation = null;
 const submissionLabels = new WeakMap();

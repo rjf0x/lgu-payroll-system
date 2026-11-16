@@ -12,6 +12,8 @@ use App\Models\Role;
 use App\Models\User;
 use App\Services\PayrollComputationService;
 use Database\Seeders\RolePermissionSeeder;
+use DOMDocument;
+use DOMXPath;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Schema;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -42,6 +44,97 @@ class ManualPayrollInputTest extends TestCase
     private function payload(): array
     {
         return ['payable_days' => 20, 'input_reference' => 'Approved summary HR-123', 'inputs_confirmed' => 1, 'earnings' => [], 'deductions' => [], 'lbp_loan_deduction' => 0];
+    }
+
+    private function editorDocument(string $html): DOMXPath
+    {
+        $previous = libxml_use_internal_errors(true);
+        $document = new DOMDocument;
+        $document->loadHTML('<?xml encoding="UTF-8">'.$html);
+        libxml_clear_errors();
+        libxml_use_internal_errors($previous);
+
+        return new DOMXPath($document);
+    }
+
+    public function test_editor_prioritizes_configured_entries_and_keeps_additional_fields_submittable(): void
+    {
+        $run = $this->preparedRun();
+        $detail = $run->details()->firstOrFail();
+        $earning = EarningType::factory()->create(['earning_name' => 'Configured allowance', 'earning_category' => 'ALLOWANCE']);
+        $additional = EarningType::factory()->create(['earning_name' => 'Additional benefit', 'earning_category' => 'BENEFIT']);
+        $gsis = DeductionType::factory()->create(['deduction_name' => 'MPL', 'deduction_category' => 'GSIS_LOAN', 'is_statutory' => false]);
+        $pagibig = DeductionType::factory()->create(['deduction_name' => 'MPL', 'deduction_category' => 'PAGIBIG_LOAN', 'is_statutory' => false]);
+        $statutory = DeductionType::factory()->create(['is_statutory' => true]);
+        $inactive = EarningType::factory()->create(['status' => 'INACTIVE']);
+        $this->put(route('payroll-details.update', [$run, $detail]), array_replace($this->payload(), [
+            'earnings' => [$earning->getKey() => 500],
+            'deductions' => [$gsis->getKey() => 100, $pagibig->getKey() => 50],
+            'lbp_loan_deduction' => 25,
+        ]))->assertRedirect();
+
+        $response = $this->get(route('payroll-details.edit', [$run, $detail]))->assertOk();
+
+        $response->assertSee('Last computed')->assertSee('Save &amp; Recompute', false);
+        $xpath = $this->editorDocument($response->getContent());
+        $this->assertSame('500.00', $xpath->evaluate('string(//input[@id="earning-'.$earning->getKey().'"]/@value)'));
+        $this->assertSame(0, $xpath->query('//input[@id="earning-'.$earning->getKey().'"]/ancestor::details')->length);
+        $this->assertSame(1, $xpath->query('//input[@id="earning-'.$additional->getKey().'"]/ancestor::details[not(@open)]')->length);
+        $this->assertSame('25.00', $xpath->evaluate('string(//input[@name="lbp_loan_deduction"]/@value)'));
+        $this->assertSame('GSIS loans', $xpath->evaluate('string(//input[@id="deduction-'.$gsis->getKey().'"]/ancestor::fieldset/legend)'));
+        $this->assertSame('Pag-IBIG loans & savings', $xpath->evaluate('string(//input[@id="deduction-'.$pagibig->getKey().'"]/ancestor::fieldset/legend)'));
+        $this->assertSame(0, $xpath->query('//input[@id="deduction-'.$statutory->getKey().'" or @id="earning-'.$inactive->getKey().'"]')->length);
+        $this->assertSame(0, $xpath->query('//form[@data-payroll-detail-form]//input[@disabled]')->length);
+
+        foreach ($xpath->query('//form[@data-payroll-detail-form]//input[not(@type="hidden")]') as $field) {
+            $this->assertSame(1, $xpath->query('//label[@for="'.$field->getAttribute('id').'"]')->length);
+        }
+    }
+
+    public function test_editor_retains_cleared_zero_and_invalid_amounts_after_validation_failure(): void
+    {
+        $run = $this->preparedRun();
+        $detail = $run->details()->firstOrFail();
+        $zeroed = EarningType::factory()->create();
+        $cleared = EarningType::factory()->create();
+        $deduction = DeductionType::factory()->create(['is_statutory' => false, 'deduction_category' => 'OTHER']);
+        $this->put(route('payroll-details.update', [$run, $detail]), array_replace($this->payload(), [
+            'earnings' => [$zeroed->getKey() => 500, $cleared->getKey() => 250],
+            'lbp_loan_deduction' => 25,
+        ]))->assertRedirect();
+        $editUrl = route('payroll-details.edit', [$run, $detail]);
+        $response = $this->from($editUrl)->followingRedirects()->put(route('payroll-details.update', [$run, $detail]), array_replace($this->payload(), [
+            'payable_days' => 0,
+            'input_reference' => 'Revised approval HR-124',
+            'earnings' => [$zeroed->getKey() => 0, $cleared->getKey() => ''],
+            'deductions' => [$deduction->getKey() => -10],
+        ]))->assertOk();
+
+        $response->assertSee('Unsaved changes. Totals update when you save.');
+        $xpath = $this->editorDocument($response->getContent());
+        $this->assertSame('0', $xpath->evaluate('string(//input[@id="earning-'.$zeroed->getKey().'"]/@value)'));
+        $this->assertSame('', $xpath->evaluate('string(//input[@id="earning-'.$cleared->getKey().'"]/@value)'));
+        $this->assertSame('-10', $xpath->evaluate('string(//input[@id="deduction-'.$deduction->getKey().'"]/@value)'));
+        $this->assertSame('true', $xpath->evaluate('string(//input[@id="deduction-'.$deduction->getKey().'"]/@aria-invalid)'));
+        $this->assertSame(0, $xpath->query('//input[@id="deduction-'.$deduction->getKey().'"]/ancestor::details')->length);
+        $this->assertSame('0', $xpath->evaluate('string(//input[@name="lbp_loan_deduction"]/@value)'));
+        $this->assertSame('0', $xpath->evaluate('string(//input[@name="payable_days"]/@value)'));
+        $this->assertSame('Revised approval HR-124', $xpath->evaluate('string(//input[@name="input_reference"]/@value)'));
+        $this->assertSame(1, $xpath->query('//input[@name="inputs_confirmed" and @checked]')->length);
+    }
+
+    public function test_editor_makes_initial_entries_available_without_configured_adjustments(): void
+    {
+        $run = $this->preparedRun();
+        $detail = $run->details()->firstOrFail();
+        $earning = EarningType::factory()->create(['earning_name' => 'Allowance <script>alert(1)</script>']);
+
+        $response = $this->get(route('payroll-details.edit', [$run, $detail]))->assertOk();
+
+        $response->assertSee($earning->earning_name)->assertDontSee($earning->earning_name, false);
+        $xpath = $this->editorDocument($response->getContent());
+        $this->assertSame(1, $xpath->query('//input[@id="earning-'.$earning->getKey().'"]/ancestor::details[@open]')->length);
+        $this->assertSame(1, $xpath->query('//input[@name="lbp_loan_deduction"]')->length);
     }
 
     public function test_removed_modules_have_no_routes_permissions_tables_or_navigation(): void

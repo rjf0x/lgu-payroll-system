@@ -115,6 +115,11 @@
     .ui-filter-toolbar select { @apply px-2; }
     .ui-filter-toolbar label { @apply mb-1 text-xs font-medium text-muted; }
     .ui-compact-form label { @apply mb-1 text-sm font-medium text-muted; }
+    .payroll-adjustment-tab { @apply min-h-11 rounded-t-lg border-b-2 border-transparent px-4 py-2 text-sm font-semibold text-muted hover:bg-slate-50 hover:text-brand-ink; }
+    .payroll-adjustment-tab[aria-selected='true'] { @apply border-brand bg-brand-soft text-brand-ink; }
+    .payroll-detail-form [data-payroll-entry] > label { @apply mb-0 text-ink; }
+    .payroll-detail-form :is(input, button, summary, [tabindex]) { scroll-margin-bottom: 12rem; }
+    .payroll-detail-actions { padding-bottom: max(0.75rem, env(safe-area-inset-bottom)); }
     .ui-table-scroll { @apply relative max-h-[36rem] w-full min-w-0 max-w-full overflow-auto overscroll-x-contain rounded-2xl border border-slate-200 bg-surface shadow-xs; }
     .ui-table { @apply w-full min-w-[40rem] border-collapse whitespace-nowrap text-left text-sm leading-5; }
     .ui-table :is(th, td) { @apply min-w-28; }
