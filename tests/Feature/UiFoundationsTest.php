@@ -18,6 +18,40 @@ class UiFoundationsTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_action_flash_message_appears_once_after_a_real_redirect(): void
+    {
+        $user = $this->userWithRole(Role::ADMIN);
+
+        $this->actingAs($user)->post(route('departments.store'), [
+            'department_code' => 'TOAST',
+            'department_name' => 'Payroll Notifications',
+            'status' => 'ACTIVE',
+        ])->assertRedirect(route('departments.index'))->assertSessionHas('status', 'Department created.');
+
+        $this->assertDatabaseHas('departments', ['department_code' => 'TOAST']);
+        $response = $this->get(route('departments.index'))->assertOk();
+        $this->assertSame(1, $this->document($response->getContent())->query('//section[@aria-label="Notifications"]//p[text()="Department created."]')->length);
+        $this->get(route('departments.index'))->assertOk()->assertDontSee('Department created.');
+    }
+
+    public function test_action_messages_render_as_toasts_outside_the_page_content_and_escape_html(): void
+    {
+        $user = $this->userWithRole(Role::VIEWER);
+        $error = 'Cannot save <script>alert(1)</script>.';
+
+        $response = $this->actingAs($user)->withSession([
+            'status' => 'Employee updated.',
+            'error' => $error,
+        ])->get(route('dashboard'))->assertOk()
+            ->assertSee('Employee updated.')->assertSee($error)->assertDontSee($error, false);
+
+        $document = $this->document($response->getContent());
+        $this->assertSame(1, $document->query('//section[@aria-label="Notifications"]//*[@role="status"]//p[text()="Employee updated."]')->length);
+        $this->assertSame(1, $document->query('//section[@aria-label="Notifications"]//*[@role="alert"]')->length);
+        $this->assertSame(2, $document->query('//section[@aria-label="Notifications"]//button[@type="button" and @aria-label="Dismiss notification"]')->length);
+        $this->assertSame(0, $document->query('//main//*[contains(text(), "Employee updated.") or contains(text(), "Cannot save")]')->length);
+    }
+
     public function test_action_buttons_show_decorative_icons_and_text_and_keep_accessible_labels_links_and_submission_attributes(): void
     {
         $html = Blade::render('<x-button icon="edit" href="/example" aria-label="Edit employee">Edit</x-button><x-button icon="delete" type="submit" formaction="/delete" disabled>Delete</x-button><x-button type="submit">Save changes</x-button>');

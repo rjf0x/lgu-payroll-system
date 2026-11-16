@@ -60,6 +60,56 @@
 }
 
 @layer components {
+    .ui-alert {
+        @apply relative flex min-w-0 items-start gap-3 rounded-lg border;
+        color: var(--alert-ink);
+    }
+    .ui-alert [x-cloak] { display: none !important; }
+    .ui-alert-success {
+        --alert-ink: var(--color-success-ink);
+        --alert-solid: var(--color-success-ink);
+        --alert-soft: var(--color-success-soft);
+        --alert-border: var(--color-emerald-200);
+    }
+    .ui-alert-destructive {
+        --alert-ink: var(--color-rose-800);
+        --alert-solid: var(--color-rose-700);
+        --alert-soft: var(--color-rose-50);
+        --alert-border: var(--color-rose-200);
+    }
+    .ui-alert-warning {
+        --alert-ink: var(--color-warning-ink);
+        --alert-solid: var(--color-amber-800);
+        --alert-soft: var(--color-warning-soft);
+        --alert-border: var(--color-amber-200);
+    }
+    .ui-alert-info, .ui-alert-primary {
+        --alert-ink: var(--color-brand-ink);
+        --alert-solid: var(--color-brand);
+        --alert-soft: var(--color-brand-soft);
+        --alert-border: var(--color-brand-border);
+    }
+    .ui-alert-secondary {
+        --alert-ink: var(--color-muted);
+        --alert-solid: var(--color-muted);
+        --alert-soft: var(--color-slate-50);
+        --alert-border: var(--color-slate-300);
+    }
+    .ui-alert-mono {
+        --alert-ink: var(--color-ink);
+        --alert-solid: var(--color-ink);
+        --alert-soft: var(--color-slate-100);
+        --alert-border: var(--color-slate-300);
+    }
+    .ui-alert-light { background: var(--alert-soft); border-color: var(--alert-border); }
+    .ui-alert-outline { background: var(--color-surface); border-color: var(--alert-border); }
+    .ui-alert-solid { background: var(--alert-solid); border-color: var(--alert-solid); color: white; }
+    .ui-alert-sm { @apply gap-2 px-3 py-2 text-xs leading-5; }
+    .ui-alert-md { @apply px-3.5 py-3 text-sm leading-6; }
+    .ui-alert-lg { @apply px-4 py-3.5 text-base leading-7; }
+    .ui-alert .ui-alert-icon { @apply mt-0.5; }
+    .ui-alert-dismiss { @apply -mr-1 -mt-1 flex size-8 shrink-0 items-center justify-center rounded-md hover:bg-black/10; }
+    .ui-alert-dismiss:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
     .ui-skeleton { @apply rounded-md bg-slate-200; }
     .ui-button {
         @apply inline-flex h-10 min-h-10 shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-lg border px-3 py-2 text-sm font-semibold leading-5;

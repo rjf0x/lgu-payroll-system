@@ -1,7 +1,18 @@
-@props(['name'])
+@props(['name', 'size' => 'md'])
 
 @php
+    $sizeClass = match ($size) {
+        'sm' => 'size-4',
+        'lg' => 'size-6',
+        default => 'size-5',
+    };
     $path = match ($name) {
+        'circle-check' => 'M22 12a10 10 0 1 1-4-8M8 11l4 4L22 4',
+        'circle-x' => 'M22 12a10 10 0 1 1-20 0 10 10 0 0 1 20 0ZM9 9l6 6m0-6-6 6',
+        'triangle-alert' => 'm10.3 3.9-8.2 14a2 2 0 0 0 1.7 3h16.4a2 2 0 0 0 1.7-3l-8.2-14a2 2 0 0 0-3.4 0ZM12 9v4m0 4h.01',
+        'info' => 'M22 12a10 10 0 1 1-20 0 10 10 0 0 1 20 0ZM12 11v6m0-10h.01',
+        'bell' => 'M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4',
+        'close' => 'm6 6 12 12M18 6 6 18',
         'view' => 'M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Zm10-3a3 3 0 1 0 0 6 3 3 0 0 0 0-6',
         'edit' => 'm16 3 5 5L8 21H3v-5L16 3Zm-3 3 5 5',
         'delete' => 'M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7M14 10v7',
@@ -30,4 +41,4 @@
     };
 @endphp
 
-<svg {{ $attributes->class(['size-5 shrink-0']) }} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="{{ $path }}" /></svg>
+<svg {{ $attributes->class([$sizeClass, 'shrink-0']) }} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="{{ $path }}" /></svg>

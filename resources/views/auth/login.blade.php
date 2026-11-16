@@ -115,5 +115,6 @@
             <p class="mt-6 text-center text-xs text-muted">{{ $systemSettings['system_name'] }} &middot; Staff workspace</p>
         </div>
     </main>
+    <x-ui.alert-container presentation="toast" />
 </body>
 </html>

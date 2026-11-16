@@ -102,12 +102,6 @@
             <x-page-loader />
             <div data-page-content>
                 <x-breadcrumbs />
-                @if (session('status'))
-                    <x-alert class="mb-5">{{ session('status') }}</x-alert>
-                @endif
-                @if (session('error'))
-                    <x-alert variant="error" class="mb-5">{{ session('error') }}</x-alert>
-                @endif
                 <x-form.error-summary />
                 <p id="submission-status" role="status" class="sr-only"></p>
                 @yield('content')
@@ -116,5 +110,6 @@
     </div>
 </div>
 <x-confirmation-dialog />
+<x-ui.alert-container presentation="toast" />
 </body>
 </html>

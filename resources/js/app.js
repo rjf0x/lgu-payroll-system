@@ -3,6 +3,8 @@ import './header.js';
 import './action-menus.js';
 import './payroll-detail.js';
 import './page-loading.js';
+import Alpine from 'alpinejs';
+import { alertNotification } from './toast-notifications.js';
 const confirmation = document.getElementById('confirmation-dialog');
 let pendingConfirmation = null;
 const submissionLabels = new WeakMap();
@@ -139,3 +141,7 @@ if (passwordToggle && passwordField) {
     passwordToggle.addEventListener('click', () => setPasswordVisibility(passwordField.type === 'password'));
     window.addEventListener('pageshow', () => setPasswordVisibility(false));
 }
+
+Alpine.data('payrollAlert', alertNotification);
+window.Alpine = Alpine;
+Alpine.start();
