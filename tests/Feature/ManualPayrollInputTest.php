@@ -76,7 +76,9 @@ class ManualPayrollInputTest extends TestCase
         $response = $this->get(route('payroll-details.edit', [$run, $detail]))->assertOk();
 
         $response->assertSee('Last computed')->assertSee('Save &amp; Recompute', false);
+        $response->assertSee('Approval reference / reason (optional)');
         $xpath = $this->editorDocument($response->getContent());
+        $this->assertSame(0, $xpath->query('//input[@name="input_reference" and @required]')->length);
         $this->assertSame('500.00', $xpath->evaluate('string(//input[@id="earning-'.$earning->getKey().'"]/@value)'));
         $this->assertSame(0, $xpath->query('//input[@id="earning-'.$earning->getKey().'"]/ancestor::details')->length);
         $this->assertSame(1, $xpath->query('//input[@id="earning-'.$additional->getKey().'"]/ancestor::details[not(@open)]')->length);
@@ -194,6 +196,36 @@ class ManualPayrollInputTest extends TestCase
         $this->assertSame('0.00', $detail->fresh()->basic_pay);
     }
 
+    /** @return array<string, array{array<string, mixed>}> */
+    public static function optionalReferences(): array
+    {
+        return [
+            'omitted' => [[]],
+            'null' => [['input_reference' => null]],
+            'empty' => [['input_reference' => '']],
+            'whitespace' => [['input_reference' => '   ']],
+        ];
+    }
+
+    /** @param array<string, mixed> $reference */
+    #[DataProvider('optionalReferences')]
+    public function test_confirmed_payroll_can_be_saved_and_submitted_without_a_reference(array $reference): void
+    {
+        $run = $this->preparedRun();
+        $detail = $run->details()->firstOrFail();
+        $payload = $this->payload();
+        unset($payload['input_reference']);
+
+        $this->put(route('payroll-details.update', [$run, $detail]), [...$payload, ...$reference])
+            ->assertRedirect(route('payroll-runs.show', $run));
+
+        $this->assertNull($detail->fresh()->input_reference);
+        $this->assertNotNull($detail->fresh()->input_confirmed_at);
+        $this->get(route('payroll-runs.show', $run))->assertOk()->assertViewHas('canSubmit', true);
+        $this->post(route('payroll-runs.submit', $run))->assertRedirect();
+        $this->assertSame('PENDING_APPROVAL', $run->fresh()->status);
+    }
+
     public static function invalidInputs(): array
     {
         return [
@@ -201,7 +233,8 @@ class ManualPayrollInputTest extends TestCase
             'negative days' => [['payable_days' => -1], 'payable_days'],
             'too many monthly days' => [['payable_days' => 23], 'payable_days'],
             'excess precision' => [['payable_days' => 1.234], 'payable_days'],
-            'missing reference' => [['input_reference' => '   '], 'input_reference'],
+            'reference too long' => [['input_reference' => str_repeat('a', 256)], 'input_reference'],
+            'reference is not text' => [['input_reference' => ['invalid']], 'input_reference'],
             'unconfirmed inputs' => [['inputs_confirmed' => 0], 'inputs_confirmed'],
         ];
     }

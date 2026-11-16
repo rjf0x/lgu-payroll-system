@@ -27,7 +27,7 @@ class PayrollDetailRequest extends FormRequest
 
         return [
             'payable_days' => ['required', 'numeric', 'decimal:0,2', 'min:0', 'max:'.$maxDays],
-            'input_reference' => ['required', 'string', 'max:255'],
+            'input_reference' => ['nullable', 'string', 'max:255'],
             'inputs_confirmed' => ['required', 'accepted'],
             'lbp_loan_deduction' => ['nullable', 'numeric', 'min:0'],
             'earnings' => ['array'],

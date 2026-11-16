@@ -18,7 +18,7 @@
                 <div>
                     <x-form.input name="payable_days" label="Approved payable days" type="number" step="0.01" min="0" :max="$detail->pay_basis_snapshot === 'DAILY' ? $run->payrollPeriod->start_date->diffInDays($run->payrollPeriod->end_date) + 1 : 22" :value="$detail->payable_days" required inputmode="decimal" class="max-w-36 text-right tabular-nums" aria-describedby="approved-input-guidance" />
                 </div>
-                <x-form.input name="input_reference" label="Approval reference / reason" :value="$detail->input_reference" maxlength="255" required aria-describedby="approved-input-guidance" />
+                <x-form.input name="input_reference" label="Approval reference / reason (optional)" :value="$detail->input_reference" maxlength="255" aria-describedby="approved-input-guidance" />
             </div>
             <details class="group mt-2 text-sm text-muted">
                 <summary class="inline-flex min-h-9 items-center gap-2 rounded font-medium text-brand underline decoration-dotted underline-offset-4">
@@ -27,7 +27,7 @@
                 </summary>
                 <div id="approved-input-guidance" class="mt-1 space-y-1">
                     <p>Monthly pay uses a 22-day equivalent; daily pay uses the approved number of payable days. Enter zero explicitly when no pay is due.</p>
-                    <p>Identify the approved summary or authorization supporting these inputs and adjustments.</p>
+                    <p>You may add the approved summary or authorization supporting these inputs and adjustments.</p>
                     <p>Reflect unpaid absences in payable days. Do not deduct the same absence again under Deductions.</p>
                 </div>
             </details>

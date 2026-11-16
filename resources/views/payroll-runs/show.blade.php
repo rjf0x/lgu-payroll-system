@@ -11,7 +11,7 @@
 
     <div class="space-y-6">
         @if ($run->isEditable() && $run->details->contains(fn ($detail) => $detail->payable_days === null || $detail->input_confirmed_at === null))
-            <x-alert variant="warning">Payroll inputs are incomplete. Open each employee's payroll detail, enter approved payable days and an approval reference, and confirm the inputs before submitting. Totals are provisional until all inputs are complete.</x-alert>
+            <x-alert variant="warning">Payroll inputs are incomplete. Open each employee's payroll detail, enter approved payable days, and confirm the inputs before submitting. Totals are provisional until all inputs are complete.</x-alert>
         @endif
         <x-payroll-progress :run="$run" :can-submit="$canSubmit" :can-review="$canReview" :can-finalize="$canFinalize" :independent="$isIndependentReviewer" />
         <x-card heading="Run overview">

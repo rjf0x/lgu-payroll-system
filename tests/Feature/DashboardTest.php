@@ -76,9 +76,9 @@ class DashboardTest extends TestCase
                 $byTitle = collect($actions)->keyBy('title');
 
                 return $byTitle->keys()->all() === ['Payroll preparation', 'Payroll corrections', 'Ready to submit']
-                    && $byTitle['Payroll preparation']['count'] === 3
+                    && $byTitle['Payroll preparation']['count'] === 2
                     && $byTitle['Payroll corrections']['count'] === 2
-                    && $byTitle['Ready to submit']['count'] === 1
+                    && $byTitle['Ready to submit']['count'] === 2
                     && $byTitle['Ready to submit']['href'] === route('payroll-runs.show', $ready)
                     && $byTitle['Payroll corrections']['href'] === route('payroll-runs.show', $returned);
             })
@@ -88,9 +88,9 @@ class DashboardTest extends TestCase
         $this->get(route('dashboard'))->assertOk()->assertViewHas('nextActions', function (array $actions): bool {
             $byTitle = collect($actions)->keyBy('title');
 
-            return $byTitle['Payroll preparation']['count'] === 2
+            return $byTitle['Payroll preparation']['count'] === 1
                 && $byTitle['Payroll corrections']['count'] === 2
-                && $byTitle['Ready to submit']['count'] === 2;
+                && $byTitle['Ready to submit']['count'] === 3;
         });
     }
 

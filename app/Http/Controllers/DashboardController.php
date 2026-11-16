@@ -35,7 +35,7 @@ class DashboardController extends Controller
         $runs = PayrollRun::query()->with('payrollPeriod')->withCount('details');
         $nextActions = [];
         $incompleteInputs = fn (Builder $query): Builder => $query->whereNull('payable_days')
-            ->orWhereNull('input_confirmed_at')->orWhereNull('input_reference')->orWhere('input_reference', '');
+            ->orWhereNull('input_confirmed_at');
         if ($user->can('payroll.view') && $user->can('payroll.prepare')) {
             $metrics['Pending payroll tasks'] = PayrollRun::whereIn('status', [PayrollRun::STATUS_DRAFT, PayrollRun::STATUS_RETURNED, PayrollRun::STATUS_REJECTED])->count();
             $preparation = PayrollRun::where('status', PayrollRun::STATUS_DRAFT);

@@ -46,6 +46,7 @@ class PayrollPayloadBuilder
             }
             $value = $model->getAttribute($field);
             $values[$field] = match (true) {
+                $field === 'input_reference' && $value === null => '',
                 $value === null => null,
                 $type === 'id' => (string) $value,
                 $type === 'timestamp' && $value instanceof DateTimeInterface => DateTimeImmutable::createFromInterface($value)->setTimezone(new DateTimeZone('UTC'))->format('Y-m-d\TH:i:s\Z'),

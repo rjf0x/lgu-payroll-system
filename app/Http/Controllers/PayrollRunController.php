@@ -66,15 +66,13 @@ class PayrollRunController extends Controller
                 ->first();
 
             foreach ($previous?->details ?? [] as $detail) {
+                $inputsComplete = $detail->payable_days !== null && $detail->input_confirmed_at !== null;
                 $copy = $detail->replicate();
                 $copy->setRelations([]);
                 $copy->fill([
                     'payroll_run_id' => $run->getKey(),
-                    'input_reference' => null,
-                    'input_recorded_by' => null,
-                    'input_confirmed_at' => null,
                     'manual_adjustments' => true,
-                    'payroll_status' => 'INPUT_REQUIRED',
+                    'payroll_status' => $inputsComplete ? 'COMPUTED' : 'INPUT_REQUIRED',
                 ]);
                 $copy->save();
 
@@ -92,7 +90,7 @@ class PayrollRunController extends Controller
         return redirect()
             ->route('payroll-runs.show', $run)
             ->with('status', $run->details()->exists()
-                ? 'Payroll run created from the previous finalized run. Review and confirm inputs for this period.'
+                ? 'Payroll run created from the previous finalized run with its approval references and input confirmations. Review the carried-forward inputs before submitting.'
                 : 'Payroll run created. Compute it to generate payroll details.');
     }
 
@@ -124,7 +122,7 @@ class PayrollRunController extends Controller
             'totalNet' => (float) $payrollRun->details->sum('net_pay'),
             'employerContributions' => (float) PayrollEmployerContribution::whereIn('payroll_detail_id', $detailIds)->sum('amount'),
             'canSubmit' => $user->can('payroll.submit') && $payrollRun->isEditable() && $payrollRun->details->isNotEmpty()
-                && $payrollRun->details->every(fn ($detail): bool => $detail->payable_days !== null && $detail->input_confirmed_at !== null && filled($detail->input_reference)),
+                && $payrollRun->details->every(fn ($detail): bool => $detail->payable_days !== null && $detail->input_confirmed_at !== null),
             'isIndependentReviewer' => $independent,
             'canApprove' => $pendingReview && $user->can('payroll.approve'),
             'canReject' => $pendingReview && $user->can('payroll.reject'),

@@ -69,6 +69,23 @@ class PayrollRegistrationTest extends TestCase
         $this->assertDatabaseCount('payroll_registrations', 1);
     }
 
+    public function test_finalization_without_an_optional_reference_captures_a_valid_blockchain_payload(): void
+    {
+        [$run, $user] = $this->approvedRun();
+        $run->details()->update(['input_reference' => null]);
+
+        $this->actingAs($user)->post(route('payroll-runs.finalize', $run))->assertRedirect();
+
+        $registration = $run->registration()->firstOrFail();
+        $payload = json_decode($registration->canonical_payload, true, 512, JSON_THROW_ON_ERROR);
+        $this->assertSame('', $payload['details'][0]['input_reference']);
+        $this->assertSame(PayrollRun::STATUS_FINALIZED, $run->refresh()->status);
+        $this->assertSame($registration->payload_hash, app(PayrollCanonicalizer::class)->hash(
+            app(PayrollPayloadBuilder::class)->build($run, $registration),
+        ));
+        Http::assertNothingSent();
+    }
+
     public function test_invalid_covered_data_rolls_back_finalization_and_approval_audit(): void
     {
         [$run, $user] = $this->approvedRun();
