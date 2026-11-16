@@ -155,6 +155,47 @@ test('verifies registrations on long-running chains within the RPC log range lim
     assert.deepEqual(ranges, [[1, 1000], [1001, 2000], [2001, 2501]]);
 });
 
+test('bounds concurrent history reads while checking every block range', async () => {
+    const { gateway, log } = fixture();
+    gateway.rpc.getBlockNumber = async () => 17001;
+    const ranges = [];
+    let active = 0;
+    let peak = 0;
+    gateway.rpc.getLogs = async ({ fromBlock, toBlock }) => {
+        active++;
+        peak = Math.max(peak, active);
+        ranges.push([fromBlock, toBlock]);
+        await new Promise(resolve => setImmediate(resolve));
+        active--;
+        return fromBlock === 17001 ? [log] : [];
+    };
+
+    const evidence = await gateway.registration(subject);
+
+    assert.equal(evidence.payload_hash, subject.payload_hash);
+    assert.ok(peak > 1 && peak <= 8, 'History reads must overlap without overwhelming the node');
+    assert.equal(ranges.length, 18);
+    assert.deepEqual(ranges[0], [1, 1000]);
+    assert.deepEqual(ranges[17], [17001, 17001]);
+    for (let index = 1; index < ranges.length; index++) {
+        assert.equal(ranges[index][0], ranges[index - 1][1] + 1);
+        assert.ok(ranges[index][1] - ranges[index][0] < 1000);
+    }
+});
+
+test('rejects verification when any concurrent history read fails', async () => {
+    const { gateway, log } = fixture();
+    gateway.rpc.getBlockNumber = async () => 2501;
+    gateway.rpc.getLogs = async ({ fromBlock }) => {
+        if (fromBlock === 1001) {
+            throw new Error('History read failed');
+        }
+        return fromBlock === 1 ? [log] : [];
+    };
+
+    await assert.rejects(gateway.registration(subject), /History read failed/);
+});
+
 test('rejects duplicate registration evidence across separate log ranges', async () => {
     const { gateway, log } = fixture();
     gateway.rpc.getBlockNumber = async () => 1001;

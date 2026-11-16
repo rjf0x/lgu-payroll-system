@@ -142,9 +142,14 @@ export class BesuRegistryGateway {
             [record.organization_id, record.payroll_reference, record.revision]));
         const latestBlock = await this.rpc.getBlockNumber();
         const logs = [];
-        for (let fromBlock = this.config.deploymentBlock; fromBlock <= latestBlock; fromBlock += 1000) {
-            logs.push(...await this.rpc.getLogs({ address: this.address, fromBlock, toBlock: Math.min(fromBlock + 999, latestBlock),
-                topics: [this.interface.getEvent('PayrollRegistered').topicHash, key] }));
+        for (let batchStart = this.config.deploymentBlock; batchStart <= latestBlock; batchStart += 8000) {
+            const requests = [];
+            for (let fromBlock = batchStart; fromBlock <= Math.min(batchStart + 7999, latestBlock); fromBlock += 1000) {
+                requests.push(this.rpc.getLogs({ address: this.address, fromBlock, toBlock: Math.min(fromBlock + 999, latestBlock),
+                    topics: [this.interface.getEvent('PayrollRegistered').topicHash, key] }));
+            }
+            const results = await Promise.all(requests);
+            logs.push(...results.flat());
         }
         if (logs.length !== 1 || logs[0].removed) {
             throw new BridgeError('INVALID_EVIDENCE');
