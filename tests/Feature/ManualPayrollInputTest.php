@@ -3,15 +3,19 @@
 namespace Tests\Feature;
 
 use App\Models\CompensationProfile;
+use App\Models\ContributionRate;
 use App\Models\DeductionType;
 use App\Models\EarningType;
 use App\Models\EmploymentRecord;
 use App\Models\PayrollRun;
 use App\Models\Permission;
 use App\Models\Role;
+use App\Models\TaxBracket;
 use App\Models\User;
 use App\Services\PayrollComputationService;
+use Database\Seeders\DeductionTypeSeeder;
 use Database\Seeders\RolePermissionSeeder;
+use Database\Seeders\StatutoryConfigSeeder;
 use DOMDocument;
 use DOMXPath;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -26,6 +30,9 @@ class ManualPayrollInputTest extends TestCase
     private function preparedRun(string $basis = 'MONTHLY'): PayrollRun
     {
         $this->seed(RolePermissionSeeder::class);
+        $this->seed([DeductionTypeSeeder::class, StatutoryConfigSeeder::class]);
+        ContributionRate::query()->update(['employee_rate' => 0, 'employer_rate' => 0]);
+        TaxBracket::query()->update(['base_tax' => 0, 'marginal_tax_rate' => 0]);
         $officer = User::factory()->create();
         $officer->roles()->attach(Role::where('role_name', Role::PAYROLL_OFFICER)->value('role_id'), ['assigned_at' => now()]);
         $this->actingAs($officer);

@@ -73,7 +73,7 @@ class PayrollRunController extends Controller
                 if ($employment === null || $employment->employee_id !== $detail->employee_id || $eligibility->requiresException($employment) || ! $eligibility->overlaps($employment, $period)) {
                     continue;
                 }
-                $copy = $detail->replicate();
+                $copy = $detail->replicate(['computation_fingerprint']);
                 $copy->setRelations([]);
                 $copy->fill([
                     'payroll_run_id' => $run->getKey(),

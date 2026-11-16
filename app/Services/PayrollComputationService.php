@@ -12,8 +12,9 @@ use App\Models\PayrollDetail;
 use App\Models\PayrollPeriod;
 use App\Models\PayrollRun;
 use App\Models\TaxBracket;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
-use RuntimeException;
+use Illuminate\Validation\ValidationException;
 
 /**
  * Computes monthly payroll from compensation, approved payable-day inputs, and configured
@@ -116,13 +117,21 @@ class PayrollComputationService
         ]);
 
         $detail->save();
+        $this->financialContext($detail, $period);
         if (! $detail->manual_adjustments) {
             $detail->earnings()->delete();
             $detail->deductions()->delete();
             $this->seedEarnings($detail, $employment, $compensationDate);
             $this->seedDeductions($detail, $employment, $compensationDate);
         }
+        foreach ($detail->earnings()->with(['earningType' => fn ($query) => $query->sharedLock()])->lockForUpdate()->get() as $earning) {
+            if ($earning->earningType !== null) {
+                $earning->update(['is_taxable' => $earning->earningType->is_taxable]);
+            }
+        }
         $this->recomputeTotals($detail, $period);
+        $detail->refresh();
+        $detail->forceFill(['computation_fingerprint' => $this->computationFingerprint($detail, $period)])->save();
 
         return $detail;
     }
@@ -137,8 +146,220 @@ class PayrollComputationService
             $run = PayrollRun::query()->lockForUpdate()->findOrFail($detail->payroll_run_id);
             abort_unless($run->isEditable(), 422, 'This payroll run can no longer be recomputed.');
             $detail->refresh();
+            $detail->forceFill(['computation_fingerprint' => null])->save();
             $this->recomputeEditableTotals($detail, $period);
         });
+    }
+
+    /**
+     * Validate persisted calculations without changing payroll amounts or confirming inputs.
+     * The caller holds the run lock in the submission transaction.
+     */
+    public function validateForSubmission(PayrollRun $run): void
+    {
+        $period = $run->payrollPeriod()->sharedLock()->firstOrFail();
+        $errors = [];
+        foreach ($run->details()->orderBy('payroll_detail_id')->lockForUpdate()->get() as $detail) {
+            $issues = $this->financialIssues($detail, $period);
+            if ($issues !== []) {
+                $employee = "{$detail->employee_number_snapshot} ({$detail->employee_name_snapshot})";
+                $errors['financial.'.$detail->getKey()] = [$employee.': '.implode(' ', $issues)];
+            }
+        }
+
+        if ($errors !== []) {
+            throw ValidationException::withMessages($errors);
+        }
+    }
+
+    /** @return list<string> */
+    private function financialIssues(PayrollDetail $detail, PayrollPeriod $period): array
+    {
+        $context = $this->financialContext($detail, $period);
+        $profile = $context['profile'];
+        $issues = [];
+        if ($profile === null) {
+            $issues[] = 'No effective compensation profile covers the payroll compensation date. Add the profile and recompute.';
+        } elseif (($profile->grade_step_id !== null && $profile->gradeStep === null)
+            || ($profile->grade_step_id === null && $profile->basic_rate === null)
+            || $this->rateFor($profile) < 0
+            || (float) $profile->service_fraction <= 0 || (float) $profile->service_fraction > 1
+            || ! in_array($profile->pay_basis, [CompensationProfile::BASIS_MONTHLY, CompensationProfile::BASIS_DAILY, CompensationProfile::BASIS_PROPORTIONAL_MONTHLY, CompensationProfile::BASIS_HOURLY], true)) {
+            $issues[] = 'The effective compensation profile has an invalid salary rate, pay basis, or service fraction.';
+        } elseif ($profile->grade_step_id !== null) {
+            $schedule = $profile->gradeStep->salarySchedule;
+            $date = $context['compensation_date'];
+            if ($schedule === null || $schedule->status !== 'ACTIVE'
+                || $schedule->effective_from->toDateString() > $date
+                || ($schedule->effective_to !== null && $schedule->effective_to->toDateString() < $date)) {
+                $issues[] = 'The compensation salary schedule is not active and effective for the payroll compensation date.';
+            }
+        }
+
+        foreach ($context['rates'] as $name => $rate) {
+            if ($rate === null) {
+                $issues[] = "No effective {$name} contribution rate covers this payroll period. Configure it and recompute.";
+            } elseif ((float) $rate->minimum_compensation < 0
+                || ($rate->maximum_compensation !== null && (float) $rate->maximum_compensation < (float) $rate->minimum_compensation)
+                || (float) $rate->employee_rate < 0 || (float) $rate->employee_rate > 1
+                || (float) $rate->employer_rate < 0 || (float) $rate->employer_rate > 1
+                || (float) $rate->employee_fixed_amount < 0 || (float) $rate->employer_fixed_amount < 0) {
+                $issues[] = "The effective {$name} contribution configuration contains invalid rates or compensation limits.";
+            }
+        }
+        foreach ($context['deduction_types'] as $name => $type) {
+            if ($type === null || ! $type->is_statutory || $type->status !== 'ACTIVE') {
+                $issues[] = "Required statutory deduction type [{$name}] is missing, inactive, or not statutory.";
+            }
+        }
+        if ($context['tax']->isEmpty()) {
+            $issues[] = 'No effective annual tax configuration covers this payroll period. Configure it and recompute.';
+        }
+        foreach ($context['tax'] as $bracket) {
+            if ((float) $bracket->minimum_income < 0 || (float) $bracket->base_tax < 0
+                || (float) $bracket->marginal_tax_rate < 0 || (float) $bracket->marginal_tax_rate > 1
+                || ($bracket->maximum_income !== null && (float) $bracket->maximum_income < (float) $bracket->minimum_income)) {
+                $issues[] = 'The effective tax configuration contains an invalid income range or tax rate.';
+                break;
+            }
+        }
+        if ($issues !== []) {
+            return $issues;
+        }
+
+        $detail->load(['earnings.earningType', 'deductions.deductionType', 'employerContributions']);
+        foreach ($detail->earnings as $earning) {
+            if ($earning->earningType === null || $earning->earningType->status !== 'ACTIVE'
+                || $earning->is_taxable !== $earning->earningType->is_taxable) {
+                $issues[] = 'An earning type is missing, inactive, or has changed tax treatment. Correct the earning configuration and recompute.';
+            }
+        }
+        foreach ($detail->deductions as $deduction) {
+            if ($deduction->deductionType === null || $deduction->deductionType->status !== 'ACTIVE'
+                || $deduction->deductionType->deduction_category === 'LBP') {
+                $issues[] = 'A deduction type is missing, inactive, or duplicates the separately recorded LBP deduction. Correct the deduction entries and recompute.';
+            }
+        }
+        $basic = $this->basicPay($profile, $profile->pay_basis, (float) $profile->service_fraction, (float) $detail->payable_days);
+        if ($detail->payable_days === null || (float) $detail->payable_days < 0
+            || (float) $detail->payable_days > ($profile->pay_basis === CompensationProfile::BASIS_DAILY ? (int) $period->start_date->diffInDays($period->end_date) + 1 : self::PAYROLL_DAYS_PER_MONTH)) {
+            $issues[] = 'Payable days are outside the permitted range. Correct and reconfirm the inputs.';
+        }
+        $contributions = $this->computeContributions($basic, $period, $detail);
+        $taxableGross = round($basic + (float) $detail->earnings->where('is_taxable', true)->sum('amount'), 2);
+        $annualTaxable = max(0.0, ($taxableGross - round(array_sum(array_column($contributions['employee'], 'amount')), 2)) * 12);
+        $matchingBrackets = $context['tax']->filter(fn (TaxBracket $bracket): bool => (float) $bracket->minimum_income <= $annualTaxable
+            && ($bracket->maximum_income === null || (float) $bracket->maximum_income >= $annualTaxable));
+        if ($matchingBrackets->isEmpty()) {
+            $issues[] = 'The effective tax brackets do not cover the calculated taxable income. Correct the tax coverage and recompute.';
+        }
+        $orderedBrackets = $context['tax']->sortBy('minimum_income')->values();
+        foreach ($orderedBrackets as $index => $bracket) {
+            if ($index > 0 && ($orderedBrackets[$index - 1]->maximum_income === null
+                || (float) $bracket->minimum_income < (float) $orderedBrackets[$index - 1]->maximum_income)) {
+                $issues[] = 'The effective tax brackets overlap. Correct the ambiguous tax coverage and recompute.';
+                break;
+            }
+        }
+
+        $tax = $this->computeWithholdingTax($taxableGross, round(array_sum(array_column($contributions['employee'], 'amount')), 2), $period);
+        $expectedDeductions = collect($contributions['employee'])->mapWithKeys(fn (array $row): array => [$row['type_id'] => $this->cents($row['amount'])])->filter(fn (int $amount): bool => $amount > 0)->all();
+        if ($tax > 0) {
+            $expectedDeductions[$context['deduction_types']['Withholding Tax']->getKey()] = $this->cents($tax);
+        }
+        $statutoryRows = $detail->deductions->filter(fn ($row): bool => (bool) $row->deductionType?->is_statutory);
+        $actualDeductions = $statutoryRows->mapWithKeys(fn ($row): array => [$row->deduction_type_id => $this->cents($row->amount)])->all();
+        ksort($expectedDeductions);
+        ksort($actualDeductions);
+        if ($expectedDeductions !== $actualDeductions || $statutoryRows->count() !== count($actualDeductions)) {
+            $issues[] = 'Saved statutory deductions or withholding tax do not match the applicable calculations. Recompute payroll.';
+        }
+        $expectedEmployer = collect($contributions['employer'])->mapWithKeys(fn (array $row): array => [$row['rate_id'] => $this->cents($row['amount'])])->filter(fn (int $amount): bool => $amount > 0)->all();
+        $actualEmployer = $detail->employerContributions->mapWithKeys(fn ($row): array => [$row->contribution_rate_id => $this->cents($row->amount)])->all();
+        ksort($expectedEmployer);
+        ksort($actualEmployer);
+        if ($expectedEmployer !== $actualEmployer || $detail->employerContributions->count() !== count($actualEmployer)) {
+            $issues[] = 'Saved employer contributions do not match the applicable contribution rates. Recompute payroll.';
+        }
+
+        $earnings = (int) $detail->earnings->sum(fn ($row): int => $this->cents($row->amount));
+        $deductions = (int) $detail->deductions->sum(fn ($row): int => $this->cents($row->amount));
+        $gross = $this->cents($basic) + $earnings;
+        $expected = ['salary_rate_snapshot' => $this->cents($this->rateFor($profile)), 'basic_pay' => $this->cents($basic),
+            'total_earnings' => $earnings, 'gross_pay' => $gross, 'total_deductions' => $deductions,
+            'nthp_before_lbp' => $gross - $deductions, 'net_pay' => $gross - $deductions - $this->cents($detail->lbp_loan_deduction)];
+        foreach ($expected as $field => $amount) {
+            if ($detail->getAttribute($field) === null || $this->cents($detail->getAttribute($field)) !== $amount) {
+                $issues[] = "Saved {$field} does not reconcile with the payroll inputs and line items. Recompute payroll.";
+            }
+        }
+        if ($this->cents($detail->lbp_loan_deduction) < 0 || $detail->earnings->contains(fn ($row): bool => $this->cents($row->amount) < 0)
+            || $detail->deductions->contains(fn ($row): bool => $this->cents($row->amount) < 0)) {
+            $issues[] = 'Earnings, deductions, and the LBP deduction must not contain negative amounts.';
+        }
+        if ($expected['net_pay'] < 0 || $this->cents($detail->net_pay) < 0) {
+            $issues[] = 'Net pay is negative. Correct deductions or payroll inputs before submission; no authorized negative-pay exception policy is configured.';
+        }
+        if ($detail->computation_fingerprint === null || ! hash_equals($detail->computation_fingerprint, $this->computationFingerprint($detail, $period))) {
+            $issues[] = 'The calculation is missing or stale: compensation, payable days, earnings, deductions, LBP, or applicable configuration changed. Save and recompute payroll before submission.';
+        }
+
+        return $issues;
+    }
+
+    private function cents(float|string|null $amount): int
+    {
+        return (int) round((float) $amount * 100);
+    }
+
+    /**
+     * Lock the effective sources so calculation, fingerprinting, and submission use a stable context.
+     *
+     * @return array{compensation_date: string, profile: ?CompensationProfile, rates: Collection<string, ContributionRate|null>, tax: Collection<int, TaxBracket>, deduction_types: Collection<string, DeductionType|null>, assignments: array<string, mixed>}
+     */
+    private function financialContext(PayrollDetail $detail, PayrollPeriod $period): array
+    {
+        $employment = $detail->employmentRecord()->sharedLock()->firstOrFail();
+        $date = $employment->end_date !== null && $employment->end_date->lt($period->end_date) ? $employment->end_date->toDateString() : $period->end_date->toDateString();
+        $rates = collect([ContributionRate::TYPE_GSIS, ContributionRate::TYPE_PHILHEALTH, ContributionRate::TYPE_PAGIBIG])
+            ->mapWithKeys(fn (string $name): array => [$name => $this->effectiveContributionRate($name, $period)]);
+        $deductionTypes = collect(['GSIS Contribution', 'PhilHealth Contribution', 'Pag-IBIG Contribution', 'Withholding Tax'])
+            ->mapWithKeys(fn (string $name): array => [$name => DeductionType::where('deduction_name', $name)->sharedLock()->first()]);
+        $assignments = [];
+        foreach (['earnings' => EmployeeEarningAssignment::class, 'deductions' => EmployeeDeductionAssignment::class] as $key => $model) {
+            $relation = $key === 'earnings' ? 'earningType' : 'deductionType';
+            $assignments[$key] = $model::where('employment_id', $employment->getKey())
+                ->with([$relation => fn ($query) => $query->sharedLock()])
+                ->whereDate('effective_from', '<=', $date)
+                ->where(fn ($query) => $query->whereNull('effective_to')->orWhereDate('effective_to', '>=', $date))
+                ->orderBy('assignment_id')->sharedLock()->get()->toArray();
+        }
+
+        return ['compensation_date' => $date, 'profile' => $this->effectiveCompensation($employment, $date),
+            'rates' => $rates, 'tax' => $this->effectiveTaxBrackets($period), 'deduction_types' => $deductionTypes, 'assignments' => $assignments];
+    }
+
+    private function computationFingerprint(PayrollDetail $detail, PayrollPeriod $period): string
+    {
+        $context = $this->financialContext($detail, $period);
+        $state = $detail->only(['employment_id', 'pay_basis_snapshot', 'salary_rate_snapshot', 'basic_pay', 'payable_days', 'lbp_loan_deduction', 'manual_adjustments',
+            'total_earnings', 'gross_pay', 'total_deductions', 'nthp_before_lbp', 'net_pay']);
+        $state['earnings'] = $detail->earnings()->with(['earningType' => fn ($query) => $query->sharedLock()])->orderBy('payroll_earning_id')->sharedLock()->get()->toArray();
+        $state['deductions'] = $detail->deductions()->with(['deductionType' => fn ($query) => $query->sharedLock()])->orderBy('payroll_deduction_id')->sharedLock()->get()->toArray();
+        $state['employer'] = $detail->employerContributions()->orderBy('employer_contribution_id')->sharedLock()->get()->toArray();
+
+        return hash('sha256', json_encode(['version' => 1, 'period' => $period->only(['start_date', 'end_date']), 'context' => $context, 'state' => $state], JSON_THROW_ON_ERROR));
+    }
+
+    /** @return Collection<int, TaxBracket> */
+    private function effectiveTaxBrackets(PayrollPeriod $period): Collection
+    {
+        $brackets = TaxBracket::where('tax_type', 'ANNUAL')->where('pay_frequency', 'ANNUAL')
+            ->whereDate('effective_from', '<=', $period->end_date)
+            ->where(fn ($query) => $query->whereNull('effective_to')->orWhereDate('effective_to', '>=', $period->end_date))
+            ->orderByDesc('effective_from')->orderBy('minimum_income')->orderBy('tax_bracket_id')->sharedLock()->get();
+
+        return $brackets->filter(fn (TaxBracket $bracket): bool => $bracket->effective_from->equalTo($brackets->first()->effective_from))->values();
     }
 
     private function recomputeEditableTotals(PayrollDetail $detail, PayrollPeriod $period): void
@@ -150,7 +371,7 @@ class PayrollComputationService
         $grossPay = round($basicPay + $totalEarnings, 2);
         $taxableGross = round($basicPay + (float) $detail->earnings->where('is_taxable', true)->sum('amount'), 2);
 
-        $contributions = $this->computeContributions($basicPay, $period);
+        $contributions = $this->computeContributions($basicPay, $period, $detail);
         $employeePreTax = round(array_sum(array_column($contributions['employee'], 'amount')), 2);
         $tax = $this->computeWithholdingTax($taxableGross, $employeePreTax, $period);
 
@@ -173,7 +394,7 @@ class PayrollComputationService
         }
 
         if ($tax > 0) {
-            $taxType = $this->requireDeductionType('Withholding Tax');
+            $taxType = $this->requireDeductionType('Withholding Tax', $detail);
             $detail->deductions()->create([
                 'deduction_type_id' => $taxType->deduction_type_id,
                 'deduction_name_snapshot' => $taxType->deduction_name,
@@ -212,7 +433,7 @@ class PayrollComputationService
     /**
      * @return array{employee: array<int, array{type_id:int, label:string, amount:float}>, employer: array<int, array{rate_id:int, label:string, amount:float}>}
      */
-    private function computeContributions(float $basicPay, PayrollPeriod $period): array
+    private function computeContributions(float $basicPay, PayrollPeriod $period, PayrollDetail $detail): array
     {
         $map = [
             ContributionRate::TYPE_GSIS => 'GSIS Contribution',
@@ -239,7 +460,7 @@ class PayrollComputationService
             $employeeAmount = round($base * (float) $rate->employee_rate + (float) ($rate->employee_fixed_amount ?? 0), 2);
             $employerAmount = round($base * (float) $rate->employer_rate + (float) ($rate->employer_fixed_amount ?? 0), 2);
 
-            $type = $this->requireDeductionType($deductionName);
+            $type = $this->requireDeductionType($deductionName, $detail);
 
             $employee[] = ['type_id' => $type->deduction_type_id, 'label' => $deductionName, 'amount' => $employeeAmount];
             $employer[] = ['rate_id' => $rate->contribution_rate_id, 'label' => $contributionType.' (Employer)', 'amount' => $employerAmount];
@@ -252,29 +473,10 @@ class PayrollComputationService
     {
         $annualTaxable = max(0.0, ($taxableMonthlyGross - $monthlyPreTaxContributions) * 12);
 
-        $effectiveDate = TaxBracket::query()
-            ->where('tax_type', 'ANNUAL')
-            ->where('pay_frequency', 'ANNUAL')
-            ->whereDate('effective_from', '<=', $period->end_date)
-            ->where(fn ($query) => $query
-                ->whereNull('effective_to')
-                ->orWhereDate('effective_to', '>=', $period->end_date))
-            ->max('effective_from');
-
-        if ($effectiveDate === null) {
-            return 0.0;
-        }
-
-        $bracket = TaxBracket::query()
-            ->where('tax_type', 'ANNUAL')->where('pay_frequency', 'ANNUAL')
-            ->where('effective_from', $effectiveDate)
-            ->where(fn ($query) => $query->whereNull('effective_to')->orWhereDate('effective_to', '>=', $period->end_date))
-            ->where('minimum_income', '<=', $annualTaxable)
-            ->where(fn ($query) => $query
-                ->whereNull('maximum_income')
-                ->orWhere('maximum_income', '>=', $annualTaxable))
-            ->orderByDesc('minimum_income')
-            ->first();
+        $bracket = $this->effectiveTaxBrackets($period)
+            ->filter(fn (TaxBracket $bracket): bool => (float) $bracket->minimum_income <= $annualTaxable
+                && ($bracket->maximum_income === null || (float) $bracket->maximum_income >= $annualTaxable))
+            ->sortByDesc('minimum_income')->first();
 
         if ($bracket === null) {
             return 0.0;
@@ -381,10 +583,11 @@ class PayrollComputationService
     private function effectiveCompensation(EmploymentRecord $employment, string $date): ?CompensationProfile
     {
         return $employment->compensationProfiles()
-            ->with('gradeStep')
+            ->with(['gradeStep' => fn ($query) => $query->sharedLock(), 'gradeStep.salarySchedule' => fn ($query) => $query->sharedLock()])
             ->whereDate('effective_from', '<=', $date)
             ->where(fn ($query) => $query->whereNull('effective_to')->orWhereDate('effective_to', '>=', $date))
             ->orderByDesc('effective_from')
+            ->sharedLock()
             ->first();
     }
 
@@ -395,15 +598,18 @@ class PayrollComputationService
             ->whereDate('effective_from', '<=', $period->end_date)
             ->where(fn ($query) => $query->whereNull('effective_to')->orWhereDate('effective_to', '>=', $period->end_date))
             ->orderByDesc('effective_from')
+            ->sharedLock()
             ->first();
     }
 
-    private function requireDeductionType(string $name): DeductionType
+    private function requireDeductionType(string $name, PayrollDetail $detail): DeductionType
     {
-        $type = DeductionType::query()->where('deduction_name', $name)->first();
+        $type = DeductionType::query()->where('deduction_name', $name)->sharedLock()->first();
 
-        if ($type === null) {
-            throw new RuntimeException("Required deduction type [{$name}] is not configured.");
+        if ($type === null || $type->status !== 'ACTIVE' || ! $type->is_statutory) {
+            throw ValidationException::withMessages([
+                'financial.'.$detail->getKey() => "{$detail->employee_number_snapshot} ({$detail->employee_name_snapshot}): Required deduction type [{$name}] is missing, inactive, or not statutory. Correct the configuration and recompute.",
+            ]);
         }
 
         return $type;

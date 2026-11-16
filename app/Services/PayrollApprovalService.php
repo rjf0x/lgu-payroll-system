@@ -19,6 +19,7 @@ class PayrollApprovalService
         private readonly AuditLogger $auditLogger,
         private readonly PayrollRegistrationService $registrations,
         private readonly PayrollEligibilityService $eligibility,
+        private readonly PayrollComputationService $computation,
     ) {}
 
     public function submit(PayrollRun $run, User $user): void
@@ -40,6 +41,7 @@ class PayrollApprovalService
             if ($run->details()->where(fn ($query) => $query->whereNull('payable_days')->orWhereNull('input_confirmed_at')->orWhere('payroll_status', '!=', 'COMPUTED'))->exists()) {
                 abort(422, 'Enter and confirm approved payroll inputs for every employee before submission.');
             }
+            $this->computation->validateForSubmission($run);
             $run->update([
                 'status' => PayrollRun::STATUS_PENDING_APPROVAL,
                 'submitted_by' => $user->user_id,

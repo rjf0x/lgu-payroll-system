@@ -12,11 +12,13 @@ use App\Models\PayrollDetail;
 use App\Models\PayrollPeriod;
 use App\Models\PayrollRun;
 use App\Models\Role;
+use App\Models\TaxBracket;
 use App\Models\User;
 use App\Services\AuditLogger;
 use App\Services\BlockchainAnchorService;
 use Database\Seeders\DeductionTypeSeeder;
 use Database\Seeders\RolePermissionSeeder;
+use Database\Seeders\StatutoryConfigSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\DataProvider;
 use RuntimeException;
@@ -39,6 +41,9 @@ class ArchivedEmployeePayrollTest extends TestCase
 
     private function detail(string $status = 'DRAFT'): PayrollDetail
     {
+        $this->seed([DeductionTypeSeeder::class, StatutoryConfigSeeder::class]);
+        ContributionRate::query()->update(['employee_rate' => 0, 'employer_rate' => 0]);
+        TaxBracket::query()->update(['base_tax' => 0, 'marginal_tax_rate' => 0]);
         $period = PayrollPeriod::factory()->create(['start_date' => '2026-01-01', 'end_date' => '2026-01-31']);
         $run = PayrollRun::factory()->create(['payroll_period_id' => $period->getKey(), 'status' => $status, 'created_by' => auth()->id()]);
         $employment = EmploymentRecord::factory()->create();

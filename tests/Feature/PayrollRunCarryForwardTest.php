@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\CompensationProfile;
 use App\Models\ContributionRate;
 use App\Models\DeductionType;
 use App\Models\EarningType;
@@ -12,6 +13,7 @@ use App\Models\Role;
 use App\Models\User;
 use Database\Seeders\DeductionTypeSeeder;
 use Database\Seeders\RolePermissionSeeder;
+use Database\Seeders\StatutoryConfigSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
@@ -70,6 +72,8 @@ class PayrollRunCarryForwardTest extends TestCase
         $this->assertSame('200.00', $copy->employerContributions()->sole()->amount);
         $this->get(route('payroll-runs.show', $run))->assertOk()->assertViewHas('canSubmit', false);
         $this->postJson(route('payroll-runs.submit', $run))->assertUnprocessable();
+        $this->seed(StatutoryConfigSeeder::class);
+        CompensationProfile::factory()->create(['employment_id' => $copy->employment_id, 'basic_rate' => 45000, 'effective_from' => '2024-01-01']);
         $this->put(route('payroll-details.update', [$run, $copy]), [
             'payable_days' => 20, 'inputs_confirmed' => 1,
             'earnings' => [$detail->earnings()->sole()->earning_type_id => 500],
