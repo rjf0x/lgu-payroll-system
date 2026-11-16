@@ -108,3 +108,75 @@ All are `whereNumber('payroll_run')` so they never collide with `payroll-runs/cr
 
 Blockchain anchoring and verification of finalized payroll are implemented in Stage 9,
 building on the `FINALIZED` state.
+
+## F04: compensation uniqueness and non-regular payroll
+
+Regular compensation is checked by employee identity across employment records,
+run numbers, and inclusive payroll-period dates. Basic salary and each earning
+type are separate components; changing an amount does not create a new entitlement.
+Processing, pending, approved, and finalized runs reserve their compensation.
+Editable drafts, returned/rejected runs, and cancelled runs do not reserve it,
+but repeated components and overlapping details within the same run are invalid.
+Regular coverage uses the full run period: the system has no approved policy for
+splitting one regular entitlement between multiple appointments in that period.
+
+Preparation/computation, submission, approval, and finalization repeat these
+checks. Financial transitions acquire the singleton `payroll_processing_locks`
+database row before locking a run, and retain it through validation and commit.
+This serializes cross-run decisions even when no conflicting detail existed
+before the first request. Existing unique run-number and run/employment indexes
+remain in force. Blocked financial transitions are audited after rollback.
+
+Pending or approved runs require the existing independent return/rejection
+workflow before edits. A regular run returned/rejected by an independent reviewer
+can be replaced in the same period with a reason. Replacement retains the old
+run as cancelled, copies provisional inputs, clears confirmation/fingerprints,
+and requires fresh computation and approval. Finalized runs cannot be replaced,
+returned, edited, or deleted through payroll preparation routes.
+
+Supplemental and adjustment runs do not carry forward finalized payroll or
+automatically include the employee population. The officer explicitly selects
+employees and records coverage, an entitlement reference, justification, and
+accounting authorization. Supplemental basic salary is always zero; earnings
+are entered explicitly. Adjustments record only the positive salary difference
+and/or explicit earning differences and reference a finalized original detail
+for the same employee and coverage. Original details and registry proofs remain
+unchanged; the correction receives its own run, approval history, and registry
+capture on finalization when registry integration is enabled.
+
+An overlapping earning component may represent a separate authorized entitlement.
+It requires a distinct supporting reference and overlap justification, visible to
+the independent reviewer and recorded in the audit trail. The same normalized
+reference, component, employee, and overlapping coverage is always rejected,
+even when amounts differ. A linked adjustment is distinct from its original;
+another correction of that component still needs its own entitlement evidence.
+References identify the business entitlement, not a newly generated payment ID.
+
+### Accounting decisions still requiring Municipal Accounting Office confirmation
+
+- Whether the existing monthly contribution bases, minimums, fixed amounts,
+  and annual-projection withholding calculation apply to each non-regular run
+  type and its supported entitlements; whether aggregation with prior payments
+  or another calculation method is required.
+- What documents distinguish separate entitlements, installments, and corrections
+  of the same component, and who verifies those supporting authorizations.
+- Treatment of recoveries, negative adjustments, refunds of deductions, and
+  transactions that would produce negative net pay. Automatic recoveries and
+  negative-net-pay exceptions are unsupported; F03 remains in force.
+
+Until confirmed, non-regular amounts are provisional and details show
+`POLICY_REQUIRED`; submission, approval, and finalization fail with an accounting
+policy message. Missing configuration is never interpreted as an approved zero
+tax/contribution treatment. Draft gross/net totals exclude unestablished statutory
+amounts and must not be treated as final financial liabilities.
+
+Only if MAO explicitly confirms that the existing calculation applies to the
+supported transaction type, configure its `PAYROLL_SUPPLEMENTAL_POLICY_REFERENCE`
+or `PAYROLL_ADJUSTMENT_POLICY_REFERENCE` and corresponding
+`*_CALCULATION_METHOD=existing_monthly`, then rebuild the configuration cache and
+recompute the draft. These variables are unset by default. Unknown methods remain
+blocked; a different treatment needs a separately reviewed implementation.
+Confirmation does not waive F03: compensation profiles, effective contribution
+rates, deduction types, tax coverage, reconciled totals, calculation fingerprints,
+and nonnegative net pay must still pass validation. Policy changes invalidate
+non-regular computation fingerprints. Approval and finalization revalidate them.

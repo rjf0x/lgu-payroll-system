@@ -27,14 +27,17 @@ class PayrollComputationService
 {
     private const PAYROLL_DAYS_PER_MONTH = 22.0;
 
-    public function __construct(private readonly PayrollEligibilityService $eligibility) {}
+    public function __construct(
+        private readonly PayrollEligibilityService $eligibility,
+        private readonly PayrollDuplicateGuard $duplicates,
+    ) {}
 
     /**
      * Rebuild every detail for a run from the current source data.
      */
     public function computeRun(PayrollRun $run): void
     {
-        DB::transaction(function () use ($run): void {
+        $this->duplicates->transaction($run, 'computation', function () use ($run): void {
             $locked = PayrollRun::whereKey($run->getKey())->lockForUpdate()->firstOrFail();
             $run->setRawAttributes($locked->getAttributes(), true);
             abort_unless($run->isEditable(), 422, 'This payroll run can no longer be recomputed.');
@@ -43,19 +46,23 @@ class PayrollComputationService
             $employments = EmploymentRecord::query()
                 ->with(['employee', 'department', 'position', 'employmentType'])
                 ->where(function ($query) use ($locked, $period): void {
-                    $query->where(function ($query) use ($period): void {
-                        $query->where('employment_status', EmploymentRecord::STATUS_ACTIVE)
-                            ->whereHas('employee', fn ($query) => $query->whereNull('employees.deleted_at'))
-                            ->whereDate('start_date', '<=', $period->end_date)
-                            ->where(fn ($query) => $query->whereNull('end_date')->orWhereDate('end_date', '>=', $period->start_date));
-                    })->orWhereIn('employment_id', $locked->details()->select('employment_id'));
+                    $query->whereIn('employment_id', $locked->details()->select('employment_id'));
+                    if ($locked->run_type === 'REGULAR') {
+                        $query->orWhere(function ($query) use ($period): void {
+                            $query->where('employment_status', EmploymentRecord::STATUS_ACTIVE)
+                                ->whereHas('employee', fn ($query) => $query->whereNull('employees.deleted_at'))
+                                ->whereDate('start_date', '<=', $period->end_date)
+                                ->where(fn ($query) => $query->whereNull('end_date')->orWhereDate('end_date', '>=', $period->start_date));
+                        });
+                    }
                 })->get();
 
             foreach ($employments as $employment) {
                 if ($employment->employee !== null && $this->eligibility->overlaps($employment, $period)) {
-                    $this->computeDetail($run, $employment, $period);
+                    $this->computeEditableDetail($locked, $employment, $period);
                 }
             }
+            $this->duplicates->validate($run, 'computation', preparing: true);
 
             $run->update([
                 'status' => PayrollRun::STATUS_DRAFT,
@@ -64,7 +71,7 @@ class PayrollComputationService
             app(AuditLogger::class)->log('PAYROLL_RECALCULATED', 'Payroll', auth()->id(), 'payroll_runs', (string) $run->getKey(), $oldTotals, [
                 ...$this->eligibility->totals($locked), 'reason' => 'Recomputed from current compensation, statutory settings, and payroll inputs.',
             ]);
-        });
+        }, serialize: false);
     }
 
     /**
@@ -72,12 +79,15 @@ class PayrollComputationService
      */
     public function computeDetail(PayrollRun $run, EmploymentRecord $employment, PayrollPeriod $period): PayrollDetail
     {
-        return DB::transaction(function () use ($run, $employment, $period): PayrollDetail {
+        return $this->duplicates->transaction($run, 'preparation', function () use ($run, $employment): PayrollDetail {
             $locked = PayrollRun::query()->lockForUpdate()->findOrFail($run->getKey());
             abort_unless($locked->isEditable(), 422, 'This payroll run can no longer be recomputed.');
 
-            return $this->computeEditableDetail($locked, $employment, $period);
-        });
+            $detail = $this->computeEditableDetail($locked, $employment, $locked->payrollPeriod);
+            $this->duplicates->validate($locked, 'preparation', preparing: true);
+
+            return $detail;
+        }, serialize: false);
     }
 
     private function computeEditableDetail(PayrollRun $run, EmploymentRecord $employment, PayrollPeriod $period): PayrollDetail
@@ -95,6 +105,13 @@ class PayrollComputationService
 
         $detail = $run->details()->firstOrNew(['employment_id' => $employment->employment_id]);
 
+        if ($run->run_type === 'REGULAR') {
+            $detail->fill([
+                'coverage_start' => $period->start_date->toDateString(),
+                'coverage_end' => $period->end_date->toDateString(),
+            ]);
+        }
+
         $detail->fill([
             'employee_id' => $employment->employee_id,
             'employment_id' => $employment->employment_id,
@@ -106,7 +123,11 @@ class PayrollComputationService
             'salary_step_snapshot' => $gradeStep?->step_number,
             'salary_rate_snapshot' => $this->rateFor($profile),
             'pay_basis_snapshot' => $payBasis,
-            'basic_pay' => $this->basicPay($profile, $payBasis, $serviceFraction, $detail->payable_days === null ? 0.0 : (float) $detail->payable_days),
+            'basic_pay' => match ($run->run_type) {
+                'REGULAR' => $this->basicPay($profile, $payBasis, $serviceFraction, $detail->payable_days === null ? 0.0 : (float) $detail->payable_days),
+                'ADJUSTMENT' => $detail->basic_pay ?? 0,
+                default => 0,
+            },
             'total_earnings' => 0,
             'gross_pay' => 0,
             'total_deductions' => 0,
@@ -118,7 +139,7 @@ class PayrollComputationService
 
         $detail->save();
         $this->financialContext($detail, $period);
-        if (! $detail->manual_adjustments) {
+        if ($run->run_type === 'REGULAR' && ! $detail->manual_adjustments) {
             $detail->earnings()->delete();
             $detail->deductions()->delete();
             $this->seedEarnings($detail, $employment, $compensationDate);
@@ -157,10 +178,14 @@ class PayrollComputationService
      */
     public function validateForSubmission(PayrollRun $run): void
     {
+        $this->assertAccountingPolicy($run);
         $period = $run->payrollPeriod()->sharedLock()->firstOrFail();
         $errors = [];
         foreach ($run->details()->orderBy('payroll_detail_id')->lockForUpdate()->get() as $detail) {
             $issues = $this->financialIssues($detail, $period);
+            if ($detail->input_confirmed_at === null || $detail->payable_days === null || $detail->payroll_status !== 'COMPUTED') {
+                $issues[] = 'Confirm current inputs and recompute this detail before approval or finalization.';
+            }
             if ($issues !== []) {
                 $employee = "{$detail->employee_number_snapshot} ({$detail->employee_name_snapshot})";
                 $errors['financial.'.$detail->getKey()] = [$employee.': '.implode(' ', $issues)];
@@ -169,6 +194,19 @@ class PayrollComputationService
 
         if ($errors !== []) {
             throw ValidationException::withMessages($errors);
+        }
+    }
+
+    public function hasAccountingPolicy(PayrollRun $run): bool
+    {
+        return $run->run_type === 'REGULAR' || (filled(config('payroll.non_regular.'.$run->run_type.'.policy_reference'))
+            && config('payroll.non_regular.'.$run->run_type.'.calculation_method') === 'existing_monthly');
+    }
+
+    public function assertAccountingPolicy(PayrollRun $run): void
+    {
+        if (! $this->hasAccountingPolicy($run)) {
+            throw ValidationException::withMessages(['financial.policy' => 'Municipal Accounting Office policy confirmation is required for '.$run->run_type.' taxes and statutory contributions. Keep this run editable until the applicable calculation method and approved policy reference are configured.']);
         }
     }
 
@@ -240,7 +278,12 @@ class PayrollComputationService
                 $issues[] = 'A deduction type is missing, inactive, or duplicates the separately recorded LBP deduction. Correct the deduction entries and recompute.';
             }
         }
-        $basic = $this->basicPay($profile, $profile->pay_basis, (float) $profile->service_fraction, (float) $detail->payable_days);
+        $basic = $detail->payrollRun->run_type === 'REGULAR'
+            ? $this->basicPay($profile, $profile->pay_basis, (float) $profile->service_fraction, (float) $detail->payable_days)
+            : (float) $detail->basic_pay;
+        if ($basic < 0) {
+            $issues[] = 'Negative adjustments and automatic recoveries require approved accounting rules and are unsupported.';
+        }
         if ($detail->payable_days === null || (float) $detail->payable_days < 0
             || (float) $detail->payable_days > ($profile->pay_basis === CompensationProfile::BASIS_DAILY ? (int) $period->start_date->diffInDays($period->end_date) + 1 : self::PAYROLL_DAYS_PER_MONTH)) {
             $issues[] = 'Payable days are outside the permitted range. Correct and reconfirm the inputs.';
@@ -344,6 +387,11 @@ class PayrollComputationService
         $context = $this->financialContext($detail, $period);
         $state = $detail->only(['employment_id', 'pay_basis_snapshot', 'salary_rate_snapshot', 'basic_pay', 'payable_days', 'lbp_loan_deduction', 'manual_adjustments',
             'total_earnings', 'gross_pay', 'total_deductions', 'nthp_before_lbp', 'net_pay']);
+        if ($detail->payrollRun->run_type !== 'REGULAR') {
+            $state['entitlement'] = $detail->only(['coverage_start', 'coverage_end', 'compensation_reference', 'compensation_reason', 'accounting_basis', 'overlap_justification', 'original_payroll_detail_id']);
+            $state['policy'] = config('payroll.non_regular.'.$detail->payrollRun->run_type);
+            $state['purpose'] = $detail->payrollRun->purpose;
+        }
         $state['earnings'] = $detail->earnings()->with(['earningType' => fn ($query) => $query->sharedLock()])->orderBy('payroll_earning_id')->sharedLock()->get()->toArray();
         $state['deductions'] = $detail->deductions()->with(['deductionType' => fn ($query) => $query->sharedLock()])->orderBy('payroll_deduction_id')->sharedLock()->get()->toArray();
         $state['employer'] = $detail->employerContributions()->orderBy('employer_contribution_id')->sharedLock()->get()->toArray();
@@ -365,6 +413,22 @@ class PayrollComputationService
     private function recomputeEditableTotals(PayrollDetail $detail, PayrollPeriod $period): void
     {
         $detail->load(['earnings', 'deductions', 'deductions.deductionType']);
+
+        if (! $this->hasAccountingPolicy($detail->payrollRun)) {
+            $detail->deductions()->whereHas('deductionType', fn ($query) => $query->where('is_statutory', true))->delete();
+            $detail->employerContributions()->delete();
+            $earnings = round((float) $detail->earnings->sum('amount'), 2);
+            $deductions = round((float) $detail->deductions()->sum('amount'), 2);
+            $gross = round((float) $detail->basic_pay + $earnings, 2);
+            $detail->update([
+                'total_earnings' => $earnings, 'gross_pay' => $gross, 'total_deductions' => $deductions,
+                'nthp_before_lbp' => round($gross - $deductions, 2),
+                'net_pay' => round($gross - $deductions - (float) $detail->lbp_loan_deduction, 2),
+                'payroll_status' => 'POLICY_REQUIRED',
+            ]);
+
+            return;
+        }
 
         $basicPay = (float) $detail->basic_pay;
         $totalEarnings = round((float) $detail->earnings->sum('amount'), 2);

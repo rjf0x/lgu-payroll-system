@@ -34,6 +34,13 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
     'input_confirmed_at',
     'manual_adjustments',
     'payroll_status',
+    'coverage_start',
+    'coverage_end',
+    'compensation_reference',
+    'compensation_reason',
+    'accounting_basis',
+    'overlap_justification',
+    'original_payroll_detail_id',
     'eligibility_reason',
     'eligibility_resolved_by',
     'eligibility_resolved_at',
@@ -51,6 +58,8 @@ class PayrollDetail extends Model
     protected function casts(): array
     {
         return [
+            'coverage_start' => 'date',
+            'coverage_end' => 'date',
             'payable_days' => 'decimal:2',
             'input_confirmed_at' => 'datetime',
             'manual_adjustments' => 'boolean',
@@ -107,6 +116,11 @@ class PayrollDetail extends Model
     public function adjustments(): HasMany
     {
         return $this->hasMany(PayrollAdjustment::class, 'payroll_detail_id', 'payroll_detail_id');
+    }
+
+    public function originalDetail(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'original_payroll_detail_id', 'payroll_detail_id');
     }
 
     public function payslip(): HasOne

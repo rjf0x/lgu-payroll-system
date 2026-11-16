@@ -10,6 +10,7 @@ use App\Models\PayrollRun;
 use App\Services\AuditLogger;
 use App\Services\PayrollApprovalService;
 use App\Services\PayrollComputationService;
+use App\Services\PayrollDuplicateGuard;
 use App\Services\PayrollEligibilityService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -19,6 +20,8 @@ use Illuminate\View\View;
 
 class PayrollRunController extends Controller
 {
+    public function __construct(private readonly PayrollDuplicateGuard $duplicates) {}
+
     public function index(Request $request): View
     {
         $status = $request->string('status')->toString() ?: null;
@@ -39,33 +42,47 @@ class PayrollRunController extends Controller
     {
         return view('payroll-runs.create', [
             'periods' => PayrollPeriod::orderByDesc('start_date')->get(),
+            'replacements' => PayrollRun::where('run_type', 'REGULAR')->whereIn('status', [PayrollRun::STATUS_RETURNED, PayrollRun::STATUS_REJECTED])->with('payrollPeriod')->get(),
         ]);
     }
 
     public function store(PayrollRunRequest $request): RedirectResponse
     {
         $periodId = $request->integer('payroll_period_id');
-        $run = DB::transaction(function () use ($request, $periodId): PayrollRun {
+        $run = $this->duplicates->transaction(new PayrollRun, 'creation', function () use ($request, $periodId): PayrollRun {
             $period = PayrollPeriod::whereKey($periodId)->lockForUpdate()->firstOrFail();
             if ($period->status !== 'OPEN') {
                 throw ValidationException::withMessages(['payroll_period_id' => 'Choose an open payroll period.']);
             }
             $nextNumber = (int) PayrollRun::where('payroll_period_id', $periodId)->max('run_number') + 1;
 
+            $replacement = null;
+            if ($request->filled('replaces_payroll_run_id')) {
+                $replacement = PayrollRun::whereKey($request->integer('replaces_payroll_run_id'))->lockForUpdate()->firstOrFail();
+                if ($replacement->run_type !== 'REGULAR' || $request->validated('run_type') !== 'REGULAR'
+                    || (int) $replacement->payroll_period_id !== $periodId
+                    || ! in_array($replacement->status, [PayrollRun::STATUS_RETURNED, PayrollRun::STATUS_REJECTED], true)
+                    || ! $replacement->approvals()->whereIn('action', ['RETURNED', 'REJECTED'])->exists()) {
+                    throw ValidationException::withMessages(['replaces_payroll_run_id' => 'Replace only a regular run in the same period after an independent reviewer has returned or rejected it. Finalized runs must be corrected using an adjustment.']);
+                }
+                $replacement->update(['status' => PayrollRun::STATUS_CANCELLED]);
+            }
+
             $run = PayrollRun::create([
                 'payroll_period_id' => $periodId, 'run_number' => $nextNumber,
                 'run_type' => $request->validated('run_type'), 'status' => PayrollRun::STATUS_DRAFT, 'created_by' => auth()->id(),
+                'purpose' => $request->validated('purpose'), 'replaces_payroll_run_id' => $replacement?->getKey(),
             ]);
-            $previous = PayrollRun::query()
+            $previous = $replacement ?? ($run->run_type === 'REGULAR' ? PayrollRun::query()
                 ->where('status', PayrollRun::STATUS_FINALIZED)
                 ->where('run_type', $run->run_type)
                 ->whereHas('payrollPeriod', fn ($query) => $query
                     ->where('payroll_type', $period->payroll_type)
-                    ->where('start_date', '<=', $period->start_date))
+                    ->where('end_date', '<', $period->start_date))
                 ->orderByDesc('finalized_at')
                 ->orderByDesc('payroll_run_id')
                 ->with(['details.earnings', 'details.deductions', 'details.employerContributions', 'details.employmentRecord.employee'])
-                ->first();
+                ->first() : null);
 
             foreach ($previous?->details ?? [] as $detail) {
                 $employment = $detail->employmentRecord;
@@ -73,7 +90,7 @@ class PayrollRunController extends Controller
                 if ($employment === null || $employment->employee_id !== $detail->employee_id || $eligibility->requiresException($employment) || ! $eligibility->overlaps($employment, $period)) {
                     continue;
                 }
-                $copy = $detail->replicate(['computation_fingerprint']);
+                $copy = $detail->replicate(['computation_fingerprint', 'coverage_start', 'coverage_end', 'compensation_reference', 'compensation_reason', 'accounting_basis', 'overlap_justification', 'original_payroll_detail_id']);
                 $copy->setRelations([]);
                 $copy->fill([
                     'payroll_run_id' => $run->getKey(),
@@ -95,6 +112,11 @@ class PayrollRunController extends Controller
                 }
             }
             app(AuditLogger::class)->log('PAYROLL_CREATED', 'Payroll', (int) auth()->id(), 'payroll_runs', (string) $run->getKey());
+            if ($replacement !== null) {
+                app(AuditLogger::class)->log('PAYROLL_REPLACED', 'Payroll', (int) auth()->id(), 'payroll_runs', (string) $replacement->getKey(), newValues: [
+                    'replacement_run_id' => $run->getKey(), 'reason' => $request->validated('replacement_reason'), 'status' => PayrollRun::STATUS_CANCELLED,
+                ]);
+            }
 
             return $run;
         });
@@ -102,8 +124,8 @@ class PayrollRunController extends Controller
         return redirect()
             ->route('payroll-runs.show', $run)
             ->with('status', $run->details()->exists()
-                ? 'Payroll run created with provisional inputs from the previous finalized run. Confirm and recompute every employee for this coverage period before submitting.'
-                : 'Payroll run created. Compute it to generate payroll details.');
+                ? 'Payroll run created with provisional source inputs. Confirm and recompute every employee for this coverage period before submitting.'
+                : ($run->run_type === 'REGULAR' ? 'Payroll run created. Compute it to generate payroll details.' : 'Payroll run created. Include employees explicitly, then enter additional amounts, coverage, references, and accounting authorization.'));
     }
 
     public function show(PayrollRun $payrollRun, PayrollApprovalService $approval, PayrollEligibilityService $eligibility): View
@@ -123,6 +145,7 @@ class PayrollRunController extends Controller
 
         $detailIds = $payrollRun->details->pluck('payroll_detail_id');
         $user = auth()->user();
+        $hasAccountingPolicy = app(PayrollComputationService::class)->hasAccountingPolicy($payrollRun);
         $independent = $approval->isIndependentReviewer($payrollRun, $user);
         $pendingReview = $payrollRun->status === PayrollRun::STATUS_PENDING_APPROVAL && $independent;
         $canReturn = $independent && $user->can('payroll.review')
@@ -133,27 +156,28 @@ class PayrollRunController extends Controller
 
         return view('payroll-runs.show', [
             'run' => $payrollRun,
+            'accountingPolicyRequired' => ! $hasAccountingPolicy,
             'eligibilityIssues' => $eligibilityIssues,
             'exceptionEmployments' => $payrollRun->isEditable() && $user->can('payroll.prepare')
                 ? EmploymentRecord::with('employee')->whereNotIn('employment_id', $payrollRun->details->pluck('employment_id'))
                     ->whereDate('start_date', '<=', $payrollRun->payrollPeriod->end_date)
                     ->where(fn ($query) => $query->whereNull('end_date')->orWhereDate('end_date', '>=', $payrollRun->payrollPeriod->start_date))
-                    ->where(fn ($query) => $query->where('employment_status', '!=', EmploymentRecord::STATUS_ACTIVE)->orWhereHas('employee', fn ($query) => $query->whereNotNull('employees.deleted_at')))
+                    ->when($payrollRun->run_type === 'REGULAR', fn ($query) => $query->where(fn ($query) => $query->where('employment_status', '!=', EmploymentRecord::STATUS_ACTIVE)->orWhereHas('employee', fn ($query) => $query->whereNotNull('employees.deleted_at'))))
                     ->orderBy('employment_id')->get()
                 : collect(),
             'totalGross' => (float) $payrollRun->details->sum('gross_pay'),
             'totalDeductions' => (float) $payrollRun->details->sum('total_deductions'),
             'totalNet' => (float) $payrollRun->details->sum('net_pay'),
             'employerContributions' => (float) PayrollEmployerContribution::whereIn('payroll_detail_id', $detailIds)->sum('amount'),
-            'canSubmit' => $user->can('payroll.submit') && $payrollRun->isEditable() && $payrollRun->details->isNotEmpty()
+            'canSubmit' => $hasAccountingPolicy && $user->can('payroll.submit') && $payrollRun->isEditable() && $payrollRun->details->isNotEmpty()
                 && $eligibilityIssues->isEmpty()
                 && $payrollRun->details->every(fn ($detail): bool => $detail->payable_days !== null && $detail->input_confirmed_at !== null && $detail->payroll_status === 'COMPUTED'),
             'isIndependentReviewer' => $independent,
-            'canApprove' => $pendingReview && $user->can('payroll.approve'),
+            'canApprove' => $hasAccountingPolicy && $pendingReview && $user->can('payroll.approve'),
             'canReject' => $pendingReview && $user->can('payroll.reject'),
             'canReturn' => $canReturn,
             'canReview' => $canReturn || ($pendingReview && ($user->can('payroll.approve') || $user->can('payroll.reject'))),
-            'canFinalize' => $user->can('payroll.finalize') && $payrollRun->status === PayrollRun::STATUS_APPROVED,
+            'canFinalize' => $hasAccountingPolicy && $user->can('payroll.finalize') && $payrollRun->status === PayrollRun::STATUS_APPROVED,
         ]);
     }
 

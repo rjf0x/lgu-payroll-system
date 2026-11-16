@@ -5,6 +5,7 @@ namespace App\Http\Requests;
 use App\Models\DeductionType;
 use App\Models\EarningType;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
 
 class PayrollDetailRequest extends FormRequest
@@ -21,9 +22,19 @@ class PayrollDetailRequest extends FormRequest
     {
         $detail = $this->route('payroll_detail');
         $maxDays = $detail->maximumPayableDays($this->route('payroll_run')->payrollPeriod);
+        $run = $this->route('payroll_run');
+        $nonRegular = $run->run_type !== 'REGULAR';
 
         return [
-            'payable_days' => ['required', 'numeric', 'decimal:0,2', 'min:0', 'max:'.$maxDays],
+            'payable_days' => ['required', 'numeric', 'decimal:0,2', 'min:0', 'max:'.($nonRegular ? 0 : $maxDays)],
+            'coverage_start' => [Rule::requiredIf($nonRegular), 'nullable', Rule::prohibitedIf(! $nonRegular), 'date_format:Y-m-d', 'after_or_equal:'.$run->payrollPeriod->start_date->toDateString()],
+            'coverage_end' => [Rule::requiredIf($nonRegular), 'nullable', Rule::prohibitedIf(! $nonRegular), 'date_format:Y-m-d', 'after_or_equal:coverage_start', 'before_or_equal:'.$run->payrollPeriod->end_date->toDateString()],
+            'compensation_reference' => [Rule::requiredIf($nonRegular), 'nullable', 'string', 'max:255'],
+            'compensation_reason' => [Rule::requiredIf($nonRegular), 'nullable', 'string', 'max:2000'],
+            'accounting_basis' => [Rule::requiredIf($nonRegular), 'nullable', 'string', 'max:2000'],
+            'overlap_justification' => ['nullable', 'string', 'max:2000'],
+            'original_payroll_detail_id' => [Rule::requiredIf($run->run_type === 'ADJUSTMENT'), 'nullable', Rule::prohibitedIf($run->run_type !== 'ADJUSTMENT'), 'integer', 'exists:payroll_details,payroll_detail_id'],
+            'adjustment_basic_pay' => ['nullable', Rule::prohibitedIf($run->run_type !== 'ADJUSTMENT'), 'numeric', 'decimal:0,2', 'min:0'],
             'input_reference' => ['nullable', 'string', 'max:255'],
             'inputs_confirmed' => ['required', 'accepted'],
             'eligibility_reason' => ['nullable', 'string', 'max:2000'],

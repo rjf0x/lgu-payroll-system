@@ -10,6 +10,25 @@
     </x-page-header>
 
     <div class="space-y-6">
+        @if ($accountingPolicyRequired)
+            <x-alert variant="warning">Municipal Accounting Office policy confirmation is required for this run's tax and statutory contribution treatment. Amounts remain provisional; submission, approval, and finalization are blocked.</x-alert>
+        @endif
+        @if ($run->run_type !== 'REGULAR')
+            <x-card heading="Additional compensation and correction references">
+                <p>{{ $run->purpose }}</p>
+                @foreach ($run->details as $detail)
+                    <dl class="mt-3 space-y-1 border-t border-slate-200 pt-3 text-sm">
+                        <div><dt class="font-semibold">{{ $detail->employee_name_snapshot }} / {{ $detail->compensation_reference ?? 'Reference required' }}</dt><dd>{{ $detail->coverage_start?->toDateString() ?? 'Coverage required' }} to {{ $detail->coverage_end?->toDateString() ?? 'Coverage required' }}</dd></div>
+                        <div><dt>Reason</dt><dd>{{ $detail->compensation_reason }}</dd></div>
+                        <div><dt>Accounting authorization</dt><dd>{{ $detail->accounting_basis }}</dd></div>
+                        <div><dt>Separate entitlement justification</dt><dd>{{ $detail->overlap_justification }}</dd></div>
+                        @if ($detail->original_payroll_detail_id)
+                            <div><dt>Original finalized detail</dt><dd>#{{ $detail->original_payroll_detail_id }}</dd></div>
+                        @endif
+                    </dl>
+                @endforeach
+            </x-card>
+        @endif
         @if ($eligibilityIssues->isNotEmpty())
             <x-alert variant="warning">Employee eligibility needs resolution. Open each flagged payroll detail to retain payable compensation with justification or remove the employee before submission.</x-alert>
         @endif
@@ -123,7 +142,7 @@
         <x-card heading="Payroll actions">
             @if ($exceptionEmployments->isNotEmpty())
                 <details class="mb-4">
-                    <summary class="cursor-pointer text-sm font-semibold">Include archived or inactive employee with payable compensation</summary>
+                    <summary class="cursor-pointer text-sm font-semibold">{{ $run->run_type === 'REGULAR' ? 'Include archived or inactive employee with payable compensation' : 'Include an employee for explicit additional compensation or correction' }}</summary>
                     <form method="POST" action="{{ route('payroll-details.store', $run) }}" class="mt-3 space-y-3">
                         @csrf
                         <x-form.select name="employment_id" label="Employment eligible by coverage dates" required placeholder="Choose an employment record" :options="$exceptionEmployments->mapWithKeys(fn ($employment) => [$employment->getKey() => $employment->employee?->full_name.' / Employment #'.$employment->getKey()])" />

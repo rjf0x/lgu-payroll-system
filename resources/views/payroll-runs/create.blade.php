@@ -22,7 +22,11 @@
             required
         />
 
-        <p class="text-xs text-slate-500">The run is created as a draft; compute it to generate payroll details.</p>
+        <x-form.textarea name="purpose" label="Run purpose / supporting reason" maxlength="2000" hint="Required for supplemental and adjustment runs. Add employees explicitly and enter only the additional compensation or correction." />
+        <x-form.select name="replaces_payroll_run_id" label="Replace a returned or rejected regular run (optional)" placeholder="No replacement" :options="$replacements->mapWithKeys(fn ($run) => [$run->getKey() => 'Run #'.$run->getKey().' / '.$run->payrollPeriod->period_name.' / '.$run->status])" />
+        <x-form.textarea name="replacement_reason" label="Replacement justification" maxlength="2000" hint="Required for a replacement in the same period. The returned or rejected run is retained as cancelled and the replacement needs fresh approval." />
+
+        <p class="text-xs text-slate-500">Regular runs use approved payroll inputs. Non-regular runs require explicit amounts, entitlement references, coverage, and confirmed accounting treatment before submission.</p>
 
         <div class="flex flex-wrap gap-3">
             <x-button icon="add" variant="primary" type="submit">Create run</x-button>

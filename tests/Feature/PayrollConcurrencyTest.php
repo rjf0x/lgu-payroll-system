@@ -2,10 +2,14 @@
 
 namespace Tests\Feature;
 
+use App\Models\CompensationProfile;
 use App\Models\PayrollDetail;
 use App\Models\PayrollPeriod;
 use App\Models\PayrollRun;
 use App\Models\User;
+use App\Services\PayrollComputationService;
+use Database\Seeders\DeductionTypeSeeder;
+use Database\Seeders\StatutoryConfigSeeder;
 use Illuminate\Support\Facades\DB;
 use PHPUnit\Framework\Attributes\Group;
 use Symfony\Component\Process\Process;
@@ -70,12 +74,68 @@ class PayrollConcurrencyTest extends TestCase
         $this->assertDatabaseCount('audit_logs', 4);
     }
 
+    public function test_parallel_submissions_of_overlapping_regular_runs_reserve_compensation_once(): void
+    {
+        $this->seed([DeductionTypeSeeder::class, StatutoryConfigSeeder::class]);
+        $user = User::factory()->create();
+        $period = PayrollPeriod::factory()->create(['start_date' => '2026-01-01', 'end_date' => '2026-01-31']);
+        $first = PayrollRun::factory()->create(['payroll_period_id' => $period->getKey(), 'created_by' => $user->getKey()]);
+        $detail = PayrollDetail::factory()->create(['payroll_run_id' => $first->getKey(), 'manual_adjustments' => true]);
+        CompensationProfile::factory()->create(['employment_id' => $detail->employment_id, 'basic_rate' => 45000, 'effective_from' => '2024-01-01']);
+        app(PayrollComputationService::class)->computeDetail($first, $detail->employmentRecord, $period);
+        $second = PayrollRun::factory()->create(['payroll_period_id' => $period->getKey(), 'run_number' => 2, 'created_by' => $user->getKey()]);
+        PayrollDetail::factory()->create(['payroll_run_id' => $second->getKey(), 'employment_id' => $detail->employment_id, 'manual_adjustments' => true]);
+        app(PayrollComputationService::class)->computeDetail($second, $detail->employmentRecord, $period);
+        $operations = [];
+        foreach ([$first, $second] as $run) {
+            $operations[] = '$run = App\Models\PayrollRun::findOrFail('.$run->getKey().');'
+                .'$user = App\Models\User::findOrFail('.$user->getKey().');'
+                .'Illuminate\Support\Facades\Auth::setUser($user);'
+                .'echo "READY\n"; flush();'
+                .'try { app(App\Services\PayrollApprovalService::class)->submit($run, $user); echo "SUBMITTED\n"; }'
+                .'catch (Illuminate\Validation\ValidationException $e) { echo "DUPLICATE_BLOCKED\n"; }';
+        }
+
+        DB::beginTransaction();
+        DB::table('payroll_processing_locks')->where('id', 1)->lockForUpdate()->firstOrFail();
+        $outputs = $this->contend($operations, 2);
+
+        $this->assertSame(1, substr_count(implode('', $outputs), "SUBMITTED\n"));
+        $this->assertSame(1, substr_count(implode('', $outputs), "DUPLICATE_BLOCKED\n"));
+        $this->assertSame(1, PayrollRun::where('status', 'PENDING_APPROVAL')->count());
+        $this->assertSame(1, PayrollRun::where('status', 'DRAFT')->count());
+        $this->assertDatabaseCount('payroll_approvals', 1);
+        $this->assertDatabaseHas('audit_logs', ['action' => 'PAYROLL_VALIDATION_BLOCKED']);
+    }
+
+    public function test_parallel_finalization_of_the_same_run_records_one_liability(): void
+    {
+        $user = User::factory()->create();
+        $run = PayrollRun::factory()->create(['status' => PayrollRun::STATUS_APPROVED]);
+        PayrollDetail::factory()->create(['payroll_run_id' => $run->getKey()]);
+        $operation = '$run = App\Models\PayrollRun::findOrFail('.$run->getKey().');'
+            .'$user = App\Models\User::findOrFail('.$user->getKey().');'
+            .'echo "READY\n"; flush();'
+            .'try { app(App\Services\PayrollApprovalService::class)->finalize($run, $user); echo "FINALIZED\n"; }'
+            .'catch (Symfony\Component\HttpKernel\Exception\HttpException $e) { echo "REJECTED:".$e->getStatusCode()."\n"; }';
+
+        DB::beginTransaction();
+        DB::table('payroll_processing_locks')->where('id', 1)->lockForUpdate()->firstOrFail();
+        $outputs = $this->contend($operation, 2);
+
+        $this->assertSame(1, substr_count(implode('', $outputs), "FINALIZED\n"));
+        $this->assertSame(1, substr_count(implode('', $outputs), 'REJECTED:422'));
+        $this->assertDatabaseCount('payroll_approvals', 1);
+        $this->assertSame(PayrollRun::STATUS_FINALIZED, $run->fresh()->status);
+    }
+
     /**
      * Release the parent lock after every independent process has loaded its inputs.
      *
+     * @param  string|list<string>  $operation
      * @return list<string>
      */
-    private function contend(string $operation, int $workers): array
+    private function contend(string|array $operation, int $workers): array
     {
         $connection = config('database.connections.mysql');
         $environment = [
@@ -91,7 +151,8 @@ class PayrollConcurrencyTest extends TestCase
 
         try {
             for ($index = 0; $index < $workers; $index++) {
-                $process = new Process([PHP_BINARY, '-r', $bootstrap.$operation], base_path(), $environment, timeout: 20);
+                $workerOperation = is_array($operation) ? $operation[$index] : $operation;
+                $process = new Process([PHP_BINARY, '-r', $bootstrap.$workerOperation], base_path(), $environment, timeout: 20);
                 $process->start();
                 $processes[] = $process;
             }

@@ -13,6 +13,8 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
     'payroll_period_id',
     'run_number',
     'run_type',
+    'purpose',
+    'replaces_payroll_run_id',
     'status',
     'created_by',
     'processed_at',

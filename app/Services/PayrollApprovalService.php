@@ -5,7 +5,6 @@ namespace App\Services;
 use App\Models\PayrollApproval;
 use App\Models\PayrollRun;
 use App\Models\User;
-use Illuminate\Support\Facades\DB;
 
 /**
  * Drives the payroll approval workflow and enforces separation of duties.
@@ -20,11 +19,12 @@ class PayrollApprovalService
         private readonly PayrollRegistrationService $registrations,
         private readonly PayrollEligibilityService $eligibility,
         private readonly PayrollComputationService $computation,
+        private readonly PayrollDuplicateGuard $duplicates,
     ) {}
 
     public function submit(PayrollRun $run, User $user): void
     {
-        DB::transaction(function () use ($run, $user): void {
+        $this->duplicates->transaction($run, 'submission', function () use ($run, $user): void {
             $locked = PayrollRun::whereKey($run->getKey())->lockForUpdate()->firstOrFail();
             $run->setRawAttributes($locked->getAttributes(), true);
             if (! $run->isEditable()) {
@@ -34,6 +34,8 @@ class PayrollApprovalService
             if (! $run->details()->exists()) {
                 abort(422, 'Compute the payroll before submitting it for approval.');
             }
+            $this->duplicates->validate($run, 'submission');
+            $this->computation->assertAccountingPolicy($run);
             foreach ($run->details()->with(['employmentRecord.employee'])->get() as $detail) {
                 $issue = $this->eligibility->issue($detail, $run->payrollPeriod);
                 abort_if($issue !== null, 422, $issue ?? 'Resolve payroll eligibility before submission.');
@@ -49,16 +51,23 @@ class PayrollApprovalService
             ]);
 
             $this->record($run, PayrollApproval::ACTION_SUBMITTED, $user, 'Submitted for approval');
-            $this->auditLogger->log('PAYROLL_SUBMITTED', 'Payroll', $user->user_id, 'payroll_runs', (string) $run->payroll_run_id);
+            $this->auditLogger->log('PAYROLL_SUBMITTED', 'Payroll', $user->user_id, 'payroll_runs', (string) $run->payroll_run_id, newValues: [
+                'run_type' => $run->run_type, 'accounting_policy' => config('payroll.non_regular.'.$run->run_type),
+            ]);
         });
     }
 
     public function approve(PayrollRun $run, User $user, ?string $remarks = null): void
     {
-        DB::transaction(function () use ($run, $user, $remarks): void {
+        $this->duplicates->transaction($run, 'approval', function () use ($run, $user, $remarks): void {
             $locked = PayrollRun::whereKey($run->getKey())->lockForUpdate()->firstOrFail();
             $run->setRawAttributes($locked->getAttributes(), true);
             $this->assertIndependentReviewer($run, $user);
+            $this->duplicates->validate($run, 'approval');
+            $this->computation->assertAccountingPolicy($run);
+            if ($run->run_type !== 'REGULAR') {
+                $this->computation->validateForSubmission($run);
+            }
             $run->update(['status' => PayrollRun::STATUS_APPROVED]);
 
             $this->record($run, PayrollApproval::ACTION_APPROVED, $user, $remarks);
@@ -68,7 +77,7 @@ class PayrollApprovalService
 
     public function reject(PayrollRun $run, User $user, ?string $remarks = null): void
     {
-        DB::transaction(function () use ($run, $user, $remarks): void {
+        $this->duplicates->transaction($run, 'rejection', function () use ($run, $user, $remarks): void {
             $locked = PayrollRun::whereKey($run->getKey())->lockForUpdate()->firstOrFail();
             $run->setRawAttributes($locked->getAttributes(), true);
             $this->assertIndependentReviewer($run, $user);
@@ -81,7 +90,7 @@ class PayrollApprovalService
 
     public function returnForCorrection(PayrollRun $run, User $user, ?string $remarks = null): void
     {
-        DB::transaction(function () use ($run, $user, $remarks): void {
+        $this->duplicates->transaction($run, 'return', function () use ($run, $user, $remarks): void {
             $locked = PayrollRun::whereKey($run->getKey())->lockForUpdate()->firstOrFail();
             $run->setRawAttributes($locked->getAttributes(), true);
             $this->assertIndependentReviewer($run, $user, allowApproved: true);
@@ -98,11 +107,16 @@ class PayrollApprovalService
 
     public function finalize(PayrollRun $run, User $user): void
     {
-        DB::transaction(function () use ($run, $user): void {
+        $this->duplicates->transaction($run, 'finalization', function () use ($run, $user): void {
             $locked = PayrollRun::whereKey($run->getKey())->lockForUpdate()->firstOrFail();
             $run->setRawAttributes($locked->getAttributes(), true);
             if ($run->status !== PayrollRun::STATUS_APPROVED) {
                 abort(422, 'Only an approved payroll run can be finalized.');
+            }
+            $this->duplicates->validate($run, 'finalization');
+            $this->computation->assertAccountingPolicy($run);
+            if ($run->run_type !== 'REGULAR') {
+                $this->computation->validateForSubmission($run);
             }
             $run->update([
                 'status' => PayrollRun::STATUS_FINALIZED,

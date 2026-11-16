@@ -4,6 +4,9 @@
 @section('heading', 'Payroll Detail - '.$detail->employee_name_snapshot)
 
 @section('content')
+    @if ($accountingPolicyRequired)
+        <x-alert variant="warning">Accounting policy confirmation required. These are provisional amounts; taxes and statutory contributions have not been established for this transaction. Submission, approval, and finalization remain blocked until the Municipal Accounting Office confirms the calculation method.</x-alert>
+    @endif
     @if ($eligibilityIssue)
         <x-alert variant="warning">{{ $eligibilityIssue }}</x-alert>
     @endif
@@ -22,6 +25,21 @@
                 <div><dt class="text-xs text-muted">Basic pay · PHP</dt><dd class="font-semibold tabular-nums">{{ number_format((float) $detail->basic_pay, 2) }}</dd></div>
                 <div><dt class="text-xs text-muted">Pay basis</dt><dd class="font-semibold">{{ str_replace('_', ' ', $detail->pay_basis_snapshot) }}</dd></div>
             </dl>
+            @if ($run->run_type !== 'REGULAR')
+                <input type="hidden" name="payable_days" value="0">
+                <div class="mt-3 space-y-3">
+                    <x-form.input name="coverage_start" label="Entitlement coverage start" type="date" :value="$detail->coverage_start?->toDateString() ?? $run->payrollPeriod->start_date->toDateString()" required />
+                    <x-form.input name="coverage_end" label="Entitlement coverage end" type="date" :value="$detail->coverage_end?->toDateString() ?? $run->payrollPeriod->end_date->toDateString()" required />
+                    <x-form.input name="compensation_reference" label="Supporting entitlement reference" :value="$detail->compensation_reference" maxlength="255" required hint="Use the same reference for the same entitlement. A different reference must identify separate authorized compensation." />
+                    <x-form.textarea name="compensation_reason" label="Additional payment or correction justification" :value="$detail->compensation_reason" maxlength="2000" required />
+                    <x-form.textarea name="accounting_basis" label="Accounting authorization and financial treatment" :value="$detail->accounting_basis" maxlength="2000" required hint="Identify the supporting accounting decision for these amounts, taxes, and contributions. This does not replace the required configured accounting policy." />
+                    <x-form.textarea name="overlap_justification" label="Separate entitlement justification (when a component overlaps)" :value="$detail->overlap_justification" maxlength="2000" hint="Explain why this is additional authorized compensation for the same coverage, rather than a repeat payment." />
+                    @if ($run->run_type === 'ADJUSTMENT')
+                        <x-form.select name="original_payroll_detail_id" label="Finalized original payroll detail" :selected="$detail->original_payroll_detail_id" required placeholder="Choose the original detail" :options="$originalDetails->mapWithKeys(fn ($original) => [$original->getKey() => 'Detail #'.$original->getKey().' / Run #'.$original->payroll_run_id.' / '.$original->payrollRun->payrollPeriod->period_name])" />
+                        <x-form.input name="adjustment_basic_pay" label="Authorized basic salary adjustment only (PHP)" type="number" step="0.01" min="0" :value="$detail->basic_pay" hint="Enter only the positive difference. Other earning corrections belong in the earning components below. Automatic recoveries are unsupported." />
+                    @endif
+                </div>
+            @else
             <div class="mt-3 grid items-start gap-3 md:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
                 <div>
                     <x-form.input name="payable_days" label="Approved payable days" type="number" step="0.01" min="0" :max="$detail->maximumPayableDays($run->payrollPeriod)" :value="$detail->payable_days" required inputmode="decimal" class="max-w-36 text-right tabular-nums" aria-describedby="approved-input-guidance" />
@@ -39,12 +57,13 @@
                     <p>Reflect unpaid absences in payable days. Do not deduct the same absence again under Deductions.</p>
                 </div>
             </details>
+            @endif
         </section>
 
         <section aria-labelledby="payroll-adjustments-heading" class="min-w-0 rounded-xl border border-slate-200 bg-surface shadow-sm">
             <div class="border-b border-slate-200 px-4 pt-3">
                 <h2 id="payroll-adjustments-heading" class="text-sm font-semibold">Payroll adjustments</h2>
-                <p class="mt-1 text-xs text-muted">Statutory contributions and withholding tax are computed automatically when you save. All amounts are in PHP.</p>
+                <p class="mt-1 text-xs text-muted">{{ $accountingPolicyRequired ? 'Amounts remain provisional until accounting confirms tax and contribution treatment.' : 'Statutory contributions and withholding tax use the configured calculation method when you save.' }} All amounts are in PHP.</p>
                 <div hidden data-payroll-tabs aria-label="Payroll adjustment categories" class="mt-2 flex gap-1">
                     <button type="button" id="earnings-tab" data-payroll-tab="earnings" aria-controls="earnings-panel" class="payroll-adjustment-tab">Earnings</button>
                     <button type="button" id="deductions-tab" data-payroll-tab="deductions" aria-controls="deductions-panel" class="payroll-adjustment-tab">Deductions</button>
