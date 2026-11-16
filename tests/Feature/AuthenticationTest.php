@@ -132,4 +132,81 @@ class AuthenticationTest extends TestCase
             ->assertSee('value="officer"', false)->assertSee('aria-invalid="true"', false)
             ->assertSee('data-error-summary', false)->assertDontSee('never-render-this-password');
     }
+
+    public function test_empty_login_shows_linked_summary_and_inline_errors_for_both_fields(): void
+    {
+        $this->followingRedirects()->from(route('login'))->post(route('login.store'), [])
+            ->assertOk()
+            ->assertSee('Unable to sign in')
+            ->assertSee('href="#username"', false)
+            ->assertSee('href="#password"', false)
+            ->assertSee('aria-describedby="username-error"', false)
+            ->assertSee('aria-describedby="password-error"', false)
+            ->assertSee('id="username-error"', false)
+            ->assertSee('id="password-error"', false)
+            ->assertSee('The username field is required.')
+            ->assertSee('The password field is required.');
+        $this->assertGuest();
+    }
+
+    public function test_remember_me_restores_login_without_an_existing_session(): void
+    {
+        $user = User::factory()->create(['password_hash' => 'secret-password']);
+        $cookieName = $this->app['auth']->guard()->getRecallerName();
+
+        $response = $this->post(route('login.store'), [
+            'username' => $user->username,
+            'password' => 'secret-password',
+            'remember' => '1',
+        ]);
+
+        $response->assertRedirect(route('dashboard'))->assertCookie($cookieName);
+        $rememberCookie = $response->getCookie($cookieName);
+        $this->app['session']->invalidate();
+        $this->app['session']->save();
+        $this->app['auth']->forgetGuards();
+
+        $this->withCookie($cookieName, $rememberCookie->getValue())
+            ->get(route('dashboard'))->assertOk();
+        $this->assertAuthenticatedAs($user);
+    }
+
+    public function test_login_without_remember_me_does_not_restore_an_ended_session(): void
+    {
+        $user = User::factory()->create(['password_hash' => 'secret-password']);
+        $cookieName = $this->app['auth']->guard()->getRecallerName();
+
+        $this->post(route('login.store'), [
+            'username' => $user->username,
+            'password' => 'secret-password',
+        ])->assertRedirect(route('dashboard'))->assertCookieMissing($cookieName);
+
+        $this->app['session']->invalidate();
+        $this->app['session']->save();
+        $this->app['auth']->forgetGuards();
+
+        $this->get(route('dashboard'))->assertRedirect(route('login'));
+        $this->assertGuest();
+    }
+
+    public function test_logout_invalidates_the_previous_remember_me_cookie(): void
+    {
+        $user = User::factory()->create(['password_hash' => 'secret-password']);
+        $cookieName = $this->app['auth']->guard()->getRecallerName();
+        $response = $this->post(route('login.store'), [
+            'username' => $user->username,
+            'password' => 'secret-password',
+            'remember' => '1',
+        ]);
+        $response->assertRedirect(route('dashboard'))->assertCookie($cookieName);
+        $rememberCookie = $response->getCookie($cookieName);
+
+        $this->withCookie($cookieName, $rememberCookie->getValue())
+            ->post(route('logout'))->assertRedirect(route('login'));
+        $this->app['auth']->forgetGuards();
+
+        $this->withCookie($cookieName, $rememberCookie->getValue())
+            ->get(route('dashboard'))->assertRedirect(route('login'));
+        $this->assertGuest();
+    }
 }

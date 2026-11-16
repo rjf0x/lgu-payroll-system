@@ -103,6 +103,13 @@
     }
     .ui-field:focus { @apply border-brand ring-2 ring-sky-100; }
     .ui-field[aria-invalid='true'] { @apply border-rose-700 ring-2 ring-rose-100; }
+    .login-page :is(a, button, input):focus-visible,
+    .login-page [data-error-summary]:focus {
+        outline: 3px solid var(--color-brand-strong);
+        outline-offset: 3px;
+    }
+    .login-page .ui-field[aria-invalid='true'] { @apply border-2 border-rose-700 bg-rose-50; }
+    .login-page :is(#username-error, #password-error) { @apply rounded-lg border-l-4 border-rose-700 bg-rose-50 px-3 py-2 font-semibold text-rose-900; }
     .ui-filter-toolbar .ui-field, .ui-compact-form .ui-field { @apply h-10 min-h-10 rounded-md px-3 py-2 text-base leading-5 shadow-none sm:h-9 sm:min-h-9 sm:py-1.5 sm:text-sm; }
     .ui-filter-toolbar .ui-button, .ui-compact-form .ui-button { @apply h-9 min-h-9 py-1.5; }
     .ui-filter-toolbar select { @apply px-2; }

@@ -6,7 +6,7 @@
     <title>Sign in | {{ $systemSettings['system_name'] }}</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body class="min-h-dvh bg-slate-50 font-sans antialiased">
+<body class="login-page min-h-dvh bg-slate-50 font-sans antialiased">
     <main class="flex min-h-dvh items-center justify-center px-4 py-8 sm:px-8">
         <div class="w-full max-w-6xl">
             <div class="grid overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-xl shadow-slate-900/5 lg:grid-cols-[0.95fr_1.05fr]">
@@ -62,17 +62,18 @@
                         <p class="mt-3 text-base leading-7 text-muted">Sign in with your assigned username and password.</p>
 
                         @if ($errors->any())
-                            <div id="error-summary" role="alert" tabindex="-1" aria-labelledby="error-summary-title" data-error-summary class="mt-6 rounded-xl border border-rose-300 bg-rose-50 p-4 text-rose-900">
-                                <h2 id="error-summary-title" class="text-sm font-semibold">Unable to sign in</h2>
+                            <div id="error-summary" role="alert" tabindex="-1" aria-labelledby="error-summary-title" data-error-summary class="mt-6 rounded-xl border-2 border-rose-700 bg-rose-50 p-4 text-rose-900">
+                                <h2 id="error-summary-title" class="text-base font-bold">Unable to sign in</h2>
+                                <p class="mt-1 text-sm">Review the errors below. Select an error to go to its field.</p>
                                 <ul class="mt-2 space-y-2 text-sm">
                                     @foreach ($errors->messages() as $field => $messages)
-                                        <li><a href="#{{ $field }}" data-error-field="{{ $field }}" class="underline underline-offset-4">{{ $messages[0] }}</a></li>
+                                        <li><a href="#{{ $field }}" data-error-field="{{ $field }}" class="font-semibold underline underline-offset-4">{{ $messages[0] }}</a></li>
                                     @endforeach
                                 </ul>
                             </div>
                         @endif
 
-                        <form method="POST" action="{{ route('login.store') }}" class="mt-8 space-y-5" data-submit-feedback>
+                        <form method="POST" action="{{ route('login.store') }}" novalidate class="mt-8 space-y-5" data-submit-feedback>
                             @csrf
                             <x-form.input name="username" label="Username" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="Enter your username" class="h-12" required />
 
@@ -89,7 +90,7 @@
                             </div>
 
                             <label for="remember" class="flex min-h-11 w-fit cursor-pointer items-center gap-3 text-sm text-muted">
-                                <input id="remember" name="remember" type="checkbox" value="1" @checked(old('remember')) class="h-4 w-4 shrink-0 rounded border-slate-500 accent-brand">
+                                <input id="remember" name="remember" type="checkbox" value="1" @checked(old('remember')) class="h-5 w-5 shrink-0 rounded border-slate-500 accent-brand">
                                 Remember me on this device
                             </label>
 
