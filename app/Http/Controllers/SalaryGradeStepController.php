@@ -51,6 +51,13 @@ class SalaryGradeStepController extends Controller
             ->with('status', 'Grade step created.');
     }
 
+    public function show(SalaryGradeStep $salaryGradeStep): View
+    {
+        $salaryGradeStep->load('salarySchedule');
+
+        return view('salary-grade-steps.show', ['gradeStep' => $salaryGradeStep]);
+    }
+
     public function edit(SalaryGradeStep $salaryGradeStep): View
     {
         return view('salary-grade-steps.edit', [

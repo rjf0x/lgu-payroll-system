@@ -129,6 +129,7 @@ The login screen is standalone HTML and does not require the build.
 | Test | Coverage |
 |---|---|
 | `tests/Feature/MasterDataTest.php` | Department CRUD + unique code, Viewer read-only vs `403` on create, employee create, employment record create, grade-step composite uniqueness, employee soft delete. |
+| `tests/Feature/SalaryGradeStepNavigationTest.php` | All four grade-step GET routes and schedule link, correct detail values, Viewer/Approver read-only controls, missing/unauthorized access and escaped schedule text. The F12 show action renders the existing detail view with its schedule. |
 | `tests/Feature/CompensationProfileValidationTest.php` | Grade match accept/reject, direct-rate requirement, schedule effective-date rule, overlap reject, non-overlapping accept. |
 | `tests/Feature/EmploymentRecordValidationTest.php` | Department/position consistency, inclusive overlap boundaries, sequential/inactive history, archival, identity preservation, transaction rechecks, permission denial, retained form input and audit/history effects. |
 | F10 cases in `tests/Feature/PayrollConcurrencyTest.php` | MySQL contention for first appointment creation, overlapping reactivation and archival before a waiting save; requires a dedicated `lgu_payroll_qa_` database. |
