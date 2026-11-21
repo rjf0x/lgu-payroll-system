@@ -14,31 +14,7 @@ class BesuBlockchainDriver implements OnChainBlockchainDriver
 
     public function anchor(string $payloadHash): array
     {
-        abort_unless(preg_match('/^[a-f0-9]{64}$/', $payloadHash), 422, 'Invalid SHA-256 payload hash.');
-        $contract = $this->address((string) config('blockchain.contract_address'));
-        $sender = $this->address((string) config('blockchain.besu.from_address'));
-        $this->checkNetwork();
-
-        $code = $this->rpc('eth_getCode', [$contract, 'latest']);
-        abort_unless(is_string($code) && preg_match('/^0x[0-9a-f]+$/i', $code) && $code !== '0x0', 503, 'No anchoring contract exists at the configured Besu address.');
-
-        $transaction = $this->rpc('eth_sendTransaction', [[
-            'from' => $sender,
-            'to' => $contract,
-            'data' => $this->selector('anchor(bytes32)').$payloadHash,
-            'gas' => (string) config('blockchain.besu.gas'),
-            'gasPrice' => (string) config('blockchain.besu.gas_price'),
-            'value' => '0x0',
-        ]], signing: true);
-
-        abort_unless(is_string($transaction) && preg_match('/^0x[0-9a-f]{64}$/i', $transaction), 503, 'The signer did not return a valid transaction ID. Check the signer before submitting again.');
-
-        return [
-            'network_name' => 'besu:'.config('blockchain.besu.chain_id'),
-            'transaction_id' => $transaction,
-            'block_number' => null,
-            'contract_address' => $contract,
-        ];
+        abort(422, 'Legacy network submission is disabled. Use versioned payroll registration for new blockchain proofs.');
     }
 
     public function receipt(string $transactionId, string $contractAddress): ?array
@@ -116,10 +92,10 @@ class BesuBlockchainDriver implements OnChainBlockchainDriver
     /**
      * @param  array<int, mixed>  $parameters
      */
-    private function rpc(string $method, array $parameters, bool $signing = false): mixed
+    private function rpc(string $method, array $parameters): mixed
     {
-        $url = (string) config($signing ? 'blockchain.besu.signer_url' : 'blockchain.besu.rpc_url');
-        abort_unless(filter_var($url, FILTER_VALIDATE_URL) && in_array(parse_url($url, PHP_URL_SCHEME), ['http', 'https'], true), 503, 'Configure a valid Besu RPC and signer URL.');
+        $url = (string) config('blockchain.besu.rpc_url');
+        abort_unless(filter_var($url, FILTER_VALIDATE_URL) && in_array(parse_url($url, PHP_URL_SCHEME), ['http', 'https'], true), 503, 'Configure a valid Besu RPC URL.');
 
         try {
             $response = Http::connectTimeout(3)->timeout(10)->post($url, [
@@ -129,16 +105,14 @@ class BesuBlockchainDriver implements OnChainBlockchainDriver
                 'params' => $parameters,
             ]);
         } catch (ConnectionException) {
-            abort(503, $signing
-                ? 'Signer connection failed. Submission may have succeeded; reconcile the signer before retrying.'
-                : 'The Besu node is unavailable. Try checking the existing transaction again later.');
+            abort(503, 'The Besu node is unavailable. Try checking the existing transaction again later.');
         }
 
         $body = $response->json();
         abort_unless($response->successful() && is_array($body)
             && ($body['jsonrpc'] ?? null) === '2.0' && ($body['id'] ?? null) === 1
             && ! array_key_exists('error', $body) && array_key_exists('result', $body), 503,
-            $signing ? 'Signer rejected or could not confirm submission. Reconcile the signer before retrying.' : 'The Besu node could not complete the requested operation.');
+            'The Besu node could not complete the requested operation.');
 
         return $body['result'];
     }

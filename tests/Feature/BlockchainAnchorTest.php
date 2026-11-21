@@ -17,7 +17,6 @@ use App\Models\Role;
 use App\Models\SalaryGradeStep;
 use App\Models\SalarySchedule;
 use App\Models\User;
-use App\Services\Blockchain\BesuBlockchainDriver;
 use App\Services\Blockchain\BlockchainDriver;
 use App\Services\Blockchain\OnChainBlockchainDriver;
 use App\Services\BlockchainAnchorService;
@@ -29,7 +28,6 @@ use Database\Seeders\RolePermissionSeeder;
 use Database\Seeders\StatutoryConfigSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
-use PHPUnit\Framework\Attributes\Group;
 use Tests\TestCase;
 
 class BlockchainAnchorTest extends TestCase
@@ -191,39 +189,33 @@ class BlockchainAnchorTest extends TestCase
         $this->actingAs($viewer)->get(route('blockchain.index'))->assertForbidden();
     }
 
-    public function test_besu_submission_is_saved_as_pending_and_repeat_requests_do_not_resubmit(): void
+    public function test_legacy_network_submission_is_rejected_even_when_a_network_driver_is_injected(): void
     {
         $run = $this->finalizedRun();
         $officer = $this->userWithRole(Role::PAYROLL_OFFICER);
         $driver = $this->mock(OnChainBlockchainDriver::class);
-        $driver->shouldReceive('anchor')->once()->andReturn([
-            'network_name' => 'besu:1337', 'transaction_id' => '0x'.str_repeat('a', 64),
-            'block_number' => null, 'contract_address' => '0x'.str_repeat('1', 40),
-        ]);
+        $driver->shouldNotReceive('anchor');
         $this->app->instance(BlockchainDriver::class, $driver);
 
-        $this->actingAs($officer)->post(route('payroll-runs.anchor', $run))->assertRedirect();
-        $this->actingAs($officer)->post(route('payroll-runs.anchor', $run))->assertRedirect();
+        $this->actingAs($officer)->postJson(route('payroll-runs.anchor', $run))->assertUnprocessable()->assertSee('Legacy network submission is disabled');
+        $this->actingAs($officer)->postJson(route('payroll-runs.anchor', $run))->assertUnprocessable();
 
-        $this->assertDatabaseCount('blockchain_anchors', 1);
-        $this->assertDatabaseHas('blockchain_anchors', [
-            'payroll_run_id' => $run->getKey(), 'anchor_status' => 'PENDING', 'anchored_at' => null,
-        ]);
-        $this->assertDatabaseHas('audit_logs', ['action' => 'PAYROLL_ANCHOR_SUBMITTED']);
+        $this->assertDatabaseCount('blockchain_anchors', 0);
+        $this->assertDatabaseMissing('audit_logs', ['action' => 'PAYROLL_ANCHOR_SUBMITTED']);
     }
 
     private function pendingBesuAnchor(PayrollRun $run, User $user): BlockchainAnchor
     {
         config(['blockchain.besu.chain_id' => 1337]);
 
-        $driver = $this->mock(OnChainBlockchainDriver::class);
-        $driver->shouldReceive('anchor')->once()->andReturn([
-            'network_name' => 'besu:1337', 'transaction_id' => '0x'.str_repeat('a', 64),
-            'contract_address' => '0x'.str_repeat('1', 40), 'block_number' => null,
+        return BlockchainAnchor::create([
+            'payroll_run_id' => $run->getKey(),
+            'payload_hash' => app(BlockchainAnchorService::class)->hashPayrollRun($run),
+            'hash_algorithm' => 'SHA-256', 'network_name' => 'besu:1337',
+            'transaction_id' => '0x'.str_repeat('a', 64),
+            'contract_address' => '0x'.str_repeat('1', 40),
+            'anchor_status' => 'PENDING', 'anchored_by' => $user->getKey(),
         ]);
-        $this->app->instance(BlockchainDriver::class, $driver);
-
-        return app(BlockchainAnchorService::class)->anchor($run, $user);
     }
 
     public function test_confirming_besu_transaction_updates_anchor_and_records_match(): void
@@ -297,56 +289,18 @@ class BlockchainAnchorTest extends TestCase
         ]);
     }
 
-    #[Group('besu')]
-    public function test_live_besu_anchors_and_verifies_an_isolated_payroll_run(): void
+    public function test_live_legacy_settings_cannot_reenable_network_submission(): void
     {
-        if (! config('blockchain.besu.live_tests')) {
-            $this->markTestSkipped('Set BESU_LIVE_TESTS=true with the local Docker network running.');
-        }
-
-        config(['blockchain.driver' => 'besu']);
+        config(['blockchain.driver' => 'besu', 'blockchain.besu.live_tests' => true]);
+        Http::preventStrayRequests();
+        Http::fake();
         $run = $this->finalizedRun();
         $officer = $this->userWithRole(Role::PAYROLL_OFFICER);
 
-        $this->actingAs($officer)->post(route('payroll-runs.anchor', $run))->assertRedirect();
-        $anchor = BlockchainAnchor::firstOrFail();
-        $this->assertSame('PENDING', $anchor->anchor_status);
-        $this->actingAs($officer)->post(route('payroll-runs.anchor', $run))->assertRedirect();
-        $this->assertDatabaseCount('blockchain_anchors', 1);
+        $this->actingAs($officer)->postJson(route('payroll-runs.anchor', $run))->assertUnprocessable();
 
-        $receipt = null;
-
-        for ($attempt = 0; $attempt < 20; $attempt++) {
-            $receipt = app(BesuBlockchainDriver::class)->receipt($anchor->transaction_id, $anchor->contract_address);
-
-            if ($receipt !== null) {
-                break;
-            }
-
-            usleep(500_000);
-        }
-
-        $this->assertNotNull($receipt, 'The live transaction did not mine within the bounded wait.');
-        $this->actingAs($officer)->post(route('blockchain-anchors.verify', $anchor))->assertRedirect();
-        $this->assertDatabaseHas('blockchain_anchors', ['anchor_id' => $anchor->getKey(), 'anchor_status' => 'ANCHORED']);
-        $this->assertDatabaseHas('blockchain_verification_logs', ['anchor_id' => $anchor->getKey(), 'verification_result' => 'MATCH']);
-
-        $transaction = Http::connectTimeout(3)->timeout(10)->post(config('blockchain.besu.rpc_url'), [
-            'jsonrpc' => '2.0', 'id' => 1, 'method' => 'eth_getTransactionByHash',
-            'params' => [$anchor->transaction_id],
-        ])->throw()->json('result');
-        $unauthorizedCall = Http::connectTimeout(3)->timeout(10)->post(config('blockchain.besu.rpc_url'), [
-            'jsonrpc' => '2.0', 'id' => 1, 'method' => 'eth_call',
-            'params' => [[
-                'from' => '0x'.str_repeat('3', 40), 'to' => $anchor->contract_address,
-                'data' => $transaction['input'],
-            ], 'latest'],
-        ])->throw()->json();
-        $this->assertArrayHasKey('error', $unauthorizedCall);
-
-        PayrollDetail::firstOrFail()->update(['net_pay' => 99999.99]);
-        $anchor->update(['payload_hash' => app(BlockchainAnchorService::class)->hashPayrollRun($run)]);
-        $this->actingAs($officer)->post(route('blockchain-anchors.verify', $anchor))->assertRedirect();
-        $this->assertDatabaseHas('blockchain_verification_logs', ['anchor_id' => $anchor->getKey(), 'verification_result' => 'MISMATCH']);
+        Http::assertNothingSent();
+        $this->assertDatabaseCount('blockchain_anchors', 0);
+        $this->assertSame('FINALIZED', $run->fresh()->status);
     }
 }

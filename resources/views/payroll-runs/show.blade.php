@@ -247,19 +247,28 @@
                     @if ($run->anchor)
                         <div class="space-y-3 text-sm">
                             <p class="break-words">Network: {{ $run->anchor->network_name }} · <x-status :value="$run->anchor->anchor_status" /></p>
+                            @if (! $run->anchor->contract_address && str_starts_with($run->anchor->network_name, 'simulated:'))
+                                <p>Simulated local proof: no independent blockchain evidence. View the anchor for its limited digest scope.</p>
+                            @else
+                                <p>Historical legacy proof. View the anchor for its original network identity and limited digest scope; new network submissions use versioned registration.</p>
+                            @endif
                             <p class="text-muted">Anchored: <x-local-time :value="$run->anchor->anchored_at" /></p>
                             <p class="break-all rounded-lg bg-slate-50 p-3 font-mono">{{ $run->anchor->payload_hash }}</p>
                             <x-button icon="view" :href="route('blockchain-anchors.show', $run->anchor)">View &amp; verify anchor</x-button>
                         </div>
                     @else
-                        <p class="mb-3 text-muted">This finalized run has not been anchored yet.</p>
-                        <form method="POST" action="{{ route('payroll-runs.anchor', $run) }}" data-confirm-context="{{ $confirmationContext }}" onsubmit="return window.payrollConfirmationReady || !this.hasAttribute('data-confirm') || confirm((event.submitter?.dataset.confirmDescription || this.dataset.confirmDescription) + '\n' + this.dataset.confirmContext)" data-submit-feedback>
-                            @csrf
-                            <x-button icon="verify" type="submit" variant="primary">Anchor finalized payroll</x-button>
-                        </form>
+                        @if (! config('blockchain.registry.enabled') && config('blockchain.driver') === 'simulated')
+                            <p class="mb-3 text-muted">Local simulation only: this creates no blockchain transaction or independent blockchain evidence. New blockchain proofs require versioned payroll registration.</p>
+                            <form method="POST" action="{{ route('payroll-runs.anchor', $run) }}" data-confirm-context="{{ $confirmationContext }}" onsubmit="return window.payrollConfirmationReady || !this.hasAttribute('data-confirm') || confirm((event.submitter?.dataset.confirmDescription || this.dataset.confirmDescription) + '\n' + this.dataset.confirmContext)" data-submit-feedback>
+                                @csrf
+                                <x-button icon="verify" type="submit" variant="primary">Record simulated local proof</x-button>
+                            </form>
+                        @else
+                            <p class="mb-3 text-muted">This run has no versioned payroll registration. Legacy network submission is disabled. Ask an authorized operator to review it for retrospective registration; that records the current baseline, not proof from its original finalization date.</p>
+                        @endif
                     @endif
                 @else
-                    <p class="text-muted">Anchoring becomes available once the payroll run is finalized.</p>
+                    <p class="text-muted">Versioned payroll registration is captured at finalization when enabled. Blockchain confirmation and integrity verification follow separately.</p>
                 @endif
             </x-card>
         @endcan

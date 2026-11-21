@@ -11,18 +11,21 @@
         @if ($anchor->anchor_status === 'PENDING')
             <p class="mb-3">The transaction is awaiting confirmation. Check again after Besu includes it in a block.</p>
         @elseif ($anchor->anchor_status === 'FAILED')
-            <x-alert variant="error">The anchoring transaction failed. Contact the administrator to reconcile it before resubmission.</x-alert>
+            <x-alert variant="error">The legacy anchoring transaction failed. Preserve its evidence and contact the administrator; legacy network resubmission is disabled.</x-alert>
         @elseif ($latestCheck)
             <p class="mb-3"><x-status :value="$latestCheck->verification_result" /> ? Last checked <x-local-time :value="$latestCheck->verified_at" show-timezone /></p>
             <p>{{ $latestCheck->verification_result === 'MATCH' ? 'At the last check, payroll data matched the anchored hash.' : 'At the last check, payroll data or the local anchor hash differed from the anchored evidence. Ask the administrator to investigate.' }}</p>
         @else
             <p>No integrity check has been recorded for this anchor.</p>
         @endif
-        @if (! $anchor->contract_address)
+        @if (! $anchor->contract_address && str_starts_with($anchor->network_name, 'simulated:'))
             <p class="mt-3 font-semibold text-amber-900">Simulated proof: this checks local records and provides no independent blockchain evidence.</p>
+        @elseif ($anchor->contract_address || str_starts_with($anchor->network_name, 'besu:'))
+            <p class="mt-3 text-muted">Legacy blockchain proof: verification reads the confirmed transaction and contract state from the original configured Besu node. New network submissions use versioned payroll registration.</p>
         @else
-            <p class="mt-3 text-muted">Verification reads the confirmed transaction and contract state from the configured Besu node.</p>
+            <p>Unclassified legacy proof: its network identity must be reviewed before verification. No blockchain evidence is asserted.</p>
         @endif
+        <p>Legacy digest scope covers saved employee number/name, basic/gross/deduction/LBP/net amounts and earning/deduction labels and amounts. It excludes employer contributions, period and approval evidence, payable days, and other fields covered by registry v1. A legacy MATCH is limited to this scope.</p>
         <p class="mt-3 text-muted">A previous result describes that check only. Verify again to check the current payroll data.</p>
         <form method="POST" action="{{ route('blockchain-anchors.verify', $anchor) }}" class="mt-4" data-submit-feedback>
             @csrf

@@ -9,8 +9,9 @@ return [
     |
     | Only a deterministic hash of finalized payroll data is anchored; no
     | confidential payroll or employee detail ever leaves the application.
-    | The "simulated" driver produces a verifiable local proof for the
-    | mock-defense build. A real network driver can replace it later.
+    | The "simulated" driver produces local demonstration records only.
+    | The legacy Besu driver verifies historical proofs but cannot submit.
+    | New network proofs use the versioned registry configured below.
     |
     */
 

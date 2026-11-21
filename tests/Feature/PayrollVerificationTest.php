@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\BlockchainAnchor;
 use App\Models\ContributionRate;
 use App\Models\DeductionType;
 use App\Models\EarningType;
@@ -381,7 +382,7 @@ class PayrollVerificationTest extends TestCase
         $this->fakeRead($registration, $this->evidence($registration));
         app(PayrollVerificationService::class)->verify($registration, $user);
         $legacy = PayrollRun::factory()->create(['status' => PayrollRun::STATUS_FINALIZED]);
-        $anchor = app(BlockchainAnchorService::class)->anchor($legacy, $user);
+        $anchor = $this->historicalSimulatedAnchor($legacy, $user);
         $this->actingAs($user)->get(route('blockchain.index'))->assertOk()
             ->assertSee('Payroll registrations')->assertSee('Legacy anchors')->assertSee('Simulated local proof')
             ->assertSee(route('payroll-registrations.show', $registration))->assertSee(route('blockchain-anchors.show', $anchor));
@@ -410,7 +411,7 @@ class PayrollVerificationTest extends TestCase
         [, $user] = $this->registration();
         $run = PayrollRun::factory()->create(['status' => PayrollRun::STATUS_FINALIZED]);
         $run->payrollPeriod->update(['period_name' => '<img src=x onerror=alert(1)>']);
-        $anchor = app(BlockchainAnchorService::class)->anchor($run, $user);
+        $anchor = $this->historicalSimulatedAnchor($run, $user);
 
         $this->actingAs($user)->get(route('blockchain-anchors.show', $anchor))->assertOk()
             ->assertSee('&lt;img src=x', false)->assertDontSee('<img src=x onerror=alert(1)>', false);
@@ -484,5 +485,16 @@ class PayrollVerificationTest extends TestCase
             'chain_id' => '1337', 'genesis_hash' => '0x'.str_repeat('a', 64), 'contract_address' => '0x'.str_repeat('b', 40),
             'transaction_hash' => '0x'.str_repeat('e', 64), 'block_hash' => '0x'.str_repeat('f', 64),
             'block_number' => 11, 'registered_at' => '1794193200', 'registrar' => '0x'.str_repeat('d', 40)];
+    }
+
+    private function historicalSimulatedAnchor(PayrollRun $run, User $user): BlockchainAnchor
+    {
+        return BlockchainAnchor::create([
+            'payroll_run_id' => $run->getKey(),
+            'payload_hash' => app(BlockchainAnchorService::class)->hashPayrollRun($run),
+            'hash_algorithm' => 'SHA-256', 'network_name' => 'simulated:QA',
+            'transaction_id' => '0x'.str_repeat('a', 64), 'contract_address' => null,
+            'anchor_status' => 'ANCHORED', 'anchored_by' => $user->getKey(), 'anchored_at' => now(),
+        ]);
     }
 }

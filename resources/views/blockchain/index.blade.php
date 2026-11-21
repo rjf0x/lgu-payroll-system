@@ -63,7 +63,7 @@
                 @forelse ($anchors as $anchor)
                     <tr>
                         <td class="px-4 py-3 ui-table-primary">{{ $anchor->payrollRun->payrollPeriod->period_name }} #{{ $anchor->payrollRun->run_number }}</td>
-                        <td class="px-4 py-3 text-slate-600">{{ $anchor->network_name }}<p class="ui-table-secondary">{{ $anchor->contract_address ? 'Legacy blockchain proof' : 'Simulated local proof' }}</p></td>
+                        <td class="px-4 py-3 text-slate-600">{{ $anchor->network_name }}<p class="ui-table-secondary">{{ $anchor->contract_address || str_starts_with($anchor->network_name, 'besu:') ? 'Legacy blockchain proof' : (str_starts_with($anchor->network_name, 'simulated:') ? 'Simulated local proof' : 'Unclassified legacy proof') }}</p></td>
                         <td class="px-4 py-3 text-center">
                             <x-status :value="$anchor->anchor_status" />
                         </td>

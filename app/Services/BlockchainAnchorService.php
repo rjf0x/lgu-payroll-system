@@ -8,11 +8,12 @@ use App\Models\PayrollRun;
 use App\Models\User;
 use App\Services\Blockchain\BlockchainDriver;
 use App\Services\Blockchain\OnChainBlockchainDriver;
+use App\Services\Blockchain\SimulatedBlockchainDriver;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Anchors a deterministic hash of a finalized payroll run and verifies that the
- * anchored proof still matches the stored payroll data.
+ * Retains legacy verification and local simulation for finalized payroll.
+ * New network proofs use versioned payroll registration.
  *
  * Confidential employee and payroll detail stays in MySQL; only the hash and
  * transaction metadata are anchored.
@@ -83,6 +84,11 @@ class BlockchainAnchorService
             return $anchor;
         }
 
+        abort_unless(! config('blockchain.registry.enabled')
+            && config('blockchain.driver') === 'simulated'
+            && $this->driver instanceof SimulatedBlockchainDriver,
+            422, 'Legacy network submission is disabled. New blockchain proofs require versioned payroll registration. Existing legacy anchors remain verifiable.');
+
         $hash = $this->hashPayrollRun($run);
         $result = $this->driver->anchor($hash);
 
@@ -114,7 +120,7 @@ class BlockchainAnchorService
     {
         $stored = (string) $anchor->payload_hash;
 
-        if ($anchor->contract_address !== null || str_starts_with($anchor->network_name, 'besu:')) {
+        if ($anchor->contract_address !== null || ! str_starts_with($anchor->network_name, 'simulated:')) {
             abort_unless($this->driver instanceof OnChainBlockchainDriver, 503, 'Select the Besu driver to verify an on-chain anchor.');
             abort_unless(is_string($anchor->contract_address), 503, 'The stored Besu contract address is missing.');
             abort_unless($anchor->network_name === 'besu:'.config('blockchain.besu.chain_id'), 503, 'Configure the original Besu chain before verifying this anchor.');

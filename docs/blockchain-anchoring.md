@@ -1,12 +1,16 @@
 # Blockchain Anchoring & Verification (Stage 9)
 
 **Stage:** 9 of the development plan
-**Status:** Hyperledger Besu local Docker integration implemented; simulated driver retained for isolated QA
+**Status:** Versioned registry handles new blockchain proofs; legacy Besu is verification-only and simulation is explicitly local.
 **Related:** `payroll-approval-workflow.md`, `system-architecture-diagram.md`, `database-schema.md` §9
 
 ---
 
 ## 1. Approach
+
+F11 retires new legacy network submission at both `BlockchainAnchorService` and `BesuBlockchainDriver`. New blockchain proofs use the versioned registry: finalization captures a versioned payload and durable outbox, then the worker/bridge journal submits and reconciles it. An older finalized run can be reviewed for the existing `blockchain:register-finalized {payroll}` console command. This captures its current baseline, not proof from the original finalization date, and preserves its original legacy anchor. Registry enablement, approved source evidence and the pinned target configuration remain required.
+
+Historical legacy proofs remain readable/verifiable under their original digest. Only an explicit `simulated:` network with no contract may use local comparison; unknown/malformed network identity cannot silently become a simulated MATCH. A local simulation remains available only with registry disabled and the concrete simulated driver selected; it performs no external network operation and creates no independent blockchain evidence. Changing BLOCKCHAIN_DRIVER or enabling the former live-test switch cannot restore legacy network writes.
 
 Only a **deterministic cryptographic hash** of a finalized payroll run leaves the
 application. No employee name, personal identifier, salary, deduction, or payslip content
@@ -43,7 +47,7 @@ unless the underlying payroll data changed.
 | Driver | Behaviour |
 |---|---|
 | `SimulatedBlockchainDriver` (repository default) | Generates local transaction metadata with a `simulated:` network label and no contract. No external calls or independent blockchain proof. |
-| `BesuBlockchainDriver` | Submits `anchor(bytes32)` through Web3Signer; confirms transaction receipts and reads the anchoring contract on Besu. |
+| `BesuBlockchainDriver` | Verification-only: reads historical receipts, transactions and contract state from the original Besu target. Its anchor method rejects with 422 before any network call. |
 | `TestnetBlockchainDriver` | Stub for a real test network; throws until configured. |
 
 Selected via `config/blockchain.php` (`BLOCKCHAIN_DRIVER`, `BLOCKCHAIN_NETWORK`,
@@ -56,10 +60,11 @@ Selected via `config/blockchain.php` (`BLOCKCHAIN_DRIVER`, `BLOCKCHAIN_NETWORK`,
 **Anchor** (`BlockchainAnchorService::anchor`):
 - Allowed **only for `FINALIZED` runs** (`422` otherwise).
 - Locks and reloads the run before checking finalization and submission. An existing anchor, including a pending or failed transaction, is returned without resubmission.
+- New legacy network requests are rejected with 422 before any driver/network call. With registry enabled, even an unregistered run cannot bypass registration by requesting a new simulated legacy record.
 - Writes `blockchain_anchors`: `payload_hash`, `hash_algorithm`, `transaction_id`,
   `block_number`, `network_name`, `contract_address`, `anchor_status`,
   `anchored_by`, `anchored_at`.
-- Besu submissions are saved as `PENDING`, with a transaction ID and no block or confirmation time; audited as `PAYROLL_ANCHOR_SUBMITTED`. Confirmation records `ANCHORED` and `PAYROLL_ANCHORED`. Simulated anchors are recorded immediately.
+- New records here are local simulations only. The local record and its audit commit atomically; audit failure rolls both back. Historical PENDING/FAILED/ANCHORED metadata is retained without creating or retrying a transaction. Historical confirmation can still record ANCHORED and PAYROLL_ANCHORED.
 
 **Verify** (`BlockchainAnchorService::verify`):
 - Recomputes the hash from the current stored payroll data.
@@ -70,7 +75,7 @@ Selected via `config/blockchain.php` (`BLOCKCHAIN_DRIVER`, `BLOCKCHAIN_NETWORK`,
   `verification_result` (`MATCH` / `MISMATCH`), `verified_by`, `verified_at`.
 - Audited as `PAYROLL_VERIFIED`.
 
-A `MISMATCH` means the stored payroll no longer matches what was anchored.
+A legacy `MATCH`/`MISMATCH` applies only to its original delimiter-joined digest: employee number/name, basic/gross/deductions/pre-LBP/LBP/net amounts, and earning/deduction names/amounts. It excludes employer contributions, period/approval evidence, payable days and other registry-v1 fields. Historical digests are not rewritten or upgraded, and the detail page explains this boundary.
 
 ---
 
@@ -96,8 +101,7 @@ Route::middleware('can:blockchain.verify')->group(function () {
   anchored by/at, hash prefix).
 - **Anchor detail** shows the full hash, transaction id, block number, contract, and a
   **Verify integrity** action with the verification history. Pending anchors show **Check confirmation and verify**.
-- The **run page** shows an anchoring panel for finalized runs: anchor the run, or view and
-  verify an existing anchor.
+- The **run page** links to a versioned registration or historical anchor. With registry disabled and simulation selected, it offers **Record simulated local proof** with an explicit non-blockchain explanation. Other unregistered finalized runs show retrospective-registration guidance rather than a legacy network submit action.
 
 ---
 
@@ -107,14 +111,19 @@ Route::middleware('can:blockchain.verify')->group(function () {
 
 - The payroll hash is deterministic across calls.
 - Only a finalized run can be anchored (`422` otherwise).
-- Anchoring stores a 64-char hash and transaction metadata.
+- Local simulation stores a 64-char hash and clearly labeled simulated metadata.
+- Legacy network submission is refused without network traffic; historical pending receipt fixtures retain confirmation/tamper coverage.
 - Verification of an untampered run returns `MATCH`.
 - Tampering with a stored detail after anchoring returns `MISMATCH`.
 - A Viewer cannot access blockchain verification.
 
+`tests/Feature/LegacyAnchorBoundaryTest.php` adds rejection/no-write/no-network checks, historical identity and idempotency, local audit rollback/retry, limited hash-scope disclosure and retrospective registry capture with original legacy proof preserved. Driver tests retain wrong-chain, pending/failed and untrusted receipt coverage. The former opt-in legacy live-write test now checks that live settings cannot reenable submission without sending HTTP; registry pilot/restore tests remain separate opt-in acceptance.
+
 ---
 
 ## 8. Local Besu setup
+
+This section describes the historical PayrollAnchor deployment for verifying old proofs. It does not enable new legacy writes. Use the versioned PayrollIntegrityRegistry setup and operating instructions later in this document for new registrations; do not redeploy old contracts or replace original target identities to make a historical verification pass.
 
 The local stack uses **Hyperledger Besu 26.10.2**, four **QBFT** validators with a
 node allowlist, and **Web3Signer 26.10.2**. Its chain ID is **1337**. Docker Compose
@@ -150,28 +159,11 @@ docker compose -f config/besu/compose.yaml up -d
 docker compose -f config/besu/compose.yaml stop
 ```
 
-To demonstrate, open an unanchored finalized run, select **Anchor finalized
-payroll**, then **Check confirmation and verify**. A transaction may take several
-seconds to confirm. Existing simulated anchors remain simulated; they are not
-automatically replaced or resubmitted.
+To inspect a historical proof, open its anchor detail and select **Check confirmation and verify** or **Verify integrity**. Existing simulated anchors remain simulated. New blockchain submissions use versioned registration; the legacy submit control has been removed from the network workflow.
 
 ## 9. Verification and operational limits
 
-The normal suite fakes outbound RPC and tests pending/failed receipts, wrong-chain
-rejection, untrusted transaction evidence, submission idempotency, and local-hash
-tampering. The opt-in live test uses isolated test database records, submits a
-real hash transaction, verifies MATCH, then changes only test data and verifies
-MISMATCH even after changing its local hash:
-
-```powershell
-$env:BESU_LIVE_TESTS = 'true'
-php artisan test --compact --group=besu
-Remove-Item Env:BESU_LIVE_TESTS
-```
-
-Run this only against the local disposable network: the test database is isolated,
-but its hash transactions remain in the development chain. Normal tests select
-the simulated driver and skip the live case.
+The normal suite fakes outbound RPC and tests pending/failed receipts, wrong-chain rejection, untrusted transaction evidence, repeated historical access without resubmission, and local-hash tampering. Legacy driver submission always returns 422, including with BESU_LIVE_TESTS enabled. Actual registry pilot/restore and live journal-recovery acceptance require their separate explicit test configuration and authorization; ordinary PHP/Node regressions do not establish a fresh live-chain result.
 
 This is a development network. Its raw signing key is stored in an ignored local
 file for Web3Signer; Laravel stores only public addresses. Production requires

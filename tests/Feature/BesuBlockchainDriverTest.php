@@ -73,25 +73,19 @@ class BesuBlockchainDriverTest extends TestCase
         ]);
     }
 
-    public function test_submits_only_a_hash_to_the_signer_and_returns_pending_evidence(): void
+    public function test_legacy_driver_rejects_submission_before_contacting_the_node_or_signer(): void
     {
         $this->fakeNetwork();
 
-        $result = app(BlockchainDriver::class)->anchor(self::PAYLOAD);
+        try {
+            app(BlockchainDriver::class)->anchor(self::PAYLOAD);
+            $this->fail('Legacy network submission was allowed.');
+        } catch (HttpException $exception) {
+            $this->assertSame(422, $exception->getStatusCode());
+            $this->assertStringContainsString('Legacy network submission is disabled', $exception->getMessage());
+        }
 
-        $this->assertSame([
-            'network_name' => 'besu:1337',
-            'transaction_id' => self::TRANSACTION,
-            'block_number' => null,
-            'contract_address' => self::CONTRACT,
-        ], $result);
-        Http::assertSent(fn (Request $request): bool => $request->url() === 'http://signer.test'
-            && $request['method'] === 'eth_sendTransaction'
-            && $request['params'][0] === [
-                'from' => self::SENDER, 'to' => self::CONTRACT,
-                'data' => '0x12345678'.self::PAYLOAD,
-                'gas' => '0x30d40', 'gasPrice' => '0x0', 'value' => '0x0',
-            ]);
+        Http::assertNothingSent();
     }
 
     public function test_reads_confirmed_hash_from_the_transaction_and_contract(): void
@@ -126,13 +120,13 @@ class BesuBlockchainDriverTest extends TestCase
         Http::assertNotSent(fn (Request $request): bool => $request['method'] === 'eth_call');
     }
 
-    public function test_wrong_chain_prevents_transaction_submission(): void
+    public function test_wrong_chain_prevents_legacy_receipt_verification(): void
     {
         $this->fakeNetwork(['eth_chainId' => '0x1']);
 
         try {
-            app(BesuBlockchainDriver::class)->anchor(self::PAYLOAD);
-            $this->fail('Wrong-chain submission was allowed.');
+            app(BesuBlockchainDriver::class)->receipt(self::TRANSACTION, self::CONTRACT);
+            $this->fail('Wrong-chain verification was allowed.');
         } catch (HttpException $exception) {
             $this->assertSame(503, $exception->getStatusCode());
         }
@@ -181,7 +175,7 @@ class BesuBlockchainDriverTest extends TestCase
         ])]);
 
         try {
-            app(BesuBlockchainDriver::class)->anchor(self::PAYLOAD);
+            app(BesuBlockchainDriver::class)->receipt(self::TRANSACTION, self::CONTRACT);
             $this->fail('RPC error was accepted.');
         } catch (HttpException $exception) {
             $this->assertSame(503, $exception->getStatusCode());
@@ -189,12 +183,12 @@ class BesuBlockchainDriverTest extends TestCase
         }
     }
 
-    public function test_connection_failure_does_not_submit_a_transaction(): void
+    public function test_connection_failure_does_not_record_confirmation(): void
     {
         Http::fake(['http://besu.test' => Http::failedConnection()]);
         $this->expectException(HttpException::class);
 
-        app(BesuBlockchainDriver::class)->anchor(self::PAYLOAD);
+        app(BesuBlockchainDriver::class)->receipt(self::TRANSACTION, self::CONTRACT);
     }
 
     public function test_unknown_driver_does_not_silently_simulate_anchoring(): void
