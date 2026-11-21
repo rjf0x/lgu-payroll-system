@@ -5,7 +5,7 @@
 
 @section('content')
     <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <p class="text-sm text-slate-500">Payslips can be generated once the run is approved or finalized.</p>
+        <p class="text-sm text-slate-500">Approved payslips are previews. Finalize the run before publishing. Returned payslips must be generated again after approval.</p>
         <div class="flex flex-wrap gap-3">
             <x-button icon="back" variant="secondary" href="{{ route('payroll-runs.show', $run) }}">Back to run</x-button>
             @can('reports.generate')
@@ -32,14 +32,15 @@
             </thead>
             <tbody>
                 @foreach ($run->details as $detail)
+                    @php($isPublished = $run->status === \App\Models\PayrollRun::STATUS_FINALIZED && $detail->payslip?->publication_status === \App\Models\Payslip::STATUS_PUBLISHED)
                     <tr>
                         <td class="px-4 py-3 ui-table-primary">{{ $detail->employee_name_snapshot }}</td>
                         <td class="px-4 py-3 font-mono text-right tabular-nums">{{ number_format((float) $detail->net_pay, 2) }}</td>
                         <td class="px-4 py-3 font-mono text-xs">{{ $detail->payslip?->payslip_number ?? '—' }}</td>
                         <td class="px-4 py-3 text-center">
                             @if ($detail->payslip)
-                                <span class="inline-flex rounded-full px-2 py-0.5 text-xs font-semibold {{ $detail->payslip->publication_status === 'PUBLISHED' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700' }}">
-                                    {{ $detail->payslip->publication_status }}
+                                <span class="inline-flex rounded-full px-2 py-0.5 text-xs font-semibold {{ $isPublished ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700' }}">
+                                    {{ ! $canGenerate ? 'WITHDRAWN' : ($detail->payslip->isViewableFor($run) && $run->status !== \App\Models\PayrollRun::STATUS_FINALIZED ? 'PREVIEW' : $detail->payslip->publication_status) }}
                                 </span>
                             @else
                                 <span class="text-xs text-slate-400">Not generated</span>
@@ -47,10 +48,10 @@
                         </td>
                         <td class="px-4 py-3 text-right ui-table-actions">
                             <x-action-menu :label="'Actions for payslip for '.$detail->employee_name_snapshot">
-                                @if ($detail->payslip)
+                                @if ($detail->payslip?->isViewableFor($run))
                                     <x-button icon="view" variant="secondary" href="{{ route('payslips.show', $detail->payslip) }}">View</x-button>
                                     @can('reports.generate')
-                                        @if ($detail->payslip->publication_status !== 'PUBLISHED')
+                                        @if ($detail->payslip->isPublishableFor($run))
                                             <form method="POST" action="{{ route('payslips.publish', $detail->payslip) }}" data-submit-feedback>
                                                 @csrf
                                                 <x-button icon="send" variant="secondary" type="submit">Publish</x-button>

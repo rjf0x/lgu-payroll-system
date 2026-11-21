@@ -27,6 +27,19 @@ class Payslip extends Model
 
     public const STATUS_PUBLISHED = 'PUBLISHED';
 
+    public const STATUS_WITHDRAWN = 'WITHDRAWN';
+
+    public function isViewableFor(PayrollRun $run): bool
+    {
+        return in_array($run->status, [PayrollRun::STATUS_APPROVED, PayrollRun::STATUS_FINALIZED], true)
+            && in_array($this->publication_status, [self::STATUS_GENERATED, self::STATUS_PUBLISHED], true);
+    }
+
+    public function isPublishableFor(PayrollRun $run): bool
+    {
+        return $run->status === PayrollRun::STATUS_FINALIZED && $this->publication_status === self::STATUS_GENERATED;
+    }
+
     /**
      * @return array<string, string>
      */

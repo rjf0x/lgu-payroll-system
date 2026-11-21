@@ -36,6 +36,6 @@ class GeneratePayslips implements ShouldBeUnique, ShouldQueue
     {
         $user = User::query()->findOrFail($this->requestedBy);
         abort_unless($user->isActive() && $user->can('reports.generate'), 403, 'Report generation access has been revoked.');
-        $generation->generate(PayrollRun::query()->findOrFail($this->payrollRunId));
+        $generation->generate(PayrollRun::query()->findOrFail($this->payrollRunId), $this->requestedBy);
     }
 }

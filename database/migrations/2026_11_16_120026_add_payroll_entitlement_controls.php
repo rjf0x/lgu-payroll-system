@@ -45,6 +45,7 @@ return new class extends Migration
         });
         Schema::table('payroll_runs', function (Blueprint $table): void {
             $table->dropForeign(['replaces_payroll_run_id']);
+            $table->dropUnique(['replaces_payroll_run_id']);
             $table->dropColumn(['purpose', 'replaces_payroll_run_id']);
         });
         Schema::dropIfExists('payroll_processing_locks');

@@ -9,6 +9,9 @@
     <div class="border-b border-slate-200 pb-4 text-center">
         <div class="text-sm font-semibold text-brand">Payroll statement · Amounts in PHP</div>
         <h1 class="mt-1 text-xl font-bold">Employee Payslip</h1>
+        @unless ($isPublished)
+            <p class="text-sm font-semibold">PREVIEW — This payslip has not been published for finalized payroll.</p>
+        @endunless
         <p class="text-sm text-slate-500">{{ $period->period_name }} · Pay date {{ $period->pay_date?->format('M d, Y') }}</p>
     </div>
 
@@ -75,6 +78,9 @@
     @endif
 
     <p class="mt-8 text-center text-xs text-muted">
-        Generated <x-local-time :value="$payslip->generated_at" /> · Status: {{ $payslip->publication_status }}
+        Generated <x-local-time :value="$payslip->generated_at" /> · Status: {{ $isPublished ? 'PUBLISHED' : 'PREVIEW' }}
+        @if ($isPublished)
+            · Published <x-local-time :value="$payslip->published_at" />
+        @endif
     </p>
 @endsection

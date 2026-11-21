@@ -20,6 +20,7 @@ class PayrollApprovalService
         private readonly PayrollEligibilityService $eligibility,
         private readonly PayrollComputationService $computation,
         private readonly PayrollDuplicateGuard $duplicates,
+        private readonly PayslipPublicationService $payslips,
     ) {}
 
     public function submit(PayrollRun $run, User $user): void
@@ -82,6 +83,7 @@ class PayrollApprovalService
             $run->setRawAttributes($locked->getAttributes(), true);
             $this->assertIndependentReviewer($run, $user);
             $run->update(['status' => PayrollRun::STATUS_REJECTED]);
+            $this->payslips->withdraw($run, (int) $user->getKey(), $remarks);
 
             $this->record($run, PayrollApproval::ACTION_REJECTED, $user, $remarks);
             $this->auditLogger->log('PAYROLL_REJECTED', 'Payroll', $user->user_id, 'payroll_runs', (string) $run->payroll_run_id);
@@ -95,6 +97,7 @@ class PayrollApprovalService
             $run->setRawAttributes($locked->getAttributes(), true);
             $this->assertIndependentReviewer($run, $user, allowApproved: true);
             $run->update(['status' => PayrollRun::STATUS_RETURNED]);
+            $this->payslips->withdraw($run, (int) $user->getKey(), $remarks);
 
             $this->record($run, PayrollApproval::ACTION_RETURNED, $user, $remarks);
             $this->auditLogger->log('PAYROLL_RETURNED', 'Payroll', $user->user_id, 'payroll_runs', (string) $run->payroll_run_id, newValues: [
@@ -118,6 +121,7 @@ class PayrollApprovalService
             if ($run->run_type !== 'REGULAR') {
                 $this->computation->validateForSubmission($run);
             }
+            $this->payslips->withdraw($run, (int) $user->getKey(), 'Publication before finalization requires fresh generation and publication.', publishedOnly: true);
             $run->update([
                 'status' => PayrollRun::STATUS_FINALIZED,
                 'finalized_by' => $user->user_id,

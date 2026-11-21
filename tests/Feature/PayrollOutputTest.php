@@ -137,10 +137,10 @@ class PayrollOutputTest extends TestCase
         $this->assertDatabaseCount('payslips', 0);
     }
 
-    public function test_payslips_are_generated_and_published_for_an_approved_run(): void
+    public function test_payslips_are_generated_and_published_for_a_finalized_run(): void
     {
         $officer = $this->officer();
-        $run = $this->makeRun(PayrollRun::STATUS_APPROVED);
+        $run = $this->makeRun(PayrollRun::STATUS_FINALIZED);
 
         $this->actingAs($officer)->post(route('payroll-runs.payslips.generate', $run))->assertRedirect();
 
