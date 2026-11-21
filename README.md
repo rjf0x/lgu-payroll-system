@@ -16,6 +16,8 @@ composer setup
 
 `composer setup` installs PHP and frontend dependencies, creates `.env` when needed, preserves an existing application key, creates the SQLite file when configured, runs migrations and local seeders, builds the frontend assets, starts the four-validator Besu network, deploys the local anchor contract, merges the generated Besu settings into `.env`, and clears Laravel's configuration cache. It is for local development only and refuses production environments.
 
+The legacy anchor contract supports historical verification; new legacy network submissions are disabled. For new blockchain proofs, configure the versioned payroll registry and its bridge, worker and scheduler using the [blockchain guide](docs/blockchain-anchoring.md). A simulation-only demonstration uses `BLOCKCHAIN_DRIVER=simulated` with registry disabled and provides local comparison rather than independent blockchain evidence.
+
 For the optional demo payroll workflow after setup:
 
 ```powershell
@@ -86,7 +88,7 @@ npm run build
 php artisan deployment:check --no-interaction
 ```
 
-Normal tests require in-memory SQLite or a database with the `lgu_payroll_qa_` prefix. MySQL contention and live Besu tests are opt-in; see the development plan and blockchain guide. The preflight command is read-only. Its local mode checks the PHP runtime, configured database migrations, application key presence, writable directories, compiled assets, and absence of Vite's development marker. It does not prove production readiness.
+Normal tests require in-memory SQLite or a database with the `lgu_payroll_qa_` prefix. MySQL contention and registry pilot/restore tests are opt-in; see the development plan and blockchain guide. The preflight command is read-only. Its local mode checks the PHP runtime, configured database migrations, application key presence, writable directories, compiled assets, and absence of Vite's development marker. It does not prove production readiness.
 
 ## Build a source release locally
 
@@ -108,7 +110,7 @@ The production template is `.env.production.example`. It is an example, not a co
 4. Apply migrations with `php artisan migrate --force --no-interaction` on the selected database after taking a restorable backup. Never run `migrate:fresh` on staging history or production.
 5. For the first installation with an empty users table, temporarily provide INITIAL_ADMIN_USERNAME, INITIAL_ADMIN_EMAIL, and INITIAL_ADMIN_PASSWORD via the environment. The password must contain at least 16 characters, mixed case, digits and symbols. Run `php artisan db:seed --class=ProductionDatabaseSeeder --force --no-interaction`. Existing accounts are never overwritten. Roles, permissions, system identity defaults, employment types, earning types, deduction types, and one administrator are created; no employees, salary schedules or statutory amounts are seeded in production.
 6. Remove the INITIAL_ADMIN_PASSWORD secret after bootstrap and rebuild configuration caches. Configure organization identity and authorized staff through the interface. Import only client-approved reference data and payroll policies.
-7. Configure Besu's actual chain ID, contract and public sender addresses, node RPC and Web3Signer URLs. Keep signing keys in managed infrastructure. The local four-container stack and raw development key are not a production deployment design. Restrict and authenticate RPC/signing access; test hash anchoring and verification in staging.
+7. Enable and configure the versioned payroll registry, organization namespace, pinned chain/genesis/contract/code/signer identity, authenticated bridge, worker and scheduler as described in the blockchain guide. Keep signing keys in managed infrastructure. The legacy Besu driver verifies historical proofs and cannot submit new ones; production preflight requires the supported registry transport. The local four-container stack and raw development key are not a production deployment design. Restrict RPC/signing access and verify registration/confirmation/integrity in staging.
 8. Install the report worker below, then warm caches with `php artisan optimize --no-interaction`. Run `php artisan deployment:check --production --no-interaction`. Resolve every failure; the final message also identifies manual checks the command cannot prove.
 9. Verify login for each role, inactive-account rejection, independent payroll approval, an authorized report export, printable payslips, worker health, HTTPS redirects/cookies, and Besu evidence. Approve the release only after the backup restore drill and client payroll-policy acceptance. No external deployment is performed by this repository's release builder.
 
@@ -116,9 +118,11 @@ The supplied preflight checks the repository's database-backed deployment baseli
 
 ## Reports and background workers
 
-CSV registers stream on demand. Export history records the request and scope; it is not an immutable archive of the downloaded file. CSV text is neutralized against spreadsheet formulas. Department summaries and payslips have browser-print layouts; the wide register requests A3 landscape paper.
+Payroll registers export XLSX using the bundled spreadsheet template. User-entered labels are written as text cells. Historical registers use saved component identities, labels and amounts, with reconciliation information for legacy differences. Export history records the request and scope; it is not an immutable archive of the downloaded file. Department summaries and payslips have browser-print layouts; the wide register requests A3 landscape paper.
 
 `QUEUE_PAYSLIP_GENERATION=true` queues payslip generation on `reports`; false retains synchronous behavior for local demonstrations. The endpoint confirms dispatch, and users refresh to see generated payslips. Jobs recheck the requester's active status/permission and the run state, and generation is idempotent under a run lock. Generation never publishes payslips automatically.
+
+Approved-run payslips are previews. Publication requires a finalized run; returning or rejecting payroll withdraws existing outputs. After correction and fresh approval, regenerate payslips before publishing. Viewer can read/export authorized outputs; generation/publication require the separate writer grant.
 
 ```bash
 php artisan queue:work database --queue=reports,default --sleep=3 --tries=3 --timeout=60 --max-time=3600
@@ -127,7 +131,7 @@ php artisan queue:failed
 
 The database retry reservation is 90 seconds, longer than the 60-second worker timeout. Review `config/deployment/reports-worker.conf` for a Linux Supervisor example and replace its user, paths and logging destinations for the selected host. Monitor failed jobs and worker backlog; reconcile failures before retrying. Restart workers after a release on a conventional server. Managed platforms may manage that restart themselves.
 
-No periodic payroll mutations are scheduled. If the selected host enables Laravel scheduling, use a single coordinated scheduler and inspect `php artisan schedule:list --no-interaction` before enabling `schedule:run` every minute. Backups are a separate host/database responsibility; an idle Laravel scheduler does not mean a backup exists.
+Payroll computation, approval and finalization are explicit user actions. Enabled registry dispatch uses the configured scheduler and blockchain worker. Use a single coordinated scheduler and inspect `php artisan schedule:list --no-interaction` before enabling `schedule:run` every minute. Backups are a separate host/database responsibility; an idle Laravel scheduler does not mean a backup exists.
 
 ## Backups, restore and rollback acceptance
 
@@ -139,6 +143,18 @@ Keep the preceding application release and its lockfiles. Use backward-compatibl
 
 ## Mock-defense rehearsal
 
-Use a separate demonstration environment. Show the Viewer reports workspace, Officer computation/submission, independent Approver review and finalization, register/CSV, generated and published payslips, and Besu MATCH verification. Show the Admin audit/settings screens and explain the distinction between application audit records and independently operated blockchain evidence. The isolated tests demonstrate MISMATCH; real payroll remains unchanged.
+Use a separate environment with fictional records and prechecked individual role logins. Before projecting or sharing it, set `APP_DEBUG=false` in that environment and keep session cookies HTTP-only with `SESSION_HTTP_ONLY=true` and `SESSION_SAME_SITE=lax`. For local HTTP, leave `SESSION_SECURE_COOKIE` unset or false; an HTTPS demo requires `SESSION_SECURE_COOKIE=true` and the correct HTTPS `APP_URL`. Local HTTP is not production HTTPS acceptance. Keep the existing APP_KEY, credentials, registry identities and saved histories.
+
+If configuration is cached, clear/rebuild it after reviewing the intended environment settings; restart long-running application processes as needed. Then run the read-only demo preflight:
+
+```powershell
+php artisan deployment:check --demo --no-interaction
+```
+
+The demo checks enforce debug suppression and compatible session settings in addition to the existing local checks. They do not certify a browser session, operational readiness or a payroll proof. Production checks remain separate and cannot be bypassed with `--demo`. Rehearse a benign validation error, forbidden/missing-page response and session behavior on fictional data before sharing the screen; detailed failures remain in server-side logs rather than the shared response.
+
+Show the Viewer reports workspace, Officer computation/submission, independent Approver review/finalization, register/XLSX and the generation/publication lifecycle. Show Admin audit/settings and user assignment to predefined roles. Role definitions/grants are maintained in repository code; the seeded `roles.manage` permission has no role/permission editor.
+
+For network integrity, show the versioned registration's actual status and a fresh verification result. Claim live proof only with actual CONFIRMED registration and fresh MATCH. QUEUED/RECONCILING, an unavailable check, local simulation and the **Node connected** header badge describe different states and do not establish that proof. Preserve the local journal and original target identity when recovering an uncertain submission. The isolated tests demonstrate MISMATCH without changing real payroll; live-network and human browser acceptance remain separately recorded gates.
 
 Documented remaining decisions include adopted salary/contribution/tax tables, allowance taxability, coverage classifications, paid-day/leave rules, withholding/annualization, and the meaning/authority of LBP and GABE deductions. Participant task times, screen-reader acceptance, production-scale load, and production recovery acceptance remain outstanding.

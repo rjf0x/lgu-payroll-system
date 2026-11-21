@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Throwable;
 
-#[Signature('deployment:check {--production : Also enforce production configuration requirements}')]
+#[Signature('deployment:check {--production : Also enforce production configuration requirements} {--demo : Check shared-demonstration debug and session settings}')]
 #[Description('Inspect release prerequisites without changing data or contacting the blockchain')]
 class DeploymentCheck extends Command
 {
@@ -37,6 +37,20 @@ class DeploymentCheck extends Command
                 && array_diff(array_keys($migrator->getMigrationFiles(database_path('migrations'))), $migrator->getRepository()->getRan()) === [];
         } catch (Throwable) {
             $checks['Database reachable and migrations current'] = false;
+        }
+
+        if ($this->option('demo')) {
+            $scheme = strtolower((string) parse_url((string) config('app.url'), PHP_URL_SCHEME));
+            $checks += [
+                'Demo debug output disabled' => config('app.debug') === false,
+                'Demo session cookies HTTP-only' => config('session.http_only') === true,
+                'Demo session SameSite policy' => in_array(config('session.same_site'), ['lax', 'strict'], true),
+                'Demo session cookies match application URL' => filter_var((string) config('app.url'), FILTER_VALIDATE_URL) !== false && match ($scheme) {
+                    'https' => config('session.secure') === true,
+                    'http' => in_array(config('session.secure'), [null, false], true),
+                    default => false,
+                },
+            ];
         }
 
         if ($this->option('production') || app()->isProduction()) {
@@ -65,6 +79,9 @@ class DeploymentCheck extends Command
         }
 
         $this->comment('Manual acceptance remains: HTTPS smoke test, backup restore drill, worker/scheduler monitoring, Besu connectivity and approved payroll policies.');
+        if ($this->option('demo')) {
+            $this->comment('Demo checks do not establish browser/session behavior, approved payroll policy or a confirmed registration with a fresh MATCH. Rehearse those separately on fictional data.');
+        }
 
         return in_array(false, $checks, true) ? self::FAILURE : self::SUCCESS;
     }
@@ -72,9 +89,7 @@ class DeploymentCheck extends Command
     private function integrityConfigured(PayrollRegistryClient $registry): bool
     {
         if (! config('blockchain.registry.enabled')) {
-            return config('blockchain.driver') === 'besu'
-                && preg_match('/^0x[0-9a-f]{40}$/i', (string) config('blockchain.contract_address'))
-                && preg_match('/^0x[0-9a-f]{40}$/i', (string) config('blockchain.besu.from_address'));
+            return false;
         }
         try {
             $registry->target();

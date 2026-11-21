@@ -4,6 +4,8 @@ Use this walkthrough for the first browser test on a clean database. All names a
 
 Workflow: Admin setup → Employees → Employment → Compensation → Payroll preparation → Independent approval → Finalization → Reports and payslips.
 
+Before sharing the demonstration, set `APP_DEBUG=false` in the separate fictional-data environment and run `php artisan deployment:check --demo --no-interaction`. Keep session cookies HTTP-only with SameSite=lax; use secure cookies for HTTPS, and leave the secure flag unset/false for local HTTP. Review cached configuration and restart long-running processes when changing these settings. The read-only preflight does not replace a browser/session rehearsal or actual payroll verification. Preserve the existing application key, accounts and payroll/registry history.
+
 ## 1. Create the initial administrator
 
 If an administrator has not been created yet, run from the project directory:
@@ -207,11 +209,13 @@ To test corrections before approval, enter a reason such as “Please confirm Ma
 
 From the payroll run:
 
-- **Register:** Review the complete payroll and export CSV.
+- **Register:** Review the complete payroll and export XLSX.
 - **Summary:** Review department totals.
-- **Payslips:** Click **Generate payslips**, then **View** and **Publish** for each employee.
+- **Payslips:** Generate/view the finalized run's payslips, then publish each employee's output. Approved-run output is a preview; returning/rejecting payroll withdraws old outputs and correction requires regeneration before publication.
 - **Print:** Use the available print controls for the register or payslip.
 
 Check **Audit Logs** as Admin to review recorded actions.
 
-If blockchain anchoring is configured, anchor the finalized run and verify it. A simulated driver provides a demonstration rather than a live Besu transaction.
+Admin can assign predefined roles to users; there is no role/permission editor for the seeded roles.manage grant.
+
+With the versioned registry enabled, finalization captures a registration for queued submission. Open the registration, show its actual status and request a fresh integrity check. Only actual CONFIRMED registration with fresh MATCH establishes the demonstrated network proof. A queued/reconciling registration, unavailable check or Node connected badge is not that acceptance result. New legacy network submission is disabled. Explicit local simulation provides local comparison only, and historical legacy proofs retain their narrower original digest. Keep actual-network acceptance separate when it has not been rehearsed.
