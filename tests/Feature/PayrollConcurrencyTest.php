@@ -3,6 +3,8 @@
 namespace Tests\Feature;
 
 use App\Models\CompensationProfile;
+use App\Models\Employee;
+use App\Models\EmploymentRecord;
 use App\Models\PayrollDetail;
 use App\Models\PayrollPeriod;
 use App\Models\PayrollRun;
@@ -127,6 +129,79 @@ class PayrollConcurrencyTest extends TestCase
         $this->assertSame(1, substr_count(implode('', $outputs), 'REJECTED:422'));
         $this->assertDatabaseCount('payroll_approvals', 1);
         $this->assertSame(PayrollRun::STATUS_FINALIZED, $run->fresh()->status);
+    }
+
+    public function test_parallel_first_appointments_cannot_create_overlapping_active_records(): void
+    {
+        $actor = User::factory()->create();
+        $record = EmploymentRecord::factory()->make();
+        $operation = $this->appointmentCreationOperation($record, $actor);
+
+        DB::beginTransaction();
+        Employee::whereKey($record->employee_id)->lockForUpdate()->firstOrFail();
+        $outputs = $this->contend($operation, 2);
+
+        $this->assertSame(1, substr_count(implode('', $outputs), "CREATED\n"));
+        $this->assertSame(1, substr_count(implode('', $outputs), 'REJECTED:start_date'));
+        $this->assertDatabaseCount('employment_records', 1);
+        $this->assertDatabaseCount('employment_history', 1);
+        $this->assertDatabaseCount('audit_logs', 1);
+    }
+
+    public function test_parallel_reactivations_cannot_activate_two_overlapping_appointments(): void
+    {
+        $actor = User::factory()->create();
+        $first = EmploymentRecord::factory()->create(['employment_status' => 'INACTIVE']);
+        $second = EmploymentRecord::factory()->create(['employee_id' => $first->employee_id, 'employment_status' => 'INACTIVE']);
+        $operations = [];
+        foreach ([$first, $second] as $record) {
+            $operations[] = '$actor = App\Models\User::findOrFail('.$actor->getKey().'); Illuminate\Support\Facades\Auth::setUser($actor);'
+                .'$record = App\Models\EmploymentRecord::findOrFail('.$record->getKey().');'
+                .'echo "READY\n"; flush();'
+                .'try { app(App\Services\MasterDataMutationService::class)->update($record, ["employment_status" => "ACTIVE"], $actor); echo "ACTIVATED\n"; }'
+                .'catch (Illuminate\Validation\ValidationException $e) { echo "REJECTED:".implode(",", array_keys($e->errors()))."\n"; }';
+        }
+
+        DB::beginTransaction();
+        Employee::whereKey($first->employee_id)->lockForUpdate()->firstOrFail();
+        $outputs = $this->contend($operations, 2);
+
+        $this->assertSame(1, substr_count(implode('', $outputs), "ACTIVATED\n"));
+        $this->assertSame(1, substr_count(implode('', $outputs), 'REJECTED:start_date'));
+        $this->assertSame(1, EmploymentRecord::where('employment_status', 'ACTIVE')->count());
+        $this->assertSame(1, EmploymentRecord::where('employment_status', 'INACTIVE')->count());
+        $this->assertDatabaseCount('employment_history', 1);
+        $this->assertDatabaseCount('audit_logs', 1);
+    }
+
+    public function test_archival_committed_before_a_waiting_appointment_save_blocks_the_save(): void
+    {
+        $actor = User::factory()->create();
+        $record = EmploymentRecord::factory()->make();
+        $operation = $this->appointmentCreationOperation($record, $actor);
+
+        DB::beginTransaction();
+        $employee = Employee::whereKey($record->employee_id)->lockForUpdate()->firstOrFail();
+        $employee->delete();
+        $outputs = $this->contend($operation, 1);
+
+        $this->assertSame(0, substr_count(implode('', $outputs), "CREATED\n"));
+        $this->assertSame(1, substr_count(implode('', $outputs), 'REJECTED:employee_id'));
+        $this->assertSoftDeleted($employee);
+        $this->assertDatabaseCount('employment_records', 0);
+        $this->assertDatabaseCount('employment_history', 0);
+        $this->assertDatabaseCount('audit_logs', 0);
+    }
+
+    private function appointmentCreationOperation(EmploymentRecord $record, User $actor): string
+    {
+        $encoded = base64_encode(json_encode($record->attributesToArray(), JSON_THROW_ON_ERROR));
+
+        return '$actor = App\Models\User::findOrFail('.$actor->getKey().'); Illuminate\Support\Facades\Auth::setUser($actor);'
+            .'$attributes = json_decode(base64_decode("'.$encoded.'"), true, 512, JSON_THROW_ON_ERROR);'
+            .'echo "READY\n"; flush();'
+            .'try { app(App\Services\MasterDataMutationService::class)->create(new App\Models\EmploymentRecord, $attributes, $actor); echo "CREATED\n"; }'
+            .'catch (Illuminate\Validation\ValidationException $e) { echo "REJECTED:".implode(",", array_keys($e->errors()))."\n"; }';
     }
 
     /**

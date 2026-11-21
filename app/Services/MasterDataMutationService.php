@@ -14,7 +14,10 @@ use Illuminate\Support\Str;
 
 class MasterDataMutationService
 {
-    public function __construct(private readonly AuditLogger $auditLogger) {}
+    public function __construct(
+        private readonly AuditLogger $auditLogger,
+        private readonly EmploymentRecordValidationService $appointments,
+    ) {}
 
     /**
      * @template TModel of Model
@@ -28,7 +31,11 @@ class MasterDataMutationService
         $context = $this->auditLogger->context('Created a payroll source record.');
 
         return DB::transaction(function () use ($record, $attributes, $actor, $context): Model {
-            $record->fill($attributes)->save();
+            $record->fill($attributes);
+            if ($record instanceof EmploymentRecord) {
+                $this->appointments->validateForMutation($record);
+            }
+            $record->save();
             $record->refresh();
             $this->employmentHistory($record, null, $actor, $context);
             $this->record($record, 'CREATED', $actor, null, $record->getAttributes(), $context);
@@ -49,9 +56,16 @@ class MasterDataMutationService
         $context = $this->auditLogger->context('Updated a payroll source record.');
 
         return DB::transaction(function () use ($record, $attributes, $actor, $context): Model {
+            if ($record instanceof EmploymentRecord) {
+                $employeeId = $record->newQuery()->whereKey($record->getKey())->value('employee_id');
+                Employee::withTrashed()->whereKey($employeeId)->lockForUpdate()->firstOrFail();
+            }
             $record = $record->newQuery()->lockForUpdate()->findOrFail($record->getKey());
             $before = $record->getAttributes();
             $record->fill($attributes);
+            if ($record instanceof EmploymentRecord) {
+                $this->appointments->validateForMutation($record);
+            }
             if (! $record->isDirty()) {
                 return $record;
             }

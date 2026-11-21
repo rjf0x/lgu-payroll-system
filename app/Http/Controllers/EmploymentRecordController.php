@@ -97,7 +97,9 @@ class EmploymentRecordController extends Controller
     {
         return [
             'employmentRecord' => $employmentRecord,
-            'employees' => Employee::orderBy('last_name')->get(),
+            'employees' => Employee::withTrashed()->where(fn ($query) => $query->whereNull('deleted_at')
+                ->when($employmentRecord->exists, fn ($query) => $query->orWhere('employee_id', $employmentRecord->employee_id)))
+                ->orderBy('last_name')->get(),
             'departments' => Department::orderBy('department_name')->get(),
             'positions' => Position::orderBy('position_title')->get(),
             'employmentTypes' => EmploymentType::orderBy('employment_type_name')->get(),

@@ -2,8 +2,11 @@
 
 namespace App\Http\Requests;
 
+use App\Models\EmploymentRecord;
+use App\Services\EmploymentRecordValidationService;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Validator;
 
 class EmploymentRecordRequest extends FormRequest
 {
@@ -27,5 +30,21 @@ class EmploymentRecordRequest extends FormRequest
             'end_date' => ['nullable', 'date', 'after_or_equal:start_date'],
             'employment_status' => ['required', Rule::in(['ACTIVE', 'INACTIVE'])],
         ];
+    }
+
+    public function withValidator(Validator $validator): void
+    {
+        $validator->after(function (Validator $validator): void {
+            if ($validator->errors()->isNotEmpty()) {
+                return;
+            }
+
+            $existing = $this->route('employment_record');
+            $candidate = $existing instanceof EmploymentRecord ? clone $existing : new EmploymentRecord;
+            $candidate->fill($this->only(array_keys($this->rules())));
+            foreach (app(EmploymentRecordValidationService::class)->issues($candidate) as $field => $message) {
+                $validator->errors()->add($field, $message);
+            }
+        });
     }
 }

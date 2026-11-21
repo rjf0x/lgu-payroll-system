@@ -15,7 +15,7 @@
         <x-form.select
             name="employee_id"
             label="Employee"
-            :options="$employees->mapWithKeys(fn ($e) => [$e->employee_id => $e->employee_number.' — '.$e->full_name])"
+            :options="$employees->mapWithKeys(fn ($e) => [$e->employee_id => $e->employee_number.' — '.$e->full_name.($e->trashed() ? ' (archived; inactive history only)' : '')])"
             :selected="$employmentRecord->employee_id"
             placeholder="Select an employee"
             required
@@ -55,6 +55,8 @@
         <x-form.input name="start_date" label="Start Date" type="date" :value="$employmentRecord->start_date?->toDateString()" required />
         <x-form.input name="end_date" label="End Date" type="date" :value="$employmentRecord->end_date?->toDateString()" />
     </div>
+
+    <p>Choose a position within the selected department. Active appointment dates cannot overlap for the same employee, including their start and end dates. End the earlier appointment before the next starts; concurrent dual appointments are unsupported. Archived employees may only have existing inactive appointments corrected.</p>
 
     <x-audit-change-context :employment="true" />
 

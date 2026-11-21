@@ -2,7 +2,6 @@
 
 namespace Database\Factories;
 
-use App\Models\Department;
 use App\Models\Employee;
 use App\Models\EmploymentRecord;
 use App\Models\EmploymentType;
@@ -21,8 +20,8 @@ class EmploymentRecordFactory extends Factory
     {
         return [
             'employee_id' => Employee::factory(),
-            'department_id' => Department::factory(),
             'position_id' => Position::factory(),
+            'department_id' => fn (array $attributes): int => Position::findOrFail($attributes['position_id'])->department_id,
             'employment_type_id' => EmploymentType::factory(),
             'appointment_number' => fake()->optional()->bothify('APPT-####'),
             'start_date' => '2024-01-01',

@@ -64,6 +64,20 @@ valid salary:
 4. **No overlap:** an employment record may not have two compensation profiles whose
    effective periods overlap (open-ended when `effective_to` is null).
 
+### Appointment consistency (F10)
+
+`EmploymentRecordRequest` checks related fields after basic field/date validation. `EmploymentRecordValidationService` repeats the same checks inside the audited save transaction:
+
+- A position must belong to the selected department.
+- An existing appointment keeps its employee identity, preserving compensation, employment history and saved payroll references. Create a separate appointment rather than reassigning one to another employee.
+- New appointments cannot select archived employees, including when the proposed appointment is inactive. An existing appointment for an archived employee can be made inactive and corrected for history; it cannot remain active or be reactivated through an appointment update. Its archived employee stays visible and labeled on edit, while new forms exclude archived employees.
+- ACTIVE appointments for the same employee cannot overlap, across departments and employment types. Start/end dates are inclusive, and a missing end date is open-ended. A succeeding appointment starts after the earlier appointment ends. Updates exclude the appointment being edited and also check reactivation/date extensions.
+- Inactive historical records may overlap. Separate nonoverlapping appointments and consistent transfers remain supported and audited. Concurrent dual appointments have no authorization policy or bypass in this build and are rejected.
+
+Saves lock the employee before validating/writing the appointment, including the first appointment where no conflicting rows exist yet. Updates use the same employee-first lock order, reload the current appointment, and recheck position membership and overlap with current locked reads. This also coordinates with employee archival. History and source audit events remain in the same transaction; rejected saves create neither.
+
+These rules govern the exposed appointment create/update paths and the shared mutation service. They do not backfill or repair legacy inconsistent records, direct database/model writes, or downstream organization changes. F04's independent employee/coverage compensation guard remains enforced; sequential source appointments do not authorize duplicate regular pay within a payroll period. No dual-appointment compensation or retrospective entitlement policy is introduced.
+
 ---
 
 ## 4. Controllers & routes
@@ -116,6 +130,8 @@ The login screen is standalone HTML and does not require the build.
 |---|---|
 | `tests/Feature/MasterDataTest.php` | Department CRUD + unique code, Viewer read-only vs `403` on create, employee create, employment record create, grade-step composite uniqueness, employee soft delete. |
 | `tests/Feature/CompensationProfileValidationTest.php` | Grade match accept/reject, direct-rate requirement, schedule effective-date rule, overlap reject, non-overlapping accept. |
+| `tests/Feature/EmploymentRecordValidationTest.php` | Department/position consistency, inclusive overlap boundaries, sequential/inactive history, archival, identity preservation, transaction rechecks, permission denial, retained form input and audit/history effects. |
+| F10 cases in `tests/Feature/PayrollConcurrencyTest.php` | MySQL contention for first appointment creation, overlapping reactivation and archival before a waiting save; requires a dedicated `lgu_payroll_qa_` database. |
 | `tests/Feature/UserManagementTest.php` | Admin creates a user with a role, non-admin forbidden, self-delete guard, at-least-one-role rule. |
 
 Run with `php artisan test --compact`.
