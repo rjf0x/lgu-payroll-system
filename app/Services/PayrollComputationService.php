@@ -30,6 +30,8 @@ class PayrollComputationService
     public function __construct(
         private readonly PayrollEligibilityService $eligibility,
         private readonly PayrollDuplicateGuard $duplicates,
+        private readonly PayrollAuditSnapshot $auditSnapshots,
+        private readonly AuditLogger $auditLogger,
     ) {}
 
     /**
@@ -43,6 +45,7 @@ class PayrollComputationService
             abort_unless($run->isEditable(), 422, 'This payroll run can no longer be recomputed.');
             $period = $locked->payrollPeriod;
             $oldTotals = $this->eligibility->totals($locked);
+            $oldDetails = $this->auditSnapshots->run($locked);
             $employments = EmploymentRecord::query()
                 ->with(['employee', 'department', 'position', 'employmentType'])
                 ->where(function ($query) use ($locked, $period): void {
@@ -68,8 +71,10 @@ class PayrollComputationService
                 'status' => PayrollRun::STATUS_DRAFT,
                 'processed_at' => now(),
             ]);
-            app(AuditLogger::class)->log('PAYROLL_RECALCULATED', 'Payroll', auth()->id(), 'payroll_runs', (string) $run->getKey(), $oldTotals, [
+            $this->auditLogger->log('PAYROLL_RECALCULATED', 'Payroll', auth()->id(), 'payroll_runs', (string) $run->getKey(), [...$oldTotals, 'details' => $oldDetails], [
                 ...$this->eligibility->totals($locked), 'reason' => 'Recomputed from current compensation, statutory settings, and payroll inputs.',
+                'details' => $this->auditSnapshots->run($locked),
+                'audit_context' => $this->auditLogger->context('Recomputed from current payroll sources and inputs.'),
             ]);
         }, serialize: false);
     }
@@ -83,8 +88,14 @@ class PayrollComputationService
             $locked = PayrollRun::query()->lockForUpdate()->findOrFail($run->getKey());
             abort_unless($locked->isEditable(), 422, 'This payroll run can no longer be recomputed.');
 
+            $previous = $locked->details()->where('employment_id', $employment->getKey())->first();
+            $before = $previous === null ? null : $this->auditSnapshots->detail($previous);
             $detail = $this->computeEditableDetail($locked, $employment, $locked->payrollPeriod);
             $this->duplicates->validate($locked, 'preparation', preparing: true);
+            $this->auditLogger->log('PAYROLL_DETAIL_RECALCULATED', 'Payroll', auth()->id(), 'payroll_details', (string) $detail->getKey(), $before, [
+                ...$this->auditSnapshots->detail($detail),
+                'audit_context' => $this->auditLogger->context('Computed the employee payroll detail from current sources and inputs.'),
+            ]);
 
             return $detail;
         }, serialize: false);
@@ -150,7 +161,7 @@ class PayrollComputationService
                 $earning->update(['is_taxable' => $earning->earningType->is_taxable]);
             }
         }
-        $this->recomputeTotals($detail, $period);
+        $this->recomputeEditableTotals($detail, $period);
         $detail->refresh();
         $detail->forceFill(['computation_fingerprint' => $this->computationFingerprint($detail, $period)])->save();
 
@@ -167,8 +178,13 @@ class PayrollComputationService
             $run = PayrollRun::query()->lockForUpdate()->findOrFail($detail->payroll_run_id);
             abort_unless($run->isEditable(), 422, 'This payroll run can no longer be recomputed.');
             $detail->refresh();
+            $before = $this->auditSnapshots->detail($detail);
             $detail->forceFill(['computation_fingerprint' => null])->save();
             $this->recomputeEditableTotals($detail, $period);
+            $this->auditLogger->log('PAYROLL_TOTALS_RECALCULATED', 'Payroll', auth()->id(), 'payroll_details', (string) $detail->getKey(), $before, [
+                ...$this->auditSnapshots->detail($detail),
+                'audit_context' => $this->auditLogger->context('Recomputed statutory deductions and saved payroll totals.'),
+            ]);
         });
     }
 

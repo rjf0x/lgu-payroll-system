@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\ContributionRateRequest;
 use App\Models\ContributionRate;
+use App\Services\MasterDataMutationService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 
@@ -31,9 +32,9 @@ class ContributionRateController extends Controller
         ]);
     }
 
-    public function store(ContributionRateRequest $request): RedirectResponse
+    public function store(ContributionRateRequest $request, MasterDataMutationService $mutations): RedirectResponse
     {
-        ContributionRate::create($request->validated());
+        $mutations->create(new ContributionRate, $request->validated(), $request->user());
 
         return redirect()->route('contribution-rates.index')->with('status', 'Contribution rate created.');
     }
@@ -43,16 +44,16 @@ class ContributionRateController extends Controller
         return view('contribution-rates.edit', ['rate' => $contributionRate]);
     }
 
-    public function update(ContributionRateRequest $request, ContributionRate $contributionRate): RedirectResponse
+    public function update(ContributionRateRequest $request, ContributionRate $contributionRate, MasterDataMutationService $mutations): RedirectResponse
     {
-        $contributionRate->update($request->validated());
+        $contributionRate = $mutations->update($contributionRate, $request->validated(), $request->user());
 
         return redirect()->route('contribution-rates.index')->with('status', 'Contribution rate updated.');
     }
 
-    public function destroy(ContributionRate $contributionRate): RedirectResponse
+    public function destroy(ContributionRate $contributionRate, MasterDataMutationService $mutations): RedirectResponse
     {
-        $contributionRate->delete();
+        $mutations->delete($contributionRate, auth()->user());
 
         return redirect()->route('contribution-rates.index')->with('status', 'Contribution rate deleted.');
     }

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\SalaryGradeStepRequest;
 use App\Models\SalaryGradeStep;
 use App\Models\SalarySchedule;
+use App\Services\MasterDataMutationService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -41,9 +42,9 @@ class SalaryGradeStepController extends Controller
         ]);
     }
 
-    public function store(SalaryGradeStepRequest $request): RedirectResponse
+    public function store(SalaryGradeStepRequest $request, MasterDataMutationService $mutations): RedirectResponse
     {
-        SalaryGradeStep::create($request->validated());
+        $mutations->create(new SalaryGradeStep, $request->validated(), $request->user());
 
         return redirect()
             ->route('salary-grade-steps.index', ['salary_schedule_id' => $request->input('salary_schedule_id')])
@@ -58,18 +59,18 @@ class SalaryGradeStepController extends Controller
         ]);
     }
 
-    public function update(SalaryGradeStepRequest $request, SalaryGradeStep $salaryGradeStep): RedirectResponse
+    public function update(SalaryGradeStepRequest $request, SalaryGradeStep $salaryGradeStep, MasterDataMutationService $mutations): RedirectResponse
     {
-        $salaryGradeStep->update($request->validated());
+        $salaryGradeStep = $mutations->update($salaryGradeStep, $request->validated(), $request->user());
 
         return redirect()
             ->route('salary-grade-steps.index', ['salary_schedule_id' => $request->input('salary_schedule_id')])
             ->with('status', 'Grade step updated.');
     }
 
-    public function destroy(SalaryGradeStep $salaryGradeStep): RedirectResponse
+    public function destroy(SalaryGradeStep $salaryGradeStep, MasterDataMutationService $mutations): RedirectResponse
     {
-        $salaryGradeStep->delete();
+        $mutations->delete($salaryGradeStep, auth()->user());
 
         return redirect()
             ->route('salary-grade-steps.index')

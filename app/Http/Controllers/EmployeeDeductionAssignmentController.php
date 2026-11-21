@@ -8,6 +8,7 @@ use App\Models\Employee;
 use App\Models\EmployeeDeductionAssignment;
 use App\Models\EmploymentRecord;
 use App\Services\EmployeeWorkspaceContext;
+use App\Services\MasterDataMutationService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 
@@ -38,9 +39,9 @@ class EmployeeDeductionAssignmentController extends Controller
         ])));
     }
 
-    public function store(EmployeeDeductionAssignmentRequest $request): RedirectResponse
+    public function store(EmployeeDeductionAssignmentRequest $request, MasterDataMutationService $mutations): RedirectResponse
     {
-        $assignment = EmployeeDeductionAssignment::create($request->validated());
+        $assignment = $mutations->create(new EmployeeDeductionAssignment, $request->validated(), $request->user());
 
         return $this->workspace->redirect((int) $assignment->employmentRecord->employee_id, 'deductions', 'Deduction assignment created.') ?? redirect()->route('employee-deduction-assignments.index')->with('status', 'Deduction assignment created.');
     }
@@ -50,16 +51,16 @@ class EmployeeDeductionAssignmentController extends Controller
         return view('employee-deduction-assignments.edit', $this->formData($employeeDeductionAssignment));
     }
 
-    public function update(EmployeeDeductionAssignmentRequest $request, EmployeeDeductionAssignment $employeeDeductionAssignment): RedirectResponse
+    public function update(EmployeeDeductionAssignmentRequest $request, EmployeeDeductionAssignment $employeeDeductionAssignment, MasterDataMutationService $mutations): RedirectResponse
     {
-        $employeeDeductionAssignment->update($request->validated());
+        $employeeDeductionAssignment = $mutations->update($employeeDeductionAssignment, $request->validated(), $request->user());
 
         return $this->workspace->redirect((int) $employeeDeductionAssignment->employmentRecord->employee_id, 'deductions', 'Deduction assignment updated.') ?? redirect()->route('employee-deduction-assignments.index')->with('status', 'Deduction assignment updated.');
     }
 
-    public function destroy(EmployeeDeductionAssignment $employeeDeductionAssignment): RedirectResponse
+    public function destroy(EmployeeDeductionAssignment $employeeDeductionAssignment, MasterDataMutationService $mutations): RedirectResponse
     {
-        $employeeDeductionAssignment->delete();
+        $mutations->delete($employeeDeductionAssignment, auth()->user());
 
         return redirect()->route('employee-deduction-assignments.index')->with('status', 'Deduction assignment deleted.');
     }

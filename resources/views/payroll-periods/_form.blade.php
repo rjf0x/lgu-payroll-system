@@ -21,6 +21,8 @@
         <x-form.select name="status" label="Status" :options="['OPEN' => 'Open', 'CLOSED' => 'Closed']" :selected="$period->status" required />
     </div>
 
+    <x-audit-change-context />
+
     <div class="flex flex-wrap gap-3">
         <x-button :icon="$isEdit ? 'save' : 'add'" type="submit" variant="primary">{{ $isEdit ? 'Save changes' : 'Create period' }}</x-button>
         <x-button icon="back" href="{{ route('payroll-periods.index') }}">Cancel</x-button>

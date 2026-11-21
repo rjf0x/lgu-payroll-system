@@ -177,7 +177,7 @@ class PayrollDetailConfirmationTest extends TestCase
     {
         $detail = $this->detail();
         $before = $detail->fresh()->getAttributes();
-        $this->mock(AuditLogger::class)->shouldReceive('log')->once()->andThrow(new RuntimeException('Audit unavailable'));
+        $this->partialMock(AuditLogger::class)->shouldReceive('log')->once()->andThrow(new RuntimeException('Audit unavailable'));
         $this->withoutExceptionHandling();
 
         try {

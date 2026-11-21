@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\SalaryScheduleRequest;
 use App\Models\SalarySchedule;
+use App\Services\MasterDataMutationService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 
@@ -29,9 +30,9 @@ class SalaryScheduleController extends Controller
         ]);
     }
 
-    public function store(SalaryScheduleRequest $request): RedirectResponse
+    public function store(SalaryScheduleRequest $request, MasterDataMutationService $mutations): RedirectResponse
     {
-        $schedule = SalarySchedule::create($request->validated());
+        $schedule = $mutations->create(new SalarySchedule, $request->validated(), $request->user());
 
         return redirect()
             ->route('salary-schedules.show', $schedule)
@@ -52,18 +53,18 @@ class SalaryScheduleController extends Controller
         return view('salary-schedules.edit', ['schedule' => $salarySchedule]);
     }
 
-    public function update(SalaryScheduleRequest $request, SalarySchedule $salarySchedule): RedirectResponse
+    public function update(SalaryScheduleRequest $request, SalarySchedule $salarySchedule, MasterDataMutationService $mutations): RedirectResponse
     {
-        $salarySchedule->update($request->validated());
+        $salarySchedule = $mutations->update($salarySchedule, $request->validated(), $request->user());
 
         return redirect()
             ->route('salary-schedules.show', $salarySchedule)
             ->with('status', 'Salary schedule updated.');
     }
 
-    public function destroy(SalarySchedule $salarySchedule): RedirectResponse
+    public function destroy(SalarySchedule $salarySchedule, MasterDataMutationService $mutations): RedirectResponse
     {
-        $salarySchedule->delete();
+        $mutations->delete($salarySchedule, auth()->user());
 
         return redirect()
             ->route('salary-schedules.index')

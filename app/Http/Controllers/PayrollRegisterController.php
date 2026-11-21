@@ -6,8 +6,10 @@ use App\Models\DeductionType;
 use App\Models\EarningType;
 use App\Models\GeneratedReport;
 use App\Models\PayrollRun;
+use App\Services\AuditLogger;
 use App\Services\PayrollRegisterService;
 use App\Services\PayrollSpreadsheetService;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -24,17 +26,22 @@ class PayrollRegisterController extends Controller
         return view('payroll-runs.register', $this->registerData($payrollRun) + ['run' => $payrollRun]);
     }
 
-    public function export(PayrollRun $payrollRun, PayrollSpreadsheetService $spreadsheet): StreamedResponse
+    public function export(PayrollRun $payrollRun, PayrollSpreadsheetService $spreadsheet, AuditLogger $auditLogger): StreamedResponse
     {
         $data = $this->registerData($payrollRun);
         $contents = $spreadsheet->generate($data, $payrollRun->payrollPeriod->start_date->month, $payrollRun->payrollPeriod->start_date->year);
 
-        GeneratedReport::create([
-            'report_type' => 'PAYROLL_REGISTER',
-            'generated_by' => auth()->id(),
-            'filters' => ['payroll_run_id' => $payrollRun->payroll_run_id],
-            'generated_at' => now(),
-        ]);
+        DB::transaction(function () use ($payrollRun, $auditLogger): void {
+            $report = GeneratedReport::create([
+                'report_type' => 'PAYROLL_REGISTER',
+                'generated_by' => auth()->id(),
+                'filters' => ['payroll_run_id' => $payrollRun->payroll_run_id],
+                'generated_at' => now(),
+            ]);
+            $auditLogger->log('REPORT_GENERATED', 'Reports', (int) auth()->id(), 'generated_reports', (string) $report->getKey(), newValues: [
+                ...$report->getAttributes(), 'audit_context' => $auditLogger->context('Generated a payroll register spreadsheet.'),
+            ]);
+        });
 
         $filename = Str::slug('Payroll Register '.$payrollRun->payrollPeriod->period_name.' Run '.$payrollRun->run_number).'.xlsx';
 

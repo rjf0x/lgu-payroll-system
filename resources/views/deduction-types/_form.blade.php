@@ -45,6 +45,8 @@
         />
     </div>
 
+    <x-audit-change-context />
+
     <div class="flex flex-wrap gap-3">
         <x-button :icon="$isEdit ? 'save' : 'add'" type="submit" variant="primary">{{ $isEdit ? 'Save changes' : 'Create deduction type' }}</x-button>
         <x-button icon="back" href="{{ route('deduction-types.index') }}">Cancel</x-button>

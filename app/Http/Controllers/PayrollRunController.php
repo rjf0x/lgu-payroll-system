@@ -9,6 +9,7 @@ use App\Models\PayrollPeriod;
 use App\Models\PayrollRun;
 use App\Services\AuditLogger;
 use App\Services\PayrollApprovalService;
+use App\Services\PayrollAuditSnapshot;
 use App\Services\PayrollComputationService;
 use App\Services\PayrollDuplicateGuard;
 use App\Services\PayrollEligibilityService;
@@ -20,7 +21,10 @@ use Illuminate\View\View;
 
 class PayrollRunController extends Controller
 {
-    public function __construct(private readonly PayrollDuplicateGuard $duplicates) {}
+    public function __construct(
+        private readonly PayrollDuplicateGuard $duplicates,
+        private readonly PayrollAuditSnapshot $auditSnapshots,
+    ) {}
 
     public function index(Request $request): View
     {
@@ -111,7 +115,10 @@ class PayrollRunController extends Controller
                     }
                 }
             }
-            app(AuditLogger::class)->log('PAYROLL_CREATED', 'Payroll', (int) auth()->id(), 'payroll_runs', (string) $run->getKey());
+            app(AuditLogger::class)->log('PAYROLL_CREATED', 'Payroll', (int) auth()->id(), 'payroll_runs', (string) $run->getKey(), newValues: [
+                ...$run->getAttributes(), 'details' => $this->auditSnapshots->run($run),
+                'audit_context' => app(AuditLogger::class)->context('Created a payroll run with provisional source inputs.'),
+            ]);
             if ($replacement !== null) {
                 app(AuditLogger::class)->log('PAYROLL_REPLACED', 'Payroll', (int) auth()->id(), 'payroll_runs', (string) $replacement->getKey(), newValues: [
                     'replacement_run_id' => $run->getKey(), 'reason' => $request->validated('replacement_reason'), 'status' => PayrollRun::STATUS_CANCELLED,
@@ -203,8 +210,11 @@ class PayrollRunController extends Controller
         DB::transaction(function () use ($payrollRun): void {
             $locked = PayrollRun::whereKey($payrollRun->getKey())->lockForUpdate()->firstOrFail();
             abort_unless($locked->isEditable(), 422, 'Only editable payroll runs can be deleted.');
+            $before = [...$locked->getAttributes(), 'details' => $this->auditSnapshots->run($locked)];
             $locked->delete();
-            app(AuditLogger::class)->log('PAYROLL_DELETED', 'Payroll', (int) auth()->id(), 'payroll_runs', (string) $locked->getKey());
+            app(AuditLogger::class)->log('PAYROLL_DELETED', 'Payroll', (int) auth()->id(), 'payroll_runs', (string) $locked->getKey(), $before, [
+                'audit_context' => app(AuditLogger::class)->context('Deleted an editable payroll run and its financial details.'),
+            ]);
         });
 
         return redirect()->route('payroll-runs.index')->with('status', 'Payroll run deleted.');

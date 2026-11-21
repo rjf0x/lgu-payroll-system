@@ -61,6 +61,7 @@ Route::middleware(['auth', EnsureAccountIsActive::class, PreventSensitiveRespons
     Route::middleware('can:audit.view')->group(function () {
         Route::get('audit-logs', [AuditLogController::class, 'index'])->name('audit-logs.index');
         Route::get('audit-logs/export', [AuditLogController::class, 'export'])->name('audit-logs.export');
+        Route::get('audit-logs/{audit_log}', [AuditLogController::class, 'show'])->whereNumber('audit_log')->name('audit-logs.show');
     });
 
     Route::post('/logout', [

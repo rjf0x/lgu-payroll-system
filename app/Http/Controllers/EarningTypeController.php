@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\EarningTypeRequest;
 use App\Models\EarningType;
+use App\Services\MasterDataMutationService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 
@@ -28,9 +29,9 @@ class EarningTypeController extends Controller
         ]);
     }
 
-    public function store(EarningTypeRequest $request): RedirectResponse
+    public function store(EarningTypeRequest $request, MasterDataMutationService $mutations): RedirectResponse
     {
-        EarningType::create($request->validated());
+        $mutations->create(new EarningType, $request->validated(), $request->user());
 
         return redirect()->route('earning-types.index')->with('status', 'Earning type created.');
     }
@@ -40,16 +41,16 @@ class EarningTypeController extends Controller
         return view('earning-types.edit', compact('earningType'));
     }
 
-    public function update(EarningTypeRequest $request, EarningType $earningType): RedirectResponse
+    public function update(EarningTypeRequest $request, EarningType $earningType, MasterDataMutationService $mutations): RedirectResponse
     {
-        $earningType->update($request->validated());
+        $earningType = $mutations->update($earningType, $request->validated(), $request->user());
 
         return redirect()->route('earning-types.index')->with('status', 'Earning type updated.');
     }
 
-    public function destroy(EarningType $earningType): RedirectResponse
+    public function destroy(EarningType $earningType, MasterDataMutationService $mutations): RedirectResponse
     {
-        $earningType->delete();
+        $mutations->delete($earningType, auth()->user());
 
         return redirect()->route('earning-types.index')->with('status', 'Earning type deleted.');
     }

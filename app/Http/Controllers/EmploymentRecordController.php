@@ -9,6 +9,7 @@ use App\Models\EmploymentRecord;
 use App\Models\EmploymentType;
 use App\Models\Position;
 use App\Services\EmployeeWorkspaceContext;
+use App\Services\MasterDataMutationService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -42,9 +43,9 @@ class EmploymentRecordController extends Controller
         ));
     }
 
-    public function store(EmploymentRecordRequest $request): RedirectResponse
+    public function store(EmploymentRecordRequest $request, MasterDataMutationService $mutations): RedirectResponse
     {
-        $record = EmploymentRecord::create($request->validated());
+        $record = $mutations->create(new EmploymentRecord, $request->validated(), $request->user());
 
         return $this->workspace->redirect((int) $record->employee_id, 'employment', 'Employment record created.') ?? redirect()
             ->route('employment-records.show', $record)
@@ -59,7 +60,8 @@ class EmploymentRecordController extends Controller
             'position',
             'employmentType',
             'compensationProfiles.gradeStep.salarySchedule',
-            'history.recordedBy',
+            'history' => fn ($query) => $query->orderByDesc('effective_date')->orderByDesc('history_id'),
+            'history.recordedBy', 'history.fromDepartment', 'history.toDepartment', 'history.fromPosition', 'history.toPosition',
         ]);
 
         return view('employment-records.show', compact('employmentRecord'));
@@ -70,18 +72,18 @@ class EmploymentRecordController extends Controller
         return view('employment-records.edit', $this->formData($employmentRecord));
     }
 
-    public function update(EmploymentRecordRequest $request, EmploymentRecord $employmentRecord): RedirectResponse
+    public function update(EmploymentRecordRequest $request, EmploymentRecord $employmentRecord, MasterDataMutationService $mutations): RedirectResponse
     {
-        $employmentRecord->update($request->validated());
+        $employmentRecord = $mutations->update($employmentRecord, $request->validated(), $request->user());
 
         return $this->workspace->redirect((int) $employmentRecord->employee_id, 'employment', 'Employment record updated.') ?? redirect()
             ->route('employment-records.show', $employmentRecord)
             ->with('status', 'Employment record updated.');
     }
 
-    public function destroy(EmploymentRecord $employmentRecord): RedirectResponse
+    public function destroy(EmploymentRecord $employmentRecord, MasterDataMutationService $mutations): RedirectResponse
     {
-        $employmentRecord->delete();
+        $mutations->delete($employmentRecord, auth()->user());
 
         return redirect()
             ->route('employment-records.index')

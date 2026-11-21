@@ -13,6 +13,15 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class AuditLogController extends Controller
 {
+    public function show(AuditLog $auditLog, AuditLogger $auditLogger): View
+    {
+        return view('audit-logs.show', [
+            'log' => $auditLog->load('user'),
+            'before' => $auditLog->old_values === null ? null : $auditLogger->redact($auditLog->old_values),
+            'after' => $auditLog->new_values === null ? null : $auditLogger->redact($auditLog->new_values),
+        ]);
+    }
+
     public function index(AuditLogFilterRequest $request): View
     {
         return view('audit-logs.index', [

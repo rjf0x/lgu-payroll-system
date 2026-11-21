@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\DeductionTypeRequest;
 use App\Models\DeductionType;
+use App\Services\MasterDataMutationService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 
@@ -31,9 +32,9 @@ class DeductionTypeController extends Controller
         ]);
     }
 
-    public function store(DeductionTypeRequest $request): RedirectResponse
+    public function store(DeductionTypeRequest $request, MasterDataMutationService $mutations): RedirectResponse
     {
-        DeductionType::create($request->validated());
+        $mutations->create(new DeductionType, $request->validated(), $request->user());
 
         return redirect()->route('deduction-types.index')->with('status', 'Deduction type created.');
     }
@@ -43,16 +44,16 @@ class DeductionTypeController extends Controller
         return view('deduction-types.edit', compact('deductionType'));
     }
 
-    public function update(DeductionTypeRequest $request, DeductionType $deductionType): RedirectResponse
+    public function update(DeductionTypeRequest $request, DeductionType $deductionType, MasterDataMutationService $mutations): RedirectResponse
     {
-        $deductionType->update($request->validated());
+        $deductionType = $mutations->update($deductionType, $request->validated(), $request->user());
 
         return redirect()->route('deduction-types.index')->with('status', 'Deduction type updated.');
     }
 
-    public function destroy(DeductionType $deductionType): RedirectResponse
+    public function destroy(DeductionType $deductionType, MasterDataMutationService $mutations): RedirectResponse
     {
-        $deductionType->delete();
+        $mutations->delete($deductionType, auth()->user());
 
         return redirect()->route('deduction-types.index')->with('status', 'Deduction type deleted.');
     }

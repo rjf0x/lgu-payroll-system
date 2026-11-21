@@ -81,4 +81,32 @@
             </ul>
         </div>
     </div>
+    @can('employees.manage')
+        <section class="mt-6 min-w-0" aria-labelledby="employment-history-heading">
+            <h2 id="employment-history-heading" class="mb-3 text-lg font-semibold">Employment history</h2>
+            <x-table label="Employment history records">
+                <thead>
+                    <tr>
+                        @foreach (['Effective date', 'Change', 'From', 'To', 'Recorded by', 'Notes'] as $heading)
+                            <th scope="col" class="px-4 py-3 text-left">{{ $heading }}</th>
+                        @endforeach
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse ($employmentRecord->history as $entry)
+                        <tr>
+                            <td class="px-4 py-3">{{ $entry->effective_date?->format('M d, Y') }}</td>
+                            <td class="px-4 py-3">{{ str_replace('_', ' ', $entry->change_type) }}</td>
+                            <td class="px-4 py-3">{{ $entry->fromDepartment?->department_name ?? 'Not recorded' }} / {{ $entry->fromPosition?->position_title ?? 'Not recorded' }}</td>
+                            <td class="px-4 py-3">{{ $entry->toDepartment?->department_name ?? 'Not recorded' }} / {{ $entry->toPosition?->position_title ?? 'Not recorded' }}</td>
+                            <td class="px-4 py-3">{{ $entry->recordedBy?->username ?? 'Unavailable user' }}</td>
+                            <td class="px-4 py-3 whitespace-normal break-words">{{ $entry->remarks }}</td>
+                        </tr>
+                    @empty
+                        <tr><td colspan="6" class="px-4 py-6 text-center text-muted">No employment changes recorded.</td></tr>
+                    @endforelse
+                </tbody>
+            </x-table>
+        </section>
+    @endcan
 @endsection

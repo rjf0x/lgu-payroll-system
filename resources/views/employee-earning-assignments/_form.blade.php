@@ -45,6 +45,8 @@
 
     <p class="text-xs text-slate-500">Provide an amount, a percentage, or both.</p>
 
+    <x-audit-change-context />
+
     <div class="flex flex-wrap gap-3">
         <x-button :icon="$isEdit ? 'save' : 'add'" type="submit" variant="primary">{{ $isEdit ? 'Save changes' : 'Create assignment' }}</x-button>
         <x-button icon="back" href="{{ $workspaceEmployee ? route('employees.show', $workspaceEmployee).'#earnings' : route('employee-earning-assignments.index') }}">Cancel</x-button>

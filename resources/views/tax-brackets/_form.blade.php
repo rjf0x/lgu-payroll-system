@@ -23,6 +23,8 @@
         <x-form.input name="effective_to" label="Effective To" type="date" :value="$bracket->effective_to?->toDateString()" />
     </div>
 
+    <x-audit-change-context />
+
     <div class="flex flex-wrap gap-3">
         <x-button :icon="$isEdit ? 'save' : 'add'" type="submit" variant="primary">{{ $isEdit ? 'Save changes' : 'Create bracket' }}</x-button>
         <x-button icon="back" href="{{ route('tax-brackets.index') }}">Cancel</x-button>

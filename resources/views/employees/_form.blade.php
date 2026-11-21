@@ -40,6 +40,8 @@
     <x-form.textarea name="address" label="Address" :value="$employee->address" required />
 
     <p class="text-sm text-muted">Fields marked with an asterisk (*) are required.</p>
+    <x-audit-change-context />
+
     <div class="flex flex-wrap gap-3">
         <x-button :icon="$isEdit ? 'save' : 'add'" type="submit" variant="primary" data-submitting-label="Saving employee…">
             {{ $isEdit ? 'Save changes' : 'Create employee' }}

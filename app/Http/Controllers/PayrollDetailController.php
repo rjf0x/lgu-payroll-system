@@ -10,6 +10,7 @@ use App\Models\EmploymentRecord;
 use App\Models\PayrollDetail;
 use App\Models\PayrollRun;
 use App\Services\AuditLogger;
+use App\Services\PayrollAuditSnapshot;
 use App\Services\PayrollComputationService;
 use App\Services\PayrollEligibilityService;
 use Illuminate\Http\RedirectResponse;
@@ -24,6 +25,7 @@ class PayrollDetailController extends Controller
     public function __construct(
         private readonly PayrollComputationService $service,
         private readonly PayrollEligibilityService $eligibility,
+        private readonly PayrollAuditSnapshot $auditSnapshots,
     ) {}
 
     public function store(PayrollEligibilityRequest $request, PayrollRun $payrollRun): RedirectResponse
@@ -46,7 +48,7 @@ class PayrollDetailController extends Controller
             $run = PayrollRun::whereKey($payrollRun->getKey())->lockForUpdate()->firstOrFail();
             abort_unless($run->isEditable(), 403, 'Return this payroll for correction before changing employee inclusion.');
             $payrollDetail->refresh();
-            $oldValues = ['detail' => $payrollDetail->toArray(), 'totals' => $this->eligibility->totals($run)];
+            $oldValues = ['detail' => $this->auditSnapshots->detail($payrollDetail), 'totals' => $this->eligibility->totals($run)];
             $payrollDetail->earnings()->delete();
             $payrollDetail->deductions()->delete();
             $payrollDetail->employerContributions()->delete();
@@ -105,7 +107,7 @@ class PayrollDetailController extends Controller
                 'payable_days' => ['required', 'numeric', 'decimal:0,2', 'min:0', 'max:'.$payrollDetail->maximumPayableDays($period)],
             ], ['payable_days.required' => 'Open this employee’s payroll detail and enter approved payable days before confirming.'])->validate();
 
-            $oldValues = $payrollDetail->only(['payable_days', 'input_reference', 'input_recorded_by', 'input_confirmed_at', 'basic_pay', 'net_pay']);
+            $oldValues = $this->auditSnapshots->detail($payrollDetail);
             $payrollDetail->update([
                 'input_recorded_by' => $request->user()->getKey(),
                 'input_confirmed_at' => now(),
@@ -114,7 +116,7 @@ class PayrollDetailController extends Controller
             $this->service->computeDetail($run, $payrollDetail->employmentRecord, $period);
             $payrollDetail->refresh();
             app(AuditLogger::class)->log('PAYROLL_INPUTS_CONFIRMED', 'Payroll', $request->user()->getKey(), 'payroll_details', (string) $payrollDetail->getKey(), $oldValues, [
-                ...$payrollDetail->only(['payable_days', 'input_reference', 'input_recorded_by', 'input_confirmed_at', 'basic_pay', 'net_pay']),
+                ...$this->auditSnapshots->detail($payrollDetail),
                 'reason' => 'Confirmed existing payroll inputs from the employee breakdown and recomputed payroll.',
             ]);
         });
@@ -138,7 +140,7 @@ class PayrollDetailController extends Controller
                 }
                 $this->eligibility->resolve($payrollDetail, $request->user(), $request->validated('eligibility_reason'));
             }
-            $oldValues = $payrollDetail->only(['payable_days', 'input_reference', 'basic_pay', 'net_pay', 'lbp_loan_deduction']);
+            $oldValues = $this->auditSnapshots->detail($payrollDetail);
             if ($locked->run_type !== 'REGULAR') {
                 $payrollDetail->fill($request->safe()->only(['coverage_start', 'coverage_end', 'compensation_reference', 'compensation_reason', 'accounting_basis', 'overlap_justification', 'original_payroll_detail_id']));
                 $payrollDetail->basic_pay = $locked->run_type === 'ADJUSTMENT' ? round((float) $request->validated('adjustment_basic_pay', 0), 2) : 0;
@@ -200,7 +202,8 @@ class PayrollDetailController extends Controller
             $this->service->computeDetail($payrollRun, $payrollDetail->employmentRecord, $payrollRun->payrollPeriod);
             $payrollDetail->refresh();
             app(AuditLogger::class)->log('PAYROLL_DETAIL_UPDATED', 'Payroll', (int) auth()->id(), 'payroll_details', (string) $payrollDetail->getKey(), oldValues: $oldValues, newValues: [
-                ...$payrollDetail->only(['coverage_start', 'coverage_end', 'compensation_reference', 'compensation_reason', 'accounting_basis', 'overlap_justification', 'original_payroll_detail_id']),
+                ...$this->auditSnapshots->detail($payrollDetail),
+                'audit_context' => app(AuditLogger::class)->context('Updated and confirmed employee payroll inputs.'),
                 'payable_days' => $payrollDetail->payable_days,
                 'input_reference' => $payrollDetail->input_reference,
                 'lbp_loan_deduction' => $payrollDetail->lbp_loan_deduction,

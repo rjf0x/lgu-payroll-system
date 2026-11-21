@@ -27,6 +27,8 @@
 
     <x-form.textarea name="description" label="Description" :value="$department->description" />
 
+    <x-audit-change-context />
+
     <div class="flex flex-wrap gap-3">
         <x-button :icon="$isEdit ? 'save' : 'add'" type="submit" variant="primary">
             {{ $isEdit ? 'Save changes' : 'Create department' }}

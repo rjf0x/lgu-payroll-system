@@ -8,6 +8,7 @@ use App\Models\Employee;
 use App\Models\EmploymentRecord;
 use App\Models\SalaryGradeStep;
 use App\Services\EmployeeWorkspaceContext;
+use App\Services\MasterDataMutationService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 
@@ -40,9 +41,9 @@ class CompensationProfileController extends Controller
         ])));
     }
 
-    public function store(CompensationProfileRequest $request): RedirectResponse
+    public function store(CompensationProfileRequest $request, MasterDataMutationService $mutations): RedirectResponse
     {
-        $profile = CompensationProfile::create($this->payload($request));
+        $profile = $mutations->create(new CompensationProfile, $this->payload($request), $request->user());
 
         return $this->workspace->redirect((int) $profile->employmentRecord->employee_id, 'compensation', 'Compensation profile created.') ?? redirect()
             ->route('compensation-profiles.show', $profile)
@@ -67,18 +68,18 @@ class CompensationProfileController extends Controller
         return view('compensation-profiles.edit', $this->formData($compensationProfile));
     }
 
-    public function update(CompensationProfileRequest $request, CompensationProfile $compensationProfile): RedirectResponse
+    public function update(CompensationProfileRequest $request, CompensationProfile $compensationProfile, MasterDataMutationService $mutations): RedirectResponse
     {
-        $compensationProfile->update($this->payload($request));
+        $compensationProfile = $mutations->update($compensationProfile, $this->payload($request), $request->user());
 
         return $this->workspace->redirect((int) $compensationProfile->employmentRecord->employee_id, 'compensation', 'Compensation profile updated.') ?? redirect()
             ->route('compensation-profiles.show', $compensationProfile)
             ->with('status', 'Compensation profile updated.');
     }
 
-    public function destroy(CompensationProfile $compensationProfile): RedirectResponse
+    public function destroy(CompensationProfile $compensationProfile, MasterDataMutationService $mutations): RedirectResponse
     {
-        $compensationProfile->delete();
+        $mutations->delete($compensationProfile, auth()->user());
 
         return redirect()
             ->route('compensation-profiles.index')

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\PayrollPeriodRequest;
 use App\Models\PayrollPeriod;
 use App\Services\AuditLogger;
+use App\Services\MasterDataMutationService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -64,7 +65,9 @@ class PayrollPeriodController extends Controller
             }
             $old = $locked->getAttributes();
             $locked->update(['status' => 'CLOSED']);
-            app(AuditLogger::class)->log('PERIOD_CLOSED', 'Payroll', (int) auth()->id(), 'payroll_periods', (string) $locked->getKey(), $old, $locked->getAttributes());
+            app(AuditLogger::class)->log('PERIOD_CLOSED', 'Payroll', (int) auth()->id(), 'payroll_periods', (string) $locked->getKey(), $old, [
+                ...$locked->getAttributes(), 'audit_context' => app(AuditLogger::class)->context('Closed the payroll period to new runs.'),
+            ]);
         });
 
         return back()->with('status', 'Payroll period closed. Existing payroll runs are preserved; new runs cannot be created.');
@@ -83,9 +86,9 @@ class PayrollPeriodController extends Controller
         ]);
     }
 
-    public function store(PayrollPeriodRequest $request): RedirectResponse
+    public function store(PayrollPeriodRequest $request, MasterDataMutationService $mutations): RedirectResponse
     {
-        PayrollPeriod::create($request->validated());
+        $mutations->create(new PayrollPeriod, $request->validated(), $request->user());
 
         return redirect()->route('payroll-periods.index')->with('status', 'Payroll period created.');
     }
@@ -110,19 +113,21 @@ class PayrollPeriodController extends Controller
             }
             $old = $locked->getAttributes();
             $locked->update($request->validated());
-            app(AuditLogger::class)->log('PERIOD_UPDATED', 'Payroll', (int) auth()->id(), 'payroll_periods', (string) $locked->getKey(), $old, $locked->getAttributes());
+            app(AuditLogger::class)->log('PERIOD_UPDATED', 'Payroll', (int) auth()->id(), 'payroll_periods', (string) $locked->getKey(), $old, [
+                ...$locked->getAttributes(), 'audit_context' => app(AuditLogger::class)->context('Updated a payroll period.'),
+            ]);
         });
 
         return redirect()->route('payroll-periods.index')->with('status', 'Payroll period updated.');
     }
 
-    public function destroy(PayrollPeriod $payrollPeriod): RedirectResponse
+    public function destroy(PayrollPeriod $payrollPeriod, MasterDataMutationService $mutations): RedirectResponse
     {
         if ($payrollPeriod->runs()->exists()) {
             return back()->with('error', 'A period with payroll runs cannot be deleted.');
         }
 
-        $payrollPeriod->delete();
+        $mutations->delete($payrollPeriod, auth()->user());
 
         return redirect()->route('payroll-periods.index')->with('status', 'Payroll period deleted.');
     }

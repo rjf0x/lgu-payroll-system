@@ -27,6 +27,8 @@
         <x-form.input name="monthly_salary" label="Monthly Salary" type="number" step="0.01" :value="$gradeStep->monthly_salary" required />
     </div>
 
+    <x-audit-change-context />
+
     <div class="flex flex-wrap gap-3">
         <x-button :icon="$isEdit ? 'save' : 'add'" type="submit" variant="primary">
             {{ $isEdit ? 'Save changes' : 'Create grade step' }}

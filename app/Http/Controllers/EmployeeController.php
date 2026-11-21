@@ -8,6 +8,7 @@ use App\Models\Employee;
 use App\Models\EmployeeDeductionAssignment;
 use App\Models\EmployeeEarningAssignment;
 use App\Services\AuditLogger;
+use App\Services\MasterDataMutationService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -41,9 +42,9 @@ class EmployeeController extends Controller
         return view('employees.create', ['employee' => new Employee]);
     }
 
-    public function store(EmployeeRequest $request): RedirectResponse
+    public function store(EmployeeRequest $request, MasterDataMutationService $mutations): RedirectResponse
     {
-        $employee = Employee::create($request->validated());
+        $employee = $mutations->create(new Employee, $request->validated(), $request->user());
 
         return redirect()
             ->route('employees.show', $employee)
@@ -72,9 +73,9 @@ class EmployeeController extends Controller
         return view('employees.edit', compact('employee'));
     }
 
-    public function update(EmployeeRequest $request, Employee $employee): RedirectResponse
+    public function update(EmployeeRequest $request, Employee $employee, MasterDataMutationService $mutations): RedirectResponse
     {
-        $employee->update($request->validated());
+        $employee = $mutations->update($employee, $request->validated(), $request->user());
 
         return redirect()
             ->route('employees.show', $employee)
@@ -86,8 +87,10 @@ class EmployeeController extends Controller
         $request->validate(['reason' => ['nullable', 'string', 'max:2000']]);
         DB::transaction(function () use ($request, $employee): void {
             $locked = Employee::whereKey($employee->getKey())->lockForUpdate()->firstOrFail();
+            $before = $locked->getAttributes();
             $locked->delete();
-            app(AuditLogger::class)->log('EMPLOYEE_ARCHIVED', 'Employees', $request->user()->getKey(), 'employees', (string) $locked->getKey(), newValues: [
+            app(AuditLogger::class)->log('EMPLOYEE_ARCHIVED', 'Employees', $request->user()->getKey(), 'employees', (string) $locked->getKey(), oldValues: $before, newValues: [
+                ...$locked->getAttributes(),
                 'reason' => $request->input('reason') ?: 'Employee archived by authorized personnel.',
                 'deleted_at' => $locked->deleted_at->toISOString(),
             ]);

@@ -47,7 +47,7 @@
             <tbody>
                 @forelse ($logs as $log)
                     <tr>
-                        <td class="px-4 py-3 tabular-nums">#{{ $log->audit_id }}</td>
+                        <td class="px-4 py-3 tabular-nums"><a class="text-brand underline" href="{{ route('audit-logs.show', $log) }}" aria-label="View audit event {{ $log->audit_id }}">#{{ $log->audit_id }}</a></td>
                         <td class="ui-table-primary px-4 py-3"><x-local-time :value="$log->created_at" format="M d, Y H:i:s" /></td>
                         <td class="px-4 py-3">{{ $log->user?->username ?? 'System / unavailable user' }}</td>
                         <td class="px-4 py-3">{{ $log->module }}</td>

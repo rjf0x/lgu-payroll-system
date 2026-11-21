@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\TaxBracketRequest;
 use App\Models\TaxBracket;
+use App\Services\MasterDataMutationService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 
@@ -34,9 +35,9 @@ class TaxBracketController extends Controller
         ]);
     }
 
-    public function store(TaxBracketRequest $request): RedirectResponse
+    public function store(TaxBracketRequest $request, MasterDataMutationService $mutations): RedirectResponse
     {
-        TaxBracket::create($request->validated());
+        $mutations->create(new TaxBracket, $request->validated(), $request->user());
 
         return redirect()->route('tax-brackets.index')->with('status', 'Tax bracket created.');
     }
@@ -46,16 +47,16 @@ class TaxBracketController extends Controller
         return view('tax-brackets.edit', ['bracket' => $taxBracket]);
     }
 
-    public function update(TaxBracketRequest $request, TaxBracket $taxBracket): RedirectResponse
+    public function update(TaxBracketRequest $request, TaxBracket $taxBracket, MasterDataMutationService $mutations): RedirectResponse
     {
-        $taxBracket->update($request->validated());
+        $taxBracket = $mutations->update($taxBracket, $request->validated(), $request->user());
 
         return redirect()->route('tax-brackets.index')->with('status', 'Tax bracket updated.');
     }
 
-    public function destroy(TaxBracket $taxBracket): RedirectResponse
+    public function destroy(TaxBracket $taxBracket, MasterDataMutationService $mutations): RedirectResponse
     {
-        $taxBracket->delete();
+        $mutations->delete($taxBracket, auth()->user());
 
         return redirect()->route('tax-brackets.index')->with('status', 'Tax bracket deleted.');
     }

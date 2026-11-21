@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\DepartmentRequest;
 use App\Models\Department;
+use App\Services\MasterDataMutationService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 
@@ -26,9 +27,9 @@ class DepartmentController extends Controller
         ]);
     }
 
-    public function store(DepartmentRequest $request): RedirectResponse
+    public function store(DepartmentRequest $request, MasterDataMutationService $mutations): RedirectResponse
     {
-        Department::create($request->validated());
+        $mutations->create(new Department, $request->validated(), $request->user());
 
         return redirect()
             ->route('departments.index')
@@ -47,18 +48,18 @@ class DepartmentController extends Controller
         return view('departments.edit', compact('department'));
     }
 
-    public function update(DepartmentRequest $request, Department $department): RedirectResponse
+    public function update(DepartmentRequest $request, Department $department, MasterDataMutationService $mutations): RedirectResponse
     {
-        $department->update($request->validated());
+        $department = $mutations->update($department, $request->validated(), $request->user());
 
         return redirect()
             ->route('departments.index')
             ->with('status', 'Department updated.');
     }
 
-    public function destroy(Department $department): RedirectResponse
+    public function destroy(Department $department, MasterDataMutationService $mutations): RedirectResponse
     {
-        $department->delete();
+        $mutations->delete($department, auth()->user());
 
         return redirect()
             ->route('departments.index')

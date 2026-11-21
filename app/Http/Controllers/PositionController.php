@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\PositionRequest;
 use App\Models\Department;
 use App\Models\Position;
+use App\Services\MasterDataMutationService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 
@@ -28,9 +29,9 @@ class PositionController extends Controller
         ]);
     }
 
-    public function store(PositionRequest $request): RedirectResponse
+    public function store(PositionRequest $request, MasterDataMutationService $mutations): RedirectResponse
     {
-        Position::create($request->validated());
+        $mutations->create(new Position, $request->validated(), $request->user());
 
         return redirect()
             ->route('positions.index')
@@ -52,18 +53,18 @@ class PositionController extends Controller
         ]);
     }
 
-    public function update(PositionRequest $request, Position $position): RedirectResponse
+    public function update(PositionRequest $request, Position $position, MasterDataMutationService $mutations): RedirectResponse
     {
-        $position->update($request->validated());
+        $position = $mutations->update($position, $request->validated(), $request->user());
 
         return redirect()
             ->route('positions.index')
             ->with('status', 'Position updated.');
     }
 
-    public function destroy(Position $position): RedirectResponse
+    public function destroy(Position $position, MasterDataMutationService $mutations): RedirectResponse
     {
-        $position->delete();
+        $mutations->delete($position, auth()->user());
 
         return redirect()
             ->route('positions.index')

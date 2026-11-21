@@ -8,6 +8,7 @@ use App\Models\Employee;
 use App\Models\EmployeeEarningAssignment;
 use App\Models\EmploymentRecord;
 use App\Services\EmployeeWorkspaceContext;
+use App\Services\MasterDataMutationService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 
@@ -38,9 +39,9 @@ class EmployeeEarningAssignmentController extends Controller
         ])));
     }
 
-    public function store(EmployeeEarningAssignmentRequest $request): RedirectResponse
+    public function store(EmployeeEarningAssignmentRequest $request, MasterDataMutationService $mutations): RedirectResponse
     {
-        $assignment = EmployeeEarningAssignment::create($request->validated());
+        $assignment = $mutations->create(new EmployeeEarningAssignment, $request->validated(), $request->user());
 
         return $this->workspace->redirect((int) $assignment->employmentRecord->employee_id, 'earnings', 'Earning assignment created.') ?? redirect()->route('employee-earning-assignments.index')->with('status', 'Earning assignment created.');
     }
@@ -50,16 +51,16 @@ class EmployeeEarningAssignmentController extends Controller
         return view('employee-earning-assignments.edit', $this->formData($employeeEarningAssignment));
     }
 
-    public function update(EmployeeEarningAssignmentRequest $request, EmployeeEarningAssignment $employeeEarningAssignment): RedirectResponse
+    public function update(EmployeeEarningAssignmentRequest $request, EmployeeEarningAssignment $employeeEarningAssignment, MasterDataMutationService $mutations): RedirectResponse
     {
-        $employeeEarningAssignment->update($request->validated());
+        $employeeEarningAssignment = $mutations->update($employeeEarningAssignment, $request->validated(), $request->user());
 
         return $this->workspace->redirect((int) $employeeEarningAssignment->employmentRecord->employee_id, 'earnings', 'Earning assignment updated.') ?? redirect()->route('employee-earning-assignments.index')->with('status', 'Earning assignment updated.');
     }
 
-    public function destroy(EmployeeEarningAssignment $employeeEarningAssignment): RedirectResponse
+    public function destroy(EmployeeEarningAssignment $employeeEarningAssignment, MasterDataMutationService $mutations): RedirectResponse
     {
-        $employeeEarningAssignment->delete();
+        $mutations->delete($employeeEarningAssignment, auth()->user());
 
         return redirect()->route('employee-earning-assignments.index')->with('status', 'Earning assignment deleted.');
     }

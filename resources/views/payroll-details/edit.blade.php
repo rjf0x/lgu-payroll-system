@@ -74,6 +74,8 @@
             @include('payroll-details._adjustment-panel', ['section' => 'deductions', 'types' => $deductionTypes, 'amounts' => $deductionAmounts])
         </section>
 
+        <x-audit-change-context />
+
         <div class="px-1">
             <label for="inputs_confirmed" class="flex min-h-11 items-start gap-2 text-sm">
                 <input id="inputs_confirmed" type="checkbox" name="inputs_confirmed" value="1" @checked(old('inputs_confirmed')) required aria-invalid="{{ $errors->has('inputs_confirmed') ? 'true' : 'false' }}" @if ($errors->has('inputs_confirmed')) aria-describedby="inputs_confirmed-error" @endif class="mt-0.5 h-5 w-5 shrink-0">
