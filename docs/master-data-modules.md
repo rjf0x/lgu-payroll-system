@@ -78,6 +78,22 @@ Saves lock the employee before validating/writing the appointment, including the
 
 These rules govern the exposed appointment create/update paths and the shared mutation service. They do not backfill or repair legacy inconsistent records, direct database/model writes, or downstream organization changes. F04's independent employee/coverage compensation guard remains enforced; sequential source appointments do not authorize duplicate regular pay within a payroll period. No dual-appointment compensation or retrospective entitlement policy is introduced.
 
+### Referenced deletion (F14)
+
+`MasterDataDeletionGuard` runs inside `MasterDataMutationService` after locking the source row. Referenced deletes return a `delete` validation error (422 for JSON, or the existing browser error summary after redirect), with no SQL details or fabricated deletion audit. It protects:
+
+- Departments/positions referenced by organization, appointments or either side of employment transfer history.
+- Appointments referenced by draft or finalized payroll details.
+- Salary grade steps referenced by compensation profiles, and salary schedules containing those steps. Schedule deletion also locks its grade steps before checking profiles, preventing a check followed by silent removal of those compensation links.
+- Earning/deduction types referenced by assignments or saved payroll lines, including inactive assignments.
+- Contribution rates referenced by saved employer-contribution rows, and periods with payroll runs. The existing period-controller rejection remains in place; the shared service also checks references.
+
+Where supported, the message offers the existing status or employment-status inactivation. Grade steps and contribution rates have no independent inactive flag; their messages direct users to retain the record and manage schedule status/effective dates or future effective-dated rates. No source is automatically inactivated or detached.
+
+The database remains the final safeguard for a reference appearing after validation. Only foreign-key failures from the deletion are converted: MySQL SQLSTATE 23000/code 1451 and SQLite foreign-key constraint failures. Duplicate/other constraint errors, unrelated query errors and audit failures propagate and roll back rather than being mislabeled as a reference problem. Deletion transactions retry deadlocks up to five times; all writes/audits are transactional.
+
+Unused records still support deletion with the existing audit. A salary schedule containing only unused steps may be cleaned up with those steps captured in its deletion audit. An appointment without payroll references retains the existing audited cascading cleanup of its profiles/assignments/history; F14 does not introduce permanent retention for unused setup records. Employee soft archival and account deletion controls are unchanged. These guards cover the exposed shared mutation service, not direct SQL/model deletes or reconstruction of previously removed references.
+
 ---
 
 ## 4. Controllers & routes
@@ -130,6 +146,7 @@ The login screen is standalone HTML and does not require the build.
 |---|---|
 | `tests/Feature/MasterDataTest.php` | Department CRUD + unique code, Viewer read-only vs `403` on create, employee create, employment record create, grade-step composite uniqueness, employee soft delete. |
 | `tests/Feature/SalaryGradeStepNavigationTest.php` | All four grade-step GET routes and schedule link, correct detail values, Viewer/Approver read-only controls, missing/unauthorized access and escaped schedule text. The F12 show action renders the existing detail view with its schedule. |
+| `tests/Feature/MasterDataDeletionTest.php` | Sixteen referenced-source cases, unused cleanup/audit, browser-visible rejection, inactivation, a real FK failure after the guard, unrelated error propagation and rollback, period-service protection and access boundaries. All 36 cases run on SQLite and isolated MySQL. |
 | `tests/Feature/CompensationProfileValidationTest.php` | Grade match accept/reject, direct-rate requirement, schedule effective-date rule, overlap reject, non-overlapping accept. |
 | `tests/Feature/EmploymentRecordValidationTest.php` | Department/position consistency, inclusive overlap boundaries, sequential/inactive history, archival, identity preservation, transaction rechecks, permission denial, retained form input and audit/history effects. |
 | F10 cases in `tests/Feature/PayrollConcurrencyTest.php` | MySQL contention for first appointment creation, overlapping reactivation and archival before a waiting save; requires a dedicated `lgu_payroll_qa_` database. |

@@ -9,6 +9,7 @@ use App\Models\PayrollPeriod;
 use App\Models\SalarySchedule;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -17,6 +18,7 @@ class MasterDataMutationService
     public function __construct(
         private readonly AuditLogger $auditLogger,
         private readonly EmploymentRecordValidationService $appointments,
+        private readonly MasterDataDeletionGuard $deletions,
     ) {}
 
     /**
@@ -83,6 +85,7 @@ class MasterDataMutationService
         $context = $this->auditLogger->context('Deleted a payroll source record.');
         DB::transaction(function () use ($record, $actor, $context): void {
             $record = $record->newQuery()->lockForUpdate()->findOrFail($record->getKey());
+            $this->deletions->validate($record);
             $before = $record->getAttributes();
             $relations = match (true) {
                 $record instanceof EmploymentRecord => ['compensationProfiles', 'earningAssignments', 'deductionAssignments', 'history'],
@@ -94,12 +97,16 @@ class MasterDataMutationService
                 $before[$relation] = $relationship->orderBy($relationship->getRelated()->getKeyName())
                     ->get()->map(fn (Model $child): array => $child->getAttributes())->all();
             }
-            if ($record instanceof PayrollPeriod) {
-                abort_if($record->runs()->exists(), 422, 'A period with payroll runs cannot be deleted.');
+            try {
+                $record->delete();
+            } catch (QueryException $exception) {
+                if (! $this->deletions->isReferencedDeleteFailure($exception)) {
+                    throw $exception;
+                }
+                $this->deletions->reject($record);
             }
-            $record->delete();
             $this->record($record, 'DELETED', $actor, $before, null, $context);
-        });
+        }, 5);
     }
 
     /**
