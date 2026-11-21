@@ -12,7 +12,7 @@ class BlockchainStatusController extends Controller
         $status = $besu->checkConnection();
 
         return response()->json(
-            $status,
+            [...$status, 'scope' => 'node_connectivity'],
             $status['connected'] ? 200 : 503
         );
     }

@@ -46,14 +46,15 @@ if (besuStatus) {
                 throw new Error('Status unavailable');
             }
             const status = await response.json();
-            if (typeof status.connected !== 'boolean') {
+            if (status.scope !== 'node_connectivity' || typeof status.connected !== 'boolean'
+                || status.connected !== (response.status === 200)) {
                 throw new Error('Invalid connection status');
             }
-            label.textContent = status.connected ? 'Connected' : 'Disconnected';
+            label.textContent = status.connected ? 'Node connected' : 'Node unavailable';
             dot.classList.remove('bg-slate-400', 'bg-emerald-600', 'bg-red-600');
             dot.classList.add(status.connected ? 'bg-emerald-600' : 'bg-red-600');
         } catch {
-            label.textContent = 'Status unavailable';
+            label.textContent = 'Node status unavailable';
             dot.classList.remove('bg-emerald-600', 'bg-red-600');
             dot.classList.add('bg-slate-400');
         } finally {
@@ -61,7 +62,7 @@ if (besuStatus) {
         }
     };
 
-    label.textContent = 'Checking…';
+    label.textContent = 'Checking node…';
     checkBesuStatus();
     window.setInterval(checkBesuStatus, 30000);
     document.addEventListener('visibilitychange', () => {

@@ -7,6 +7,7 @@ use Throwable;
 
 class BesuService
 {
+    /** @return array{connected: bool, status: string, block_number: ?int} */
     public function checkConnection(): array
     {
         try {
@@ -23,19 +24,22 @@ class BesuService
 
             if (
                 ! $response->successful() ||
+                $response->json('jsonrpc') !== '2.0' ||
+                $response->json('id') !== 1 ||
+                $response->json('error') !== null ||
                 ! is_string($blockHex) ||
-                ! preg_match('/^0x[0-9a-fA-F]+$/', $blockHex)
+                ! preg_match('/^0x[0-9a-fA-F]{1,15}$/', $blockHex)
             ) {
                 return [
                     'connected' => false,
-                    'status' => 'Disconnected',
+                    'status' => 'Node unavailable',
                     'block_number' => null,
                 ];
             }
 
             return [
                 'connected' => true,
-                'status' => 'Connected',
+                'status' => 'Node connected',
                 'block_number' => hexdec($blockHex),
             ];
 
@@ -44,7 +48,7 @@ class BesuService
 
             return [
                 'connected' => false,
-                'status' => 'Disconnected',
+                'status' => 'Node unavailable',
                 'block_number' => null,
             ];
         }

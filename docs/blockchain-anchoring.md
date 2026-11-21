@@ -8,6 +8,8 @@
 
 ## 1. Approach
 
+The header's F13 node badge is a limited connectivity indicator. Its authenticated, active-account-protected, uncached endpoint validates a JSON-RPC `eth_blockNumber` response and labels it **Node connected** or **Node unavailable**. A failed session/request displays **Node status unavailable**. `scope: node_connectivity` makes that boundary explicit; no registry bridge/signer/contract readiness or payroll confirmation/MATCH is inferred from a responding node. Review the registration and a fresh integrity check separately.
+
 F11 retires new legacy network submission at both `BlockchainAnchorService` and `BesuBlockchainDriver`. New blockchain proofs use the versioned registry: finalization captures a versioned payload and durable outbox, then the worker/bridge journal submits and reconciles it. An older finalized run can be reviewed for the existing `blockchain:register-finalized {payroll}` console command. This captures its current baseline, not proof from the original finalization date, and preserves its original legacy anchor. Registry enablement, approved source evidence and the pinned target configuration remain required.
 
 Historical legacy proofs remain readable/verifiable under their original digest. Only an explicit `simulated:` network with no contract may use local comparison; unknown/malformed network identity cannot silently become a simulated MATCH. A local simulation remains available only with registry disabled and the concrete simulated driver selected; it performs no external network operation and creates no independent blockchain evidence. Changing BLOCKCHAIN_DRIVER or enabling the former live-test switch cannot restore legacy network writes.

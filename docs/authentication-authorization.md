@@ -28,6 +28,14 @@ Login is **username-based** against the documented `users` table.
 5. On success: regenerate the session, record `LOGIN` (and update `last_login_at`), and redirect to the intended URL (default `dashboard`).
 6. On failure: the `Failed` event records `LOGIN_FAILED`.
 
+### Existing-session checks and node status (F13)
+
+Protected application routes, including `blockchain.status` at `/blockchain/status`, use authentication, `EnsureAccountIsActive` and `PreventSensitiveResponseCaching`. An account deactivated after login is logged out and its session invalidated before the status controller can contact the node. Browser requests redirect to sign-in; JSON requests return 403. Subsequent unauthenticated JSON requests return 401. Active accounts can read this limited connectivity indicator without a payroll-write or verification grant.
+
+Successful and unavailable node responses carry `Cache-Control: no-store, private`, `Pragma: no-cache` and the existing no-sniff header. The response contains only `connected`, `status`, `block_number` and `scope: node_connectivity`; unavailable/malformed RPC evidence returns 503 without upstream details. The header polls without cache, labels the result **Node connected**, **Node unavailable** or **Node status unavailable**, and clears an earlier green result when a session check fails.
+
+This indicator checks `eth_blockNumber` only. It does not check the registry bridge, signer, target identity, queue, contract readiness, transaction confirmation or payroll integrity. Use operational readiness checks and the payroll registration's current confirmation/integrity result for those decisions. A responding node can coexist with an unavailable bridge or an unconfirmed payroll.
+
 ### Audit events
 
 All authentication activity is written to `audit_logs` (module `Authentication`) by

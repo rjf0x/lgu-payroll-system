@@ -60,9 +60,9 @@
                 <p class="hidden text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-brand sm:block">LGU financial operations</p>
                 <h1 class="break-words text-lg font-semibold tracking-tight sm:text-2xl">@yield('heading', 'Dashboard')</h1>
             </div>
-            <div id="besu-status" data-status-url="{{ route('blockchain.status') }}" role="status" aria-live="polite" aria-atomic="true" class="ui-status-chip no-print shrink-0">
+            <div id="besu-status" data-status-url="{{ route('blockchain.status') }}" role="status" aria-live="polite" aria-atomic="true" title="Node connection only. Check a payroll registration for confirmation and integrity." class="ui-status-chip no-print shrink-0">
                 <span data-besu-dot aria-hidden="true" class="h-2 w-2 shrink-0 rounded-full bg-slate-400"></span>
-                <span><span class="hidden sm:inline">Hyperledger </span>Besu: <span data-besu-label>Status unavailable</span></span>
+                <span><span class="hidden sm:inline">Hyperledger </span>Besu: <span data-besu-label>Node status unavailable</span></span>
             </div>
             <div class="no-print flex w-full min-w-0 items-center justify-end gap-3 border-t border-slate-100 pt-3 md:w-auto md:border-0 md:pt-0">
                 <details id="header-activity" class="relative shrink-0">

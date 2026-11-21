@@ -53,6 +53,7 @@ Route::middleware('guest')->group(function () {
 Route::middleware(['auth', EnsureAccountIsActive::class, PreventSensitiveResponseCaching::class])->group(function () {
 
     Route::get('/dashboard', DashboardController::class)->name('dashboard');
+    Route::get('/blockchain/status', [BlockchainStatusController::class, 'show'])->name('blockchain.status');
     Route::middleware('can:settings.manage')->group(function () {
         Route::get('system-settings', [SystemSettingController::class, 'edit'])->name('system-settings.edit');
         Route::put('system-settings', [SystemSettingController::class, 'update'])->name('system-settings.update');
@@ -192,8 +193,3 @@ Route::middleware(['auth', EnsureAccountIsActive::class, PreventSensitiveRespons
     });
 
 });
-
-Route::middleware(['auth'])->get(
-    '/blockchain/status',
-    [BlockchainStatusController::class, 'show']
-)->name('blockchain.status');
