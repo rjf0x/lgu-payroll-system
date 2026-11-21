@@ -56,7 +56,7 @@
                 <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16" /></svg>
                 <span>Menu</span>
             </button>
-            <div class="min-w-0 flex-1">
+            <div class="min-w-0 flex-1 basis-[calc(100%_-_7rem)] lg:min-w-48 lg:basis-0">
                 <p class="hidden text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-brand sm:block">LGU financial operations</p>
                 <h1 class="break-words text-lg font-semibold tracking-tight sm:text-2xl">@yield('heading', 'Dashboard')</h1>
             </div>
