@@ -1,4 +1,10 @@
-@php($isEdit = $profile->exists)
+@php
+    $isEdit = $profile->exists;
+    $payBases = ['MONTHLY' => 'Monthly', 'DAILY' => 'Daily', 'PROPORTIONAL_MONTHLY' => 'Proportional monthly'];
+    if ($isEdit && ! array_key_exists($profile->pay_basis, $payBases)) {
+        $payBases[$profile->pay_basis] = $profile->pay_basis.' (unsupported; select a supported pay basis)';
+    }
+@endphp
 
 <form
     method="POST"
@@ -48,7 +54,7 @@
         <x-form.select
             name="pay_basis"
             label="Pay Basis"
-            :options="['MONTHLY' => 'Monthly', 'DAILY' => 'Daily', 'HOURLY' => 'Hourly', 'PROPORTIONAL_MONTHLY' => 'Proportional monthly']"
+            :options="$payBases"
             :selected="$profile->pay_basis"
             required
         />

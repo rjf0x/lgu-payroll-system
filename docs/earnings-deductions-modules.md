@@ -57,10 +57,16 @@ Attach an earning or deduction to an **employment record** with an effective per
 | `employment_id` | The employment record the assignment applies to. |
 | `earning_type_id` / `deduction_type_id` | The configured type. |
 | `amount` / `percentage` | **At least one is required** (validated). |
-| `frequency` (earnings) | `MONTHLY`, `ANNUAL`, `ONE_TIME`. |
+| `frequency` (earnings) | `MONTHLY` only for automatic assignments of active, recurring earning types. Annual and one-time amounts require explicit payroll-period input. |
 | `reference_number` (deductions) | Optional lender/authority reference. |
 | `effective_from` / `effective_to` | `effective_to` must not precede `effective_from`. |
 | `status` (deductions) | `ACTIVE` / `INACTIVE`. |
+
+Automatic computation skips inactive earning types, inactive deduction assignments and inactive deduction types. Earnings have no separate assignment-status field. Assignment dates are inclusive at the compensation date (period end, or employment end when earlier). Amount takes precedence when both amount and percentage are supplied; percentages apply to basic pay. Statutory deductions and the separate LBP amount retain their dedicated calculation/input paths.
+
+Effective legacy `ANNUAL`/`ONE_TIME` assignments, or automatic assignments using a nonrecurring active earning type, block regular computation and submission with an employee-specific correction message. They are not silently repeated or discarded. Correct or remove the assignment, then enter exceptional earnings explicitly in the applicable period. Inactive or out-of-period assignments do not trigger that restriction. Existing unsupported edit values remain visible and labeled for correction; new forms offer supported choices only.
+
+Next-period carry-forward excludes inactive types, nonrecurring earnings and assignment-backed rows without an eligible effective monthly earning or active deduction assignment. Active recurring manual earnings and active manual deductions without assignments may remain provisional inputs. Same-period authorized replacements retain their explicit inputs. Every copied detail still requires current confirmation and recomputation. This does not introduce annual entitlement scheduling or one-time payment tracking.
 
 ## 6. Statutory tables (effective-dated)
 
@@ -114,3 +120,5 @@ foreach ($configResources as [$uri, $controller]) {
 - Deduction type can be created.
 
 Run with `php artisan test --compact`.
+
+`tests/Feature/PayrollAssignmentPolicyTest.php` covers active/effective automatic sources, unsupported assignment and hourly-profile rejection, computation/submission rollback, stale calculations after inactivation, supported pay formulas, explicit exceptional earnings and next-period carry-forward filtering.

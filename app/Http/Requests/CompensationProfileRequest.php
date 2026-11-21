@@ -30,7 +30,6 @@ class CompensationProfileRequest extends FormRequest
             'pay_basis' => ['required', Rule::in([
                 CompensationProfile::BASIS_MONTHLY,
                 CompensationProfile::BASIS_DAILY,
-                CompensationProfile::BASIS_HOURLY,
                 CompensationProfile::BASIS_PROPORTIONAL_MONTHLY,
             ])],
             'basic_rate' => ['nullable', 'numeric', 'min:0', 'required_if:basis,DIRECT_RATE'],
@@ -38,6 +37,12 @@ class CompensationProfileRequest extends FormRequest
             'effective_from' => ['required', 'date'],
             'effective_to' => ['nullable', 'date', 'after_or_equal:effective_from'],
         ];
+    }
+
+    /** @return array<string, string> */
+    public function messages(): array
+    {
+        return ['pay_basis.in' => 'Select monthly, daily, or proportional monthly compensation. Hourly payroll requires approved hours and is unsupported.'];
     }
 
     public function withValidator(Validator $validator): void

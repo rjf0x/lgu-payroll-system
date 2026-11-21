@@ -111,6 +111,11 @@ class PayrollComputationService
         $profile = $this->effectiveCompensation($employment, $compensationDate);
 
         $payBasis = $profile?->pay_basis ?? CompensationProfile::BASIS_MONTHLY;
+        if (! in_array($payBasis, [CompensationProfile::BASIS_MONTHLY, CompensationProfile::BASIS_DAILY, CompensationProfile::BASIS_PROPORTIONAL_MONTHLY], true)) {
+            throw ValidationException::withMessages([
+                'financial.'.$employment->getKey() => "{$employment->employee->employee_number} ({$employment->employee->full_name}): Unsupported pay basis [{$payBasis}]. Select monthly, daily, or proportional monthly compensation and recompute. Hourly payroll requires approved hours and is unsupported.",
+            ]);
+        }
         $serviceFraction = (float) ($profile?->service_fraction ?? 1.0);
         $gradeStep = $profile?->gradeStep;
 
@@ -149,7 +154,13 @@ class PayrollComputationService
         ]);
 
         $detail->save();
-        $this->financialContext($detail, $period);
+        $context = $this->financialContext($detail, $period);
+        $issues = $this->assignmentIssues($detail, $context['assignments']['earnings']);
+        if ($issues !== []) {
+            throw ValidationException::withMessages([
+                'financial.'.$detail->getKey() => "{$detail->employee_number_snapshot} ({$detail->employee_name_snapshot}): ".implode(' ', $issues),
+            ]);
+        }
         if ($run->run_type === 'REGULAR' && ! $detail->manual_adjustments) {
             $detail->earnings()->delete();
             $detail->deductions()->delete();
@@ -231,14 +242,14 @@ class PayrollComputationService
     {
         $context = $this->financialContext($detail, $period);
         $profile = $context['profile'];
-        $issues = [];
+        $issues = $this->assignmentIssues($detail, $context['assignments']['earnings']);
         if ($profile === null) {
             $issues[] = 'No effective compensation profile covers the payroll compensation date. Add the profile and recompute.';
         } elseif (($profile->grade_step_id !== null && $profile->gradeStep === null)
             || ($profile->grade_step_id === null && $profile->basic_rate === null)
             || $this->rateFor($profile) < 0
             || (float) $profile->service_fraction <= 0 || (float) $profile->service_fraction > 1
-            || ! in_array($profile->pay_basis, [CompensationProfile::BASIS_MONTHLY, CompensationProfile::BASIS_DAILY, CompensationProfile::BASIS_PROPORTIONAL_MONTHLY, CompensationProfile::BASIS_HOURLY], true)) {
+            || ! in_array($profile->pay_basis, [CompensationProfile::BASIS_MONTHLY, CompensationProfile::BASIS_DAILY, CompensationProfile::BASIS_PROPORTIONAL_MONTHLY], true)) {
             $issues[] = 'The effective compensation profile has an invalid salary rate, pay basis, or service fraction.';
         } elseif ($profile->grade_step_id !== null) {
             $schedule = $profile->gradeStep->salarySchedule;
@@ -596,6 +607,8 @@ class PayrollComputationService
         $assignments = EmployeeEarningAssignment::query()
             ->with('earningType')
             ->where('employment_id', $employment->employment_id)
+            ->where('frequency', 'MONTHLY')
+            ->whereHas('earningType', fn ($query) => $query->where('status', 'ACTIVE')->where('is_recurring', true))
             ->whereDate('effective_from', '<=', $periodEnd)
             ->where(fn ($query) => $query->whereNull('effective_to')->orWhereDate('effective_to', '>=', $periodEnd))
             ->get();
@@ -621,6 +634,8 @@ class PayrollComputationService
         $assignments = EmployeeDeductionAssignment::query()
             ->with('deductionType')
             ->where('employment_id', $employment->employment_id)
+            ->where('status', 'ACTIVE')
+            ->whereHas('deductionType', fn ($query) => $query->where('status', 'ACTIVE'))
             ->whereDate('effective_from', '<=', $periodEnd)
             ->where(fn ($query) => $query->whereNull('effective_to')->orWhereDate('effective_to', '>=', $periodEnd))
             ->get();
@@ -645,6 +660,28 @@ class PayrollComputationService
                 'amount' => $amount,
             ]);
         }
+    }
+
+    /**
+     * @param  list<array<string, mixed>>  $assignments
+     * @return list<string>
+     */
+    private function assignmentIssues(PayrollDetail $detail, array $assignments): array
+    {
+        if ($detail->payrollRun->run_type !== 'REGULAR') {
+            return [];
+        }
+
+        $issues = [];
+        foreach ($assignments as $assignment) {
+            $type = $assignment['earning_type'];
+            if ($type !== null && $type['status'] === 'ACTIVE'
+                && ($assignment['frequency'] !== 'MONTHLY' || ! $type['is_recurring'])) {
+                $issues[] = "Unsupported automatic earning assignment [{$type['earning_name']}]. Only monthly assignments of recurring earnings are supported. Correct or remove the assignment; enter exceptional earnings explicitly in the applicable payroll period.";
+            }
+        }
+
+        return $issues;
     }
 
     private function assignmentAmount(?float $amount, ?float $percentage, float $basicPay): float

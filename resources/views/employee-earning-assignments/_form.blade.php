@@ -1,4 +1,10 @@
-@php($isEdit = $assignment->exists)
+@php
+    $isEdit = $assignment->exists;
+    $frequencies = ['MONTHLY' => 'Monthly'];
+    if ($isEdit && ! array_key_exists($assignment->frequency, $frequencies)) {
+        $frequencies[$assignment->frequency] = $assignment->frequency.' (unsupported; select Monthly or remove assignment)';
+    }
+@endphp
 
 <form
     method="POST"
@@ -23,7 +29,7 @@
         <x-form.select
             name="earning_type_id"
             label="Earning Type"
-            :options="$earningTypes->pluck('earning_name', 'earning_type_id')"
+            :options="$earningTypes->mapWithKeys(fn ($type) => [$type->earning_type_id => $type->earning_name.($type->status !== 'ACTIVE' || ! $type->is_recurring ? ' (unsupported for automatic assignment)' : '')])"
             :selected="$assignment->earning_type_id"
             placeholder="Select an earning type"
             required
@@ -33,7 +39,7 @@
         <x-form.select
             name="frequency"
             label="Frequency"
-            :options="['MONTHLY' => 'Monthly', 'ANNUAL' => 'Annual', 'ONE_TIME' => 'One-time']"
+            :options="$frequencies"
             :selected="$assignment->frequency"
             required
         />
@@ -43,7 +49,7 @@
         </div>
     </div>
 
-    <p class="text-xs text-slate-500">Provide an amount, a percentage, or both.</p>
+    <p class="text-xs text-slate-500">Automatic assignments support active, recurring monthly earnings only. Enter annual or one-time earnings explicitly in the applicable payroll period. Provide an amount, a percentage, or both; an amount takes precedence.</p>
 
     <x-audit-change-context />
 

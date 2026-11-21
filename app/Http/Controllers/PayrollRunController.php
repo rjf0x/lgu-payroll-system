@@ -10,6 +10,7 @@ use App\Models\PayrollRun;
 use App\Services\AuditLogger;
 use App\Services\PayrollApprovalService;
 use App\Services\PayrollAuditSnapshot;
+use App\Services\PayrollCarryForwardPolicy;
 use App\Services\PayrollComputationService;
 use App\Services\PayrollDuplicateGuard;
 use App\Services\PayrollEligibilityService;
@@ -24,6 +25,7 @@ class PayrollRunController extends Controller
     public function __construct(
         private readonly PayrollDuplicateGuard $duplicates,
         private readonly PayrollAuditSnapshot $auditSnapshots,
+        private readonly PayrollCarryForwardPolicy $carryForward,
     ) {}
 
     public function index(Request $request): View
@@ -85,7 +87,7 @@ class PayrollRunController extends Controller
                     ->where('end_date', '<', $period->start_date))
                 ->orderByDesc('finalized_at')
                 ->orderByDesc('payroll_run_id')
-                ->with(['details.earnings', 'details.deductions', 'details.employerContributions', 'details.employmentRecord.employee'])
+                ->with(['details.earnings.earningType', 'details.deductions.deductionType', 'details.employerContributions', 'details.employmentRecord.employee', 'details.employmentRecord.earningAssignments', 'details.employmentRecord.deductionAssignments'])
                 ->first() : null);
 
             foreach ($previous?->details ?? [] as $detail) {
@@ -109,8 +111,12 @@ class PayrollRunController extends Controller
                 ]);
                 $copy->save();
 
-                foreach (['earnings', 'deductions', 'employerContributions'] as $relation) {
-                    foreach ($detail->{$relation} as $row) {
+                $rows = $replacement === null ? $this->carryForward->rows($detail, $period) : [
+                    'earnings' => $detail->earnings, 'deductions' => $detail->deductions,
+                ];
+                $rows['employerContributions'] = $detail->employerContributions;
+                foreach ($rows as $relation => $entries) {
+                    foreach ($entries as $row) {
                         $copy->{$relation}()->save($row->replicate());
                     }
                 }

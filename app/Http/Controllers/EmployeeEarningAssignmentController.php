@@ -73,7 +73,9 @@ class EmployeeEarningAssignmentController extends Controller
         return [
             'assignment' => $assignment,
             'employments' => EmploymentRecord::with(['employee', 'position'])->get(),
-            'earningTypes' => EarningType::orderBy('earning_name')->get(),
+            'earningTypes' => EarningType::where(fn ($query) => $query->where(fn ($query) => $query->where('status', 'ACTIVE')->where('is_recurring', true))
+                ->when($assignment->exists, fn ($query) => $query->orWhere('earning_type_id', $assignment->earning_type_id)))
+                ->orderBy('earning_name')->get(),
         ] + $this->workspace->viewData(employmentId: $assignment->employment_id);
     }
 }

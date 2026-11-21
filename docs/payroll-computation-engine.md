@@ -2,6 +2,8 @@
 
 > Current input workflow: attendance and leave management have been removed. Payroll Officers enter approved payable days and adjustments, record an approval reference, and confirm each employee input before submission. Recomputing preserves confirmed inputs and manual adjustments; missing inputs never assume a complete month. Monthly pay retains the existing 22-day equivalent; daily pay uses approved payable days. Earlier attendance descriptions below are historical.
 
+> F09 configuration scope: automatic earnings require an active, recurring earning type and a monthly assignment; deductions require active assignments and types. Effective unsupported legacy annual/one-time/nonrecurring earning assignments block regular computation and submission. Exceptional earnings use explicit current-period input. Hourly compensation is rejected on save, computation and submission; monthly, daily and proportional monthly bases remain supported. Next-period copies filter disabled, expired and nonrecurring sources and remain provisional until confirmed and recomputed.
+
 **Stage:** 6 of the development plan
 **Status:** Implemented for the mock-defense build
 **Related:** `database-implementation.md`, `earnings-deductions-modules.md`, `attendance-leave-modules.md`, `payroll-computation-design.md`
@@ -47,9 +49,8 @@ For each active employment record with an effective compensation profile:
    - Monthly / proportional: `rate × service_fraction`, then reduced for unpaid days using
      the CSC leave-without-pay factor `(22 − days_without_pay) / 22`.
    - Daily rate: `rate × credited paid days`.
-   - If the period has **no attendance records**, a complete month is assumed (a
-     demo convenience documented in the engine).
-2. **Earnings** — from effective `employee_earning_assignments` (amount or % of basic pay).
+   - Approved payable days are required for submission; missing inputs never imply a complete month.
+2. **Earnings** — from effective monthly `employee_earning_assignments` using active, recurring types (amount or % of basic pay), or deliberate current-period manual inputs.
 3. **Gross pay (Total Compensation)** = basic pay + earnings.
 4. **Statutory employee shares** (effective-dated `contribution_rates`), each clamped to
    the rate's compensation floor/ceiling:
@@ -133,9 +134,7 @@ Route::middleware('can:payroll.prepare')->group(function () {
 
 - Auto-withholding uses the **annual projection ÷ 12** method for the prototype; the
   BIR-compliant periodic table is a later enhancement.
-- Leave-without-pay is driven by `ABSENT` attendance; unpaid leave types are not yet
-  distinguished.
-- `HOURLY` pay basis is treated as a monthly base (no hours field exists in the day-based
-  design).
-- Attendance absence defaults to a full month when no records exist — noted for demos.
+- Payroll uses explicitly approved payable days; attendance and leave are outside the current input workflow.
+- `HOURLY` pay basis is unsupported and rejected, including existing legacy profiles. No approved-hours input or hourly calculation is implemented.
+- Annual and one-time earnings require deliberate current-period input; automatic assignments do not implement an annual entitlement schedule or payment-consumption ledger.
 - All seeded rates/amounts remain illustrative placeholders.
