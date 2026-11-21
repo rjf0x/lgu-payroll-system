@@ -30,7 +30,7 @@
                                 <x-button icon="list" :href="route('reports.payroll-summary', $run)">Department summary</x-button>
                                 <x-button icon="list" :href="route('reports.deductions', $run)">Deductions report</x-button>
                                 <x-button icon="document" :href="route('payroll-runs.payslips', $run)">Payslips</x-button>
-                                @can('reports.generate')<x-button icon="download" variant="secondary" href="{{ route('payroll-runs.register.export', $run) }}">Export spreadsheet</x-button>@endcan
+                                @can('reports.export')<x-button icon="download" variant="secondary" href="{{ route('payroll-runs.register.export', $run) }}">Export spreadsheet</x-button>@endcan
                             </x-action-menu>
                         </td>
                     </tr>

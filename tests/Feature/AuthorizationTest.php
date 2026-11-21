@@ -64,6 +64,8 @@ class AuthorizationTest extends TestCase
         $viewer = $this->userWithRole(Role::VIEWER);
 
         $this->assertTrue($viewer->can(Permission::PAYROLL_VIEW));
+        $this->assertTrue($viewer->can(Permission::REPORTS_EXPORT));
+        $this->assertFalse($viewer->can(Permission::REPORTS_GENERATE));
         $this->assertFalse($viewer->can(Permission::PAYROLL_PREPARE));
         $this->assertFalse($viewer->can(Permission::EMPLOYEES_MANAGE));
     }

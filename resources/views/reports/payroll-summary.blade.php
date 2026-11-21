@@ -9,7 +9,7 @@
         <p class="text-sm text-slate-500">Totals by department for this payroll run.</p>
         <div class="flex flex-wrap gap-3">
             <x-button icon="document" variant="secondary" href="{{ route('payroll-runs.register', $run) }}">Register</x-button>
-            @can('reports.generate')
+            @can('reports.export')
                 <x-button icon="download" variant="primary" href="{{ route('payroll-runs.register.export', $run) }}">Export spreadsheet</x-button>
             @endcan
             <x-button icon="print" onclick="window.print()">Print summary</x-button>

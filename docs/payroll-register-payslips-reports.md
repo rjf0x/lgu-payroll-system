@@ -67,7 +67,14 @@ NTHP Before LBP · LBP Loan Deduction · Net Take Home Pay`
 | Action | Permission |
 |---|---|
 | View register, payslips, reports, summary | `payroll.view` |
-| Export register, generate/publish payslips | `reports.generate` |
+| Export register | `reports.export` |
+| Generate/publish payslips | `reports.generate` |
+
+The default Viewer receives `reports.export` and `payroll.view`, allowing existing
+report/payslip reads and spreadsheet exports. Payslip generation/publication requires
+`reports.generate`, which the default Viewer does not receive. Export metadata and
+audit records remain part of an authorized download; payroll and payslip state do not
+change. Existing installations receive this split through the F08 permission migration.
 
 ---
 

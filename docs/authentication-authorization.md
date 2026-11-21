@@ -114,11 +114,20 @@ cannot be bypassed by administrative privilege. The cross-table enforcement
 | `payroll.reject` | | | ✅ | |
 | `payroll.finalize` | | | ✅ | |
 | `payroll.view` | ✅ | ✅ | ✅ | ✅ |
-| `reports.generate` | ✅ | ✅ | ✅ | ✅ |
+| `reports.generate` (payslip generation/publication) | ✅ | ✅ | ✅ | |
+| `reports.export` (spreadsheet exports) | ✅ | ✅ | ✅ | ✅ |
 | `audit.view` | ✅ | | | |
 | `blockchain.verify` | ✅ | ✅ | ✅ | |
 
 Defined in `database/seeders/RolePermissionSeeder.php`.
+
+F08 separates spreadsheet exports from payslip writes. The Viewer can read existing
+authorized outputs and export spreadsheets, but cannot generate or publish payslips.
+The permission migration updates existing role grants without reseeding accounts;
+queued payslip jobs recheck the requester's current write permission. Export history
+and audit metadata are still recorded for authorized downloads.
+The data migration deliberately retains the hardened grants on rollback and does
+not automatically restore Viewer write access.
 
 ---
 

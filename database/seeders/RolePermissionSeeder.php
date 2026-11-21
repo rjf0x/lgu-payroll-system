@@ -27,7 +27,8 @@ class RolePermissionSeeder extends Seeder
             'payroll.reject' => 'Reject a submitted payroll run.',
             'payroll.finalize' => 'Finalize an approved payroll run.',
             'payroll.view' => 'View payroll records and registers.',
-            'reports.generate' => 'Generate pay slips and authorized reports.',
+            'reports.generate' => 'Generate payslips and publish finalized payroll statements.',
+            'reports.export' => 'Export authorized report spreadsheets.',
             'audit.view' => 'View audit trail records.',
             'blockchain.verify' => 'Anchor and verify payroll integrity proofs.',
         ];
@@ -45,7 +46,7 @@ class RolePermissionSeeder extends Seeder
                 'permissions' => [
                     'users.manage', 'settings.manage', 'roles.manage', 'employees.view', 'employees.manage',
                     'compensation.manage', 'payroll.view',
-                    'reports.generate', 'audit.view', 'blockchain.verify',
+                    'reports.generate', 'reports.export', 'audit.view', 'blockchain.verify',
                 ],
             ],
             Role::PAYROLL_OFFICER => [
@@ -53,20 +54,20 @@ class RolePermissionSeeder extends Seeder
                 'permissions' => [
                     'employees.view', 'employees.manage',
                     'compensation.manage', 'payroll.prepare', 'payroll.submit', 'payroll.view',
-                    'reports.generate', 'blockchain.verify',
+                    'reports.generate', 'reports.export', 'blockchain.verify',
                 ],
             ],
             Role::APPROVER => [
                 'description' => 'Independently reviews, approves, rejects, or returns payroll.',
                 'permissions' => [
                     'employees.view', 'payroll.review', 'payroll.approve', 'payroll.reject',
-                    'payroll.finalize', 'payroll.view', 'reports.generate', 'blockchain.verify',
+                    'payroll.finalize', 'payroll.view', 'reports.generate', 'reports.export', 'blockchain.verify',
                 ],
             ],
             Role::VIEWER => [
                 'description' => 'Has read-only access to authorized records and reports.',
                 'permissions' => [
-                    'employees.view', 'payroll.view', 'reports.generate',
+                    'employees.view', 'payroll.view', 'reports.export',
                 ],
             ],
         ];

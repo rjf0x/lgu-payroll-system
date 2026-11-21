@@ -167,9 +167,10 @@ Route::middleware(['auth', EnsureAccountIsActive::class, PreventSensitiveRespons
         Route::get('reports', [ReportController::class, 'index'])->name('reports.index');
     });
 
+    Route::get('payroll-runs/{payroll_run}/register/export', [PayrollRegisterController::class, 'export'])
+        ->whereNumber('payroll_run')->middleware('can:reports.export')->name('payroll-runs.register.export');
+
     Route::middleware('can:reports.generate')->group(function () {
-        Route::get('payroll-runs/{payroll_run}/register/export', [PayrollRegisterController::class, 'export'])
-            ->whereNumber('payroll_run')->name('payroll-runs.register.export');
         Route::post('payroll-runs/{payroll_run}/payslips/generate', [PayslipController::class, 'generate'])
             ->whereNumber('payroll_run')->name('payroll-runs.payslips.generate');
         Route::post('payslips/{payslip}/publish', [PayslipController::class, 'publish'])->name('payslips.publish');

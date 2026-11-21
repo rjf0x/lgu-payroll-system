@@ -42,6 +42,8 @@ class Permission extends Model
 
     public const REPORTS_GENERATE = 'reports.generate';
 
+    public const REPORTS_EXPORT = 'reports.export';
+
     public const AUDIT_VIEW = 'audit.view';
 
     public const BLOCKCHAIN_VERIFY = 'blockchain.verify';
@@ -68,6 +70,7 @@ class Permission extends Model
             self::PAYROLL_FINALIZE,
             self::PAYROLL_VIEW,
             self::REPORTS_GENERATE,
+            self::REPORTS_EXPORT,
             self::AUDIT_VIEW,
             self::BLOCKCHAIN_VERIFY,
         ];

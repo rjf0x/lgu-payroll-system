@@ -10,7 +10,7 @@
         <div class="flex flex-wrap gap-3">
             <x-button icon="back" variant="secondary" href="{{ route('payroll-runs.show', $run) }}">Back to run</x-button>
             <x-button icon="document" variant="secondary" href="{{ route('payroll-runs.payslips', $run) }}">Payslips</x-button>
-            @can('reports.generate')
+            @can('reports.export')
                 <x-button icon="download" variant="primary" href="{{ route('payroll-runs.register.export', $run) }}">Export spreadsheet</x-button>
             @endcan
             <x-button icon="print" onclick="window.print()">Print register</x-button>

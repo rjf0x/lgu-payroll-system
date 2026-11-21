@@ -25,8 +25,9 @@ flowchart LR
         Review([Review, approve, reject or return payroll])
         Finalize([Finalize approved payroll])
         Read([View dashboard, employee records and payroll])
-        Reports([View registers, department summaries and deduction reports])
-        Documents([Export payroll spreadsheet and generate or publish payslips])
+        Reports([View registers, existing payslips, summaries and deduction reports])
+        Documents([Export payroll spreadsheet])
+        Payslips([Generate or publish payslips])
         Verify([Payroll Verification])
     end
 
@@ -40,6 +41,7 @@ flowchart LR
     Admin --- Read
     Admin --- Reports
     Admin --- Documents
+    Admin --- Payslips
     Admin --- Verify
 
     Officer --- Organization
@@ -52,6 +54,7 @@ flowchart LR
     Officer --- Read
     Officer --- Reports
     Officer --- Documents
+    Officer --- Payslips
     Officer --- Verify
 
     Approver --- Review
@@ -59,6 +62,7 @@ flowchart LR
     Approver --- Read
     Approver --- Reports
     Approver --- Documents
+    Approver --- Payslips
     Approver --- Verify
 
     Viewer --- Read
@@ -73,7 +77,7 @@ flowchart LR
 | **Admin** | Manages users, role assignments, settings, organization records, employees, compensation and payroll reference data. Views and exports the audit trail, accesses reports and payslips, and verifies payroll. The default Admin role cannot prepare, approve or finalize payroll. |
 | **Payroll Officer** | Maintains organization and employee records, compensation, earnings, deductions and statutory configuration. Manages payroll periods, confirms approved inputs, computes payroll and submits it for independent approval. Accesses reports, payslips and Payroll Verification. |
 | **Approver** | Reviews submitted payroll; approves, rejects or returns it for correction; and finalizes approved payroll. Views records, accesses reports and payslips, and verifies payroll. |
-| **Viewer** | Views employee and payroll records, registers, department summaries and deduction reports. The current default permission set also permits spreadsheet exports and payslip generation/publication through `reports.generate`. The Viewer cannot edit payroll inputs, approve or finalize payroll, or use Payroll Verification. |
+| **Viewer** | Views employee and payroll records, existing payslips, registers, department summaries and deduction reports. Exports spreadsheets through `reports.export`. Cannot generate/publish payslips, edit payroll inputs, approve or finalize payroll, or use Payroll Verification. |
 
 ## Payroll and verification workflow
 

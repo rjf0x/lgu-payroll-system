@@ -198,7 +198,7 @@ The versioned registry is the current finalization integration. Legacy direct an
 | Admin | Manages users and role assignments, settings, employees and employment records, departments, positions, compensation, earnings, deductions and statutory configuration. Accesses reports, payslips, audit trail and Payroll Verification. The default role cannot prepare, approve or finalize payroll. |
 | Payroll Officer | Maintains employee and compensation information, manages payroll periods and approved inputs, computes payroll and submits it for review. Accesses reports, payslips and Payroll Verification. |
 | Approver | Independently reviews, approves, rejects or returns payroll and finalizes approved runs. Accesses records, reports, payslips and Payroll Verification. |
-| Viewer | Views authorized records and reports. The current `reports.generate` permission also allows spreadsheet exports and payslip generation/publication; it does not allow payroll preparation, approval, finalization or Payroll Verification. |
+| Viewer | Views authorized records, existing payslips and reports, and exports spreadsheets through `reports.export`. Does not receive `reports.generate`, so cannot generate/publish payslips. Cannot prepare, approve or finalize payroll or use Payroll Verification. |
 
 Users can hold multiple roles. Laravel enforces permissions and reviewer independence regardless of the combined role assignments.
 
